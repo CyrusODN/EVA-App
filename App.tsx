@@ -1,22 +1,40 @@
+import * as React from 'react';
+import { useEffect } from 'react';
+import {AppRegistry} from 'react-native';
+import { View,Text } from 'react-native';
+import {
+  MD3LightTheme as DefaultTheme,
+  PaperProvider,
+  configureFonts,
+} from 'react-native-paper';
+import Toast from 'react-native-toast-message';
+import { fontConfig } from './src/constants/fonts';
+import Navigation from './src/navigation';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import { colors } from './src/constants/colors';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+const queryClient = new QueryClient();
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+const theme = {
+  ...DefaultTheme,
+  colors: colors,
+  fonts: configureFonts({
+    config: fontConfig,
+    regular: {
+      fontFamily: 'GommeSans',
+    },
+  }),
+};
 
+const App = () => {
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <NewAppScreen templateFileName="App.tsx" />
-    </View>
+      <QueryClientProvider client={queryClient}>
+        <PaperProvider theme={theme}>
+            <Navigation />
+            <Toast />
+        </PaperProvider>
+      </QueryClientProvider>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+};
 
 export default App;
