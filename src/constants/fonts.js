@@ -2,15 +2,15 @@ import { Platform } from "react-native";
 
 export const fontConfig = {
     displaySmall: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 14,
-        fontWeight: "400",
+        // fontWeight: "400",
         letterSpacing: 0,
         lineHeight: 16,
     },
 
     displayMedium: {
-        fontFamily: "GommeSans-SemiBold",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 18,
         fontWeight: "400",
         letterSpacing: 0,
@@ -18,21 +18,21 @@ export const fontConfig = {
     },
 
     displayLarge: {
-        fontFamily: "GommeSans-SemiBold",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 22,
         fontWeight: "400",
         letterSpacing: 0,
         lineHeight: 25,
     },
     headlineSmall: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Bold",
         fontSize: 14,
         fontWeight: "400",
         letterSpacing: 0,
         lineHeight: 18,
     },
     headlineMedium: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Bold",
         fontSize: 18,
         fontWeight: "400",
         letterSpacing: 0,
@@ -40,14 +40,14 @@ export const fontConfig = {
     },
 
     headlineLarge: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Bold",
         fontSize: 25,
         fontWeight: "400",
         letterSpacing: 0,
         lineHeight: 30,
     },
     titleSmall: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 14,
         fontWeight: "400",
         letterSpacing: 0.1,
@@ -56,7 +56,7 @@ export const fontConfig = {
     },
 
     titleMedium: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 16,
         fontWeight: "400",
         letterSpacing: 0.15,
@@ -65,7 +65,7 @@ export const fontConfig = {
     },
 
     titleLarge: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 22,
         fontWeight: "400",
         letterSpacing: 0,
@@ -73,7 +73,7 @@ export const fontConfig = {
         textTransform: "none",
     },
     labelSmall: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 11,
         fontWeight: "500",
         letterSpacing: 0.5,
@@ -81,7 +81,7 @@ export const fontConfig = {
     },
 
     labelMedium: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 12,
         fontWeight: "500",
         letterSpacing: 0.5,
@@ -89,14 +89,14 @@ export const fontConfig = {
     },
 
     labelLarge: {
-        fontFamily: Platform.OS === 'ios' ? "GommeSans-Regular" : "GommeSans",
+        fontFamily: "SFProDisplay-Regular",
         fontSize: 14,
         fontWeight: "500",
         letterSpacing: 0.1,
         lineHeight: 20,
     },
     bodySmall: {
-        fontFamily: "GommeSans-SemiBold",
+        fontFamily: "SFProDisplay-Semibold",
         fontSize: 14,
         fontWeight: "400",
         letterSpacing: 0.4,
@@ -104,7 +104,7 @@ export const fontConfig = {
     },
 
     bodyMedium: {
-        fontFamily: "GommeSans-SemiBold",
+        fontFamily: "SFProDisplay-Semibold",
         fontSize: 16,
         fontWeight: "400",
         letterSpacing: 0.25,
@@ -112,7 +112,7 @@ export const fontConfig = {
     },
 
     bodyLarge: {
-        fontFamily: "GommeSans-SemiBold",
+        fontFamily:"SFProDisplay-Semibold",
         fontSize: 18,
         fontWeight: "400",
         letterSpacing: 0.15,

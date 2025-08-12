@@ -9,6 +9,11 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { screens } from '../screens';
+import useLanguageStore from '../store/language';
+import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18next from '../localization/i18next';
+
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialBottomTabNavigator();
 
@@ -27,10 +32,35 @@ const TabIcon = ({ source, color }) => {
 };
 
 const Navigation = () => {
+  const { setLanguage } = useLanguageStore();
+  const { t } = useTranslation();
+
+    useEffect(() => {
+        try {
+            AsyncStorage.getItem('language')
+                .then(language => {
+                    if (language) {
+                        i18next.changeLanguage(language);
+                        setLanguage(language);
+                    } else {
+                        setLanguage('en');
+                    }
+                })
+                .catch(() => {
+                    setLanguage('en');
+                });
+        }
+        catch (error) {
+
+            console.log(error);
+        }
+    });
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="login" component={screens.Login} />
+        <Stack.Screen name="signUp" component={screens.SignUp} />
+        <Stack.Screen name="forgotPassword" component={screens.ForgotPassword} />
       </Stack.Navigator>
     </NavigationContainer>
   );

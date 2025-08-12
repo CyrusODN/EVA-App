@@ -21,7 +21,7 @@ const theme = {
   fonts: configureFonts({
     config: fontConfig,
     regular: {
-      fontFamily: 'GommeSans',
+      fontFamily: 'SFProDisplay-Regular',
     },
   }),
 };

@@ -1,12 +1,21 @@
-import React, {SetStateAction, useState} from 'react';
-import {View, StyleSheet, TouchableOpacity, TextInput, Image, ImageSourcePropType, Platform} from 'react-native';
+import React, { SetStateAction, useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  ImageSourcePropType,
+  Platform,
+} from 'react-native';
 //@ts-ignore
-import {Ionicons} from '@react-native-vector-icons/ionicons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import {colors} from '../constants/colors';
+import { colors } from '../constants/colors';
+import { Eye, EyeOff } from 'lucide-react-native';
 
 interface InputProps {
   placeholder?: string;
@@ -24,7 +33,7 @@ interface InputProps {
   multiline?: boolean;
   height?: number;
   disable?: boolean;
-  rightIconPress?: ()=>void;
+  rightIconPress?: () => void;
   mode?: 'text' | 'email' | 'numeric' | 'tel' | 'url';
   numberOfLines?: number;
   onFocus?: () => void;
@@ -50,8 +59,8 @@ const Input: React.FC<InputProps> = ({
   rightIconPress,
   mode = 'text',
   numberOfLines = 7,
-  onFocus = ()=>{},
-  onBlur = ()=>{},
+  onFocus = () => {},
+  onBlur = () => {},
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -74,11 +83,12 @@ const Input: React.FC<InputProps> = ({
         styles.inputContainer,
         {
           borderColor,
-          borderRadius:borderRadius,
+          borderRadius: borderRadius,
           backgroundColor,
           width,
         },
-      ]}>
+      ]}
+    >
       {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
 
       <TextInput
@@ -94,7 +104,7 @@ const Input: React.FC<InputProps> = ({
             borderColor: borderColor,
             paddingLeft: leftIcon ? 45 : 15, // Adjust padding based on icon presence
             paddingRight: isPassword || rightIcon ? 45 : 15,
-            height: multiline ?  hp(10) : height || hp(6),
+            height: multiline ? hp(10) : height || hp(6),
             backgroundColor: backgroundColor,
           },
         ]}
@@ -110,13 +120,14 @@ const Input: React.FC<InputProps> = ({
         <TouchableOpacity
           style={styles.rightIconContainer}
           onPress={isPassword ? toggleShowPassword : rightIconPress}
-          activeOpacity={isPassword ? 0.7 : 1}>
+          activeOpacity={isPassword ? 0.7 : 1}
+        >
           {isPassword ? (
-            <Ionicons
-              name={showPassword ? 'eye' : 'eye-off'}
-              size={20}
-              color={textColor}
-            />
+            showPassword ? (
+              <Eye size={20} color={colors.subText} />
+            ) : (
+              <EyeOff size={20} color={colors.subText} />
+            )
           ) : (
             rightIcon && (
               <Image
@@ -147,7 +158,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    // fontFamily: 'Rubik-Regular',
     backgroundColor: 'white',
     height: hp(6),
     paddingHorizontal: 15,
