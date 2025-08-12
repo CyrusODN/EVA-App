@@ -1716,6 +1716,13 @@
   dependencies:
     "@react-native-vector-icons/common" "^12.3.0"
 
+"@react-native-vector-icons/material-design-icons@^12.3.0":
+  version "12.3.0"
+  resolved "https://registry.yarnpkg.com/@react-native-vector-icons/material-design-icons/-/material-design-icons-12.3.0.tgz#2cad45c0a12afb0d05f7620eb8b81b4470f15f42"
+  integrity sha512-0fut9zjUJtGWwjGQ0lbirmPnjMkou9vkBY3d3ZsaHqXCBgV3fGeOWuRZ17eDpsGy/9BTRtBRI85RYdFGhdcB4Q==
+  dependencies:
+    "@react-native-vector-icons/common" "^12.3.0"
+
 "@react-native/assets-registry@0.80.2":
   version "0.80.2"
   resolved "https://registry.yarnpkg.com/@react-native/assets-registry/-/assets-registry-0.80.2.tgz#35281b067fbc45ca404662b9c295d7093e23c3ae"
@@ -6209,7 +6216,7 @@ prompts@^2.0.1, prompts@^2.4.2:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.8.1:
+prop-types@^15.5.7, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -6355,6 +6362,13 @@ react-native-bootsplash@^6.3.10:
     sharp "^0.32.6"
     ts-dedent "^2.2.0"
     xml-formatter "^3.6.5"
+
+react-native-check-box@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/react-native-check-box/-/react-native-check-box-2.1.7.tgz#f349d3505a13c15d19949ec4cec40c7adc4f3626"
+  integrity sha512-dPVOoz4jKs2je2HSHp7+XJXNyZFq8Kij7IHutigrQKzB550Dko6ZAQu/1mG1FzdUMFxxkZ2nX59KmbR0Co0T8Q==
+  dependencies:
+    prop-types "^15.5.7"
 
 react-native-gesture-handler@^2.28.0:
   version "2.28.0"

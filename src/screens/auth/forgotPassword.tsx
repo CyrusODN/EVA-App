@@ -45,6 +45,7 @@ const ForgotPassword = () => {
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps='handled'
           >
             {/* Logo */}
             <View style={styles.logoContainer}>

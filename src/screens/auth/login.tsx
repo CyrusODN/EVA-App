@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { Text, Checkbox } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   widthPercentageToDP as wp,
@@ -20,13 +20,15 @@ import { colors } from '../../constants/colors';
 import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
+//@ts-ignore
+import CheckBox from 'react-native-check-box';
 
 const Login = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = () => {
@@ -40,18 +42,16 @@ const Login = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* <LinearGradient
-        colors={['#F4F7FF', '#FFFFFF']}
-        style={styles.gradient}
-      > */}
+      <LinearGradient colors={['#F4F7FF', '#FFFFFF']} style={styles.gradient}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={images.logo} 
+              source={images.logo}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -90,16 +90,22 @@ const Login = () => {
               {/* Remember Me & Forgot Password */}
               <View style={styles.optionsRow}>
                 <View style={styles.checkboxContainer}>
-                  <Checkbox
-                    status={rememberMe ? 'checked' : 'unchecked'}
-                    onPress={() => setRememberMe(!rememberMe)}
-                    color={colors.primary}
+                  <CheckBox
+                    style={{
+                      marginRight: wp(1),
+                    }}
+                    onClick={() => {
+                      setRememberMe(!rememberMe);
+                    }}
+                    isChecked={rememberMe}
+                    checkedCheckBoxColor={colors.primary}
+                    uncheckedCheckBoxColor={colors.primary}
                   />
                   <Text variant="bodyMedium" style={styles.checkboxText}>
                     {t('login.rememberMe')}
                   </Text>
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => navigation.navigate('forgotPassword')}
                 >
                   <Text variant="bodyMedium" style={styles.forgotPasswordText}>
@@ -121,7 +127,9 @@ const Login = () => {
               {/* Divider */}
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
-                <Text variant="bodyMedium" style={styles.dividerText}>{t('login.or')}</Text>
+                <Text variant="bodyMedium" style={styles.dividerText}>
+                  {t('login.or')}
+                </Text>
                 <View style={styles.dividerLine} />
               </View>
 
@@ -131,10 +139,7 @@ const Login = () => {
                   style={styles.googleButton}
                   onPress={handleGoogleLogin}
                 >
-                  <Image
-                    source={images.googleIcon}
-                    style={styles.googleIcon}
-                  />
+                  <Image source={images.googleIcon} style={styles.googleIcon} />
                   <Text variant="titleMedium" style={styles.googleButtonText}>
                     {t('login.signInWithGoogle')}
                   </Text>
@@ -158,11 +163,14 @@ const Login = () => {
           {/* Footer */}
           <View style={styles.footer}>
             <Text variant="bodySmall" style={styles.footerText}>
-              {t('login.protectedBy')} <Text variant="bodySmall" style={styles.brandText}>Remedy AI</Text>
+              {t('login.protectedBy')}{' '}
+              <Text variant="bodySmall" style={styles.brandText}>
+                Remedy AI
+              </Text>
             </Text>
           </View>
         </ScrollView>
-      {/* </LinearGradient> */}
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -220,7 +228,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: hp(2.5),
-    alignSelf: 'center'
+    alignSelf: 'center',
   },
   optionsRow: {
     flexDirection: 'row',
