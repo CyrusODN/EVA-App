@@ -10,6 +10,7 @@ import {
 import { Text, List, Divider, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { colors } from '../../constants/colors';
 
 // Mock user data - replace with actual user data from your state management
 const mockUser = {
@@ -131,60 +132,6 @@ const Profile = () => {
       </ScrollView>
     </SafeAreaView>
   );
-};
-
-const colors = {
-  primary: '#68BFB3',
-  lightPrimary: '#68BFB3',
-  darkPrimary: '#707070',
-  secondaryContainer: '#65BED620',
-  tertiary: '#DAD5E0',
-  background: '#E5E7EB',
-  surface: '#ffffff',
-  onPrimary: '#E4F9FF',
-  lightOnPrimaryContainer: '#EADBFE',
-  primaryContainer: '#f0f0f0',
-  onSurfaceVariant: 'rgb(74, 69, 78)',
-  backdrop: '#0d0d0d',
-  onSecondary: '#4A90B9',
-  lightOnSecondary: '#5BA6B6',
-  error: 'rgb(186, 26, 26)',
-  errorContainer: 'rgb(255, 218, 214)',
-  outline: 'rgb(124, 117, 126)',
-  onSecondaryContainer: '#f5f5f5',
-  onTertiary: '#FFD700',
-  tertiaryContainer: '#B8E6D3',
-  subText: '#4B5563',
-  onTertiaryContainer: 'rgb(50, 16, 23)',
-  onError: 'rgb(255, 255, 255)',
-  onErrorContainer: 'rgb(65, 0, 2)',
-  onBackground: 'rgb(29, 27, 30)',
-  onSurface: 'rgb(29, 27, 30)',
-  surfaceVariant: 'rgb(233, 223, 235)',
-  outlineVariant: 'rgb(204, 196, 206)',
-  shadow: 'rgb(0, 0, 0)',
-  scrim: 'rgb(0, 0, 0)',
-  inverseSurface: 'rgb(50, 47, 51)',
-  inverseOnSurface: 'rgb(245, 239, 244)',
-  inversePrimary: 'rgb(220, 184, 255)',
-  elevation: {
-    level0: 'transparent',
-    level1: 'rgb(248, 242, 251)',
-    level2: 'rgb(244, 236, 248)',
-    level3: 'rgb(240, 231, 246)',
-    level4: 'rgb(239, 229, 245)',
-    level5: 'rgb(236, 226, 243)',
-  },
-  surfaceDisabled: 'rgba(29, 27, 30, 0.12)',
-  onSurfaceDisabled: 'rgba(29, 27, 30, 0.38)',
-  placeholderColor: '#A5A5A5',
-  bottomBar: '#9CA3AF',
-  inputBackground: '#FFFFFF',
-  buttonBackground: '#707070',
-  addBackground: '#EEEEEE',
-  borderColor: '#D9D9D9',
-  bluish: '#53A0CD',
-  lightGreen: '#44C2AD',
 };
 
 const styles = StyleSheet.create({
