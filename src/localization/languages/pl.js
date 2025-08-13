@@ -2007,5 +2007,26 @@ export const pl = {
     "resetInstructions": "Podaj swój adres email, a wyślemy Ci link do zresetowania hasła.",
     "resetLinkSent": "Link resetujący wysłany!",
     "checkEmail": "Sprawdź swoją skrzynkę email."
+  },
+  "session": {
+    "stopRecordingConfirm": "Zatrzymać nagrywanie i przetworzyć audio?",
+    "error": "Błąd",
+    "failedToPickAudio": "Nie udało się wybrać pliku audio",
+    "transcriptionComplete": "Transkrypcja Ukończona",
+    "transcriptionCompleteDescription": "Twoja sesja została przepisana i jest gotowa do przeglądu.",
+    "viewTranscription": "Zobacz Transkrypcję",
+    "processingAudio": "Przetwarzanie Audio",
+    "processingDescription": "Proszę czekać, przepisujemy Twoje nagranie...",
+    "recordingInProgress": "Nagrywanie w Toku",
+    "startRecording": "Rozpocznij Nagrywanie",
+    "uploadAudioFile": "Prześlij Plik Audio",
+    "selectAudioFile": "Wybierz plik audio z urządzenia",
+    "supportedFormats": "Obsługiwane: MP3, WAV, M4A",
+    "connectExternalDevice": "Podłącz Zewnętrzne Urządzenie",
+    "scanToConnect": "Zeskanuj, aby podłączyć inne urządzenie z mikrofonem"
+  },
+  "home": {
+    "meetingNamePlaceholder": "Wprowadź nazwę spotkania...",
+    "lectureNamePlaceholder": "Wprowadź nazwę wykładu..."
   }
     }

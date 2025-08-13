@@ -1998,5 +1998,26 @@ export const en = {
     "resetInstructions": "Enter your email address and we'll send you a link to reset your password.",
     "resetLinkSent": "Reset Link Sent!",
     "checkEmail": "Check your email for reset instructions."
-  }
+  },
+  "session": {
+    "stopRecordingConfirm": "Stop recording and process audio?",
+    "error": "Error",
+    "failedToPickAudio": "Failed to pick audio file",
+    "transcriptionComplete": "Transcription Complete",
+    "transcriptionCompleteDescription": "Your session has been transcribed and is ready for review.",
+    "viewTranscription": "View Transcription",
+    "processingAudio": "Processing Audio",
+    "processingDescription": "Please wait while we transcribe your recording...",
+    "recordingInProgress": "Recording in Progress",
+    "startRecording": "Start Recording",
+    "uploadAudioFile": "Upload Audio File",
+    "selectAudioFile": "Select an audio file from your device",
+    "supportedFormats": "Supported: MP3, WAV, M4A",
+    "connectExternalDevice": "Connect External Device",
+    "scanToConnect": "Scan to connect another device with microphone"
+  },
+  "home": {
+    "meetingNamePlaceholder": "Enter meeting name...",
+    "lectureNamePlaceholder": "Enter lecture name..."
+  },
 }

@@ -9,4 +9,7 @@ export const images = {
   brainPurpleIcon: require('../assets/images/brain-purple.png'),
   brainPrimary: require('../assets/images/brain-primary.png'),
   brainDark: require('../assets/images/brain-dark.png'),
+  homeIcon: require('../assets/images/home-icon.png'),
+  profileIcon: require('../assets/images/profile-icon.png'),
+  aiIcon: require('../assets/images/ai-icon.png'),
 };

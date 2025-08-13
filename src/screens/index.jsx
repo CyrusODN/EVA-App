@@ -1,9 +1,31 @@
 import Login from './auth/login';
 import SignUp from './auth/signup';
 import ForgotPassword from './auth/forgotPassword';
+import Home from './home';
+import AITools from './aiTools';
+import Profile from './profile';
+import Session from './home/session';
+import Discharge from './aiTools/discharge';
+import Consult from './aiTools/consult';
+import Pathfinder from './aiTools/pathFinder';
+import Pharmcoedia from './aiTools/pharmcoedia';
+import Prescreening from './aiTools/prescreening';
+import Report from './aiTools/report';
+import Research from './aiTools/research';
  
 export const screens = {
   Login,
   SignUp,
   ForgotPassword,
+  Home,
+  Profile,
+  AITools,
+  Session,
+  Discharge,
+  Consult,
+  Pathfinder,
+  Pharmcoedia,
+  Prescreening,
+  Report,
+  Research,
 };

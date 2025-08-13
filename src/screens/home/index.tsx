@@ -1,0 +1,1304 @@
+// import React, { useState } from 'react';
+// import {
+//   StyleSheet,
+//   View,
+//   ScrollView,
+//   TouchableOpacity,
+//   Image,
+//   FlatList,
+// } from 'react-native';
+// import { SafeAreaView } from 'react-native-safe-area-context';
+// import { Text } from 'react-native-paper';
+// import {
+//   widthPercentageToDP as wp,
+//   heightPercentageToDP as hp,
+// } from 'react-native-responsive-screen';
+// import { useTranslation } from 'react-i18next';
+// import LinearGradient from 'react-native-linear-gradient';
+// import {
+//   Search,
+//   Calendar,
+//   Users,
+//   BookOpen,
+//   Video,
+//   Settings,
+//   Clock,
+//   FileText,
+// } from 'lucide-react-native';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// import Input from '../../components/input';
+// import PrimaryButton from '../../components/primaryButton';
+// import { colors } from '../../constants/colors';
+// import i18next from '../../localization/i18next';
+// import useLanguageStore from '../../store/language';
+
+// const Home = () => {
+//   const { t, i18n } = useTranslation();
+//   const { setLanguage } = useLanguageStore();
+//   const [activeTab, setActiveTab] = useState('patients');
+//   const [showCalendar, setShowCalendar] = useState(false);
+//   const [searchText, setSearchText] = useState("");
+
+//   // Mock data for demonstration
+//   const mockEvents = [
+//     {
+//       id: '1',
+//       title: 'JS45',
+//       date: '2024-01-15',
+//       type: 'patient',
+//       duration: '00:15:30',
+//     },
+//     {
+//       id: '2',
+//       title: 'MD23',
+//       date: '2024-01-14',
+//       type: 'patient',
+//       duration: '00:22:45',
+//     },
+//     {
+//       id: '3',
+//       title: 'Team Meeting',
+//       date: '2024-01-13',
+//       type: 'meeting',
+//       duration: '01:30:00',
+//     },
+//     {
+//       id: '4',
+//       title: 'Medical Lecture',
+//       date: '2024-01-12',
+//       type: 'lecture',
+//       duration: '02:15:30',
+//     },
+//   ];
+
+//   const filteredEvents = mockEvents.filter(event => {
+//     if (activeTab === 'patients') return event.type === 'patient';
+//     if (activeTab === 'meetings') return event.type === 'meeting';
+//     if (activeTab === 'lectures') return event.type === 'lecture';
+//     return true;
+//   });
+
+//   const changeToLanguage = async () => {
+//     try {
+//       const currentLanguage = await AsyncStorage.getItem('language');
+//       console.log('Current Language====>', currentLanguage);
+//       const newLanguage = currentLanguage === 'en' ? 'pl' : 'en';
+
+//       // Update i18next first
+//       i18next.changeLanguage(newLanguage);
+
+//       // Then update store (which will also update AsyncStorage)
+//       setLanguage(newLanguage);
+//     } catch (error) {
+//       console.log('Error changing language:', error);
+//       // Fallback to English
+//       i18next.changeLanguage('en');
+//       setLanguage('en');
+//     }
+//   };
+
+//   const getInitial = email => {
+//     return email ? email.charAt(0).toUpperCase() : 'U';
+//   };
+
+//   const formatEventDate = dateString => {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString('en-US', {
+//       month: 'short',
+//       day: 'numeric',
+//     });
+//   };
+
+//   const getTabIcon = (tabName, focused) => {
+//     switch (tabName) {
+//       case 'patients':
+//         return <Users size={16} color={focused ? 'white' : 'black'} />;
+//       case 'meetings':
+//         return <BookOpen size={16} color={focused ? 'white' : 'black'} />;
+//       case 'lectures':
+//         return <Video size={16} color={focused ? 'white' : 'black'} />;
+//       default:
+//         return null;
+//     }
+//   };
+
+//   const getNewButtonText = () => {
+//     switch (activeTab) {
+//       case 'patients':
+//         return t('buttons.newVisit');
+//       case 'meetings':
+//         return t('buttons.newMeeting');
+//       case 'lectures':
+//         return t('buttons.newLecture');
+//       default:
+//         return t('buttons.newVisit');
+//     }
+//   };
+
+//   const renderEventItem = ({ item }) => (
+//     <TouchableOpacity style={styles.eventItem}>
+//       <View style={styles.eventHeader}>
+//         <Text variant="titleMedium" style={styles.eventTitle}>
+//           {item.title}
+//         </Text>
+//         <Text variant="bodySmall" style={styles.eventDate}>
+//           {formatEventDate(item.date)}
+//         </Text>
+//       </View>
+//       {item.duration && (
+//         <View style={styles.durationContainer}>
+//           <Clock size={12} color={colors.subText} />
+//           <Text variant="bodySmall" style={styles.durationText}>
+//             {item.duration}
+//           </Text>
+//         </View>
+//       )}
+//     </TouchableOpacity>
+//   );
+
+//   const renderCalendarLegend = () => (
+//     <View style={styles.calendarLegend}>
+//       <View style={styles.legendItem}>
+//         <View style={[styles.legendDot, { backgroundColor: '#53A0CD' }]} />
+//         <Text variant="bodySmall" style={styles.legendText}>
+//           {t('calendar.patientVisits')}
+//         </Text>
+//       </View>
+//       <View style={styles.legendItem}>
+//         <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
+//         <Text variant="bodySmall" style={styles.legendText}>
+//           {t('calendar.meetings')}
+//         </Text>
+//       </View>
+//       <View style={styles.legendItem}>
+//         <View style={[styles.legendDot, { backgroundColor: '#8b5cf6' }]} />
+//         <Text variant="bodySmall" style={styles.legendText}>
+//           {t('calendar.lectures')}
+//         </Text>
+//       </View>
+//     </View>
+//   );
+
+//   return (
+//     <SafeAreaView style={styles.container}>
+//       <ScrollView
+//         style={styles.scrollContainer}
+//         showsVerticalScrollIndicator={false}
+//       >
+//         {/* Header Section */}
+//         <View style={styles.header}>
+//           <View style={styles.profileSection}>
+//             <TouchableOpacity style={styles.profileImageContainer}>
+//               <LinearGradient
+//                 colors={['#53A0CD', '#44C2AD']}
+//                 style={styles.profileGradient}
+//               >
+//                 <Text variant="titleMedium" style={styles.profileInitial}>
+//                   {getInitial('user@example.com')}
+//                 </Text>
+//               </LinearGradient>
+//             </TouchableOpacity>
+
+//             <View style={styles.profileInfo}>
+//               <Text variant="titleMedium" style={styles.emailText}>
+//                 user@example.com
+//               </Text>
+//               <TouchableOpacity
+//                 onPress={() => {
+//                   changeToLanguage();
+//                 }}
+//                 style={styles.languageButton}
+//               >
+//                 <Text variant="bodySmall" style={styles.languageText}>
+//                   {i18next.language === 'en'
+//                     ? t('common.polski')
+//                     : t('common.english')}
+//                 </Text>
+//               </TouchableOpacity>
+//             </View>
+//           </View>
+
+//           <TouchableOpacity
+//             style={styles.calendarButton}
+//             onPress={() => setShowCalendar(!showCalendar)}
+//           >
+//             <Calendar size={20} color={colors.primary} />
+//           </TouchableOpacity>
+//         </View>
+
+//         {/* Search Section */}
+//         <View style={styles.searchSection}>
+//           <Input
+//             placeholder={t('common.search')}
+//             leftIcon={<Search size={16} color={colors.subText} />}
+//             width={wp(90)}
+//             value={searchText}
+//             setValue={setSearchText}
+//           />
+//         </View>
+
+//         {/* Calendar or Tabs Section */}
+//         {showCalendar ? (
+//           <View style={styles.calendarContainer}>
+//             <Text variant="headlineMedium" style={styles.calendarTitle}>
+//               {t('common.calendar')}
+//             </Text>
+//             {/* Calendar placeholder - you can integrate a calendar library here */}
+//             <View style={styles.calendarPlaceholder}>
+//               <Text variant="bodyMedium" style={styles.calendarPlaceholderText}>
+//                 Calendar View
+//               </Text>
+//             </View>
+//             {renderCalendarLegend()}
+//           </View>
+//         ) : (
+//           <>
+//             {/* Tabs Section */}
+//             <View style={styles.tabsContainer}>
+//               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+//                 {['patients', 'meetings', 'lectures'].map(tab => (
+//                   <TouchableOpacity
+//                     key={tab}
+//                     style={[
+//                       styles.tabButton,
+//                       activeTab === tab && styles.activeTabButton,
+//                     ]}
+//                     onPress={() => setActiveTab(tab)}
+//                   >
+//                     <LinearGradient
+//                       colors={
+//                         activeTab === tab
+//                           ? ['#53A0CD', '#44C2AD']
+//                           : ['transparent', 'transparent']
+//                       }
+//                       style={styles.tabGradient}
+//                     >
+//                       <View
+//                         style={{
+//                           paddingHorizontal: wp(3),
+//                           paddingVertical: hp(1),
+//                           flexDirection: 'row',
+//                           alignItems: 'center',
+//                         }}
+//                       >
+//                         {getTabIcon(tab, activeTab === tab)}
+//                         <Text
+//                           variant="bodyMedium"
+//                           style={[
+//                             styles.tabText,
+//                             activeTab === tab && styles.activeTabText,
+//                           ]}
+//                         >
+//                           {t(`tabs.${tab}`)}
+//                         </Text>
+//                       </View>
+//                     </LinearGradient>
+//                   </TouchableOpacity>
+//                 ))}
+//               </ScrollView>
+//             </View>
+
+//             {/* New Button Section */}
+//             <View style={styles.newButtonSection}>
+//               <PrimaryButton
+//                 text={getNewButtonText()}
+//                 onPress={() => console.log('New button pressed')}
+//                 icon={true}
+//                 iconSource={null} // You can add appropriate icons here
+//                 width={wp(90)}
+//               />
+//             </View>
+
+//             {/* Content Section */}
+//             <View style={styles.contentSection}>
+//               {filteredEvents.length > 0 ? (
+//                 <FlatList
+//                   data={filteredEvents}
+//                   renderItem={renderEventItem}
+//                   keyExtractor={item => item.id}
+//                   scrollEnabled={false}
+//                   showsVerticalScrollIndicator={false}
+//                   contentContainerStyle={styles.eventsList}
+//                 />
+//               ) : (
+//                 <View style={styles.emptyContainer}>
+//                   <FileText size={48} color={colors.surfaceDisabled} />
+//                   <Text variant="bodyMedium" style={styles.emptyText}>
+//                     {t('messages.noRecords')}
+//                   </Text>
+//                 </View>
+//               )}
+//             </View>
+//           </>
+//         )}
+//       </ScrollView>
+//     </SafeAreaView>
+//   );
+// };
+
+// export default Home;
+
+// const styles = StyleSheet.create({
+//   container: {
+//     backgroundColor: 'white',
+//     flex: 1,
+//   },
+//   scrollContainer: {
+//     flex: 1,
+//   },
+//   header: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     paddingHorizontal: wp(5),
+//     paddingVertical: hp(2),
+//     borderBottomWidth: 1,
+//     borderBottomColor: colors.outline,
+//   },
+//   profileSection: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     flex: 1,
+//   },
+//   profileImageContainer: {
+//     width: 40,
+//     height: 40,
+//     borderRadius: 20,
+//     overflow: 'hidden',
+//   },
+//   profileGradient: {
+//     width: '100%',
+//     height: '100%',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//   },
+//   profileInitial: {
+//     color: 'white',
+//     fontSize: 16,
+//     fontWeight: 'bold',
+//   },
+//   profileInfo: {
+//     marginLeft: wp(3),
+//     flex: 1,
+//   },
+//   emailText: {
+//     color: colors.onSurface,
+//     fontSize: 14,
+//   },
+//   languageButton: {
+//     marginTop: 2,
+//   },
+//   languageText: {
+//     color: colors.primary,
+//     fontSize: 12,
+//   },
+//   calendarButton: {
+//     padding: 8,
+//     borderRadius: 8,
+//     backgroundColor: colors.surfaceVariant,
+//   },
+//   searchSection: {
+//     paddingHorizontal: wp(5),
+//     paddingVertical: hp(2),
+//     alignItems: 'center',
+//   },
+//   calendarContainer: {
+//     paddingHorizontal: wp(5),
+//     paddingVertical: hp(2),
+//   },
+//   calendarTitle: {
+//     color: colors.onSurface,
+//     marginBottom: hp(2),
+//   },
+//   calendarPlaceholder: {
+//     height: hp(30),
+//     backgroundColor: colors.surfaceVariant,
+//     borderRadius: 12,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     marginBottom: hp(2),
+//   },
+//   calendarPlaceholderText: {
+//     color: colors.onSurfaceVariant,
+//   },
+//   calendarLegend: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-around',
+//     paddingHorizontal: wp(2),
+//   },
+//   legendItem: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//   },
+//   legendDot: {
+//     width: 8,
+//     height: 8,
+//     borderRadius: 4,
+//     marginRight: 6,
+//   },
+//   legendText: {
+//     color: colors.onSurfaceVariant,
+//     fontSize: 12,
+//   },
+//   tabsContainer: {
+//     paddingHorizontal: wp(5),
+//     paddingVertical: hp(1),
+//     marginBottom: hp(1),
+//   },
+//   tabButton: {
+//     marginRight: wp(3),
+//     borderRadius: 8,
+//     // overflow: 'hidden',
+//     minWidth: wp(27),
+//     backgroundColor: colors.background,
+//   },
+//   activeTabButton: {},
+//   tabGradient: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     // paddingHorizontal: 12,
+//     // paddingVertical: 8,
+//     borderRadius: 8,
+//     // minHeight: 36,
+//   },
+//   tabText: {
+//     marginLeft: 6,
+//     color: colors.onSurfaceVariant,
+//     fontSize: 12, // Reduced font size
+//     fontWeight: '500',
+//   },
+//   activeTabText: {
+//     color: 'white',
+//     fontWeight: '600',
+//   },
+//   newButtonSection: {
+//     paddingHorizontal: wp(5),
+//     paddingVertical: hp(2),
+//     alignItems: 'center',
+//   },
+//   contentSection: {
+//     paddingHorizontal: wp(5),
+//     paddingBottom: hp(5),
+//   },
+//   eventsList: {
+//     paddingVertical: hp(1),
+//   },
+//   eventItem: {
+//     backgroundColor: 'white',
+//     borderRadius: 12,
+//     borderWidth: 1,
+//     borderColor: colors.outline,
+//     padding: 12,
+//     marginBottom: 12,
+//   },
+//   eventHeader: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     marginBottom: 8,
+//   },
+//   eventTitle: {
+//     color: colors.onSurface,
+//     fontWeight: '500',
+//   },
+//   eventDate: {
+//     color: colors.onSurfaceVariant,
+//     fontSize: 12,
+//   },
+//   durationContainer: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//   },
+//   durationText: {
+//     marginLeft: 6,
+//     color: colors.onSurfaceVariant,
+//     fontSize: 12,
+//   },
+//   emptyContainer: {
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     paddingVertical: hp(10),
+//   },
+//   emptyText: {
+//     color: colors.onSurfaceVariant,
+//     marginTop: hp(2),
+//     textAlign: 'center',
+//   },
+// });
+
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text } from 'react-native-paper';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
+import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import {
+  Search,
+  Calendar,
+  Users,
+  BookOpen,
+  Video,
+  Clock,
+  FileText,
+  Mic,
+  Upload,
+  CheckCircle,
+} from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import Input from '../../components/input';
+import PrimaryButton from '../../components/primaryButton';
+import VisitDialogModal from '../../components/visitDialogueModal';
+import { colors } from '../../constants/colors';
+import i18next from '../../localization/i18next';
+import useLanguageStore from '../../store/language';
+
+const Home = () => {
+  const { t, i18n } = useTranslation();
+  const { setLanguage } = useLanguageStore();
+  const navigation = useNavigation();
+  const [activeTab, setActiveTab] = useState('patients');
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showVisitDialog, setShowVisitDialog] = useState(false);
+  const [visitDialogType, setVisitDialogType] = useState('patient');
+
+  // Enhanced mock data with different states
+  const mockEvents = [
+    {
+      id: '1',
+      title: 'JS45',
+      date: '2024-01-15',
+      type: 'patient',
+      duration: '00:15:30',
+      hasRecording: true,
+      hasTranscription: true,
+      status: 'completed',
+    },
+    {
+      id: '2',
+      title: 'MD23',
+      date: '2024-01-14',
+      type: 'patient',
+      duration: '00:22:45',
+      hasRecording: true,
+      hasTranscription: false,
+      status: 'recorded',
+    },
+    {
+      id: '3',
+      title: 'Team Meeting',
+      date: '2024-01-13',
+      type: 'meeting',
+      duration: null,
+      hasRecording: false,
+      hasTranscription: false,
+      status: 'new',
+    },
+    {
+      id: '4',
+      title: 'Medical Lecture',
+      date: '2024-01-12',
+      type: 'lecture',
+      duration: '02:15:30',
+      hasRecording: true,
+      hasTranscription: true,
+      status: 'completed',
+    },
+    {
+      id: '5',
+      title: 'KL89',
+      date: '2024-01-11',
+      type: 'patient',
+      duration: null,
+      hasRecording: false,
+      hasTranscription: false,
+      status: 'new',
+    },
+  ];
+
+  const filteredEvents = mockEvents.filter(event => {
+    if (activeTab === 'patients') return event.type === 'patient';
+    if (activeTab === 'meetings') return event.type === 'meeting';
+    if (activeTab === 'lectures') return event.type === 'lecture';
+    return true;
+  });
+
+  const changeToLanguage = async () => {
+    try {
+      const currentLanguage = await AsyncStorage.getItem('language');
+      const newLanguage = currentLanguage === 'en' ? 'pl' : 'en';
+      i18next.changeLanguage(newLanguage);
+      setLanguage(newLanguage);
+    } catch (error) {
+      console.log('Error changing language:', error);
+      i18next.changeLanguage('en');
+      setLanguage('en');
+    }
+  };
+
+  const getInitial = email => {
+    return email ? email.charAt(0).toUpperCase() : 'U';
+  };
+
+  const formatEventDate = dateString => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getTabIcon = (tabName, focused) => {
+    switch (tabName) {
+      case 'patients':
+        return <Users size={16} color={focused ? 'white' : 'black'} />;
+      case 'meetings':
+        return <BookOpen size={16} color={focused ? 'white' : 'black'} />;
+      case 'lectures':
+        return <Video size={16} color={focused ? 'white' : 'black'} />;
+      default:
+        return null;
+    }
+  };
+
+  const getNewButtonText = () => {
+    switch (activeTab) {
+      case 'patients':
+        return t('buttons.newVisit');
+      case 'meetings':
+        return t('buttons.newMeeting');
+      case 'lectures':
+        return t('buttons.newLecture');
+      default:
+        return t('buttons.newVisit');
+    }
+  };
+
+  const getStatusIcon = event => {
+    switch (event.status) {
+      case 'completed':
+        return <CheckCircle size={16} color="#10b981" />;
+      case 'recorded':
+        return <Mic size={16} color="#f59e0b" />;
+      case 'new':
+        return <Upload size={16} color="#6b7280" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = status => {
+    switch (status) {
+      case 'completed':
+        return '#10b981';
+      case 'recorded':
+        return '#f59e0b';
+      case 'new':
+        return '#6b7280';
+      default:
+        return colors.onSurfaceVariant;
+    }
+  };
+
+  const handleNewButtonPress = () => {
+    setVisitDialogType(activeTab);
+    setShowVisitDialog(true);
+  };
+
+  const handleCreateVisit = visitName => {
+    const newEvent = {
+      id: Date.now().toString(),
+      title: visitName,
+      date: new Date().toISOString(),
+      type: visitDialogType,
+      duration: null,
+      hasRecording: false,
+      hasTranscription: false,
+      status: 'new',
+    };
+
+    // Navigate to session screen
+    navigation.navigate('session', {
+      sessionData: newEvent,
+      sessionType: visitDialogType,
+    });
+  };
+
+  const handleEventPress = event => {
+    navigation.navigate('session', {
+      sessionData: event,
+      sessionType: event.type,
+    });
+  };
+
+  const onDateChange = (event, date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  const renderEventItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.eventItem,
+        { borderLeftColor: getStatusColor(item.status), borderLeftWidth: 4 },
+      ]}
+      onPress={() => handleEventPress(item)}
+    >
+      <View style={styles.eventHeader}>
+        <View style={styles.eventTitleContainer}>
+          <Text variant="titleMedium" style={styles.eventTitle}>
+            {item.title}
+          </Text>
+          {getStatusIcon(item)}
+        </View>
+        <Text variant="bodySmall" style={styles.eventDate}>
+          {formatEventDate(item.date)}
+        </Text>
+      </View>
+
+      <View style={styles.eventDetails}>
+        {item.duration && (
+          <View style={styles.durationContainer}>
+            <Clock size={12} color={colors.subText} />
+            <Text variant="bodySmall" style={styles.durationText}>
+              {item.duration}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.statusContainer}>
+          <Text
+            variant="bodySmall"
+            style={[styles.statusText, { color: getStatusColor(item.status) }]}
+          >
+            {item.status === 'completed' && 'Transcribed'}
+            {item.status === 'recorded' && 'Recorded'}
+            {item.status === 'new' && 'New Session'}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderCalendarLegend = () => (
+    <View style={styles.calendarLegend}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: '#53A0CD' }]} />
+        <Text variant="bodySmall" style={styles.legendText}>
+          {t('calendar.patientVisits')}
+        </Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
+        <Text variant="bodySmall" style={styles.legendText}>
+          {t('calendar.meetings')}
+        </Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: '#8b5cf6' }]} />
+        <Text variant="bodySmall" style={styles.legendText}>
+          {t('calendar.lectures')}
+        </Text>
+      </View>
+    </View>
+  );
+
+  const renderCalendarView = () => (
+    <View style={styles.calendarContainer}>
+      <Text variant="headlineMedium" style={styles.calendarTitle}>
+        {t('common.calendar')}
+      </Text>
+
+      {/* Date Picker Button */}
+      <TouchableOpacity
+        style={styles.datePickerButton}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <LinearGradient
+          colors={['#53A0CD', '#44C2AD']}
+          style={styles.datePickerGradient}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: wp(4),
+              paddingVertical: hp(1.5),
+            }}
+          >
+            <Calendar size={20} color="white" />
+            <Text variant="titleMedium" style={styles.datePickerText}>
+              {selectedDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </Text>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* Calendar Events for Selected Date */}
+      <View style={styles.calendarEvents}>
+        <Text variant="titleMedium" style={styles.calendarEventsTitle}>
+          Events on {selectedDate.toLocaleDateString()}
+        </Text>
+
+        {/* Mock events for demonstration */}
+        <View style={styles.calendarEventsList}>
+          {filteredEvents.slice(0, 3).map((event, index) => (
+            <TouchableOpacity
+              key={event.id}
+              style={styles.calendarEventItem}
+              onPress={() => handleEventPress(event)}
+            >
+              <View style={styles.calendarEventTime}>
+                <Text variant="bodySmall" style={styles.calendarEventTimeText}>
+                  {`${9 + index}:00`}
+                </Text>
+              </View>
+              <View style={styles.calendarEventDetails}>
+                <Text variant="bodyMedium" style={styles.calendarEventTitle}>
+                  {event.title}
+                </Text>
+                <Text variant="bodySmall" style={styles.calendarEventType}>
+                  {event.type}
+                </Text>
+              </View>
+              {getStatusIcon(event)}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {renderCalendarLegend()}
+
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onDateChange}
+        />
+      )}
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header Section */}
+        <View style={styles.header}>
+          <View style={styles.profileSection}>
+            <TouchableOpacity style={styles.profileImageContainer}>
+              <LinearGradient
+                colors={['#53A0CD', '#44C2AD']}
+                style={styles.profileGradient}
+              >
+                <Text variant="titleMedium" style={styles.profileInitial}>
+                  {getInitial('user@example.com')}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.profileInfo}>
+              <Text variant="titleMedium" style={styles.emailText}>
+                user@example.com
+              </Text>
+              <TouchableOpacity
+                onPress={changeToLanguage}
+                style={styles.languageButton}
+              >
+                <Text variant="bodySmall" style={styles.languageText}>
+                  {i18next.language === 'en'
+                    ? t('common.polski')
+                    : t('common.english')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.calendarButton}
+            onPress={() => setShowCalendar(!showCalendar)}
+          >
+            <Calendar size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Section */}
+        <View style={styles.searchSection}>
+          <Input
+            placeholder={t('common.search')}
+            leftIcon={<Search size={16} color={colors.subText} />}
+            width={wp(90)}
+            value={searchText}
+            setValue={setSearchText}
+          />
+        </View>
+
+        {/* Calendar or Tabs Section */}
+        {showCalendar ? (
+          renderCalendarView()
+        ) : (
+          <>
+            {/* Tabs Section */}
+            <View style={styles.tabsContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {['patients', 'meetings', 'lectures'].map(tab => (
+                  <TouchableOpacity
+                    key={tab}
+                    style={[
+                      styles.tabButton,
+                      activeTab === tab && styles.activeTabButton,
+                    ]}
+                    onPress={() => setActiveTab(tab)}
+                  >
+                    <LinearGradient
+                      colors={
+                        activeTab === tab
+                          ? ['#53A0CD', '#44C2AD']
+                          : ['transparent', 'transparent']
+                      }
+                      style={styles.tabGradient}
+                    >
+                      <View style={styles.tabContent}>
+                        {getTabIcon(tab, activeTab === tab)}
+                        <Text
+                          variant="bodyMedium"
+                          style={[
+                            styles.tabText,
+                            activeTab === tab && styles.activeTabText,
+                          ]}
+                        >
+                          {t(`tabs.${tab}`)}
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* New Button Section */}
+            <View style={styles.newButtonSection}>
+              <PrimaryButton
+                text={getNewButtonText()}
+                onPress={handleNewButtonPress}
+                icon={true}
+                iconSource={null}
+                width={wp(90)}
+              />
+            </View>
+
+            {/* Content Section */}
+            <View style={styles.contentSection}>
+              {filteredEvents.length > 0 ? (
+                <FlatList
+                  data={filteredEvents}
+                  renderItem={renderEventItem}
+                  keyExtractor={item => item.id}
+                  scrollEnabled={false}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.eventsList}
+                />
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <FileText size={48} color={colors.surfaceDisabled} />
+                  <Text variant="bodyMedium" style={styles.emptyText}>
+                    {t('messages.noRecords')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
+      </ScrollView>
+
+      {/* Visit Dialog Modal */}
+      <VisitDialogModal
+        visible={showVisitDialog}
+        onClose={() => setShowVisitDialog(false)}
+        visitType={visitDialogType}
+        onCreateVisit={handleCreateVisit}
+      />
+    </SafeAreaView>
+  );
+};
+
+export default Home;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'white',
+    flex: 1,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outline,
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileImageContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  profileGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInitial: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  profileInfo: {
+    marginLeft: wp(3),
+    flex: 1,
+  },
+  emailText: {
+    color: colors.onSurface,
+    fontSize: 14,
+  },
+  languageButton: {
+    marginTop: 2,
+  },
+  languageText: {
+    color: colors.primary,
+    fontSize: 12,
+  },
+  calendarButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceVariant,
+  },
+  searchSection: {
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
+  },
+  calendarTitle: {
+    color: colors.onSurface,
+    marginBottom: hp(2),
+    fontWeight: '600',
+  },
+  datePickerButton: {
+    marginBottom: hp(3),
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  datePickerGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // paddingHorizontal: wp(4),
+    // paddingVertical: hp(1.5),
+  },
+  datePickerText: {
+    color: 'white',
+    marginLeft: wp(2),
+    fontWeight: '500',
+  },
+  calendarEvents: {
+    marginBottom: hp(3),
+  },
+  calendarEventsTitle: {
+    color: colors.onSurface,
+    marginBottom: hp(1.5),
+    fontWeight: '600',
+  },
+  calendarEventsList: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: wp(3),
+  },
+  calendarEventItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outline,
+  },
+  calendarEventTime: {
+    width: wp(15),
+    alignItems: 'center',
+  },
+  calendarEventTimeText: {
+    color: colors.onSurfaceVariant,
+    fontWeight: '500',
+  },
+  calendarEventDetails: {
+    flex: 1,
+    marginLeft: wp(3),
+  },
+  calendarEventTitle: {
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  calendarEventType: {
+    color: colors.onSurfaceVariant,
+    textTransform: 'capitalize',
+  },
+  calendarLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: wp(2),
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  legendText: {
+    color: colors.onSurfaceVariant,
+    fontSize: 12,
+  },
+  tabsContainer: {
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(1),
+    marginBottom: hp(1),
+  },
+  tabButton: {
+    marginRight: wp(3),
+    borderRadius: 8,
+    minWidth: wp(27),
+    backgroundColor: colors.background,
+  },
+  activeTabButton: {},
+  tabGradient: {
+    borderRadius: 8,
+  },
+  tabContent: {
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tabText: {
+    marginLeft: 6,
+    color: colors.onSurfaceVariant,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  newButtonSection: {
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
+    alignItems: 'center',
+  },
+  contentSection: {
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(5),
+  },
+  eventsList: {
+    paddingVertical: hp(1),
+  },
+  eventItem: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    padding: 12,
+    marginBottom: 12,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  eventTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  eventTitle: {
+    color: colors.onSurface,
+    fontWeight: '500',
+    marginRight: wp(2),
+  },
+  eventDate: {
+    color: colors.onSurfaceVariant,
+    fontSize: 12,
+  },
+  eventDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  durationText: {
+    marginLeft: 6,
+    color: colors.onSurfaceVariant,
+    fontSize: 12,
+  },
+  statusContainer: {
+    alignItems: 'flex-end',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(10),
+  },
+  emptyText: {
+    color: colors.onSurfaceVariant,
+    marginTop: hp(2),
+    textAlign: 'center',
+  },
+});

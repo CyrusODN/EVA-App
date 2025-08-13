@@ -34,6 +34,7 @@ const Login = () => {
   const handleLogin = () => {
     // setLoading(true);
     // setTimeout(() => setLoading(false), 2000);
+    navigation.navigate('tabs');
   };
 
   const handleGoogleLogin = () => {
