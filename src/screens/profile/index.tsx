@@ -93,16 +93,6 @@ const Profile = () => {
         {/* Settings Section */}
         <Section title={t('menu.settings')}>
           <PressableItem
-            title={t('settings.profile.picture')}
-            icon="account-circle"
-            onPress={() => handleNavigate('profileSettings')}
-          />
-          <PressableItem
-            title={t('settings.password.title')}
-            icon="lock"
-            onPress={() => handleNavigate('changePassword')}
-          />
-          <PressableItem
             title={t('common.settings')}
             icon="cog"
             onPress={() => handleNavigate('generalSettings')}
@@ -120,20 +110,6 @@ const Profile = () => {
             title={t('menu.transactions')}
             icon="receipt"
             onPress={() => handleNavigate('transactions')}
-          />
-        </Section>
-
-        {/* Support Section */}
-        <Section title={t('settings.support.title')}>
-          <PressableItem
-            title={t('settings.support.title')}
-            icon="help-circle"
-            onPress={() => handleNavigate('support')}
-          />
-          <PressableItem
-            title={t('common.export')}
-            icon="download"
-            onPress={() => handleNavigate('exportData')}
           />
         </Section>
 
