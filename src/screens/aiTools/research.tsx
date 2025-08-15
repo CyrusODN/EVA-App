@@ -167,6 +167,7 @@ const Research = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -214,6 +215,7 @@ const Research = () => {
           </Text>
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -221,7 +223,7 @@ const Research = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',

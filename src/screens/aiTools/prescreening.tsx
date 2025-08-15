@@ -36,7 +36,7 @@ import { colors } from '../../constants/colors';
 const Prescreening = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  
+
   // State management
   const [selectedModel, setSelectedModel] = useState('gemini');
   const [medicalHistory, setMedicalHistory] = useState('');
@@ -77,7 +77,7 @@ const Prescreening = () => {
     navigation.goBack();
   };
 
-  const handleModelSelect = (model) => {
+  const handleModelSelect = model => {
     setSelectedModel(model);
   };
 
@@ -91,7 +91,7 @@ const Prescreening = () => {
     setPdfFiles(prev => [...prev, mockFile]);
   };
 
-  const handleRemovePDF = (fileName) => {
+  const handleRemovePDF = fileName => {
     setPdfFiles(prev => prev.filter(file => file.name !== fileName));
   };
 
@@ -138,10 +138,7 @@ Social History:
 
   const handleStartAnalysis = () => {
     if (!medicalHistory.trim() && pdfFiles.length === 0) {
-      Alert.alert(
-        t('common.error'),
-        t('preScreening.messages.missingData')
-      );
+      Alert.alert(t('common.error'), t('preScreening.messages.missingData'));
       return;
     }
 
@@ -163,7 +160,7 @@ Social History:
     setShowResults(false);
   };
 
-  const getQualificationColor = (qualification) => {
+  const getQualificationColor = qualification => {
     switch (qualification) {
       case 'probablyQualifies':
         return colors.lightGreen;
@@ -176,7 +173,7 @@ Social History:
     }
   };
 
-  const getQualificationIcon = (qualification) => {
+  const getQualificationIcon = qualification => {
     switch (qualification) {
       case 'probablyQualifies':
         return CheckCircle;
@@ -195,7 +192,11 @@ Social History:
         <FileText size={16} color={colors.error} />
       </View>
       <View style={styles.pdfFileInfo}>
-        <Text variant="labelMedium" style={styles.pdfFileName} numberOfLines={1}>
+        <Text
+          variant="labelMedium"
+          style={styles.pdfFileName}
+          numberOfLines={1}
+        >
           {file.name}
         </Text>
         <Text variant="bodySmall" style={styles.pdfFileSize}>
@@ -215,354 +216,461 @@ Social History:
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text variant="headlineMedium" style={styles.headerTitle}>
-            {t('preScreening.title')}
-          </Text>
-          <Text variant="bodySmall" style={styles.headerSubtitle}>
-            {t('preScreening.subtitle')}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.toggleButton, specialistAnalysis && styles.toggleButtonActive]}
-            onPress={() => setSpecialistAnalysis(!specialistAnalysis)}
-          >
-            <Sparkles size={16} color={specialistAnalysis ? 'white' : colors.lightGreen} />
-            <Text variant="labelSmall" style={[
-              styles.toggleButtonText,
-              specialistAnalysis && styles.toggleButtonTextActive
-            ]}>
-              {t('preScreening.specialistAnalysis.label')}
-            </Text>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <ArrowLeft size={24} color={colors.onSurface} />
           </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {!showResults ? (
-          // Input Screen
-          <View style={styles.inputContainer}>
-            {/* AI Model Selection */}
-            <View style={styles.section}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                {t('preScreening.aiModel.label')}
-              </Text>
-              <View style={styles.modelSelector}>
-                <TouchableOpacity
-                  style={[
-                    styles.modelButton,
-                    selectedModel === 'gemini' && styles.selectedModelButton
-                  ]}
-                  onPress={() => handleModelSelect('gemini')}
-                >
-                  <Brain size={20} color={selectedModel === 'gemini' ? 'white' : colors.lightGreen} />
-                  <Text variant="labelMedium" style={[
-                    styles.modelButtonText,
-                    selectedModel === 'gemini' && styles.selectedModelButtonText
-                  ]}>
-                    {t('preScreening.aiModel.gemini')}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.modelButton,
-                    selectedModel === 'claude' && styles.selectedModelButton
-                  ]}
-                  onPress={() => handleModelSelect('claude')}
-                >
-                  <Brain size={20} color={selectedModel === 'claude' ? 'white' : colors.lightGreen} />
-                  <Text variant="labelMedium" style={[
-                    styles.modelButtonText,
-                    selectedModel === 'claude' && styles.selectedModelButtonText
-                  ]}>
-                    {t('preScreening.aiModel.claude')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Medical History Input */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  {t('preScreening.labels.medicalHistory')}
-                </Text>
-                <TouchableOpacity
-                  style={styles.demoButton}
-                  onPress={handleLoadDemoData}
-                >
-                  <Text variant="labelSmall" style={styles.demoButtonText}>
-                    {t('preScreening.buttons.demoMode')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              {pdfFiles.length > 0 && (
-                <View style={styles.pdfFilesContainer}>
-                  <Text variant="labelMedium" style={styles.pdfFilesTitle}>
-                    {t('preScreening.labels.pdfFilesLoaded', { fileCount: pdfFiles.length })}
-                  </Text>
-                  {pdfFiles.map((file, index) => renderPDFFile(file, index))}
-                </View>
-              )}
-
-              <TextInput
-                style={styles.medicalHistoryInput}
-                placeholder={t('preScreening.placeholders.medicalHistory')}
-                value={medicalHistory}
-                onChangeText={setMedicalHistory}
-                multiline
-                numberOfLines={8}
-                placeholderTextColor={colors.placeholderColor}
+          <View style={styles.headerContent}>
+            <Text variant="headlineMedium" style={styles.headerTitle}>
+              {t('preScreening.title')}
+            </Text>
+            <Text variant="bodySmall" style={styles.headerSubtitle}>
+              {t('preScreening.subtitle')}
+            </Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                specialistAnalysis && styles.toggleButtonActive,
+              ]}
+              onPress={() => setSpecialistAnalysis(!specialistAnalysis)}
+            >
+              <Sparkles
+                size={16}
+                color={specialistAnalysis ? 'white' : colors.lightGreen}
               />
-            </View>
-
-            {/* PDF Upload */}
-            <View style={styles.section}>
-              <TouchableOpacity style={styles.uploadArea} onPress={handleUploadPDF}>
-                <Upload size={24} color={colors.onSurfaceVariant} />
-                <Text variant="bodyMedium" style={styles.uploadText}>
-                  {t('preScreening.buttons.uploadPdf')}
-                </Text>
-                <Text variant="bodySmall" style={styles.uploadSubtext}>
-                  {t('preScreening.pdfUpload.description')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={handleClearHistory}
-              >
-                <Text variant="labelMedium" style={styles.clearButtonText}>
-                  {t('preScreening.buttons.clearHistory')}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
+              <Text
+                variant="labelSmall"
                 style={[
-                  styles.analyzeButton,
-                  (!medicalHistory.trim() && pdfFiles.length === 0) && styles.analyzeButtonDisabled
+                  styles.toggleButtonText,
+                  specialistAnalysis && styles.toggleButtonTextActive,
                 ]}
-                onPress={handleStartAnalysis}
-                disabled={isAnalyzing || (!medicalHistory.trim() && pdfFiles.length === 0)}
               >
-                {isAnalyzing ? (
-                  <>
-                    <Text variant="labelMedium" style={styles.analyzeButtonText}>
-                      {t('preScreening.loading.title')}
+                {t('preScreening.specialistAnalysis.label')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {!showResults ? (
+            // Input Screen
+            <View style={styles.inputContainer}>
+              {/* AI Model Selection */}
+              <View style={styles.section}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  {t('preScreening.aiModel.label')}
+                </Text>
+                <View style={styles.modelSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.modelButton,
+                      selectedModel === 'gemini' && styles.selectedModelButton,
+                    ]}
+                    onPress={() => handleModelSelect('gemini')}
+                  >
+                    <Brain
+                      size={20}
+                      color={
+                        selectedModel === 'gemini' ? 'white' : colors.lightGreen
+                      }
+                    />
+                    <Text
+                      variant="labelMedium"
+                      style={[
+                        styles.modelButtonText,
+                        selectedModel === 'gemini' &&
+                          styles.selectedModelButtonText,
+                      ]}
+                    >
+                      {t('preScreening.aiModel.gemini')}
                     </Text>
-                  </>
-                ) : (
-                  <>
-                    <Brain size={16} color="white" />
-                    <Text variant="labelMedium" style={styles.analyzeButtonText}>
-                      {t('preScreening.buttons.startAnalysis')}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.modelButton,
+                      selectedModel === 'claude' && styles.selectedModelButton,
+                    ]}
+                    onPress={() => handleModelSelect('claude')}
+                  >
+                    <Brain
+                      size={20}
+                      color={
+                        selectedModel === 'claude' ? 'white' : colors.lightGreen
+                      }
+                    />
+                    <Text
+                      variant="labelMedium"
+                      style={[
+                        styles.modelButtonText,
+                        selectedModel === 'claude' &&
+                          styles.selectedModelButtonText,
+                      ]}
+                    >
+                      {t('preScreening.aiModel.claude')}
                     </Text>
-                  </>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Medical History Input */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text variant="titleMedium" style={styles.sectionTitle}>
+                    {t('preScreening.labels.medicalHistory')}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.demoButton}
+                    onPress={handleLoadDemoData}
+                  >
+                    <Text variant="labelSmall" style={styles.demoButtonText}>
+                      {t('preScreening.buttons.demoMode')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {pdfFiles.length > 0 && (
+                  <View style={styles.pdfFilesContainer}>
+                    <Text variant="labelMedium" style={styles.pdfFilesTitle}>
+                      {t('preScreening.labels.pdfFilesLoaded', {
+                        fileCount: pdfFiles.length,
+                      })}
+                    </Text>
+                    {pdfFiles.map((file, index) => renderPDFFile(file, index))}
+                  </View>
                 )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          // Results Screen
-          <View style={styles.resultsContainer}>
-            {/* Patient Data Overview */}
-            <View style={styles.resultSection}>
-              <View style={styles.resultSectionHeader}>
-                <User size={20} color={colors.lightGreen} />
-                <Text variant="titleLarge" style={styles.resultSectionTitle}>
-                  {t('preScreening.mainContent.patientData')}
-                </Text>
-              </View>
-              <View style={styles.patientDataGrid}>
-                <View style={styles.patientDataItem}>
-                  <Text variant="labelMedium" style={styles.patientDataLabel}>
-                    {t('preScreening.mainContent.age')}
-                  </Text>
-                  <Text variant="bodyLarge" style={styles.patientDataValue}>
-                    {analysisResults.patientData.age} {t('preScreening.mainContent.years')}
-                  </Text>
-                </View>
-                <View style={styles.patientDataItem}>
-                  <Text variant="labelMedium" style={styles.patientDataLabel}>
-                    {t('preScreening.mainContent.mainDiagnosis')}
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.patientDataValue}>
-                    {analysisResults.patientData.mainDiagnosis}
-                  </Text>
-                </View>
-                <View style={styles.patientDataItem}>
-                  <Text variant="labelMedium" style={styles.patientDataLabel}>
-                    {t('preScreening.mainContent.comorbidities')}
-                  </Text>
-                  <View style={styles.comorbiditiesList}>
-                    {analysisResults.patientData.comorbidities.map((comorbidity, index) => (
-                      <View key={index} style={styles.comorbidityItem}>
-                        <Text variant="bodySmall" style={styles.comorbidityText}>
-                          {comorbidity}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              </View>
-            </View>
 
-            {/* Criteria Analysis Visualization */}
-            <View style={styles.resultSection}>
-              <View style={styles.resultSectionHeader}>
-                <BarChart3 size={20} color={colors.lightGreen} />
-                <Text variant="titleLarge" style={styles.resultSectionTitle}>
-                  {t('preScreening.sections.criteriaStatusAfterChanges')}
-                </Text>
+                <TextInput
+                  style={styles.medicalHistoryInput}
+                  placeholder={t('preScreening.placeholders.medicalHistory')}
+                  value={medicalHistory}
+                  onChangeText={setMedicalHistory}
+                  multiline
+                  numberOfLines={8}
+                  placeholderTextColor={colors.placeholderColor}
+                />
               </View>
-              <View style={styles.criteriaStats}>
-                <View style={styles.criteriaStatItem}>
-                  <Text variant="headlineLarge" style={styles.criteriaStatNumber}>
-                    {analysisResults.criteriaAnalysis.total}
-                  </Text>
-                  <Text variant="labelMedium" style={styles.criteriaStatLabel}>
-                    {t('preScreening.sections.totalCriteria')}
-                  </Text>
-                </View>
-                <View style={styles.criteriaStatItem}>
-                  <Text variant="headlineLarge" style={[styles.criteriaStatNumber, { color: colors.lightGreen }]}>
-                    {analysisResults.criteriaAnalysis.positive}
-                  </Text>
-                  <Text variant="labelMedium" style={styles.criteriaStatLabel}>
-                    {t('preScreening.sections.positiveCriteria')}
-                  </Text>
-                </View>
-                <View style={styles.criteriaStatItem}>
-                  <Text variant="headlineLarge" style={[styles.criteriaStatNumber, { color: colors.error }]}>
-                    {analysisResults.criteriaAnalysis.problems}
-                  </Text>
-                  <Text variant="labelMedium" style={styles.criteriaStatLabel}>
-                    {t('preScreening.sections.problemCriteria')}
-                  </Text>
-                </View>
-                <View style={styles.criteriaStatItem}>
-                  <Text variant="headlineLarge" style={[styles.criteriaStatNumber, { color: '#F59E0B' }]}>
-                    {analysisResults.criteriaAnalysis.verification}
-                  </Text>
-                  <Text variant="labelMedium" style={styles.criteriaStatLabel}>
-                    {t('preScreening.sections.verificationNeeded')}
-                  </Text>
-                </View>
-              </View>
-            </View>
 
-            {/* Overall Qualification */}
-            <View style={styles.resultSection}>
-              <View style={styles.resultSectionHeader}>
-                <Activity size={20} color={colors.lightGreen} />
-                <Text variant="titleLarge" style={styles.resultSectionTitle}>
-                  {t('preScreening.conclusion.overallQualification')}
-                </Text>
+              {/* PDF Upload */}
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.uploadArea}
+                  onPress={handleUploadPDF}
+                >
+                  <Upload size={24} color={colors.onSurfaceVariant} />
+                  <Text variant="bodyMedium" style={styles.uploadText}>
+                    {t('preScreening.buttons.uploadPdf')}
+                  </Text>
+                  <Text variant="bodySmall" style={styles.uploadSubtext}>
+                    {t('preScreening.pdfUpload.description')}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.qualificationCard}>
-                <View style={styles.qualificationHeader}>
-                  {React.createElement(
-                    getQualificationIcon(analysisResults.overallQualification),
-                    { 
-                      size: 24, 
-                      color: getQualificationColor(analysisResults.overallQualification) 
-                    }
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={handleClearHistory}
+                >
+                  <Text variant="labelMedium" style={styles.clearButtonText}>
+                    {t('preScreening.buttons.clearHistory')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.analyzeButton,
+                    !medicalHistory.trim() &&
+                      pdfFiles.length === 0 &&
+                      styles.analyzeButtonDisabled,
+                  ]}
+                  onPress={handleStartAnalysis}
+                  disabled={
+                    isAnalyzing ||
+                    (!medicalHistory.trim() && pdfFiles.length === 0)
+                  }
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Text
+                        variant="labelMedium"
+                        style={styles.analyzeButtonText}
+                      >
+                        {t('preScreening.loading.title')}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Brain size={16} color="white" />
+                      <Text
+                        variant="labelMedium"
+                        style={styles.analyzeButtonText}
+                      >
+                        {t('preScreening.buttons.startAnalysis')}
+                      </Text>
+                    </>
                   )}
-                  <Text variant="titleMedium" style={[
-                    styles.qualificationText,
-                    { color: getQualificationColor(analysisResults.overallQualification) }
-                  ]}>
-                    {t('preScreening.conclusion.probablyQualifies')}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            // Results Screen
+            <View style={styles.resultsContainer}>
+              {/* Patient Data Overview */}
+              <View style={styles.resultSection}>
+                <View style={styles.resultSectionHeader}>
+                  <User size={20} color={colors.lightGreen} />
+                  <Text variant="titleLarge" style={styles.resultSectionTitle}>
+                    {t('preScreening.mainContent.patientData')}
                   </Text>
                 </View>
-                <View style={styles.probabilityContainer}>
-                  <Text variant="labelMedium" style={styles.probabilityLabel}>
-                    {t('preScreening.messages.estimatedQualificationProbability')}
-                  </Text>
-                  <Text variant="headlineMedium" style={[
-                    styles.probabilityValue,
-                    { color: getQualificationColor(analysisResults.overallQualification) }
-                  ]}>
-                    {analysisResults.qualificationProbability}%
-                  </Text>
+                <View style={styles.patientDataGrid}>
+                  <View style={styles.patientDataItem}>
+                    <Text variant="labelMedium" style={styles.patientDataLabel}>
+                      {t('preScreening.mainContent.age')}
+                    </Text>
+                    <Text variant="bodyLarge" style={styles.patientDataValue}>
+                      {analysisResults.patientData.age}{' '}
+                      {t('preScreening.mainContent.years')}
+                    </Text>
+                  </View>
+                  <View style={styles.patientDataItem}>
+                    <Text variant="labelMedium" style={styles.patientDataLabel}>
+                      {t('preScreening.mainContent.mainDiagnosis')}
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.patientDataValue}>
+                      {analysisResults.patientData.mainDiagnosis}
+                    </Text>
+                  </View>
+                  <View style={styles.patientDataItem}>
+                    <Text variant="labelMedium" style={styles.patientDataLabel}>
+                      {t('preScreening.mainContent.comorbidities')}
+                    </Text>
+                    <View style={styles.comorbiditiesList}>
+                      {analysisResults.patientData.comorbidities.map(
+                        (comorbidity, index) => (
+                          <View key={index} style={styles.comorbidityItem}>
+                            <Text
+                              variant="bodySmall"
+                              style={styles.comorbidityText}
+                            >
+                              {comorbidity}
+                            </Text>
+                          </View>
+                        ),
+                      )}
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            {/* Main Problems */}
-            <View style={styles.resultSection}>
-              <View style={styles.resultSectionHeader}>
-                <AlertTriangle size={20} color='#F59E0B' />
-                <Text variant="titleLarge" style={styles.resultSectionTitle}>
-                  {t('preScreening.messages.mainProblems')}
-                </Text>
-              </View>
-              <View style={styles.problemsList}>
-                {analysisResults.mainProblems.map((problem, index) => (
-                  <View key={index} style={styles.problemItem}>
-                    <View style={styles.problemBullet} />
-                    <Text variant="bodyMedium" style={styles.problemText}>
-                      {problem}
+              {/* Criteria Analysis Visualization */}
+              <View style={styles.resultSection}>
+                <View style={styles.resultSectionHeader}>
+                  <BarChart3 size={20} color={colors.lightGreen} />
+                  <Text variant="titleLarge" style={styles.resultSectionTitle}>
+                    {t('preScreening.sections.criteriaStatusAfterChanges')}
+                  </Text>
+                </View>
+                <View style={styles.criteriaStats}>
+                  <View style={styles.criteriaStatItem}>
+                    <Text
+                      variant="headlineLarge"
+                      style={styles.criteriaStatNumber}
+                    >
+                      {analysisResults.criteriaAnalysis.total}
+                    </Text>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.criteriaStatLabel}
+                    >
+                      {t('preScreening.sections.totalCriteria')}
                     </Text>
                   </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Critical Information */}
-            <View style={styles.resultSection}>
-              <View style={styles.resultSectionHeader}>
-                <FileText size={20} color={colors.primary} />
-                <Text variant="titleLarge" style={styles.resultSectionTitle}>
-                  {t('preScreening.messages.criticalInfoToObtain')}
-                </Text>
-              </View>
-              <View style={styles.criticalInfoList}>
-                {analysisResults.criticalInfo.map((info, index) => (
-                  <View key={index} style={styles.criticalInfoItem}>
-                    <CheckCircle size={16} color={colors.lightGreen} />
-                    <Text variant="bodyMedium" style={styles.criticalInfoText}>
-                      {info}
+                  <View style={styles.criteriaStatItem}>
+                    <Text
+                      variant="headlineLarge"
+                      style={[
+                        styles.criteriaStatNumber,
+                        { color: colors.lightGreen },
+                      ]}
+                    >
+                      {analysisResults.criteriaAnalysis.positive}
+                    </Text>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.criteriaStatLabel}
+                    >
+                      {t('preScreening.sections.positiveCriteria')}
                     </Text>
                   </View>
-                ))}
+                  <View style={styles.criteriaStatItem}>
+                    <Text
+                      variant="headlineLarge"
+                      style={[
+                        styles.criteriaStatNumber,
+                        { color: colors.error },
+                      ]}
+                    >
+                      {analysisResults.criteriaAnalysis.problems}
+                    </Text>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.criteriaStatLabel}
+                    >
+                      {t('preScreening.sections.problemCriteria')}
+                    </Text>
+                  </View>
+                  <View style={styles.criteriaStatItem}>
+                    <Text
+                      variant="headlineLarge"
+                      style={[styles.criteriaStatNumber, { color: '#F59E0B' }]}
+                    >
+                      {analysisResults.criteriaAnalysis.verification}
+                    </Text>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.criteriaStatLabel}
+                    >
+                      {t('preScreening.sections.verificationNeeded')}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Overall Qualification */}
+              <View style={styles.resultSection}>
+                <View style={styles.resultSectionHeader}>
+                  <Activity size={20} color={colors.lightGreen} />
+                  <Text variant="titleLarge" style={styles.resultSectionTitle}>
+                    {t('preScreening.conclusion.overallQualification')}
+                  </Text>
+                </View>
+                <View style={styles.qualificationCard}>
+                  <View style={styles.qualificationHeader}>
+                    {React.createElement(
+                      getQualificationIcon(
+                        analysisResults.overallQualification,
+                      ),
+                      {
+                        size: 24,
+                        color: getQualificationColor(
+                          analysisResults.overallQualification,
+                        ),
+                      },
+                    )}
+                    <Text
+                      variant="titleMedium"
+                      style={[
+                        styles.qualificationText,
+                        {
+                          color: getQualificationColor(
+                            analysisResults.overallQualification,
+                          ),
+                        },
+                      ]}
+                    >
+                      {t('preScreening.conclusion.probablyQualifies')}
+                    </Text>
+                  </View>
+                  <View style={styles.probabilityContainer}>
+                    <Text variant="labelMedium" style={styles.probabilityLabel}>
+                      {t(
+                        'preScreening.messages.estimatedQualificationProbability',
+                      )}
+                    </Text>
+                    <Text
+                      variant="headlineMedium"
+                      style={[
+                        styles.probabilityValue,
+                        {
+                          color: getQualificationColor(
+                            analysisResults.overallQualification,
+                          ),
+                        },
+                      ]}
+                    >
+                      {analysisResults.qualificationProbability}%
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Main Problems */}
+              <View style={styles.resultSection}>
+                <View style={styles.resultSectionHeader}>
+                  <AlertTriangle size={20} color="#F59E0B" />
+                  <Text variant="titleLarge" style={styles.resultSectionTitle}>
+                    {t('preScreening.messages.mainProblems')}
+                  </Text>
+                </View>
+                <View style={styles.problemsList}>
+                  {analysisResults.mainProblems.map((problem, index) => (
+                    <View key={index} style={styles.problemItem}>
+                      <View style={styles.problemBullet} />
+                      <Text variant="bodyMedium" style={styles.problemText}>
+                        {problem}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Critical Information */}
+              <View style={styles.resultSection}>
+                <View style={styles.resultSectionHeader}>
+                  <FileText size={20} color={colors.primary} />
+                  <Text variant="titleLarge" style={styles.resultSectionTitle}>
+                    {t('preScreening.messages.criticalInfoToObtain')}
+                  </Text>
+                </View>
+                <View style={styles.criticalInfoList}>
+                  {analysisResults.criticalInfo.map((info, index) => (
+                    <View key={index} style={styles.criticalInfoItem}>
+                      <CheckCircle size={16} color={colors.lightGreen} />
+                      <Text
+                        variant="bodyMedium"
+                        style={styles.criticalInfoText}
+                      >
+                        {info}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.resultActions}>
+                <TouchableOpacity
+                  style={styles.newAnalysisButton}
+                  onPress={() => {
+                    setShowResults(false);
+                    setAnalysisResults(null);
+                  }}
+                >
+                  <Text
+                    variant="labelMedium"
+                    style={styles.newAnalysisButtonText}
+                  >
+                    {t('preScreening.buttons.analyzeNewPatient')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.downloadButton}>
+                  <Download size={16} color="white" />
+                  <Text variant="labelMedium" style={styles.downloadButtonText}>
+                    {t('preScreening.buttons.printReport')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            {/* Action Buttons */}
-            <View style={styles.resultActions}>
-              <TouchableOpacity
-                style={styles.newAnalysisButton}
-                onPress={() => {
-                  setShowResults(false);
-                  setAnalysisResults(null);
-                }}
-              >
-                <Text variant="labelMedium" style={styles.newAnalysisButtonText}>
-                  {t('preScreening.buttons.analyzeNewPatient')}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.downloadButton}>
-                <Download size={16} color="white" />
-                <Text variant="labelMedium" style={styles.downloadButtonText}>
-                  {t('preScreening.buttons.printReport')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -570,7 +678,7 @@ Social History:
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',

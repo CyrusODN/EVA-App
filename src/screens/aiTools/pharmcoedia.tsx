@@ -27,9 +27,11 @@ import {
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import 'react-native-get-random-values';
 import { nanoid } from 'nanoid';
 
 const { width: screenWidth } = Dimensions.get('window');
+const generateId = () => Math.random().toString(36).substr(2, 9);
 
 // Mock data for visits
 const MOCK_VISITS = [
@@ -331,6 +333,7 @@ const Pharmcoedia = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -643,6 +646,7 @@ const Pharmcoedia = () => {
           </View>
         </View>
       )}
+      </View>
     </SafeAreaView>
   );
 };
@@ -650,7 +654,7 @@ const Pharmcoedia = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',

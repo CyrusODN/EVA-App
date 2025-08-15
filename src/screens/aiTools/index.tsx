@@ -101,7 +101,7 @@ const AI_TOOLS = [
       'aiTools.drugs.features.1',
       'aiTools.drugs.features.2',
     ],
-    screenName: 'DrugsScreen',
+    screenName: 'pharmcoedia',
   },
   {
     id: 'report',
