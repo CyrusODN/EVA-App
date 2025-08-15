@@ -12,6 +12,8 @@ import Pharmcoedia from './aiTools/pharmcoedia';
 import Prescreening from './aiTools/prescreening';
 import Report from './aiTools/report';
 import Research from './aiTools/research';
+import Settings from './profile/settings';
+import Subscription from './profile/subscription';
  
 export const screens = {
   Login,
@@ -28,4 +30,6 @@ export const screens = {
   Prescreening,
   Report,
   Research,
+  Settings,
+  Subscription,
 };

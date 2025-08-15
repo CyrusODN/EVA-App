@@ -11,6 +11,7 @@ import { Text, List, Divider, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../../constants/colors';
+import { useNavigation } from '@react-navigation/native';
 
 // Mock user data - replace with actual user data from your state management
 const mockUser = {
@@ -22,10 +23,11 @@ const mockUser = {
 const Profile = () => {
   const { t } = useTranslation();
   const [user] = useState(mockUser);
+  const navigation = useNavigation();
 
-  const handleNavigate = (screen) => {
-    // Implement navigation logic here
-    console.log(`Navigate to ${screen}`);
+  const handleNavigate = (screen:string) => {
+    //@ts-ignore
+    navigation.navigate(screen);
   };
 
   const handleImagePicker = () => {
@@ -96,7 +98,7 @@ const Profile = () => {
           <PressableItem
             title={t('common.settings')}
             icon="cog"
-            onPress={() => handleNavigate('generalSettings')}
+            onPress={() => handleNavigate('settings')}
           />
         </Section>
 

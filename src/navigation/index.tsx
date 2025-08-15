@@ -182,6 +182,8 @@ const Navigation = () => {
         <Stack.Screen name="prescreening" component={screens.Prescreening} />
         <Stack.Screen name="report" component={screens.Report} />
         <Stack.Screen name="research" component={screens.Research} />
+        <Stack.Screen name="settings" component={screens.Settings} />
+        <Stack.Screen name="subscription" component={screens.Subscription} />
       </Stack.Navigator>
     </NavigationContainer>
   );
