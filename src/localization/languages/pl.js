@@ -104,7 +104,9 @@ export const pl = {
             "confirmRestart": "Czy na pewno chcesz ponownie uruchomić tę sesję? Wszystkie bieżące dane zostaną utracone.",
             "confirmReset": "Czy na pewno chcesz zresetować tę sesję? Spowoduje to usunięcie nagrania, wyczyszczenie danych transkrypcji i usunięcie wszystkich notatek. Ta operacja nie może być cofnięta.",
             "resetting": "Resetowanie...",
-            "reset": "Resetuj"
+            "reset": "Resetuj",
+            "success": "Sukces",
+            "error": "Błąd",
         },
         "lectureNotes": {
             "title": "Notatki z wykładu",

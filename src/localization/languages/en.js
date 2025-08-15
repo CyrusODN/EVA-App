@@ -104,7 +104,9 @@ export const en = {
 		"confirmRestart": "Are you sure you want to restart this session? All current data will be lost.",
 		"confirmReset": "Are you sure you want to reset this session? This will delete the recording, clear transcription data, and empty all notes. This action cannot be undone.",
 		"resetting": "Resetting...",
-		"reset": "Reset"
+		"reset": "Reset",
+		"success": "Success",
+        "error": "Error",
 	},
 	"lectureNotes": {
 		"title": "Lecture Notes",

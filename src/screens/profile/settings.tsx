@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { customToast } from '../../utils/toastMessage';
 import {
@@ -31,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { colors } from '../../constants/colors';
 import Header from '../../components/header';
 import { useNavigation } from '@react-navigation/native';
+import Gap from '../../components/gap';
 
 // Mock user data - replace with actual user data from your state management
 const mockUser = {
@@ -67,7 +69,6 @@ const Settings = () => {
     if (newPassword !== confirmPassword) {
       customToast(
         'error',
-        t('common.error'),
         t('settings.password.alertMatch'),
       );
       return;
@@ -75,7 +76,6 @@ const Settings = () => {
     console.log('Password changed');
     customToast(
       'success',
-      t('common.success'),
       t('settings.password.alertChanged'),
     );
     setCurrentPassword('');
@@ -85,13 +85,12 @@ const Settings = () => {
 
   const handleSupportSubmit = () => {
     if (!supportEmail || !supportSubject || !supportMessage) {
-      customToast('error', t('common.error'), 'Please fill in all fields');
+      customToast('error', 'Please fill in all fields');
       return;
     }
     console.log('Support message sent');
     customToast(
       'success',
-      t('common.success'),
       t('settings.support.alertSent'),
     );
     setSupportEmail('');
@@ -134,32 +133,22 @@ const Settings = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity>
-        <View style={styles.headerTextContainer}>
-          <Text variant="headlineMedium" style={styles.headerTitle}>
-            {t('settings.title')}
-          </Text>
-          <Text variant="bodySmall" style={styles.headerSubtitle}>
-            {t('settings.subtitle')}
-          </Text>
-        </View>
-      </View> */}
       <Header
-  title={t('settings.title')}
-  subtitle={t('settings.subtitle')}
-  onLeftPress={() => navigation.goBack()}
-//   rightIcon={true}
-//   onRightPress={() => handleNotifications()}
-//   rightIconSource="bell"
-/>
-      <View style={styles.mainContainer}>
+        title={t('settings.title')}
+        subtitle={t('settings.subtitle')}
+        onLeftPress={() => navigation.goBack()}
+        //   rightIcon={true}
+        //   onRightPress={() => handleNotifications()}
+        //   rightIconSource="bell"
+      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.mainContainer}
+      >
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Profile Picture Section */}
           <Section title={t('settings.profile.picture')}>
@@ -190,74 +179,76 @@ const Settings = () => {
           </Section>
 
           {/* Change Password Section */}
-          <Section title={t('settings.password.title')}>
-            <View style={styles.passwordSection}>
-              <Input
-                placeholder={t('settings.password.current')}
-                value={currentPassword}
-                setValue={setCurrentPassword}
-                isPassword={true}
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
-              />
-              <Input
-                placeholder={t('settings.password.new')}
-                value={newPassword}
-                setValue={setNewPassword}
-                isPassword={true}
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
-              />
-              <Input
-                placeholder={t('settings.password.confirm')}
-                value={confirmPassword}
-                setValue={setConfirmPassword}
-                isPassword={true}
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
-              />
-              <PrimaryButton
-                text={t('settings.password.update')}
-                onPress={handlePasswordChange}
-                disabled={!currentPassword || !newPassword || !confirmPassword}
-              />
-            </View>
-          </Section>
-
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            {t('settings.password.title')}
+          </Text>
+          <View style={styles.passwordSection}>
+            <Input
+              placeholder={t('settings.password.current')}
+              value={currentPassword}
+              setValue={setCurrentPassword}
+              isPassword={true}
+              backgroundColor={colors.surface}
+              borderColor={colors.borderColor}
+            />
+            <Input
+              placeholder={t('settings.password.new')}
+              value={newPassword}
+              setValue={setNewPassword}
+              isPassword={true}
+              backgroundColor={colors.surface}
+              borderColor={colors.borderColor}
+            />
+            <Input
+              placeholder={t('settings.password.confirm')}
+              value={confirmPassword}
+              setValue={setConfirmPassword}
+              isPassword={true}
+              backgroundColor={colors.surface}
+              borderColor={colors.borderColor}
+            />
+            <PrimaryButton
+              text={t('settings.password.update')}
+              onPress={handlePasswordChange}
+              disabled={!currentPassword || !newPassword || !confirmPassword}
+            />
+          </View>
+          <Gap height={hp(2)} />
           {/* Customer Support Section */}
-          <Section title={t('settings.support.title')}>
-            <View style={styles.supportSection}>
-              <Input
-                placeholder={t('settings.support.email')}
-                value={supportEmail}
-                setValue={setSupportEmail}
-                mode="email"
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
-              />
-              <Input
-                placeholder={t('settings.support.subject')}
-                value={supportSubject}
-                setValue={setSupportSubject}
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
-              />
-              <Input
-                placeholder={t('settings.support.message')}
-                value={supportMessage}
-                setValue={setSupportMessage}
-                multiline={true}
-                numberOfLines={4}
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
-              />
-              <PrimaryButton
-                text={t('settings.support.send')}
-                onPress={handleSupportSubmit}
-                disabled={!supportEmail || !supportSubject || !supportMessage}
-              />
-            </View>
-          </Section>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            {t('settings.support.title')}
+          </Text>
+          <View style={styles.supportSection}>
+            <Input
+              placeholder={t('settings.support.email')}
+              value={supportEmail}
+              setValue={setSupportEmail}
+              mode="email"
+              backgroundColor={colors.surface}
+              borderColor={colors.borderColor}
+            />
+            <Input
+              placeholder={t('settings.support.subject')}
+              value={supportSubject}
+              setValue={setSupportSubject}
+              backgroundColor={colors.surface}
+              borderColor={colors.borderColor}
+            />
+            <Input
+              placeholder={t('settings.support.message')}
+              value={supportMessage}
+              setValue={setSupportMessage}
+              multiline={true}
+              numberOfLines={4}
+              backgroundColor={colors.surface}
+              borderColor={colors.borderColor}
+            />
+            <PrimaryButton
+              text={t('settings.support.send')}
+              onPress={handleSupportSubmit}
+              disabled={!supportEmail || !supportSubject || !supportMessage}
+            />
+          </View>
 
           {/* Delete Account Section */}
           {/* <Section title={t('settings.deleteAccount.title')}>
@@ -274,55 +265,56 @@ const Settings = () => {
           </View>
         </Section> */}
         </ScrollView>
-      </View>
-      {/* Delete Account Dialog */}
-      <Portal>
-        <Dialog
-          visible={showDeleteDialog}
-          onDismiss={() => {
-            setShowDeleteDialog(false);
-            setDeleteConfirmText('');
-          }}
-        >
-          <Dialog.Title style={styles.dialogTitle}>
-            {t('settings.deleteAccount.dialogTitle')}
-          </Dialog.Title>
-          <Dialog.Content>
-            <Paragraph style={styles.dialogDescription}>
-              {t('settings.deleteAccount.dialogDescription')}
-            </Paragraph>
-            <Text variant="bodySmall" style={styles.deleteWarning}>
-              {t('settings.deleteAccount.warning')}
-            </Text>
-            <Input
-              placeholder={t('settings.deleteAccount.confirm')}
-              value={deleteConfirmText}
-              setValue={setDeleteConfirmText}
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
-              width={250}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              onPress={() => {
-                setShowDeleteDialog(false);
-                setDeleteConfirmText('');
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onPress={handleDeleteAccount}
-              disabled={deleteConfirmText !== 'DELETE'}
-              buttonColor={colors.error}
-              mode="contained"
-            >
-              {t('settings.deleteAccount.button')}
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+
+        {/* Delete Account Dialog */}
+        <Portal>
+          <Dialog
+            visible={showDeleteDialog}
+            onDismiss={() => {
+              setShowDeleteDialog(false);
+              setDeleteConfirmText('');
+            }}
+          >
+            <Dialog.Title style={styles.dialogTitle}>
+              {t('settings.deleteAccount.dialogTitle')}
+            </Dialog.Title>
+            <Dialog.Content>
+              <Paragraph style={styles.dialogDescription}>
+                {t('settings.deleteAccount.dialogDescription')}
+              </Paragraph>
+              <Text variant="bodySmall" style={styles.deleteWarning}>
+                {t('settings.deleteAccount.warning')}
+              </Text>
+              <Input
+                placeholder={t('settings.deleteAccount.confirm')}
+                value={deleteConfirmText}
+                setValue={setDeleteConfirmText}
+                backgroundColor={colors.surface}
+                borderColor={colors.borderColor}
+                width={250}
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <Button
+                onPress={() => {
+                  setShowDeleteDialog(false);
+                  setDeleteConfirmText('');
+                }}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onPress={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'DELETE'}
+                buttonColor={colors.error}
+                mode="contained"
+              >
+                {t('settings.deleteAccount.button')}
+              </Button>
+            </Dialog.Actions>
+          </Dialog>
+        </Portal>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
