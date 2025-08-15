@@ -127,7 +127,7 @@ const Profile = () => {
           <PressableItem
             title={t('settings.deleteAccount.title')}
             icon="delete"
-            onPress={() => handleNavigate('deleteAccount')}
+            onPress={() => {}}
             titleStyle={styles.deleteText}
           />
         </Section>

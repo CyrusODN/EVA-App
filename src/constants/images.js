@@ -12,4 +12,5 @@ export const images = {
   homeIcon: require('../assets/images/home-icon.png'),
   profileIcon: require('../assets/images/profile-icon.png'),
   aiIcon: require('../assets/images/ai-icon.png'),
+  downloadIcon: require('../assets/images/download-icon.png'),
 };

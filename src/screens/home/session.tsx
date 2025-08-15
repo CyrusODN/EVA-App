@@ -133,7 +133,7 @@ const Session = () => {
   };
 
   const handleViewTranscription = () => {
-    navigation.navigate('TranscriptionScreen', {
+    navigation.navigate('transcriptionCompleted', {
       sessionData: session,
       sessionType: session.type,
     });

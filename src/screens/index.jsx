@@ -14,6 +14,8 @@ import Report from './aiTools/report';
 import Research from './aiTools/research';
 import Settings from './profile/settings';
 import Subscription from './profile/subscription';
+import Transactions from './profile/transactions';
+import TranscriptionComplete from './home/transcriptionCompleted';
  
 export const screens = {
   Login,
@@ -32,4 +34,6 @@ export const screens = {
   Research,
   Settings,
   Subscription,
+  Transactions,
+  TranscriptionComplete,
 };

@@ -184,6 +184,8 @@ const Navigation = () => {
         <Stack.Screen name="research" component={screens.Research} />
         <Stack.Screen name="settings" component={screens.Settings} />
         <Stack.Screen name="subscription" component={screens.Subscription} />
+        <Stack.Screen name="transactions" component={screens.Transactions} />
+        <Stack.Screen name="transcriptionCompleted" component={screens.TranscriptionComplete} />
       </Stack.Navigator>
     </NavigationContainer>
   );
