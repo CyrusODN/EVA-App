@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -21,21 +20,24 @@ import {
   Plus,
   Folder,
   Settings,
-  Download,
-  Save,
   Upload,
   X,
   Eye,
   RefreshCw,
   Copy,
   BookOpen,
-  ChevronLeft,
-  ChevronRight,
   Brain,
   FileText,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Share,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import PrimaryButton from '../../components/primaryButton';
+import Input from '../../components/input';
 import { colors } from '../../constants/colors';
+import { customToast } from '../../utils/toastMessage';
 
 // Content types and citation styles
 const CONTENT_TYPES = [
@@ -54,6 +56,7 @@ const Pathfinder = () => {
   const navigation = useNavigation();
   
   // State management
+  const [currentView, setCurrentView] = useState('projects'); // projects, project-detail, assistant, generated
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -66,17 +69,20 @@ const Pathfinder = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState(null);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Dialog states
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
-  const [selectedPDF, setSelectedPDF] = useState(null);
 
   const handleBack = () => {
-    navigation.goBack();
+    if (currentView === 'projects') {
+      navigation.goBack();
+    } else if (currentView === 'project-detail') {
+      setCurrentView('projects');
+    } else {
+      setCurrentView('project-detail');
+    }
   };
 
   const handleCreateProject = () => {
@@ -95,22 +101,25 @@ const Pathfinder = () => {
     setNewProjectName('');
     setNewProjectDescription('');
     setShowNewProjectDialog(false);
+    setCurrentView('project-detail');
+  };
+
+  const handleSelectProject = (project) => {
+    setSelectedProject(project);
+    setCurrentView('project-detail');
   };
 
   const handleAddDocument = () => {
-    // Mock document addition
     const mockDoc = {
       id: Math.random().toString(36).substring(7),
       name: `research_paper_${Date.now()}.pdf`,
-      size: 1024 * 1024 * 3.2, // 3.2MB
+      size: 1024 * 1024 * 3.2,
       uploadedAt: new Date(),
       status: 'pending',
-      file: { name: `research_paper_${Date.now()}.pdf` },
     };
     
     setDocuments(prev => [...prev, mockDoc]);
     
-    // Simulate processing
     setTimeout(() => {
       setDocuments(prev => prev.map(d => 
         d.id === mockDoc.id ? { ...d, status: 'processing' } : d
@@ -123,21 +132,14 @@ const Pathfinder = () => {
     }, 1000);
   };
 
-  const handlePreviewPDF = (file) => {
-    setSelectedPDF(file);
-    setShowPDFPreview(true);
-  };
-
   const handleGenerate = () => {
     if (!prompt.trim() || selectedDocuments.size === 0) {
-      Alert.alert(
-        t('common.error'),
-        'Please add a prompt and select at least one document'
-      );
+      customToast('error', t('common.error'), 'Please add a prompt and select documents');
       return;
     }
     
     setIsGenerating(true);
+    setCurrentView('generated');
     
     setTimeout(() => {
       const contentTypeLabel = t(`remediusPathfinder.contentTypes.${selectedContentType}`);
@@ -157,20 +159,6 @@ const Pathfinder = () => {
     }, 3000);
   };
 
-  const handleRegenerateSection = () => {
-    setIsGenerating(true);
-    setTimeout(() => {
-      if (generatedContent) {
-        setGeneratedContent({
-          ...generatedContent,
-          content: generatedContent.content + `\n\n${t('remediusPathfinder.generation.regeneratedSection')}`,
-          timestamp: new Date(),
-        });
-      }
-      setIsGenerating(false);
-    }, 2000);
-  };
-
   const filteredProjects = useMemo(() => {
     return projects.filter(p => 
       p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -181,125 +169,493 @@ const Pathfinder = () => {
     return t(`remediusPathfinder.docStatus.${status}`);
   };
 
-  const renderProject = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.projectCard,
-        selectedProject?.id === item.id && styles.selectedProjectCard
-      ]}
-      onPress={() => setSelectedProject(item)}
-    >
-      <Text variant="titleMedium" style={styles.projectName} numberOfLines={1}>
-        {item.name}
-      </Text>
-      {item.description && (
-        <Text variant="bodySmall" style={styles.projectDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-      )}
-      <Text variant="labelSmall" style={styles.projectDate}>
-        {t('remediusPathfinder.project.updated', { date: item.updatedAt.toLocaleDateString() })}
-      </Text>
-    </TouchableOpacity>
-  );
+  // Projects List View
+  const renderProjectsView = () => (
+    <View style={styles.viewContainer}>
+      <View style={styles.searchSection}>
+        <Input
+          placeholder={t('remediusPathfinder.placeholders.searchProjects')}
+          value={searchQuery}
+          setValue={setSearchQuery}
+          width={wp(90)}
+          leftIcon={<Search size={16} color={colors.subText} />}
+        />
+      </View>
 
-  const renderDocument = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.documentCard,
-        selectedDocuments.has(item.id) && styles.selectedDocumentCard
-      ]}
-      onPress={() => {
-        setSelectedDocuments(prev => {
-          const next = new Set(prev);
-          if (next.has(item.id)) next.delete(item.id);
-          else next.add(item.id);
-          return next;
-        });
-      }}
-    >
-      <View style={styles.documentHeader}>
-        <Text variant="labelMedium" style={styles.documentName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <View style={styles.documentActions}>
-          <View style={[
-            styles.statusBadge,
-            styles[`status${item.status.charAt(0).toUpperCase() + item.status.slice(1)}`]
-          ]}>
-            <Text variant="labelSmall" style={styles.statusText}>
-              {translateDocStatus(item.status)}
+      <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+        {projects.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Folder size={80} color={colors.onSurfaceVariant} style={{ opacity: 0.3 }} />
+            <Text variant="headlineSmall" style={styles.emptyStateTitle}>
+              {t('remediusPathfinder.messages.noProjects')}
+            </Text>
+            <Text variant="bodyMedium" style={styles.emptyStateMessage}>
+              Create your first research project to get started
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={() => handlePreviewPDF(item.file)}
-            style={styles.documentActionButton}
-          >
-            <Eye size={14} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setDocuments(prev => prev.filter(d => d.id !== item.id));
-              setSelectedDocuments(prev => {
-                const next = new Set(prev);
-                next.delete(item.id);
-                return next;
-              });
-            }}
-            style={styles.documentActionButton}
-          >
-            <X size={14} color={colors.error} />
-          </TouchableOpacity>
+        ) : (
+          <View style={styles.projectsGrid}>
+            {filteredProjects.map((project) => (
+              <TouchableOpacity
+                key={project.id}
+                style={styles.projectCardMobile}
+                onPress={() => handleSelectProject(project)}
+              >
+                <View style={styles.projectCardHeader}>
+                  <Folder size={24} color={colors.lightGreen} />
+                  <TouchableOpacity style={styles.projectOptionsButton}>
+                    <Settings size={16} color={colors.onSurfaceVariant} />
+                  </TouchableOpacity>
+                </View>
+                <Text variant="titleMedium" style={styles.projectCardTitle}>
+                  {project.name}
+                </Text>
+                {project.description && (
+                  <Text variant="bodySmall" style={styles.projectCardDescription}>
+                    {project.description}
+                  </Text>
+                )}
+                <Text variant="labelSmall" style={styles.projectCardDate}>
+                  {t('remediusPathfinder.project.updated', { 
+                    date: project.updatedAt.toLocaleDateString() 
+                  })}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      <View style={styles.floatingButtonContainer}>
+        <TouchableOpacity
+          style={styles.floatingActionButton}
+          onPress={() => setShowNewProjectDialog(true)}
+        >
+          <Plus size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Project Detail View
+  const renderProjectDetailView = () => (
+    <View style={styles.viewContainer}>
+      <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+        {/* Project Info */}
+        <View style={styles.projectInfoCard}>
+          <View style={styles.projectInfoHeader}>
+            <View style={styles.projectInfoMain}>
+              <Text variant="headlineSmall" style={styles.projectInfoTitle}>
+                {selectedProject?.name}
+              </Text>
+              {selectedProject?.description && (
+                <Text variant="bodyMedium" style={styles.projectInfoDescription}>
+                  {selectedProject.description}
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity style={styles.projectInfoOptionsButton}>
+              <Settings size={20} color={colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.projectStats}>
+            <View style={styles.statItem}>
+              <Text variant="headlineSmall" style={styles.statNumber}>
+                {documents.length}
+              </Text>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                Documents
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text variant="headlineSmall" style={styles.statNumber}>
+                {generatedContent ? '1' : '0'}
+              </Text>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                Generated
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text variant="headlineSmall" style={styles.statNumber}>
+                {selectedDocuments.size}
+              </Text>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                Selected
+              </Text>
+            </View>
+          </View>
         </View>
-      </View>
-      <View style={styles.documentMeta}>
-        <Text variant="bodySmall" style={styles.documentSize}>
-          {(item.size / 1024 / 1024).toFixed(2)} MB
-        </Text>
-        <Text variant="bodySmall" style={styles.documentDate}>
-          {item.uploadedAt.toLocaleDateString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActionsSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Quick Actions
+          </Text>
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity
+              style={styles.quickActionButton}
+              onPress={handleAddDocument}
+            >
+              <Upload size={24} color={colors.lightGreen} />
+              <Text variant="bodyMedium" style={styles.quickActionText}>
+                Add Document
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickActionButton}
+              onPress={() => setCurrentView('assistant')}
+            >
+              <Brain size={24} color={colors.lightGreen} />
+              <Text variant="bodyMedium" style={styles.quickActionText}>
+                AI Assistant
+              </Text>
+            </TouchableOpacity>
+            {generatedContent && (
+              <TouchableOpacity
+                style={styles.quickActionButton}
+                onPress={() => setCurrentView('generated')}
+              >
+                <FileText size={24} color={colors.lightGreen} />
+                <Text variant="bodyMedium" style={styles.quickActionText}>
+                  View Generated
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Documents Section */}
+        <View style={styles.documentsSection}>
+          <View style={styles.sectionHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Documents ({documents.length})
+            </Text>
+            <TouchableOpacity onPress={handleAddDocument}>
+              <Plus size={20} color={colors.lightGreen} />
+            </TouchableOpacity>
+          </View>
+
+          {documents.length === 0 ? (
+            <TouchableOpacity style={styles.emptyDocumentsCard} onPress={handleAddDocument}>
+              <Upload size={32} color={colors.onSurfaceVariant} />
+              <Text variant="bodyMedium" style={styles.emptyDocumentsText}>
+                {t('remediusPathfinder.dropzone.prompt')}
+              </Text>
+              <Text variant="bodySmall" style={styles.emptyDocumentsSubtext}>
+                {t('remediusPathfinder.dropzone.sizeLimit')}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.documentsGrid}>
+              {documents.map((doc) => (
+                <TouchableOpacity
+                  key={doc.id}
+                  style={[
+                    styles.documentCardMobile,
+                    selectedDocuments.has(doc.id) && styles.selectedDocumentCardMobile
+                  ]}
+                  onPress={() => {
+                    setSelectedDocuments(prev => {
+                      const next = new Set(prev);
+                      if (next.has(doc.id)) next.delete(doc.id);
+                      else next.add(doc.id);
+                      return next;
+                    });
+                  }}
+                >
+                  <View style={styles.documentCardHeader}>
+                    <FileText size={20} color={selectedDocuments.has(doc.id) ? colors.lightGreen : colors.onSurfaceVariant} />
+                    <View style={[
+                      styles.documentStatusBadge,
+                      styles[`status${doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}`]
+                    ]}>
+                      <Text variant="labelSmall" style={styles.documentStatusText}>
+                        {translateDocStatus(doc.status)}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text variant="bodyMedium" style={styles.documentCardTitle} numberOfLines={2}>
+                    {doc.name}
+                  </Text>
+                  <View style={styles.documentCardFooter}>
+                    <Text variant="bodySmall" style={styles.documentCardSize}>
+                      {(doc.size / 1024 / 1024).toFixed(2)} MB
+                    </Text>
+                    <Text variant="bodySmall" style={styles.documentCardDate}>
+                      {doc.uploadedAt.toLocaleDateString()}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 
-  const renderContentType = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.contentTypeButton,
-        selectedContentType === item.id && styles.selectedContentTypeButton
-      ]}
-      onPress={() => setSelectedContentType(item.id)}
-    >
-      <Text variant="labelSmall" style={[
-        styles.contentTypeText,
-        selectedContentType === item.id && styles.selectedContentTypeText
-      ]}>
-        {t(`remediusPathfinder.contentTypes.${item.id}`)}
-      </Text>
-    </TouchableOpacity>
+  // AI Assistant View
+  const renderAssistantView = () => (
+    <View style={styles.viewContainer}>
+      <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.assistantCard}>
+          <Text variant="headlineSmall" style={styles.assistantTitle}>
+            AI Research Assistant
+          </Text>
+          <Text variant="bodyMedium" style={styles.assistantSubtitle}>
+            Generate research content using your documents
+          </Text>
+
+          {/* Selected Documents Summary */}
+          {selectedDocuments.size > 0 && (
+            <View style={styles.selectedDocumentsCard}>
+              <Text variant="titleMedium" style={styles.selectedDocumentsTitle}>
+                Selected Documents ({selectedDocuments.size})
+              </Text>
+              <View style={styles.selectedDocumentsList}>
+                {Array.from(selectedDocuments).map(docId => {
+                  const doc = documents.find(d => d.id === docId);
+                  return doc ? (
+                    <View key={docId} style={styles.selectedDocumentItem}>
+                      <FileText size={16} color={colors.lightGreen} />
+                      <Text variant="bodySmall" style={styles.selectedDocumentName} numberOfLines={1}>
+                        {doc.name}
+                      </Text>
+                    </View>
+                  ) : null;
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Content Type Selection */}
+          <View style={styles.inputSection}>
+            <Text variant="titleMedium" style={styles.inputLabel}>
+              {t('remediusPathfinder.labels.contentType')}
+            </Text>
+            <View style={styles.contentTypeGrid}>
+              {CONTENT_TYPES.map((type) => (
+                <TouchableOpacity
+                  key={type.id}
+                  style={[
+                    styles.contentTypeButtonMobile,
+                    selectedContentType === type.id && styles.selectedContentTypeButtonMobile
+                  ]}
+                  onPress={() => setSelectedContentType(type.id)}
+                >
+                  <Text variant="bodySmall" style={[
+                    styles.contentTypeTextMobile,
+                    selectedContentType === type.id && styles.selectedContentTypeTextMobile
+                  ]}>
+                    {t(`remediusPathfinder.contentTypes.${type.id}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Advanced Options Toggle */}
+          <TouchableOpacity
+            style={styles.advancedToggle}
+            onPress={() => setShowAdvancedOptions(!showAdvancedOptions)}
+          >
+            <Text variant="bodyMedium" style={styles.advancedToggleText}>
+              Advanced Options
+            </Text>
+            {showAdvancedOptions ? (
+              <ChevronUp size={20} color={colors.onSurfaceVariant} />
+            ) : (
+              <ChevronDown size={20} color={colors.onSurfaceVariant} />
+            )}
+          </TouchableOpacity>
+
+          {/* Advanced Options */}
+          {showAdvancedOptions && (
+            <View style={styles.advancedOptionsCard}>
+              <View style={styles.inputSection}>
+                <Text variant="titleMedium" style={styles.inputLabel}>
+                  {t('remediusPathfinder.labels.citationStyle')}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.citationStyleRow}>
+                    {CITATION_STYLES.map((style) => (
+                      <TouchableOpacity
+                        key={style}
+                        style={[
+                          styles.citationStyleButtonMobile,
+                          selectedCitationStyle === style && styles.selectedCitationStyleButtonMobile
+                        ]}
+                        onPress={() => setSelectedCitationStyle(style)}
+                      >
+                        <Text variant="bodySmall" style={[
+                          styles.citationStyleTextMobile,
+                          selectedCitationStyle === style && styles.selectedCitationStyleTextMobile
+                        ]}>
+                          {style}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+
+              <View style={[styles.inputSection,{alignSelf:'center'}]}>
+                <Input
+                  placeholder={t('remediusPathfinder.placeholders.keywords')}
+                  value={keywords}
+                  setValue={setKeywords}
+                  width={wp(80)}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Research Prompt */}
+          <View style={styles.inputSection}>
+            <Text variant="titleMedium" style={styles.inputLabel}>
+              {t('remediusPathfinder.labels.researchPrompt')}
+            </Text>
+            <TextInput
+              style={styles.promptInputMobile}
+              placeholder={t('remediusPathfinder.placeholders.researchPrompt')}
+              value={prompt}
+              onChangeText={setPrompt}
+              multiline
+              numberOfLines={4}
+              placeholderTextColor={colors.placeholderColor}
+            />
+          </View>
+
+          {/* Generate Button */}
+          <View style={{alignSelf:'center'}}>
+          <PrimaryButton
+            text={isGenerating ? t('remediusPathfinder.buttons.generating') : t('remediusPathfinder.buttons.generate')}
+            onPress={handleGenerate}
+            disabled={isGenerating || !prompt.trim() || selectedDocuments.size === 0}
+            loading={isGenerating}
+            width={wp(80)}
+          /></View>
+        </View>
+      </ScrollView>
+    </View>
   );
 
-  const renderCitationStyle = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.citationStyleButton,
-        selectedCitationStyle === item && styles.selectedCitationStyleButton
-      ]}
-      onPress={() => setSelectedCitationStyle(item)}
-    >
-      <Text variant="labelSmall" style={[
-        styles.citationStyleText,
-        selectedCitationStyle === item && styles.selectedCitationStyleText
-      ]}>
-        {t(`remediusPathfinder.citationStyles.${item}`)}
-      </Text>
-    </TouchableOpacity>
+  // Generated Content View
+  const renderGeneratedView = () => (
+    <View style={styles.viewContainer}>
+      {generatedContent ? (
+        <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.generatedContentCard}>
+            <View style={styles.generatedContentHeader}>
+              <Text variant="headlineSmall" style={styles.generatedContentTitle}>
+                Generated Content
+              </Text>
+              <View style={styles.generatedContentActions}>
+                <TouchableOpacity style={styles.generatedActionButton}>
+                  <Share size={16} color={colors.lightGreen} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.generatedActionButton}>
+                  <Download size={16} color={colors.lightGreen} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.generatedActionButton}>
+                  <Copy size={16} color={colors.lightGreen} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.generatedContentMeta}>
+              <Text variant="bodySmall" style={styles.generatedContentDate}>
+                Generated at {generatedContent.timestamp.toLocaleTimeString()}
+              </Text>
+              <Text variant="bodySmall" style={styles.generatedContentStyle}>
+                {t(`remediusPathfinder.citationStyles.${generatedContent.citationStyle}`)} Style
+              </Text>
+            </View>
+
+            <View style={styles.generatedContentBody}>
+              <Text variant="bodyMedium" style={styles.generatedContentText}>
+                {generatedContent.content}
+              </Text>
+            </View>
+
+            <View style={styles.sourcesSection}>
+              <Text variant="titleMedium" style={styles.sourcesTitle}>
+                Sources Used ({generatedContent.sources.length})
+              </Text>
+              {generatedContent.sources.map(sourceId => {
+                const doc = documents.find(d => d.id === sourceId);
+                return doc ? (
+                  <View key={sourceId} style={styles.sourceItem}>
+                    <FileText size={16} color={colors.lightGreen} />
+                    <Text variant="bodySmall" style={styles.sourceName} numberOfLines={1}>
+                      {doc.name}
+                    </Text>
+                    <TouchableOpacity style={styles.sourceViewButton}>
+                      <Eye size={14} color={colors.onSurfaceVariant} />
+                    </TouchableOpacity>
+                  </View>
+                ) : null;
+              })}
+            </View>
+
+            <View style={styles.regenerateSection}>
+              <PrimaryButton
+                text="Regenerate Section"
+                onPress={() => {
+                  setIsGenerating(true);
+                  setTimeout(() => {
+                    setGeneratedContent({
+                      ...generatedContent,
+                      content: generatedContent.content + "\n\nRegenerated content with updated analysis...",
+                      timestamp: new Date(),
+                    });
+                    setIsGenerating(false);
+                  }, 2000);
+                }}
+                loading={isGenerating}
+                width={wp(90)}
+              />
+            </View>
+          </View>
+        </ScrollView>
+      ) : (
+        <View style={styles.emptyGeneratedState}>
+          <Brain size={80} color={colors.onSurfaceVariant} style={{ opacity: 0.3 }} />
+          <Text variant="headlineSmall" style={styles.emptyGeneratedTitle}>
+            No Content Generated
+          </Text>
+          <Text variant="bodyMedium" style={styles.emptyGeneratedMessage}>
+            Use the AI Assistant to generate research content
+          </Text>
+          <PrimaryButton
+            text="Go to Assistant"
+            onPress={() => setCurrentView('assistant')}
+            width={wp(60)}
+          />
+        </View>
+      )}
+    </View>
   );
+
+  const getHeaderTitle = () => {
+    switch (currentView) {
+      case 'projects':
+        return t('remediusPathfinder.header.title');
+      case 'project-detail':
+        return selectedProject?.name || 'Project';
+      case 'assistant':
+        return 'AI Assistant';
+      case 'generated':
+        return 'Generated Content';
+      default:
+        return t('remediusPathfinder.header.title');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-       <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -307,351 +663,21 @@ const Pathfinder = () => {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text variant="headlineMedium" style={styles.headerTitle}>
-            {t('remediusPathfinder.header.title')}
+            {getHeaderTitle()}
           </Text>
-          <Text variant="bodySmall" style={styles.headerSubtitle}>
-            {t('remediusPathfinder.header.subtitle')}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        {/* Sidebar */}
-        {!isSidebarCollapsed && (
-          <View style={styles.sidebar}>
-            <View style={styles.sidebarHeader}>
-              <View style={styles.searchContainer}>
-                <Search size={16} color={colors.onSurfaceVariant} style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={t('remediusPathfinder.placeholders.searchProjects')}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor={colors.placeholderColor}
-                />
-              </View>
-              <TouchableOpacity
-                style={styles.newProjectButton}
-                onPress={() => setShowNewProjectDialog(true)}
-              >
-                <Plus size={16} color="white" />
-                <Text variant="labelMedium" style={styles.newProjectButtonText}>
-                  {t('remediusPathfinder.buttons.newProject')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.projectsList}>
-              {projects.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Folder size={48} color={colors.onSurfaceVariant} style={{ opacity: 0.4 }} />
-                  <Text variant="bodySmall" style={styles.emptyStateText}>
-                    {t('remediusPathfinder.messages.noProjects')}
-                  </Text>
-                </View>
-              ) : (
-                <FlatList
-                  data={filteredProjects}
-                  renderItem={renderProject}
-                  keyExtractor={(item) => item.id}
-                  showsVerticalScrollIndicator={false}
-                />
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Main Content */}
-        <View style={[styles.mainContent, isSidebarCollapsed && styles.fullWidthContent]}>
-          <TouchableOpacity
-            style={styles.collapseButton}
-            onPress={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          >
-            {isSidebarCollapsed ? (
-              <ChevronRight size={20} color={colors.onSurfaceVariant} />
-            ) : (
-              <ChevronLeft size={20} color={colors.onSurfaceVariant} />
-            )}
-          </TouchableOpacity>
-
-          {selectedProject ? (
-            <ScrollView style={styles.projectContent} showsVerticalScrollIndicator={false}>
-              {/* Project Header */}
-              <View style={styles.projectHeader}>
-                <View style={styles.projectInfo}>
-                  <Text variant="headlineSmall" style={styles.projectTitle} numberOfLines={1}>
-                    {selectedProject.name}
-                  </Text>
-                  {selectedProject.description && (
-                    <Text variant="bodySmall" style={styles.projectDescription}>
-                      {selectedProject.description}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.projectActions}>
-                  <TouchableOpacity style={styles.projectActionButton}>
-                    <Settings size={16} color={colors.onSurfaceVariant} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.projectActionButton}>
-                    <Download size={16} color={colors.onSurfaceVariant} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.projectActionButton}>
-                    <Save size={16} color={colors.onSurfaceVariant} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Document Upload Area */}
-              <TouchableOpacity style={styles.uploadArea} onPress={handleAddDocument}>
-                <Upload size={24} color={colors.onSurfaceVariant} />
-                <Text variant="bodyMedium" style={styles.uploadText}>
-                  {t('remediusPathfinder.dropzone.prompt')}
-                </Text>
-                <Text variant="bodySmall" style={styles.uploadSubtext}>
-                  {t('remediusPathfinder.dropzone.sizeLimit')}
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.projectGrid}>
-                {/* Left Column: Documents and Assistant */}
-                <View style={styles.leftColumn}>
-                  {/* Research Documents */}
-                  <View style={styles.section}>
-                    <Text variant="titleMedium" style={styles.sectionTitle}>
-                      {t('remediusPathfinder.sections.researchDocuments')}
-                    </Text>
-                    {documents.length === 0 ? (
-                      <View style={styles.emptyDocuments}>
-                        <FileText size={48} color={colors.onSurfaceVariant} style={{ opacity: 0.4 }} />
-                        <Text variant="bodySmall" style={styles.emptyDocumentsText}>
-                          {t('remediusPathfinder.messages.noDocuments')}
-                        </Text>
-                      </View>
-                    ) : (
-                      <FlatList
-                        data={documents}
-                        renderItem={renderDocument}
-                        keyExtractor={(item) => item.id}
-                        scrollEnabled={false}
-                      />
-                    )}
-                  </View>
-
-                  {/* Research Assistant */}
-                  <View style={styles.section}>
-                    <View style={styles.assistantHeader}>
-                      <Text variant="titleMedium" style={styles.sectionTitle}>
-                        {t('remediusPathfinder.sections.researchAssistant')}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.advancedButton}
-                        onPress={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                      >
-                        <Text variant="labelSmall" style={styles.advancedButtonText}>
-                          {showAdvancedOptions
-                            ? t('remediusPathfinder.buttons.hideAdvanced')
-                            : t('remediusPathfinder.buttons.showAdvanced')}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* Content Type */}
-                    <View style={styles.inputSection}>
-                      <Text variant="labelMedium" style={styles.inputLabel}>
-                        {t('remediusPathfinder.labels.contentType')}
-                      </Text>
-                      <FlatList
-                        data={CONTENT_TYPES}
-                        renderItem={renderContentType}
-                        keyExtractor={(item) => item.id}
-                        numColumns={2}
-                        scrollEnabled={false}
-                        columnWrapperStyle={styles.contentTypeRow}
-                      />
-                    </View>
-
-                    {/* Advanced Options */}
-                    {showAdvancedOptions && (
-                      <View style={styles.advancedOptions}>
-                        {/* Citation Style */}
-                        <View style={styles.inputSection}>
-                          <Text variant="labelMedium" style={styles.inputLabel}>
-                            {t('remediusPathfinder.labels.citationStyle')}
-                          </Text>
-                          <FlatList
-                            data={CITATION_STYLES}
-                            renderItem={renderCitationStyle}
-                            keyExtractor={(item) => item}
-                            numColumns={3}
-                            scrollEnabled={false}
-                            columnWrapperStyle={styles.citationStyleRow}
-                          />
-                        </View>
-
-                        {/* Keywords */}
-                        <View style={styles.inputSection}>
-                          <Text variant="labelMedium" style={styles.inputLabel}>
-                            {t('remediusPathfinder.labels.keywords')}
-                          </Text>
-                          <TextInput
-                            style={styles.keywordsInput}
-                            placeholder={t('remediusPathfinder.placeholders.keywords')}
-                            value={keywords}
-                            onChangeText={setKeywords}
-                            placeholderTextColor={colors.placeholderColor}
-                          />
-                        </View>
-                      </View>
-                    )}
-
-                    {/* Research Prompt */}
-                    <View style={styles.inputSection}>
-                      <Text variant="labelMedium" style={styles.inputLabel}>
-                        {t('remediusPathfinder.labels.researchPrompt')}
-                      </Text>
-                      <TextInput
-                        style={styles.promptInput}
-                        placeholder={t('remediusPathfinder.placeholders.researchPrompt')}
-                        value={prompt}
-                        onChangeText={setPrompt}
-                        multiline
-                        numberOfLines={4}
-                        placeholderTextColor={colors.placeholderColor}
-                      />
-                    </View>
-
-                    {/* Generate Button */}
-                    <TouchableOpacity
-                      style={[
-                        styles.generateButton,
-                        (isGenerating || !prompt.trim() || selectedDocuments.size === 0) && 
-                        styles.generateButtonDisabled
-                      ]}
-                      onPress={handleGenerate}
-                      disabled={isGenerating || !prompt.trim() || selectedDocuments.size === 0}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Text variant="labelMedium" style={styles.generateButtonText}>
-                            {t('remediusPathfinder.buttons.generating')}
-                          </Text>
-                        </>
-                      ) : (
-                        <>
-                          <Brain size={16} color="white" />
-                          <Text variant="labelMedium" style={styles.generateButtonText}>
-                            {t('remediusPathfinder.buttons.generate')}
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Right Column: Generated Content */}
-                <View style={styles.rightColumn}>
-                  <Text variant="titleMedium" style={styles.sectionTitle}>
-                    {t('remediusPathfinder.sections.generatedContent')}
-                  </Text>
-                  
-                  {generatedContent ? (
-                    <View style={styles.generatedContentContainer}>
-                      <View style={styles.generatedContentHeader}>
-                        <Text variant="bodySmall" style={styles.generatedContentMeta}>
-                          {t('remediusPathfinder.generation.generatedAt', {
-                            time: generatedContent.timestamp.toLocaleTimeString(),
-                            style: t(`remediusPathfinder.citationStyles.${generatedContent.citationStyle}`),
-                          })}
-                        </Text>
-                        <View style={styles.generatedContentActions}>
-                          <TouchableOpacity
-                            style={styles.contentActionButton}
-                            onPress={handleRegenerateSection}
-                            disabled={isGenerating}
-                          >
-                            <RefreshCw size={12} color={colors.primary} />
-                            <Text variant="labelSmall" style={styles.contentActionText}>
-                              {t('remediusPathfinder.buttons.regenerate')}
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.contentActionButton}
-                            onPress={() => {
-                              // Mock copy functionality
-                              Alert.alert(t('success.copied'));
-                            }}
-                          >
-                            <Copy size={12} color={colors.primary} />
-                            <Text variant="labelSmall" style={styles.contentActionText}>
-                              {t('remediusPathfinder.buttons.copy')}
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      
-                      <ScrollView style={styles.generatedContentScroll} showsVerticalScrollIndicator={false}>
-                        <Text variant="bodySmall" style={styles.generatedContentText}>
-                          {generatedContent.content}
-                        </Text>
-                      </ScrollView>
-                      
-                      {/* Sources Used */}
-                      <View style={styles.sourcesContainer}>
-                        <Text variant="labelMedium" style={styles.sourcesTitle}>
-                          {t('remediusPathfinder.generation.sourcesUsed')}:
-                        </Text>
-                        {generatedContent.sources.map(sourceId => {
-                          const doc = documents.find(d => d.id === sourceId);
-                          return doc ? (
-                            <View key={sourceId} style={styles.sourceItem}>
-                              <Text variant="labelSmall" style={styles.sourceName} numberOfLines={1}>
-                                {doc.name}
-                              </Text>
-                              <TouchableOpacity
-                                onPress={() => handlePreviewPDF(doc.file)}
-                                style={styles.sourcePreviewButton}
-                              >
-                                <BookOpen size={12} color={colors.primary} />
-                              </TouchableOpacity>
-                            </View>
-                          ) : null;
-                        })}
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.emptyContent}>
-                      <FileText size={48} color={colors.onSurfaceVariant} style={{ opacity: 0.4 }} />
-                      <Text variant="bodySmall" style={styles.emptyContentText}>
-                        {t('remediusPathfinder.messages.noContentGenerated')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </ScrollView>
-          ) : (
-            // No Project Selected
-            <View style={styles.noProjectSelected}>
-              <Folder size={80} color={colors.onSurfaceVariant} style={{ opacity: 0.3 }} />
-              <Text variant="headlineSmall" style={styles.noProjectTitle}>
-                {t('remediusPathfinder.messages.noProjectSelectedTitle')}
-              </Text>
-              <Text variant="bodyMedium" style={styles.noProjectMessage}>
-                {t('remediusPathfinder.messages.noProjectSelectedMessage')}
-              </Text>
-              <TouchableOpacity
-                style={styles.createProjectButton}
-                onPress={() => setShowNewProjectDialog(true)}
-              >
-                <Plus size={16} color="white" />
-                <Text variant="labelMedium" style={styles.createProjectButtonText}>
-                  {t('remediusPathfinder.buttons.createProject')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+          {currentView === 'projects' && (
+            <Text variant="bodySmall" style={styles.headerSubtitle}>
+              {t('remediusPathfinder.header.subtitle')}
+            </Text>
           )}
         </View>
       </View>
+
+      {/* Content */}
+      {currentView === 'projects' && renderProjectsView()}
+      {currentView === 'project-detail' && renderProjectDetailView()}
+      {currentView === 'assistant' && renderAssistantView()}
+      {currentView === 'generated' && renderGeneratedView()}
 
       {/* New Project Dialog */}
       {showNewProjectDialog && (
@@ -667,12 +693,11 @@ const Pathfinder = () => {
             </View>
             
             <View style={styles.dialogContent}>
-              <TextInput
-                style={styles.projectNameInput}
+              <Input
                 placeholder={t('remediusPathfinder.placeholders.projectName')}
                 value={newProjectName}
-                onChangeText={setNewProjectName}
-                placeholderTextColor={colors.placeholderColor}
+                setValue={setNewProjectName}
+                width={wp(80)}
               />
               <TextInput
                 style={styles.projectDescriptionInput}
@@ -683,45 +708,12 @@ const Pathfinder = () => {
                 numberOfLines={3}
                 placeholderTextColor={colors.placeholderColor}
               />
-              <TouchableOpacity
-                style={[
-                  styles.createButton,
-                  !newProjectName.trim() && styles.createButtonDisabled
-                ]}
+              <PrimaryButton
+                text={t('remediusPathfinder.buttons.createProject')}
                 onPress={handleCreateProject}
                 disabled={!newProjectName.trim()}
-              >
-                <Text variant="labelMedium" style={styles.createButtonText}>
-                  {t('remediusPathfinder.buttons.createProject')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* PDF Preview Dialog */}
-      {showPDFPreview && selectedPDF && (
-        <View style={styles.dialogOverlay}>
-          <View style={styles.dialogContainer}>
-            <View style={styles.dialogHeader}>
-              <Text variant="headlineSmall" style={styles.dialogTitle}>
-                {t('remediusPathfinder.pdfPreview.title')}
-              </Text>
-              <TouchableOpacity onPress={() => setShowPDFPreview(false)}>
-                <X size={24} color={colors.onSurface} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.pdfPreviewContent}>
-              <Text variant="bodySmall" style={styles.pdfPreviewFileName}>
-                {t('remediusPathfinder.pdfPreview.fileName')}: {selectedPDF.name}
-              </Text>
-              <View style={styles.pdfPreviewContainer}>
-                <Text variant="bodyMedium" style={styles.pdfPreviewText}>
-                  PDF preview would be displayed here
-                </Text>
-              </View>
+                width={wp(80)}
+              />
             </View>
           </View>
         </View>
@@ -762,214 +754,215 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     marginTop: 2,
   },
-  content: {
+  viewContainer: {
     flex: 1,
-    flexDirection: 'row',
   },
-  // Sidebar Styles
-  sidebar: {
-    width: wp(25),
-    backgroundColor: 'white',
-    borderRightWidth: 1,
-    borderRightColor: colors.outline,
+  contentScroll: {
+    flex: 1,
+    paddingHorizontal: wp(4),
   },
-  sidebarHeader: {
-    padding: wp(4),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  searchContainer: {
-    flexDirection: 'row',
+  searchSection: {
+    paddingVertical: hp(2),
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    marginBottom: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.onSurface,
-  },
-  newProjectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    backgroundColor: colors.lightGreen,
-    borderRadius: 8,
-  },
-  newProjectButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  projectsList: {
-    flex: 1,
-    padding: wp(4),
-  },
-  projectCard: {
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
-  },
-  selectedProjectCard: {
-    borderColor: colors.lightGreen,
-    backgroundColor: '#F0FDF4',
-  },
-  projectName: {
-    color: colors.onSurface,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  projectDescription: {
-    color: colors.onSurfaceVariant,
-    marginBottom: 6,
-  },
-  projectDate: {
-    color: colors.onSurfaceVariant,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: hp(10),
+    paddingVertical: hp(15),
   },
-  emptyStateText: {
+  emptyStateTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateMessage: {
     color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginTop: 12,
+    paddingHorizontal: wp(8),
   },
-  // Main Content Styles
-  mainContent: {
-    flex: 1,
+  projectsGrid: {
+    paddingVertical: hp(2),
+  },
+  projectCardMobile: {
     backgroundColor: 'white',
-    position: 'relative',
-  },
-  fullWidthContent: {
-    width: '100%',
-  },
-  collapseButton: {
-    position: 'absolute',
-    top: hp(2),
-    left: -15,
-    zIndex: 10,
-    backgroundColor: 'white',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 12,
+    padding: wp(4),
+    marginBottom: hp(2),
     borderWidth: 1,
     borderColor: colors.outline,
   },
-  projectContent: {
-    flex: 1,
-    padding: wp(4),
+  projectCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp(1),
   },
-  projectHeader: {
+  projectOptionsButton: {
+    padding: 4,
+  },
+  projectCardTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: hp(0.5),
+  },
+  projectCardDescription: {
+    color: colors.onSurfaceVariant,
+    marginBottom: hp(1),
+  },
+  projectCardDate: {
+    color: colors.onSurfaceVariant,
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: hp(3),
+    right: wp(4),
+  },
+  floatingActionButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.lightGreen,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  projectInfoCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: wp(4),
+    marginVertical: hp(2),
+    borderWidth: 1,
+    borderColor: colors.outline,
+  },
+  projectInfoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: hp(2),
   },
-  projectInfo: {
+  projectInfoMain: {
     flex: 1,
-    marginRight: 16,
   },
-  projectTitle: {
+  projectInfoTitle: {
     color: colors.onSurface,
     fontWeight: '600',
+    marginBottom: hp(0.5),
   },
-  projectActions: {
+  projectInfoDescription: {
+    color: colors.onSurfaceVariant,
+  },
+  projectInfoOptionsButton: {
+    padding: 4,
+  },
+  projectStats: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    borderTopColor: colors.outline,
+    paddingTop: hp(2),
   },
-  projectActionButton: {
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: colors.background,
-  },
-  uploadArea: {
+  statItem: {
     alignItems: 'center',
-    padding: 24,
-    borderWidth: 2,
-    borderColor: colors.outline,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    backgroundColor: colors.surface,
-    marginBottom: hp(3),
   },
-  uploadText: {
-    color: colors.onSurface,
-    marginTop: 8,
-    textAlign: 'center',
+  statNumber: {
+    color: colors.lightGreen,
+    fontWeight: '600',
   },
-  uploadSubtext: {
+  statLabel: {
     color: colors.onSurfaceVariant,
     marginTop: 4,
-    textAlign: 'center',
   },
-  projectGrid: {
-    flexDirection: 'row',
-    gap: wp(4),
-  },
-  leftColumn: {
-    flex: 1,
-  },
-  rightColumn: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: hp(3),
+  quickActionsSection: {
+    marginVertical: hp(1),
   },
   sectionTitle: {
     color: colors.onSurface,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: hp(1.5),
   },
-  // Document Styles
-  documentCard: {
-    padding: 12,
-    marginBottom: 8,
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: hp(1.5),
+  },
+  quickActionButton: {
+    flex: 1,
+    minWidth: wp(25),
+    alignItems: 'center',
+    padding: wp(4),
+    backgroundColor: 'white',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.outline,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
   },
-  selectedDocumentCard: {
+  quickActionText: {
+    color: colors.onSurface,
+    marginTop: hp(0.5),
+    textAlign: 'center',
+  },
+  documentsSection: {
+    marginVertical: hp(1),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: hp(1.5),
+  },
+  emptyDocumentsCard: {
+    alignItems: 'center',
+    padding: wp(8),
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.outline,
+    borderStyle: 'dashed',
+  },
+  emptyDocumentsText: {
+    color: colors.onSurface,
+    marginTop: hp(1),
+    textAlign: 'center',
+  },
+  emptyDocumentsSubtext: {
+    color: colors.onSurfaceVariant,
+    marginTop: hp(0.5),
+    textAlign: 'center',
+  },
+  documentsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: hp(1.5),
+  },
+  documentCardMobile: {
+    flex: 1,
+    minWidth: wp(40),
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: wp(3),
+    borderWidth: 1,
+    borderColor: colors.outline,
+  },
+  selectedDocumentCardMobile: {
     borderColor: colors.lightGreen,
     backgroundColor: '#F0FDF4',
   },
-  documentHeader: {
+  documentCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-  },
-  documentName: {
-    color: colors.onSurface,
-    fontWeight: '600',
-    flex: 1,
-  },
-  documentActions: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    marginBottom: hp(1),
   },
-  statusBadge: {
+  documentStatusBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   statusPending: {
     backgroundColor: '#FEF3C7',
@@ -983,277 +976,249 @@ const styles = StyleSheet.create({
   statusError: {
     backgroundColor: '#FEE2E2',
   },
-  statusText: {
+  documentStatusText: {
     color: colors.onSurface,
   },
-  documentActionButton: {
-    padding: 4,
-    borderRadius: 4,
+  documentCardTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: hp(1),
   },
-  documentMeta: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  documentSize: {
-    color: colors.onSurfaceVariant,
-  },
-  documentDate: {
-    color: colors.onSurfaceVariant,
-  },
-  emptyDocuments: {
-    alignItems: 'center',
-    paddingVertical: hp(6),
-    borderWidth: 2,
-    borderColor: colors.outline,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-  },
-  emptyDocumentsText: {
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  // Assistant Styles
-  assistantHeader: {
+  documentCardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
   },
-  advancedButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  documentCardSize: {
+    color: colors.onSurfaceVariant,
+  },
+  documentCardDate: {
+    color: colors.onSurfaceVariant,
+  },
+  assistantCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: wp(4),
+    marginVertical: hp(2),
     borderWidth: 1,
     borderColor: colors.outline,
-    borderRadius: 4,
   },
-  advancedButtonText: {
+  assistantTitle: {
     color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: hp(0.5),
+  },
+  assistantSubtitle: {
+    color: colors.onSurfaceVariant,
+    marginBottom: hp(2),
+  },
+  selectedDocumentsCard: {
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: wp(3),
+    marginBottom: hp(2),
+  },
+  selectedDocumentsTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: hp(1),
+  },
+  selectedDocumentsList: {
+    gap: hp(0.5),
+  },
+  selectedDocumentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp(2),
+  },
+  selectedDocumentName: {
+    color: colors.onSurface,
+    flex: 1,
   },
   inputSection: {
-    marginBottom: 16,
+    marginBottom: hp(2),
   },
   inputLabel: {
     color: colors.onSurface,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: hp(1),
   },
-  contentTypeRow: {
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  contentTypeButton: {
-    flex: 1,
-    marginHorizontal: 2,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 6,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-  },
-  selectedContentTypeButton: {
-    borderColor: colors.lightGreen,
-    backgroundColor: colors.lightGreen,
-  },
-  contentTypeText: {
-    color: colors.onSurface,
-    textAlign: 'center',
-  },
-  selectedContentTypeText: {
-    color: 'white',
-  },
-  advancedOptions: {
-    marginBottom: 16,
-  },
-  citationStyleRow: {
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  citationStyleButton: {
-    flex: 1,
-    marginHorizontal: 2,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 4,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-  },
-  selectedCitationStyleButton: {
-    borderColor: colors.lightGreen,
-    backgroundColor: colors.lightGreen,
-  },
-  citationStyleText: {
-    color: colors.onSurface,
-    textAlign: 'center',
-  },
-  selectedCitationStyleText: {
-    color: 'white',
-  },
-  keywordsInput: {
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: colors.onSurface,
-    backgroundColor: colors.surface,
-  },
-  promptInput: {
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: colors.onSurface,
-    backgroundColor: colors.surface,
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  generateButton: {
+  contentTypeGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    backgroundColor: colors.lightGreen,
+    flexWrap: 'wrap',
+    gap: hp(1),
+  },
+  contentTypeButtonMobile: {
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderWidth: 1,
+    borderColor: colors.outline,
     borderRadius: 8,
+    backgroundColor: colors.surface,
+    marginBottom: hp(0.5),
   },
-  generateButtonDisabled: {
-    backgroundColor: colors.onSurfaceVariant,
-    opacity: 0.6,
+  selectedContentTypeButtonMobile: {
+    borderColor: colors.lightGreen,
+    backgroundColor: colors.lightGreen,
   },
-  generateButtonText: {
+  contentTypeTextMobile: {
+    color: colors.onSurface,
+    textAlign: 'center',
+  },
+  selectedContentTypeTextMobile: {
     color: 'white',
+  },
+  advancedToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: hp(1.5),
+    borderTopWidth: 1,
+    borderTopColor: colors.outline,
+    marginTop: hp(1),
+  },
+  advancedToggleText: {
+    color: colors.onSurface,
     fontWeight: '600',
   },
-  // Generated Content Styles
-  generatedContentContainer: {
-    flex: 1,
+  advancedOptionsCard: {
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: wp(3),
+    marginTop: hp(1),
+  },
+  citationStyleRow: {
+    flexDirection: 'row',
+    gap: wp(2),
+  },
+  citationStyleButtonMobile: {
+    paddingVertical: hp(0.75),
+    paddingHorizontal: wp(3),
+    borderWidth: 1,
+    borderColor: colors.outline,
+    borderRadius: 6,
+    backgroundColor: colors.surface,
+  },
+  selectedCitationStyleButtonMobile: {
+    borderColor: colors.lightGreen,
+    backgroundColor: colors.lightGreen,
+  },
+  citationStyleTextMobile: {
+    color: colors.onSurface,
+  },
+  selectedCitationStyleTextMobile: {
+    color: 'white',
+  },
+  promptInputMobile: {
     borderWidth: 1,
     borderColor: colors.outline,
     borderRadius: 8,
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+    fontSize: 14,
+    color: colors.onSurface,
     backgroundColor: colors.surface,
+    height: hp(12),
+    textAlignVertical: 'top',
+  },
+  generatedContentCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginVertical: hp(2),
+    borderWidth: 1,
+    borderColor: colors.outline,
   },
   generatedContentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    padding: wp(4),
     borderBottomWidth: 1,
     borderBottomColor: colors.outline,
   },
-  generatedContentMeta: {
-    color: colors.onSurfaceVariant,
-    flex: 1,
+  generatedContentTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
   },
   generatedContentActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: wp(2),
   },
-  contentActionButton: {
+  generatedActionButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: colors.background,
+  },
+  generatedContentMeta: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 4,
-    backgroundColor: colors.surface,
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1),
+    backgroundColor: colors.background,
   },
-  contentActionText: {
-    color: colors.primary,
+  generatedContentDate: {
+    color: colors.onSurfaceVariant,
   },
-  generatedContentScroll: {
-    flex: 1,
-    maxHeight: hp(30),
+  generatedContentStyle: {
+    color: colors.onSurfaceVariant,
+  },
+  generatedContentBody: {
+    padding: wp(4),
   },
   generatedContentText: {
     color: colors.onSurface,
-    padding: 12,
-    lineHeight: 20,
+    lineHeight: 22,
   },
-  sourcesContainer: {
-    padding: 12,
+  sourcesSection: {
+    padding: wp(4),
     borderTopWidth: 1,
     borderTopColor: colors.outline,
   },
   sourcesTitle: {
     color: colors.onSurface,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: hp(1),
   },
   sourceItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    marginBottom: 4,
+    paddingVertical: hp(0.75),
+    paddingHorizontal: wp(3),
     backgroundColor: colors.background,
-    borderRadius: 4,
+    borderRadius: 6,
+    marginBottom: hp(0.5),
   },
   sourceName: {
     color: colors.onSurface,
     flex: 1,
+    marginLeft: wp(2),
   },
-  sourcePreviewButton: {
+  sourceViewButton: {
     padding: 4,
   },
-  emptyContent: {
+  regenerateSection: {
+    padding: wp(4),
+    borderTopWidth: 1,
+    borderTopColor: colors.outline,
+    alignItems: 'center',
+  },
+  emptyGeneratedState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: hp(10),
-    borderWidth: 2,
-    borderColor: colors.outline,
-    borderStyle: 'dashed',
-    borderRadius: 8,
+    paddingHorizontal: wp(8),
   },
-  emptyContentText: {
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  // No Project Selected Styles
-  noProjectSelected: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: wp(8),
-  },
-  noProjectTitle: {
+  emptyGeneratedTitle: {
     color: colors.onSurface,
     fontWeight: '600',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
-  noProjectMessage: {
+  emptyGeneratedMessage: {
     color: colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: hp(3),
   },
-  createProjectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: colors.lightGreen,
-    borderRadius: 8,
-  },
-  createProjectButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  // Dialog Styles
   dialogOverlay: {
     position: 'absolute',
     top: 0,
@@ -1266,8 +1231,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   dialogContainer: {
-    width: wp(85),
-    maxHeight: hp(70),
+    width: wp(90),
     backgroundColor: 'white',
     borderRadius: 12,
     overflow: 'hidden',
@@ -1286,61 +1250,20 @@ const styles = StyleSheet.create({
   },
   dialogContent: {
     padding: wp(4),
-    gap: 16,
-  },
-  projectNameInput: {
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: colors.onSurface,
+    gap: hp(2),
+    alignItems: 'center',
   },
   projectDescriptionInput: {
     borderWidth: 1,
     borderColor: colors.outline,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
     fontSize: 14,
     color: colors.onSurface,
-    height: 80,
+    width: wp(80),
+    height: hp(8),
     textAlignVertical: 'top',
-  },
-  createButton: {
-    paddingVertical: 12,
-    backgroundColor: colors.lightGreen,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  createButtonDisabled: {
-    backgroundColor: colors.onSurfaceVariant,
-    opacity: 0.6,
-  },
-  createButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
-  // PDF Preview Styles
-  pdfPreviewContent: {
-    padding: wp(4),
-  },
-  pdfPreviewFileName: {
-    color: colors.onSurfaceVariant,
-    marginBottom: 12,
-  },
-  pdfPreviewContainer: {
-    height: hp(50),
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pdfPreviewText: {
-    color: colors.onSurfaceVariant,
   },
 });
 
