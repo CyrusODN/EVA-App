@@ -7,6 +7,7 @@ import {
   FlatList,
   TextInput,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -22,18 +23,22 @@ import {
   ArrowUpDown,
   Check,
   Import,
-  ChevronRight,
   Clock,
   Send,
   Database,
   BookOpen,
   FileText,
   Link,
+  MessageSquare,
+  FileSearch,
+  X,
+  Calendar,
+  User,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Mock data for visits
 const MOCK_VISITS = [
@@ -70,7 +75,7 @@ const Consult = () => {
   const navigation = useNavigation();
   
   // State management
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('visits');
   const [selectedVisits, setSelectedVisits] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -194,29 +199,32 @@ const Consult = () => {
   };
 
   const renderVisitItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.visitCard,
-        importedVisits.has(item.id) && styles.importedVisitCard
-      ]}
-      onPress={() => handleImport(item)}
-    >
-      <View style={styles.visitHeader}>
-        <View>
-          <Text variant="titleMedium" style={styles.visitName}>{item.name}</Text>
-          <View style={styles.visitMeta}>
-            <Clock size={12} color={colors.onSurfaceVariant} />
-            <Text variant="bodySmall" style={styles.visitMetaText}>
-              {item.date.toLocaleDateString()} • {item.duration}
-            </Text>
+    <TouchableOpacity style={styles.visitCard}>
+      <View style={styles.visitCardHeader}>
+        <View style={styles.visitInfo}>
+          <View style={styles.visitNameRow}>
+            <View style={styles.patientAvatar}>
+              <User size={16} color="white" />
+            </View>
+            <View style={styles.visitDetails}>
+              <Text variant="titleMedium" style={styles.visitName}>{item.name}</Text>
+              <View style={styles.visitMeta}>
+                <Calendar size={12} color={colors.onSurfaceVariant} />
+                <Text variant="bodySmall" style={styles.visitMetaText}>
+                  {item.date.toLocaleDateString()}
+                </Text>
+                <Clock size={12} color={colors.onSurfaceVariant} />
+                <Text variant="bodySmall" style={styles.visitMetaText}>
+                  {item.duration}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
+        
         {importedVisits.has(item.id) ? (
           <View style={styles.importedBadge}>
-            <Check size={16} color={colors.lightGreen} />
-            <Text variant="labelSmall" style={styles.importedText}>
-              {t('common.imported')}
-            </Text>
+            <Check size={14} color="white" />
           </View>
         ) : (
           <TouchableOpacity
@@ -224,12 +232,10 @@ const Consult = () => {
             onPress={() => handleImport(item)}
           >
             <Import size={14} color="white" />
-            <Text variant="labelMedium" style={styles.importButtonText}>
-              {t('common.import')}
-            </Text>
           </TouchableOpacity>
         )}
       </View>
+
       <View style={styles.visitTags}>
         <View style={[styles.tag, styles.typeTag]}>
           <Text variant="labelSmall" style={styles.tagText}>{item.type}</Text>
@@ -237,6 +243,17 @@ const Consult = () => {
         <View style={[styles.tag, styles.specializationTag]}>
           <Text variant="labelSmall" style={styles.tagText}>{item.specialization}</Text>
         </View>
+      </View>
+
+      <View style={styles.visitActions}>
+        <TouchableOpacity style={styles.actionButton}>
+          <FileText size={16} color={colors.primary} />
+          <Text variant="labelSmall" style={styles.actionButtonText}>View Notes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <MessageSquare size={16} color={colors.lightGreen} />
+          <Text variant="labelSmall" style={styles.actionButtonText}>Discuss</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -252,42 +269,130 @@ const Consult = () => {
       ]}>
         {item.content}
       </Text>
+      <Text variant="bodySmall" style={styles.messageTime}>
+        {item.timestamp.toLocaleTimeString()}
+      </Text>
       {item.sources && (
         <View style={styles.sourcesContainer}>
+          <Text variant="labelMedium" style={styles.sourcesLabel}>Sources:</Text>
           {item.sources.map((source, index) => (
-            <View key={index} style={styles.sourceItem}>
+            <TouchableOpacity key={index} style={styles.sourceItem}>
               <View style={styles.sourceHeader}>
                 {source.type === 'graph' ? (
-                  <Database size={16} color={colors.primary} />
+                  <Database size={14} color={colors.primary} />
                 ) : source.type === 'literature' ? (
-                  <BookOpen size={16} color={colors.lightGreen} />
+                  <BookOpen size={14} color={colors.lightGreen} />
                 ) : (
-                  <FileText size={16} color="#8B5CF6" />
+                  <FileText size={14} color="#8B5CF6" />
                 )}
-                <Text variant="labelMedium" style={styles.sourceTitle}>
+                <Text variant="labelSmall" style={styles.sourceTitle}>
                   {source.title}
                 </Text>
-                <Text variant="labelSmall" style={styles.sourceConfidence}>
-                  {source.confidence}% {t('remediusConsult.chat.confidenceSuffix')}
-                </Text>
-              </View>
-              {source.details && (
-                <Text variant="bodySmall" style={styles.sourceDetails}>
-                  {source.details}
-                </Text>
-              )}
-              {source.link && (
-                <TouchableOpacity style={styles.sourceLink}>
-                  <Link size={12} color={colors.primary} />
-                  <Text variant="labelSmall" style={styles.sourceLinkText}>
-                    {t('remediusConsult.chat.viewSource')}
+                <View style={styles.confidenceBadge}>
+                  <Text variant="labelSmall" style={styles.confidenceText}>
+                    {source.confidence}%
                   </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                </View>
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
+    </View>
+  );
+
+  const renderVisitsTab = () => (
+    <View style={styles.tabContent}>
+      {/* Search and Filters */}
+      <View style={styles.searchAndFilters}>
+        <View style={styles.searchContainer}>
+          <Search size={18} color={colors.onSurfaceVariant} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('remediusConsult.visitHistory.searchPlaceholder')}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={colors.onSurfaceVariant}
+          />
+        </View>
+        
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterChip, showFilters && styles.activeFilterChip]}
+            onPress={() => setShowFilters(!showFilters)}
+          >
+            <Filter size={14} color={showFilters ? 'white' : colors.onSurface} />
+            <Text variant="labelSmall" style={[
+              styles.filterChipText,
+              showFilters && styles.activeFilterChipText
+            ]}>
+              Filters
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.filterChip}
+            onPress={() => handleSort('date')}
+          >
+            <ArrowUpDown size={14} color={colors.onSurface} />
+            <Text variant="labelSmall" style={styles.filterChipText}>
+              Sort
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Visits List */}
+      <FlatList
+        data={filteredAndSortedVisits}
+        renderItem={renderVisitItem}
+        keyExtractor={(item) => item.id}
+        style={styles.visitsList}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.visitsListContent}
+      />
+    </View>
+  );
+
+  const renderChatTab = () => (
+    <View style={styles.tabContent}>
+      <View style={styles.chatHeader}>
+        <Text variant="titleMedium" style={styles.chatTitle}>
+          AI Medical Consultation
+        </Text>
+        <Text variant="bodySmall" style={styles.chatSubtitle}>
+          Ask questions about patient cases and get AI-powered insights
+        </Text>
+      </View>
+
+      <FlatList
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        style={styles.chatMessages}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.chatMessagesContent}
+      />
+
+      <View style={styles.chatInputContainer}>
+        <View style={styles.chatInput}>
+          <TextInput
+            style={styles.messageInput}
+            placeholder="Ask about a patient case..."
+            value={currentMessage}
+            onChangeText={setCurrentMessage}
+            multiline
+            placeholderTextColor={colors.onSurfaceVariant}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, !currentMessage.trim() && styles.sendButtonDisabled]}
+            onPress={handleSendMessage}
+            disabled={!currentMessage.trim()}
+          >
+            <Send size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 
@@ -297,162 +402,131 @@ const Consult = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.onSurface} />
+          <ArrowLeft size={22} color={colors.onSurface} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text variant="headlineMedium" style={styles.headerTitle}>
-            {t('remediusConsult.title')}
+          <Text variant="headlineSmall" style={styles.headerTitle}>
+            Medical Consultation
           </Text>
           <Text variant="bodySmall" style={styles.headerSubtitle}>
-            {t('remediusConsult.subtitle')}
+            AI-powered case analysis
           </Text>
         </View>
       </View>
 
-      <View style={styles.content}>
-        {/* Left Panel - Visit History */}
-        {!isSidebarCollapsed && (
-          <View style={styles.leftPanel}>
-            <View style={styles.leftPanelHeader}>
-              <Text variant="titleLarge" style={styles.panelTitle}>
-                {t('remediusConsult.visitHistory.title')}
-              </Text>
-              <View style={styles.filterControls}>
-                <TouchableOpacity
-                  style={styles.filterButton}
-                  onPress={() => setShowFilters(!showFilters)}
-                >
-                  <Filter size={16} color={colors.onSurface} />
-                  <Text variant="labelMedium">{t('common.filters')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.filterButton}
-                  onPress={() => handleSort('date')}
-                >
-                  <ArrowUpDown size={16} color={colors.onSurface} />
-                  <Text variant="labelMedium">{t('common.sortBy')}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+      {/* Tab Content */}
+      {activeTab === 'visits' ? renderVisitsTab() : renderChatTab()}
 
-            <View style={styles.searchContainer}>
-              <Search size={16} color={colors.onSurfaceVariant} style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={t('remediusConsult.visitHistory.searchPlaceholder')}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={colors.placeholderColor}
-              />
-            </View>
-
-            {showFilters && (
-              <View style={styles.filtersContainer}>
-                <Text variant="labelMedium" style={styles.filterLabel}>
-                  {t('remediusConsult.filters.visitType')}
-                </Text>
-                <View style={styles.filterOptions}>
-                  {uniqueTypes.map(type => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.filterOption,
-                        filters.type.has(type) && styles.activeFilterOption
-                      ]}
-                      onPress={() => toggleFilter('type', type)}
-                    >
-                      <Text variant="labelSmall" style={[
-                        styles.filterOptionText,
-                        filters.type.has(type) && styles.activeFilterOptionText
-                      ]}>
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                <Text variant="labelMedium" style={styles.filterLabel}>
-                  {t('remediusConsult.filters.specialization')}
-                </Text>
-                <View style={styles.filterOptions}>
-                  {uniqueSpecializations.map(spec => (
-                    <TouchableOpacity
-                      key={spec}
-                      style={[
-                        styles.filterOption,
-                        filters.specialization.has(spec) && styles.activeFilterOption
-                      ]}
-                      onPress={() => toggleFilter('specialization', spec)}
-                    >
-                      <Text variant="labelSmall" style={[
-                        styles.filterOptionText,
-                        filters.specialization.has(spec) && styles.activeFilterOptionText
-                      ]}>
-                        {spec}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            <FlatList
-              data={filteredAndSortedVisits}
-              renderItem={renderVisitItem}
-              keyExtractor={(item) => item.id}
-              style={styles.visitsList}
-              showsVerticalScrollIndicator={false}
-            />
-          </View>
-        )}
-
-        {/* Right Panel - Chat */}
-        <View style={[styles.rightPanel, isSidebarCollapsed && styles.fullWidthPanel]}>
-          <TouchableOpacity
-            style={styles.collapseButton}
-            onPress={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          >
-            <ChevronRight size={20} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-
-          <View style={styles.chatHeader}>
-            <View style={styles.chatHeaderContent}>
-              <Text variant="titleLarge" style={styles.chatTitle}>
-                {t('remediusConsult.chat.title')}
-              </Text>
-              <Text variant="bodySmall" style={styles.chatSubtitle}>
-                {t('remediusConsult.chat.subtitle')}
+      {/* Bottom Tab Navigation */}
+      <View style={styles.bottomTabs}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'visits' && styles.activeTab]}
+          onPress={() => setActiveTab('visits')}
+        >
+          <FileSearch size={20} color={activeTab === 'visits' ? colors.lightGreen : colors.onSurfaceVariant} />
+          <Text variant="labelSmall" style={[
+            styles.tabText,
+            activeTab === 'visits' && styles.activeTabText
+          ]}>
+            Visit History
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'chat' && styles.activeTab]}
+          onPress={() => setActiveTab('chat')}
+        >
+          <MessageSquare size={20} color={activeTab === 'chat' ? colors.lightGreen : colors.onSurfaceVariant} />
+          <Text variant="labelSmall" style={[
+            styles.tabText,
+            activeTab === 'chat' && styles.activeTabText
+          ]}>
+            AI Consult
+          </Text>
+          {messages.length > 0 && (
+            <View style={styles.messageBadge}>
+              <Text variant="labelSmall" style={styles.messageBadgeText}>
+                {messages.length}
               </Text>
             </View>
-          </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
-          <FlatList
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            style={styles.chatMessages}
-            showsVerticalScrollIndicator={false}
-          />
-
-          <View style={styles.chatInput}>
-            <TextInput
-              style={styles.messageInput}
-              placeholder={t('remediusConsult.chat.placeholder')}
-              value={currentMessage}
-              onChangeText={setCurrentMessage}
-              multiline
-              placeholderTextColor={colors.placeholderColor}
-            />
-            <TouchableOpacity
-              style={styles.sendButton}
-              onPress={handleSendMessage}
-              disabled={!currentMessage.trim()}
-            >
-              <Send size={20} color="white" />
+      {/* Filters Modal */}
+      <Modal
+        visible={showFilters}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <SafeAreaView style={styles.filtersModal}>
+          <View style={styles.filtersHeader}>
+            <Text variant="titleLarge" style={styles.filtersTitle}>Filters</Text>
+            <TouchableOpacity onPress={() => setShowFilters(false)}>
+              <X size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
+          
+          <ScrollView style={styles.filtersContent}>
+            <View style={styles.filterSection}>
+              <Text variant="titleMedium" style={styles.filterSectionTitle}>
+                Visit Type
+              </Text>
+              <View style={styles.filterOptions}>
+                {uniqueTypes.map(type => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.filterOption,
+                      filters.type.has(type) && styles.activeFilterOption
+                    ]}
+                    onPress={() => toggleFilter('type', type)}
+                  >
+                    <Text variant="bodyMedium" style={[
+                      styles.filterOptionText,
+                      filters.type.has(type) && styles.activeFilterOptionText
+                    ]}>
+                      {type}
+                    </Text>
+                    {filters.type.has(type) && (
+                      <Check size={16} color="white" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.filterSection}>
+              <Text variant="titleMedium" style={styles.filterSectionTitle}>
+                Specialization
+              </Text>
+              <View style={styles.filterOptions}>
+                {uniqueSpecializations.map(spec => (
+                  <TouchableOpacity
+                    key={spec}
+                    style={[
+                      styles.filterOption,
+                      filters.specialization.has(spec) && styles.activeFilterOption
+                    ]}
+                    onPress={() => toggleFilter('specialization', spec)}
+                  >
+                    <Text variant="bodyMedium" style={[
+                      styles.filterOptionText,
+                      filters.specialization.has(spec) && styles.activeFilterOptionText
+                    ]}>
+                      {spec}
+                    </Text>
+                    {filters.specialization.has(spec) && (
+                      <Check size={16} color="white" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
       </View>
     </SafeAreaView>
   );
@@ -461,7 +535,7 @@ const Consult = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor:'white',
+    backgroundColor: 'white',
   },
   header: {
     flexDirection: 'row',
@@ -470,12 +544,17 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
     backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
     marginRight: wp(3),
   },
   headerContent: {
@@ -483,163 +562,143 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: colors.lightGreen,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   headerSubtitle: {
     color: colors.onSurfaceVariant,
     marginTop: 2,
   },
-  content: {
+  tabContent: {
     flex: 1,
-    flexDirection: 'row',
   },
-  leftPanel: {
-    width: wp(45),
-    backgroundColor: 'white',
-    borderRightWidth: 1,
-    borderRightColor: colors.outline,
-  },
-  leftPanelHeader: {
+  
+  // Visits Tab Styles
+  searchAndFilters: {
     padding: wp(4),
+    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  panelTitle: {
-    color: colors.onSurface,
-    marginBottom: hp(1),
-  },
-  filterControls: {
-    flexDirection: 'row',
-    gap: wp(2),
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.outline,
+    borderBottomColor: '#E2E8F0',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: wp(4),
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.outline,
-  },
-  searchIcon: {
-    marginRight: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    marginLeft: 12,
+    fontSize: 16,
     color: colors.onSurface,
   },
-  filtersContainer: {
-    padding: wp(4),
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  filterLabel: {
-    color: colors.onSurface,
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  filterOptions: {
+  filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
   },
-  filterOption: {
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: colors.outline,
-    backgroundColor: colors.surface,
+    borderColor: '#E2E8F0',
   },
-  activeFilterOption: {
+  activeFilterChip: {
     backgroundColor: colors.lightGreen,
     borderColor: colors.lightGreen,
   },
-  filterOptionText: {
+  filterChipText: {
     color: colors.onSurface,
+    fontWeight: '500',
   },
-  activeFilterOptionText: {
+  activeFilterChipText: {
     color: 'white',
   },
   visitsList: {
     flex: 1,
+  },
+  visitsListContent: {
     padding: wp(4),
+    gap: 16,
   },
   visitCard: {
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    backgroundColor: colors.surface,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  importedVisitCard: {
-    borderColor: colors.lightGreen,
-    backgroundColor: '#F0FDF4',
-  },
-  visitHeader: {
+  visitCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  visitInfo: {
+    flex: 1,
+  },
+  visitNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  patientAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.lightGreen,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  visitDetails: {
+    flex: 1,
   },
   visitName: {
     color: colors.onSurface,
     fontWeight: '600',
+    marginBottom: 4,
   },
   visitMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+    gap: 8,
   },
   visitMetaText: {
     color: colors.onSurfaceVariant,
-  },
-  importedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: '#DCFCE7',
-    borderRadius: 6,
-  },
-  importedText: {
-    color: colors.lightGreen,
+    marginRight: 8,
   },
   importButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     backgroundColor: colors.lightGreen,
-    borderRadius: 6,
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  importButtonText: {
-    color: 'white',
+  importedBadge: {
+    backgroundColor: '#10B981',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   visitTags: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 12,
   },
   tag: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
@@ -651,52 +710,55 @@ const styles = StyleSheet.create({
   },
   tagText: {
     color: colors.onSurface,
+    fontSize: 12,
+    fontWeight: '500',
   },
-  rightPanel: {
-    flex: 1,
-    backgroundColor: 'white',
-    position: 'relative',
+  visitActions: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  fullWidthPanel: {
-    width: '100%',
-  },
-  collapseButton: {
-    position: 'absolute',
-    top: hp(2),
-    left: -15,
-    zIndex: 10,
-    backgroundColor: 'white',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
+  actionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.outline,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    flex: 1,
+    justifyContent: 'center',
   },
+  actionButtonText: {
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+
+  // Chat Tab Styles
   chatHeader: {
     padding: wp(4),
+    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  chatHeaderContent: {
+    borderBottomColor: '#E2E8F0',
     alignItems: 'center',
   },
   chatTitle: {
     color: colors.onSurface,
     fontWeight: '600',
+    marginBottom: 4,
   },
   chatSubtitle: {
     color: colors.onSurfaceVariant,
-    marginTop: 4,
+    textAlign: 'center',
   },
   chatMessages: {
     flex: 1,
+  },
+  chatMessagesContent: {
     padding: wp(4),
+    gap: 16,
   },
   messageContainer: {
-    marginBottom: 16,
-    maxWidth: '80%',
+    maxWidth: '85%',
   },
   userMessage: {
     alignSelf: 'flex-end',
@@ -705,84 +767,197 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   messageText: {
-    padding: 12,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 4,
   },
   userMessageText: {
     backgroundColor: colors.lightGreen,
     color: 'white',
   },
   assistantMessageText: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'white',
     color: colors.onSurface,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  messageTime: {
+    color: colors.onSurfaceVariant,
+    fontSize: 11,
+    marginTop: 4,
+    textAlign: 'right',
   },
   sourcesContainer: {
     marginTop: 8,
-    gap: 8,
+    padding: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+  },
+  sourcesLabel: {
+    color: colors.onSurface,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   sourceItem: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.outline,
+    marginBottom: 6,
   },
   sourceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 4,
   },
   sourceTitle: {
     flex: 1,
     color: colors.onSurface,
+    fontSize: 12,
   },
-  sourceConfidence: {
-    color: colors.primary,
-    backgroundColor: '#DBEAFE',
+  confidenceBadge: {
+    backgroundColor: colors.primary,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 8,
   },
-  sourceDetails: {
-    color: colors.onSurfaceVariant,
-    marginTop: 4,
+  confidenceText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '500',
   },
-  sourceLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 6,
-  },
-  sourceLinkText: {
-    color: colors.primary,
+  chatInputContainer: {
+    padding: wp(4),
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
   },
   chatInput: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: wp(4),
-    borderTopWidth: 1,
-    borderTopColor: colors.outline,
-    gap: 8,
+    gap: 12,
   },
   messageInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#E2E8F0',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     maxHeight: 100,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.onSurface,
+    backgroundColor: '#F8FAFC',
   },
   sendButton: {
     backgroundColor: colors.lightGreen,
     borderRadius: 20,
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#94A3B8',
+  },
+
+  // Bottom Tabs
+  bottomTabs: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingVertical: 8,
+    paddingHorizontal: wp(2),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 12,
+    position: 'relative',
+  },
+  activeTab: {
+    backgroundColor: '#F0FDF4',
+  },
+  tabText: {
+    color: colors.onSurfaceVariant,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: colors.lightGreen,
+  },
+  messageBadge: {
+    position: 'absolute',
+    top: 0,
+    right: '30%',
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+
+  // Filters Modal
+  filtersModal: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  filtersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: wp(4),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  filtersTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  filtersContent: {
+    flex: 1,
+    padding: wp(4),
+  },
+  filterSection: {
+    marginBottom: 24,
+  },
+  filterSectionTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  filterOptions: {
+    gap: 8,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  activeFilterOption: {
+    backgroundColor: colors.lightGreen,
+    borderColor: colors.lightGreen,
+  },
+  filterOptionText: {
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  activeFilterOptionText: {
+    color: 'white',
   },
 });
 
