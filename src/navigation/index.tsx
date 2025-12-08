@@ -71,6 +71,7 @@ const BottomTabNavigator = () => {
               colors: {
                 onSurface: 'rgba(255, 255, 255, 0.65)',
                 primary: '#ffffff',
+                surface: 'red',
               },
             }}
             onTabPress={({ route, preventDefault }) => {

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { SetStateAction, useState } from 'react';
 import {
   View,

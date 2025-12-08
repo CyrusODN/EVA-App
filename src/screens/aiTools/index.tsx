@@ -369,12 +369,13 @@ const styles = StyleSheet.create({
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   headerSubtitle: {
-    color: colors.subText,
+    color: '#808080',
     marginTop: hp(0.5),
     fontSize: hp(1.6),
   },
   content: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   contentWrapper: {
     flex: 1,
@@ -382,7 +383,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: wp(5),
-    paddingBottom: hp(6),
   },
   toolsGrid: {
     gap: 0,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   toolTitle: {
     color: 'white',
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: hp(0.5),
     fontSize: hp(1.9),
     fontFamily:

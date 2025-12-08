@@ -28,6 +28,7 @@ interface PrimaryButtonProps {
   iconSource?: any;
   iconSourceRight?: any;
   iconRight?: boolean;
+  iconComponent?: React.ComponentType<any>;
   width?: number;
   loaderColor?: string;
   useGradient?: boolean;
@@ -46,6 +47,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   iconSource = null,
   iconSourceRight = null,
   iconRight = false,
+  iconComponent = null,
   width = wp(90),
   loaderColor = 'white',
   useGradient = true,
@@ -56,15 +58,24 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     ? [colors.surfaceDisabled, colors.surfaceDisabled]
     : ['#4A90B9', '#5BA6B6', '#68BFB3'];
 
+  const IconComponent = iconComponent;
+
   const buttonContent = (
     <View style={styles.buttonContent}>
-      {iconSource && !loading && (
+      {(iconSource || IconComponent) && !loading && (
         <>
-          <Image
-            source={iconSource}
-            style={styles.leftIcon}
-            resizeMode="contain"
-          />
+          {iconSource ? (
+            <Image
+              source={iconSource}
+              style={styles.leftIcon}
+              resizeMode="contain"
+            />
+          ) : IconComponent ? (
+            <IconComponent
+              size={hp(2)}
+              color={isDisabled ? colors.onSurfaceDisabled : textColor}
+            />
+          ) : null}
           {text && <View style={styles.iconSpacing} />}
         </>
       )}
@@ -108,7 +119,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   const buttonStyle: ViewStyle = {
     borderRadius: borderRadius,
     width: width,
-    height: hp(6.5),
+    height: hp(5),
     overflow: 'hidden',
     opacity: isDisabled ? 0.6 : 1,
     shadowColor: '#000',

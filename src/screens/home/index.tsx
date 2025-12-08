@@ -1,531 +1,4 @@
-// import React, { useState } from 'react';
-// import {
-//   StyleSheet,
-//   View,
-//   ScrollView,
-//   TouchableOpacity,
-//   Image,
-//   FlatList,
-// } from 'react-native';
-// import { SafeAreaView } from 'react-native-safe-area-context';
-// import { Text } from 'react-native-paper';
-// import {
-//   widthPercentageToDP as wp,
-//   heightPercentageToDP as hp,
-// } from 'react-native-responsive-screen';
-// import { useTranslation } from 'react-i18next';
-// import LinearGradient from 'react-native-linear-gradient';
-// import {
-//   Search,
-//   Calendar,
-//   Users,
-//   BookOpen,
-//   Video,
-//   Settings,
-//   Clock,
-//   FileText,
-// } from 'lucide-react-native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import Input from '../../components/input';
-// import PrimaryButton from '../../components/primaryButton';
-// import { colors } from '../../constants/colors';
-// import i18next from '../../localization/i18next';
-// import useLanguageStore from '../../store/language';
-
-// const Home = () => {
-//   const { t, i18n } = useTranslation();
-//   const { setLanguage } = useLanguageStore();
-//   const [activeTab, setActiveTab] = useState('patients');
-//   const [showCalendar, setShowCalendar] = useState(false);
-//   const [searchText, setSearchText] = useState("");
-
-//   // Mock data for demonstration
-//   const mockEvents = [
-//     {
-//       id: '1',
-//       title: 'JS45',
-//       date: '2024-01-15',
-//       type: 'patient',
-//       duration: '00:15:30',
-//     },
-//     {
-//       id: '2',
-//       title: 'MD23',
-//       date: '2024-01-14',
-//       type: 'patient',
-//       duration: '00:22:45',
-//     },
-//     {
-//       id: '3',
-//       title: 'Team Meeting',
-//       date: '2024-01-13',
-//       type: 'meeting',
-//       duration: '01:30:00',
-//     },
-//     {
-//       id: '4',
-//       title: 'Medical Lecture',
-//       date: '2024-01-12',
-//       type: 'lecture',
-//       duration: '02:15:30',
-//     },
-//   ];
-
-//   const filteredEvents = mockEvents.filter(event => {
-//     if (activeTab === 'patients') return event.type === 'patient';
-//     if (activeTab === 'meetings') return event.type === 'meeting';
-//     if (activeTab === 'lectures') return event.type === 'lecture';
-//     return true;
-//   });
-
-//   const changeToLanguage = async () => {
-//     try {
-//       const currentLanguage = await AsyncStorage.getItem('language');
-//       console.log('Current Language====>', currentLanguage);
-//       const newLanguage = currentLanguage === 'en' ? 'pl' : 'en';
-
-//       // Update i18next first
-//       i18next.changeLanguage(newLanguage);
-
-//       // Then update store (which will also update AsyncStorage)
-//       setLanguage(newLanguage);
-//     } catch (error) {
-//       console.log('Error changing language:', error);
-//       // Fallback to English
-//       i18next.changeLanguage('en');
-//       setLanguage('en');
-//     }
-//   };
-
-//   const getInitial = email => {
-//     return email ? email.charAt(0).toUpperCase() : 'U';
-//   };
-
-//   const formatEventDate = dateString => {
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString('en-US', {
-//       month: 'short',
-//       day: 'numeric',
-//     });
-//   };
-
-//   const getTabIcon = (tabName, focused) => {
-//     switch (tabName) {
-//       case 'patients':
-//         return <Users size={16} color={focused ? 'white' : 'black'} />;
-//       case 'meetings':
-//         return <BookOpen size={16} color={focused ? 'white' : 'black'} />;
-//       case 'lectures':
-//         return <Video size={16} color={focused ? 'white' : 'black'} />;
-//       default:
-//         return null;
-//     }
-//   };
-
-//   const getNewButtonText = () => {
-//     switch (activeTab) {
-//       case 'patients':
-//         return t('buttons.newVisit');
-//       case 'meetings':
-//         return t('buttons.newMeeting');
-//       case 'lectures':
-//         return t('buttons.newLecture');
-//       default:
-//         return t('buttons.newVisit');
-//     }
-//   };
-
-//   const renderEventItem = ({ item }) => (
-//     <TouchableOpacity style={styles.eventItem}>
-//       <View style={styles.eventHeader}>
-//         <Text variant="titleMedium" style={styles.eventTitle}>
-//           {item.title}
-//         </Text>
-//         <Text variant="bodySmall" style={styles.eventDate}>
-//           {formatEventDate(item.date)}
-//         </Text>
-//       </View>
-//       {item.duration && (
-//         <View style={styles.durationContainer}>
-//           <Clock size={12} color={colors.subText} />
-//           <Text variant="bodySmall" style={styles.durationText}>
-//             {item.duration}
-//           </Text>
-//         </View>
-//       )}
-//     </TouchableOpacity>
-//   );
-
-//   const renderCalendarLegend = () => (
-//     <View style={styles.calendarLegend}>
-//       <View style={styles.legendItem}>
-//         <View style={[styles.legendDot, { backgroundColor: '#53A0CD' }]} />
-//         <Text variant="bodySmall" style={styles.legendText}>
-//           {t('calendar.patientVisits')}
-//         </Text>
-//       </View>
-//       <View style={styles.legendItem}>
-//         <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-//         <Text variant="bodySmall" style={styles.legendText}>
-//           {t('calendar.meetings')}
-//         </Text>
-//       </View>
-//       <View style={styles.legendItem}>
-//         <View style={[styles.legendDot, { backgroundColor: '#8b5cf6' }]} />
-//         <Text variant="bodySmall" style={styles.legendText}>
-//           {t('calendar.lectures')}
-//         </Text>
-//       </View>
-//     </View>
-//   );
-
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       <ScrollView
-//         style={styles.scrollContainer}
-//         showsVerticalScrollIndicator={false}
-//       >
-//         {/* Header Section */}
-//         <View style={styles.header}>
-//           <View style={styles.profileSection}>
-//             <TouchableOpacity style={styles.profileImageContainer}>
-//               <LinearGradient
-//                 colors={['#53A0CD', '#44C2AD']}
-//                 style={styles.profileGradient}
-//               >
-//                 <Text variant="titleMedium" style={styles.profileInitial}>
-//                   {getInitial('user@example.com')}
-//                 </Text>
-//               </LinearGradient>
-//             </TouchableOpacity>
-
-//             <View style={styles.profileInfo}>
-//               <Text variant="titleMedium" style={styles.emailText}>
-//                 user@example.com
-//               </Text>
-//               <TouchableOpacity
-//                 onPress={() => {
-//                   changeToLanguage();
-//                 }}
-//                 style={styles.languageButton}
-//               >
-//                 <Text variant="bodySmall" style={styles.languageText}>
-//                   {i18next.language === 'en'
-//                     ? t('common.polski')
-//                     : t('common.english')}
-//                 </Text>
-//               </TouchableOpacity>
-//             </View>
-//           </View>
-
-//           <TouchableOpacity
-//             style={styles.calendarButton}
-//             onPress={() => setShowCalendar(!showCalendar)}
-//           >
-//             <Calendar size={20} color={colors.primary} />
-//           </TouchableOpacity>
-//         </View>
-
-//         {/* Search Section */}
-//         <View style={styles.searchSection}>
-//           <Input
-//             placeholder={t('common.search')}
-//             leftIcon={<Search size={16} color={colors.subText} />}
-//             width={wp(90)}
-//             value={searchText}
-//             setValue={setSearchText}
-//           />
-//         </View>
-
-//         {/* Calendar or Tabs Section */}
-//         {showCalendar ? (
-//           <View style={styles.calendarContainer}>
-//             <Text variant="headlineMedium" style={styles.calendarTitle}>
-//               {t('common.calendar')}
-//             </Text>
-//             {/* Calendar placeholder - you can integrate a calendar library here */}
-//             <View style={styles.calendarPlaceholder}>
-//               <Text variant="bodyMedium" style={styles.calendarPlaceholderText}>
-//                 Calendar View
-//               </Text>
-//             </View>
-//             {renderCalendarLegend()}
-//           </View>
-//         ) : (
-//           <>
-//             {/* Tabs Section */}
-//             <View style={styles.tabsContainer}>
-//               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-//                 {['patients', 'meetings', 'lectures'].map(tab => (
-//                   <TouchableOpacity
-//                     key={tab}
-//                     style={[
-//                       styles.tabButton,
-//                       activeTab === tab && styles.activeTabButton,
-//                     ]}
-//                     onPress={() => setActiveTab(tab)}
-//                   >
-//                     <LinearGradient
-//                       colors={
-//                         activeTab === tab
-//                           ? ['#53A0CD', '#44C2AD']
-//                           : ['transparent', 'transparent']
-//                       }
-//                       style={styles.tabGradient}
-//                     >
-//                       <View
-//                         style={{
-//                           paddingHorizontal: wp(3),
-//                           paddingVertical: hp(1),
-//                           flexDirection: 'row',
-//                           alignItems: 'center',
-//                         }}
-//                       >
-//                         {getTabIcon(tab, activeTab === tab)}
-//                         <Text
-//                           variant="bodyMedium"
-//                           style={[
-//                             styles.tabText,
-//                             activeTab === tab && styles.activeTabText,
-//                           ]}
-//                         >
-//                           {t(`tabs.${tab}`)}
-//                         </Text>
-//                       </View>
-//                     </LinearGradient>
-//                   </TouchableOpacity>
-//                 ))}
-//               </ScrollView>
-//             </View>
-
-//             {/* New Button Section */}
-//             <View style={styles.newButtonSection}>
-//               <PrimaryButton
-//                 text={getNewButtonText()}
-//                 onPress={() => console.log('New button pressed')}
-//                 icon={true}
-//                 iconSource={null} // You can add appropriate icons here
-//                 width={wp(90)}
-//               />
-//             </View>
-
-//             {/* Content Section */}
-//             <View style={styles.contentSection}>
-//               {filteredEvents.length > 0 ? (
-//                 <FlatList
-//                   data={filteredEvents}
-//                   renderItem={renderEventItem}
-//                   keyExtractor={item => item.id}
-//                   scrollEnabled={false}
-//                   showsVerticalScrollIndicator={false}
-//                   contentContainerStyle={styles.eventsList}
-//                 />
-//               ) : (
-//                 <View style={styles.emptyContainer}>
-//                   <FileText size={48} color={colors.surfaceDisabled} />
-//                   <Text variant="bodyMedium" style={styles.emptyText}>
-//                     {t('messages.noRecords')}
-//                   </Text>
-//                 </View>
-//               )}
-//             </View>
-//           </>
-//         )}
-//       </ScrollView>
-//     </SafeAreaView>
-//   );
-// };
-
-// export default Home;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     backgroundColor: 'white',
-//     flex: 1,
-//   },
-//   scrollContainer: {
-//     flex: 1,
-//   },
-//   header: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     paddingHorizontal: wp(5),
-//     paddingVertical: hp(2),
-//     borderBottomWidth: 1,
-//     borderBottomColor: colors.outline,
-//   },
-//   profileSection: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     flex: 1,
-//   },
-//   profileImageContainer: {
-//     width: 40,
-//     height: 40,
-//     borderRadius: 20,
-//     overflow: 'hidden',
-//   },
-//   profileGradient: {
-//     width: '100%',
-//     height: '100%',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-//   profileInitial: {
-//     color: 'white',
-//     fontSize: 16,
-//     fontWeight: 'bold',
-//   },
-//   profileInfo: {
-//     marginLeft: wp(3),
-//     flex: 1,
-//   },
-//   emailText: {
-//     color: colors.onSurface,
-//     fontSize: 14,
-//   },
-//   languageButton: {
-//     marginTop: 2,
-//   },
-//   languageText: {
-//     color: colors.primary,
-//     fontSize: 12,
-//   },
-//   calendarButton: {
-//     padding: 8,
-//     borderRadius: 8,
-//     backgroundColor: colors.surfaceVariant,
-//   },
-//   searchSection: {
-//     paddingHorizontal: wp(5),
-//     paddingVertical: hp(2),
-//     alignItems: 'center',
-//   },
-//   calendarContainer: {
-//     paddingHorizontal: wp(5),
-//     paddingVertical: hp(2),
-//   },
-//   calendarTitle: {
-//     color: colors.onSurface,
-//     marginBottom: hp(2),
-//   },
-//   calendarPlaceholder: {
-//     height: hp(30),
-//     backgroundColor: colors.surfaceVariant,
-//     borderRadius: 12,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginBottom: hp(2),
-//   },
-//   calendarPlaceholderText: {
-//     color: colors.onSurfaceVariant,
-//   },
-//   calendarLegend: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-around',
-//     paddingHorizontal: wp(2),
-//   },
-//   legendItem: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//   },
-//   legendDot: {
-//     width: 8,
-//     height: 8,
-//     borderRadius: 4,
-//     marginRight: 6,
-//   },
-//   legendText: {
-//     color: colors.onSurfaceVariant,
-//     fontSize: 12,
-//   },
-//   tabsContainer: {
-//     paddingHorizontal: wp(5),
-//     paddingVertical: hp(1),
-//     marginBottom: hp(1),
-//   },
-//   tabButton: {
-//     marginRight: wp(3),
-//     borderRadius: 8,
-//     // overflow: 'hidden',
-//     minWidth: wp(27),
-//     backgroundColor: colors.background,
-//   },
-//   activeTabButton: {},
-//   tabGradient: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     // paddingHorizontal: 12,
-//     // paddingVertical: 8,
-//     borderRadius: 8,
-//     // minHeight: 36,
-//   },
-//   tabText: {
-//     marginLeft: 6,
-//     color: colors.onSurfaceVariant,
-//     fontSize: 12, // Reduced font size
-//     fontWeight: '500',
-//   },
-//   activeTabText: {
-//     color: 'white',
-//     fontWeight: '600',
-//   },
-//   newButtonSection: {
-//     paddingHorizontal: wp(5),
-//     paddingVertical: hp(2),
-//     alignItems: 'center',
-//   },
-//   contentSection: {
-//     paddingHorizontal: wp(5),
-//     paddingBottom: hp(5),
-//   },
-//   eventsList: {
-//     paddingVertical: hp(1),
-//   },
-//   eventItem: {
-//     backgroundColor: 'white',
-//     borderRadius: 12,
-//     borderWidth: 1,
-//     borderColor: colors.outline,
-//     padding: 12,
-//     marginBottom: 12,
-//   },
-//   eventHeader: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     marginBottom: 8,
-//   },
-//   eventTitle: {
-//     color: colors.onSurface,
-//     fontWeight: '500',
-//   },
-//   eventDate: {
-//     color: colors.onSurfaceVariant,
-//     fontSize: 12,
-//   },
-//   durationContainer: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//   },
-//   durationText: {
-//     marginLeft: 6,
-//     color: colors.onSurfaceVariant,
-//     fontSize: 12,
-//   },
-//   emptyContainer: {
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     paddingVertical: hp(10),
-//   },
-//   emptyText: {
-//     color: colors.onSurfaceVariant,
-//     marginTop: hp(2),
-//     textAlign: 'center',
-//   },
-// });
-
+/* eslint-disable react-native/no-inline-styles */
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -534,6 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   Platform,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -555,6 +29,7 @@ import {
   Mic,
   Upload,
   CheckCircle,
+  Plus,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -950,12 +425,13 @@ const Home = () => {
 
         {/* Search Section */}
         <View style={styles.searchSection}>
-          <Input
+          <Search size={20} color={colors.onSurfaceVariant} />
+          <TextInput
             placeholder={t('common.search')}
-            leftIcon={<Search size={16} color={colors.subText} />}
-            width={wp(90)}
+            style={styles.searchInput}
+            placeholderTextColor={colors.onSurfaceVariant}
+            onChangeText={setSearchText}
             value={searchText}
-            setValue={setSearchText}
           />
         </View>
 
@@ -966,7 +442,14 @@ const Home = () => {
           <>
             {/* Tabs Section */}
             <View style={styles.tabsContainer}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  justifyContent: 'space-between',
+                  width: '100%',
+                }}
+              >
                 {['patients', 'meetings', 'lectures'].map(tab => (
                   <TouchableOpacity
                     key={tab}
@@ -982,6 +465,8 @@ const Home = () => {
                           ? ['#53A0CD', '#44C2AD']
                           : ['transparent', 'transparent']
                       }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
                       style={styles.tabGradient}
                     >
                       <View style={styles.tabContent}>
@@ -1007,8 +492,7 @@ const Home = () => {
               <PrimaryButton
                 text={getNewButtonText()}
                 onPress={handleNewButtonPress}
-                icon={true}
-                iconSource={null}
+                iconComponent={Plus}
                 width={wp(90)}
               />
             </View>
@@ -1110,9 +594,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceVariant,
   },
   searchSection: {
+    flexDirection: 'row',
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#d4d4d4',
+    borderRadius: 12,
+    width: '90%',
+    alignSelf: 'center',
+    marginVertical: hp(1),
+  },
+  searchInput: {
+    width: '100%',
+    paddingHorizontal: wp(3),
   },
   calendarContainer: {
     paddingHorizontal: wp(5),
@@ -1199,31 +694,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   tabsContainer: {
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(1),
-    marginBottom: hp(1),
+    marginVertical: hp(1),
+    width: '90%',
+    alignSelf: 'center',
   },
   tabButton: {
-    marginRight: wp(3),
     borderRadius: 8,
-    minWidth: wp(27),
-    backgroundColor: colors.background,
+    width: '30%',
+    backgroundColor: '#f5f5f5',
   },
   activeTabButton: {},
   tabGradient: {
-    borderRadius: 8,
+    borderRadius: 10,
   },
   tabContent: {
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tabText: {
     marginLeft: 6,
     color: colors.onSurfaceVariant,
-    fontSize: 12,
-    fontWeight: '500',
   },
   activeTabText: {
     color: 'white',
@@ -1231,7 +724,7 @@ const styles = StyleSheet.create({
   },
   newButtonSection: {
     paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
+    marginVertical: hp(1),
     alignItems: 'center',
   },
   contentSection: {
