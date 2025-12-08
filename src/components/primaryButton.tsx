@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import React from 'react';
 import {
@@ -13,7 +14,6 @@ import {
 } from 'react-native-responsive-screen';
 import { Text } from 'react-native-paper';
 import { colors } from '../constants/colors';
-// import {FontAwesome6} from '@react-native-vector-icons/fontAwesome6';
 import LinearGradient from 'react-native-linear-gradient';
 
 interface PrimaryButtonProps {
@@ -25,109 +25,138 @@ interface PrimaryButtonProps {
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
-  check?: boolean;
-  icon?: boolean;
-  iconSource: any;
-  iconSourceRight: any;
+  iconSource?: any;
+  iconSourceRight?: any;
   iconRight?: boolean;
   width?: number;
   loaderColor?: string;
+  useGradient?: boolean;
+  accessibilityLabel?: string;
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   text = '',
   textColor = 'white',
-  backgroundColor = colors.buttonBackground,
-  borderColor = colors.buttonBackground,
-  borderRadius = 10,
+  backgroundColor = colors.primary,
+  borderColor = colors.primary,
+  borderRadius = 12,
   onPress,
   loading = false,
   disabled = false,
-  check = false,
-  icon = false,
   iconSource = null,
   iconSourceRight = null,
   iconRight = false,
   width = wp(90),
   loaderColor = 'white',
+  useGradient = true,
+  accessibilityLabel,
 }) => {
-  const commonStyles: ViewStyle = {
-    flexDirection: 'row',
+  const isDisabled = disabled || loading;
+  const gradientColors = disabled
+    ? [colors.surfaceDisabled, colors.surfaceDisabled]
+    : ['#4A90B9', '#5BA6B6', '#68BFB3'];
+
+  const buttonContent = (
+    <View style={styles.buttonContent}>
+      {iconSource && !loading && (
+        <>
+          <Image
+            source={iconSource}
+            style={styles.leftIcon}
+            resizeMode="contain"
+          />
+          {text && <View style={styles.iconSpacing} />}
+        </>
+      )}
+
+      {loading ? (
+        <ActivityIndicator
+          color={loaderColor}
+          size="small"
+          testID="button-loading"
+        />
+      ) : (
+        text && (
+          <Text
+            variant="titleMedium"
+            style={[
+              styles.buttonText,
+              {
+                color: isDisabled ? colors.onSurfaceDisabled : textColor,
+                fontSize: Platform.OS === 'ios' ? hp(1.9) : hp(1.8),
+              },
+            ]}
+          >
+            {text}
+          </Text>
+        )
+      )}
+
+      {iconRight && iconSourceRight && !loading && (
+        <>
+          <View style={styles.iconSpacing} />
+          <Image
+            source={iconSourceRight}
+            style={styles.rightIcon}
+            resizeMode="contain"
+          />
+        </>
+      )}
+    </View>
+  );
+
+  const buttonStyle: ViewStyle = {
     borderRadius: borderRadius,
     width: width,
-    borderWidth: 1,
-    height: hp(6),
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: hp(6.5),
     overflow: 'hidden',
-  };
-
-  const checkTrueStyles = {
-    backgroundColor: backgroundColor,
-    borderColor: borderColor,
-  };
-
-  const checkFalseStyles = {
-    // backgroundColor: disabled ? colors.surfaceDisabled : backgroundColor,
-    borderColor: disabled ? colors.surfaceDisabled : backgroundColor,
+    opacity: isDisabled ? 0.6 : 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: disabled ? 0 : 0.15,
+    shadowRadius: 4,
+    elevation: disabled ? 0 : 3,
   };
 
   return (
-    <View style={{}}>
-      <TouchableOpacity
-        onPress={!disabled ? onPress : undefined}
-        disabled={disabled}
-        style={[commonStyles, check ? checkTrueStyles : checkFalseStyles]}
-      >
-         <LinearGradient
-          colors={['#4A90B9', '#5BA6B6', '#68BFB3']}
+    <TouchableOpacity
+      onPress={!isDisabled ? onPress : undefined}
+      disabled={isDisabled}
+      style={buttonStyle}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled }}
+      accessibilityLabel={accessibilityLabel || text}
+    >
+      {useGradient ? (
+        <LinearGradient
+          colors={gradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradientBackground}
         >
-        {icon && (
-          <>
-            {iconSource ? (
-              <Image
-                source={iconSource}
-                style={{
-                  width: hp(2.5),
-                  height: hp(2.5),
-                  resizeMode: 'contain',
-                }}
-              />
-            ) : (
-              // <FontAwesome6 name="video" iconStyle='solid' />
-              <></>
-            )}
-
-            {text && <View style={{ width: wp(5) }} />}
-          </>
-        )}
-          {!loading ? (
-            <Text
-              variant="titleMedium"
-              style={{
-                color: textColor,
-                fontSize: hp(2),
-              }}
-            >
-              {text}
-            </Text>
-          ) : (
-            <ActivityIndicator style={{}} color={loaderColor} size={'small'} />
-          )}
-        {iconRight && (
-          <>
-            <View style={{ width: wp(2) }} />
-            <Image
-              source={iconSourceRight}
-              style={{ width: hp(2.5), height: hp(2.5) }}
-            />
-          </>
-        )}</LinearGradient>
-      </TouchableOpacity>
-    </View>
+          {buttonContent}
+        </LinearGradient>
+      ) : (
+        <View
+          style={[
+            styles.solidBackground,
+            {
+              backgroundColor: isDisabled
+                ? colors.surfaceDisabled
+                : backgroundColor,
+              borderColor: isDisabled ? colors.surfaceDisabled : borderColor,
+              borderWidth: 1,
+            },
+          ]}
+        >
+          {buttonContent}
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 
@@ -139,6 +168,34 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  solidBackground: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContent: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(4),
+  },
+  buttonText: {
+    fontWeight: '600',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Semibold' : 'SFProText-Semibold',
+    letterSpacing: 0.3,
+  },
+  leftIcon: {
+    width: hp(2.5),
+    height: hp(2.5),
+  },
+  rightIcon: {
+    width: hp(2.5),
+    height: hp(2.5),
+  },
+  iconSpacing: {
+    width: wp(3),
   },
 });

@@ -5,8 +5,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Dimensions,
-  SafeAreaView as RNSafeAreaView,
+  Animated,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -16,8 +16,6 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowLeft,
-  FileText,
   Pill,
   Brain,
   BookOpen,
@@ -30,7 +28,22 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 
-const { width: screenWidth } = Dimensions.get('window');
+interface ToolCardProps {
+  tool: {
+    id: string;
+    title: string;
+    description: string;
+    icon: any;
+    bgImage: string;
+    features: string[];
+    screenName: string;
+  };
+  index: number;
+  isExpanded: boolean;
+  onPress: () => void;
+  onNavigate: () => void;
+  t: (key: string) => string;
+}
 
 const AI_TOOLS = [
   {
@@ -39,7 +52,8 @@ const AI_TOOLS = [
     description: 'aiTools.discharge.description',
     icon: Stethoscope,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/3846005/pexels-photo-3846005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/3846005/pexels-photo-3846005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.discharge.features.0',
       'aiTools.discharge.features.1',
@@ -53,7 +67,8 @@ const AI_TOOLS = [
     description: 'aiTools.prescreening.description',
     icon: ListChecks,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/4226264/pexels-photo-4226264.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/4226264/pexels-photo-4226264.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.prescreening.features.0',
       'aiTools.prescreening.features.1',
@@ -67,7 +82,8 @@ const AI_TOOLS = [
     description: 'aiTools.research.description',
     icon: GraduationCap,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/4226119/pexels-photo-4226119.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/4226119/pexels-photo-4226119.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.research.features.0',
       'aiTools.research.features.1',
@@ -81,7 +97,8 @@ const AI_TOOLS = [
     description: 'aiTools.consult.description',
     icon: Brain,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/3825527/pexels-photo-3825527.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/3825527/pexels-photo-3825527.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.consult.features.0',
       'aiTools.consult.features.1',
@@ -95,7 +112,8 @@ const AI_TOOLS = [
     description: 'aiTools.drugs.description',
     icon: Pill,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.drugs.features.0',
       'aiTools.drugs.features.1',
@@ -109,7 +127,8 @@ const AI_TOOLS = [
     description: 'aiTools.report.description',
     icon: ClipboardList,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/4226264/pexels-photo-4226264.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/4226264/pexels-photo-4226264.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.report.features.0',
       'aiTools.report.features.1',
@@ -123,7 +142,8 @@ const AI_TOOLS = [
     description: 'aiTools.pathfinder.description',
     icon: BookOpen,
     color: colors.primary,
-    bgImage: 'https://images.pexels.com/photos/4226119/pexels-photo-4226119.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    bgImage:
+      'https://images.pexels.com/photos/4226119/pexels-photo-4226119.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
     features: [
       'aiTools.pathfinder.features.0',
       'aiTools.pathfinder.features.1',
@@ -133,123 +153,170 @@ const AI_TOOLS = [
   },
 ];
 
-const AITools = () => {
-  const { t } = useTranslation();
-  const navigation = useNavigation();
-  const [expandedTool, setExpandedTool] = useState(null);
+const ToolCard: React.FC<ToolCardProps> = ({
+  tool,
+  index,
+  isExpanded,
+  onPress,
+  onNavigate,
+  t,
+}) => {
+  const Icon = tool.icon;
+  const animatedHeight = useState(new Animated.Value(hp(15)))[0];
+  const animatedOpacity = useState(new Animated.Value(0))[0];
 
-  const handleToolPress = (tool) => {
-    if (expandedTool === tool.id) {
-      // Navigate to the respective screen
-      navigation.navigate(tool.screenName);
-    } else {
-      // Expand/collapse the tool card
-      setExpandedTool(expandedTool === tool.id ? null : tool.id);
-    }
-  };
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(animatedHeight, {
+        toValue: isExpanded ? hp(35) : hp(15),
+        useNativeDriver: false,
+        tension: 50,
+        friction: 8,
+      }),
+      Animated.timing(animatedOpacity, {
+        toValue: isExpanded ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isExpanded, animatedHeight, animatedOpacity]);
 
-  const handleBackPress = () => {
-    navigation.goBack();
-  };
+  return (
+    <Animated.View
+      style={[
+        styles.toolCard,
+        { height: animatedHeight },
+        index > 0 && { marginTop: hp(1.5) },
+      ]}
+    >
+      <Image
+        source={{ uri: tool.bgImage }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      <View style={styles.overlay} />
 
-  const renderToolCard = (tool) => {
-    const Icon = tool.icon;
-    const isExpanded = expandedTool === tool.id;
-
-    return (
-      <TouchableOpacity
-        key={tool.id}
-        style={[
-          styles.toolCard,
-          { height: isExpanded ? hp(35) : hp(15) },
-        ]}
-        onPress={() => handleToolPress(tool)}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={{ uri: tool.bgImage }}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-        <View style={styles.overlay} />
-        
-        <View style={styles.cardContent}>
+      <View style={styles.cardContent}>
+        <TouchableOpacity
+          onPress={onPress}
+          activeOpacity={0.9}
+          style={styles.cardHeaderTouchable}
+        >
           <View style={styles.cardHeader}>
             <View style={styles.iconContainer}>
-              <Icon size={20} color="white" />
+              <Icon size={22} color="white" />
             </View>
             <View style={styles.titleContainer}>
-              <Text variant="titleMedium" style={styles.toolTitle}>
+              <Text
+                variant="titleMedium"
+                style={styles.toolTitle}
+                numberOfLines={isExpanded ? undefined : 1}
+              >
                 {t(tool.title)}
               </Text>
-              <Text variant="bodySmall" style={styles.toolDescription}>
+              <Text
+                variant="bodySmall"
+                style={styles.toolDescription}
+                numberOfLines={isExpanded ? undefined : 2}
+              >
                 {t(tool.description)}
               </Text>
             </View>
           </View>
+        </TouchableOpacity>
 
-          {isExpanded && (
-            <View style={styles.expandedContent}>
-              <View style={styles.featuresContainer}>
-                {tool.features.map((feature, index) => (
-                  <View key={index} style={styles.featureItem}>
-                    <View style={styles.featureBullet} />
-                    <Text variant="bodySmall" style={styles.featureText}>
-                      {t(feature)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-              
-              <TouchableOpacity
-                style={styles.startButton}
-                onPress={() => navigation.navigate(tool.screenName)}
-                activeOpacity={0.8}
-              >
-                <Text variant="labelMedium" style={styles.startButtonText}>
-                  {t('buttons.start')}
-                </Text>
-                <ArrowRight size={16} color="white" />
-              </TouchableOpacity>
+        {isExpanded && (
+          <Animated.View
+            style={[
+              styles.expandedContent,
+              {
+                opacity: animatedOpacity,
+              },
+            ]}
+          >
+            <View style={styles.featuresContainer}>
+              {tool.features.map((feature: string, featureIndex: number) => (
+                <View key={featureIndex} style={styles.featureItem}>
+                  <View style={styles.featureBullet} />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    {t(feature)}
+                  </Text>
+                </View>
+              ))}
             </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
+
+            <TouchableOpacity
+              style={styles.startButton}
+              onPress={onNavigate}
+              activeOpacity={0.8}
+            >
+              <Text variant="labelMedium" style={styles.startButtonText}>
+                {t('buttons.start')}
+              </Text>
+              <ArrowRight size={18} color="white" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+      </View>
+    </Animated.View>
+  );
+};
+
+const AITools = () => {
+  const { t } = useTranslation();
+  const navigation = useNavigation();
+  const [expandedTool, setExpandedTool] = useState<string | null>(null);
+
+  const handleToolPress = (tool: (typeof AI_TOOLS)[0]) => {
+    if (expandedTool === tool.id) {
+      navigation.navigate(tool.screenName as never);
+    } else {
+      setExpandedTool(expandedTool === tool.id ? null : tool.id);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{flex:1,backgroundColor:colors.background}}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* <TouchableOpacity
+      <View style={styles.contentWrapper}>
+        {/* Header */}
+        <View style={styles.header}>
+          {/* <TouchableOpacity
           onPress={handleBackPress}
           style={styles.backButton}
         >
           <ArrowLeft size={24} color={colors.onSurface} />
         </TouchableOpacity> */}
-        
-        <View style={styles.headerTitleContainer}>
-          <Text variant="headlineLarge" style={styles.headerTitle}>
-            {t('aiTools.title')}
-          </Text>
-          <Text variant="bodySmall" style={styles.headerSubtitle}>
-            {t('aiTools.description')}
-          </Text>
-        </View>
-      </View>
 
-      {/* Content */}
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View style={styles.toolsGrid}>
-          {AI_TOOLS.map((tool) => renderToolCard(tool))}
+          <View style={styles.headerTitleContainer}>
+            <Text variant="headlineLarge" style={styles.headerTitle}>
+              {t('aiTools.title')}
+            </Text>
+            <Text variant="bodySmall" style={styles.headerSubtitle}>
+              {t('aiTools.description')}
+            </Text>
+          </View>
         </View>
-      </ScrollView>
+
+        {/* Content */}
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.toolsGrid}>
+            {AI_TOOLS.map((tool, index) => (
+              <ToolCard
+                key={tool.id}
+                tool={tool}
+                index={index}
+                isExpanded={expandedTool === tool.id}
+                onPress={() => handleToolPress(tool)}
+                onNavigate={() => navigation.navigate(tool.screenName as never)}
+                t={t}
+              />
+            ))}
+          </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -260,16 +327,24 @@ export default AITools;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
-    backgroundColor: 'white',
+    paddingVertical: hp(2.5),
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: colors.outlineVariant,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   backButton: {
     padding: 8,
@@ -281,35 +356,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    color: colors.lightGreen,
+    color: colors.primary,
     fontWeight: '600',
+    fontSize: hp(2.4),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   headerSubtitle: {
-    color: colors.onSurfaceVariant,
-    marginTop: 2,
+    color: colors.subText,
+    marginTop: hp(0.5),
+    fontSize: hp(1.6),
   },
   content: {
     flex: 1,
   },
+  contentWrapper: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   scrollContent: {
     padding: wp(5),
-    paddingBottom: hp(5),
+    paddingBottom: hp(6),
   },
   toolsGrid: {
-    gap: hp(2),
+    gap: 0,
   },
   toolCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
-    marginBottom: hp(2),
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
   backgroundImage: {
     position: 'absolute',
@@ -326,26 +408,31 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.lightGreen,
-    opacity: 0.85,
+    backgroundColor: colors.primary,
+    opacity: 0.88,
   },
   cardContent: {
     flex: 1,
-    padding: wp(4),
+    padding: wp(5),
     justifyContent: 'space-between',
+  },
+  cardHeaderTouchable: {
+    flex: 1,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   titleContainer: {
     flex: 1,
@@ -353,13 +440,18 @@ const styles = StyleSheet.create({
   toolTitle: {
     color: 'white',
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: hp(0.5),
+    fontSize: hp(1.9),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   toolDescription: {
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontSize: hp(1.5),
+    lineHeight: hp(2.1),
   },
   expandedContent: {
-    marginTop: hp(2),
+    marginTop: hp(2.5),
   },
   featuresContainer: {
     marginBottom: hp(2),
@@ -370,29 +462,38 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   featureBullet: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: 'white',
-    marginRight: 8,
+    marginRight: wp(2.5),
+    marginTop: hp(0.8),
   },
   featureText: {
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
     flex: 1,
+    fontSize: hp(1.6),
+    lineHeight: hp(2.2),
   },
   startButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingVertical: hp(1.8),
+    paddingHorizontal: wp(5),
+    borderRadius: 12,
     alignSelf: 'stretch',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    marginTop: hp(1),
   },
   startButtonText: {
     color: 'white',
     fontWeight: '600',
-    marginRight: 8,
+    marginRight: wp(2),
+    fontSize: hp(1.8),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Semibold' : 'SFProText-Semibold',
   },
 });

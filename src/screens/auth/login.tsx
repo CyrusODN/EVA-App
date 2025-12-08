@@ -72,6 +72,9 @@ const Login = () => {
                   borderColor={colors.borderColor}
                   borderRadius={12}
                   width={wp(80)}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  accessibilityLabel={t('login.emailPlaceholder')}
                 />
               </View>
               <View style={styles.inputGroup}>
@@ -85,6 +88,9 @@ const Login = () => {
                   borderColor={colors.borderColor}
                   borderRadius={12}
                   width={wp(80)}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  accessibilityLabel={t('login.passwordPlaceholder')}
                 />
               </View>
 
@@ -121,7 +127,9 @@ const Login = () => {
                   text={t('login.signIn')}
                   onPress={handleLogin}
                   loading={loading}
+                  disabled={loading}
                   width={wp(80)}
+                  accessibilityLabel={t('login.signIn')}
                 />
               </View>
 
@@ -204,15 +212,15 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: 24,
-    padding: wp(8),
+    padding: wp(6),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
   },
   titleContainer: {
     alignItems: 'center',
@@ -228,7 +236,7 @@ const styles = StyleSheet.create({
     lineHeight: hp(2.5),
   },
   inputGroup: {
-    marginBottom: hp(2.5),
+    marginBottom: hp(2),
     alignSelf: 'center',
   },
   optionsRow: {
@@ -278,6 +286,14 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(6),
     width: wp(80),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   googleIcon: {
     width: hp(2.5),

@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unstable-nested-components */
+/* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useState, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Text, Image } from 'react-native';
@@ -51,17 +53,33 @@ const BottomTabNavigator = () => {
           colors={LinearGradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
+          style={{
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 8,
+          }}
         >
           <BottomNavigation.Bar
             navigationState={state}
             safeAreaInsets={insets}
             activeColor="#ffffff"
-            inactiveColor={colors.inverseSurface} //'rgba(255, 255, 255, 0.6)'
-            style={{ backgroundColor: 'transparent' }}
+            inactiveColor="rgba(255, 255, 255, 0.65)"
+            style={{
+              backgroundColor: 'transparent',
+              paddingTop: hp(1),
+              paddingBottom: hp(0.5),
+            }}
             theme={{
               colors: {
-                onSurface: 'rgba(255, 255, 255, 0.6)', // Inactive color
-                primary: '#ffffff', // Active color
+                onSurface: 'rgba(255, 255, 255, 0.65)',
+                primary: '#ffffff',
               },
             }}
             onTabPress={({ route, preventDefault }) => {
@@ -84,7 +102,7 @@ const BottomTabNavigator = () => {
               descriptors[route.key].options.tabBarIcon?.({
                 focused,
                 color,
-                size: 24,
+                size: focused ? 26 : 24,
               }) || null
             }
             getLabelText={({ route }) => {
@@ -99,7 +117,6 @@ const BottomTabNavigator = () => {
               return label;
             }}
           />
-          //
         </LinearGradient>
       )}
     >
@@ -185,7 +202,10 @@ const Navigation = () => {
         <Stack.Screen name="settings" component={screens.Settings} />
         <Stack.Screen name="subscription" component={screens.Subscription} />
         <Stack.Screen name="transactions" component={screens.Transactions} />
-        <Stack.Screen name="transcriptionCompleted" component={screens.TranscriptionComplete} />
+        <Stack.Screen
+          name="transcriptionCompleted"
+          component={screens.TranscriptionComplete}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

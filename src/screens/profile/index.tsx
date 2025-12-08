@@ -10,6 +10,10 @@ import {
 import { Text, List, Divider, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 import { colors } from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 
@@ -25,7 +29,7 @@ const Profile = () => {
   const [user] = useState(mockUser);
   const navigation = useNavigation();
 
-  const handleNavigate = (screen:string) => {
+  const handleNavigate = (screen: string) => {
     //@ts-ignore
     navigation.navigate(screen);
   };
@@ -51,14 +55,32 @@ const Profile = () => {
   );
 
   const PressableItem = ({ title, icon, onPress, titleStyle }) => (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+    >
       <List.Item
         title={title}
         titleStyle={[styles.listItemTitle, titleStyle]}
-        left={() => <List.Icon icon={icon} color={colors.darkPrimary} />}
-        right={() => (
-          <List.Icon icon="chevron-right" color={colors.darkPrimary} />
+        left={() => (
+          <List.Icon
+            icon={icon}
+            color={colors.primary}
+            style={{ marginLeft: wp(2) }}
+          />
         )}
+        right={() => (
+          <List.Icon
+            icon="chevron-right"
+            color={colors.subText}
+            style={{ marginRight: wp(2) }}
+          />
+        )}
+        style={{
+          paddingVertical: hp(1),
+        }}
       />
     </TouchableOpacity>
   );
@@ -67,18 +89,19 @@ const Profile = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}>
-        
+        showsVerticalScrollIndicator={false}
+      >
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
-            <Image 
-              source={{ uri: user.profilePicture }} 
+            <Image
+              source={{ uri: user.profilePicture }}
               style={styles.profileImage}
             />
             <TouchableOpacity
               style={styles.editButton}
-              onPress={handleImagePicker}>
+              onPress={handleImagePicker}
+            >
               <IconButton
                 icon="camera"
                 size={20}
@@ -87,7 +110,7 @@ const Profile = () => {
               />
             </TouchableOpacity>
           </View>
-          
+
           <Text variant="titleMedium" style={styles.userEmail}>
             {user.email}
           </Text>
@@ -139,28 +162,40 @@ const Profile = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
   },
   container: {
-    padding: 16,
-    paddingBottom: 32,
-    backgroundColor: colors.surface,
+    padding: wp(5),
+    paddingBottom: hp(6),
+    backgroundColor: colors.background,
     flexGrow: 1,
   },
   profileHeader: {
     alignItems: 'center',
-    marginBottom: 32,
-    paddingTop: 20,
+    marginBottom: hp(4),
+    paddingTop: hp(2),
+    paddingBottom: hp(2),
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    marginHorizontal: wp(2),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   profileImageContainer: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: hp(2),
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
+    width: hp(14),
+    height: hp(14),
+    borderRadius: hp(7),
+    borderWidth: 4,
     borderColor: colors.primary,
     backgroundColor: colors.primaryContainer,
   },
@@ -169,42 +204,75 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: colors.primary,
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    borderRadius: hp(3.5),
+    width: hp(7),
+    height: hp(7),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
     borderColor: colors.surface,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   editIcon: {
     margin: 0,
   },
   userEmail: {
-    color: colors.darkPrimary,
+    color: colors.onSurface,
     textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: hp(1.8),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Medium' : 'SFProDisplay-Medium',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: hp(3),
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    marginHorizontal: wp(2),
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sectionTitle: {
-    fontSize: 16,
-    color: colors.darkPrimary,
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontSize: hp(1.7),
+    color: colors.subText,
+    marginBottom: hp(1),
+    marginTop: hp(2),
+    marginHorizontal: wp(5),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   listItemTitle: {
-    color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    color: colors.onSurface,
+    fontSize: hp(1.8),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   logoutText: {
-    color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    color: colors.onSurface,
+    fontSize: hp(1.8),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   deleteText: {
     color: colors.error,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: hp(1.8),
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
 });
 

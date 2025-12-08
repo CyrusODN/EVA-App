@@ -1,4 +1,4 @@
-import React, { SetStateAction, useState, useMemo } from 'react';
+import React, { SetStateAction, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,9 +7,8 @@ import {
   Image,
   ImageSourcePropType,
   Platform,
+  Animated,
 } from 'react-native';
-//@ts-ignore
-import { Ionicons } from '@react-native-vector-icons/ionicons';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -38,14 +37,18 @@ interface InputProps {
   numberOfLines?: number;
   onFocus?: () => void;
   onBlur?: () => void;
+  error?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
+  accessibilityLabel?: string;
 }
 
 const Input: React.FC<InputProps> = ({
   placeholder = '',
-  textColor = 'black',
-  backgroundColor = 'white',
-  borderColor = colors.buttonBackground,
-  borderRadius = 10,
+  textColor = colors.onSurface,
+  backgroundColor = colors.inputBackground,
+  borderColor = colors.borderColor,
+  borderRadius = 12,
   width = wp(90),
   leftIcon = null,
   rightIcon = null,
@@ -58,11 +61,17 @@ const Input: React.FC<InputProps> = ({
   disable = false,
   rightIconPress,
   mode = 'text',
-  numberOfLines = 7,
+  numberOfLines = 4,
   onFocus = () => {},
   onBlur = () => {},
+  error = false,
+  autoCapitalize = 'none',
+  autoCorrect = false,
+  accessibilityLabel,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const borderWidthAnim = useState(new Animated.Value(1.5))[0];
 
   const toggleShowPassword = () => {
     setShowPassword(prevState => !prevState);
@@ -77,19 +86,54 @@ const Input: React.FC<InputProps> = ({
     }
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+    onFocus();
+    Animated.timing(borderWidthAnim, {
+      toValue: 2,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    onBlur();
+    Animated.timing(borderWidthAnim, {
+      toValue: 1.5,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const dynamicBorderColor = error
+    ? colors.error
+    : isFocused
+    ? colors.primary
+    : borderColor;
+
+  const iconPadding = wp(4);
+  const inputPaddingLeft = leftIcon ? wp(12) : wp(4);
+  const inputPaddingRight = isPassword || rightIcon ? wp(12) : wp(4);
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.inputContainer,
         {
-          borderColor,
+          borderColor: dynamicBorderColor,
           borderRadius: borderRadius,
-          backgroundColor,
+          backgroundColor: disable ? colors.surfaceDisabled : backgroundColor,
           width,
+          borderWidth: borderWidthAnim,
         },
       ]}
     >
-      {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
+      {leftIcon && (
+        <View style={[styles.leftIconContainer, { left: iconPadding }]}>
+          {leftIcon}
+        </View>
+      )}
 
       <TextInput
         inputMode={mode}
@@ -100,27 +144,39 @@ const Input: React.FC<InputProps> = ({
         style={[
           styles.input,
           {
-            color: textColor,
-            borderColor: borderColor,
-            paddingLeft: leftIcon ? 45 : 15, // Adjust padding based on icon presence
-            paddingRight: isPassword || rightIcon ? 45 : 15,
-            height: multiline ? hp(10) : height || hp(6),
-            backgroundColor: backgroundColor,
+            color: disable ? colors.onSurfaceDisabled : textColor,
+            paddingLeft: inputPaddingLeft,
+            paddingRight: inputPaddingRight,
+            height: multiline ? height || hp(12) : height || hp(6.5),
+            fontSize: Platform.OS === 'ios' ? 15 : 14,
+            paddingTop: multiline ? hp(1.5) : 0,
           },
         ]}
         secureTextEntry={isPassword && !showPassword}
         multiline={multiline}
-        editable={disable ? false : true}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        // numberOfLines={numberOfLines}
+        editable={!disable}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        numberOfLines={multiline ? numberOfLines : 1}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        accessibilityLabel={accessibilityLabel || placeholder}
+        accessibilityState={{ disabled: disable }}
       />
 
       {(isPassword || rightIcon) && (
         <TouchableOpacity
-          style={styles.rightIconContainer}
+          style={[styles.rightIconContainer, { right: iconPadding }]}
           onPress={isPassword ? toggleShowPassword : rightIconPress}
-          activeOpacity={isPassword ? 0.7 : 1}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPassword
+              ? showPassword
+                ? 'Hide password'
+                : 'Show password'
+              : 'Action button'
+          }
         >
           {isPassword ? (
             showPassword ? (
@@ -132,18 +188,14 @@ const Input: React.FC<InputProps> = ({
             rightIcon && (
               <Image
                 resizeMode="contain"
-                style={{
-                  width: hp(2),
-                  height: hp(2),
-                  opacity: value ? 1 : 0.4,
-                }}
+                style={[styles.rightIconImage, { opacity: value ? 1 : 0.4 }]}
                 source={rightIcon}
               />
             )
           )}
         </TouchableOpacity>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -155,28 +207,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   input: {
     flex: 1,
-    backgroundColor: 'white',
-    height: hp(6),
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    fontSize: 14,
+    backgroundColor: 'transparent',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Regular' : 'SFProText-Regular',
+    ...Platform.select({
+      ios: {
+        paddingVertical: hp(1.5),
+      },
+      android: {
+        paddingVertical: hp(1),
+      },
+    }),
   },
   leftIconContainer: {
     position: 'absolute',
-    left: 15,
     zIndex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    height: '100%',
   },
   rightIconContainer: {
     position: 'absolute',
-    right: 15,
     zIndex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    height: '100%',
+    minWidth: 32,
+    paddingHorizontal: 4,
+  },
+  rightIconImage: {
+    width: hp(2.5),
+    height: hp(2.5),
   },
 });
