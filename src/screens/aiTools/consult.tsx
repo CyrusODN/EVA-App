@@ -17,7 +17,7 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowLeft,
+  ChevronLeft,
   Search,
   Filter,
   ArrowUpDown,
@@ -35,6 +35,7 @@ import {
   Calendar,
   User,
 } from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 
@@ -402,15 +403,26 @@ const Consult = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={22} color={colors.onSurface} />
+          <ChevronLeft size={24} color={colors.onSurface} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text variant="headlineSmall" style={styles.headerTitle}>
-            Medical Consultation
-          </Text>
-          <Text variant="bodySmall" style={styles.headerSubtitle}>
-            AI-powered case analysis
-          </Text>
+
+        <View style={styles.headerTitleContainer}>
+          <LinearGradient
+            colors={['#53A0CD', '#44C2AD']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.headerIconContainer}
+          >
+            <MessageSquare size={20} color="white" />
+          </LinearGradient>
+          <View style={styles.headerTextContainer}>
+            <Text variant="headlineLarge" style={styles.headerTitle}>
+              Medical Consultation
+            </Text>
+            <Text variant="bodySmall" style={styles.headerSubtitle}>
+              AI-powered case analysis
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -540,9 +552,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
+    paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outlineVariant,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     shadowColor: '#000',
@@ -552,17 +566,30 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   backButton: {
-    padding: 10,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
-    marginRight: wp(3),
+    borderRadius: 8,
+    marginRight: wp(2),
   },
-  headerContent: {
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: colors.lightGreen,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(3),
+    alignSelf: 'flex-start',
+    marginTop: hp(0.75),
+  },
+  headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
     color: colors.lightGreen,
-    fontWeight: '700',
   },
   headerSubtitle: {
     color: colors.onSurfaceVariant,

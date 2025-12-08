@@ -15,7 +15,7 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowLeft,
+  ChevronLeft,
   Search,
   Plus,
   Folder,
@@ -33,6 +33,7 @@ import {
   Download,
   Share,
 } from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
@@ -659,17 +660,28 @@ const Pathfinder = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.onSurface} />
+          <ChevronLeft size={24} color={colors.onSurface} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text variant="headlineMedium" style={styles.headerTitle}>
-            {getHeaderTitle()}
-          </Text>
-          {currentView === 'projects' && (
-            <Text variant="bodySmall" style={styles.headerSubtitle}>
-              {t('remediusPathfinder.header.subtitle')}
+
+        <View style={styles.headerTitleContainer}>
+          <LinearGradient
+            colors={['#53A0CD', '#44C2AD']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.headerIconContainer}
+          >
+            <Brain size={20} color="white" />
+          </LinearGradient>
+          <View style={styles.headerTextContainer}>
+            <Text variant="headlineLarge" style={styles.headerTitle}>
+              {getHeaderTitle()}
             </Text>
-          )}
+            {currentView === 'projects' && (
+              <Text variant="bodySmall" style={styles.headerSubtitle}>
+                {t('remediusPathfinder.header.subtitle')}
+              </Text>
+            )}
+          </View>
         </View>
       </View>
 
@@ -731,24 +743,39 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
+    paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outlineVariant,
     borderBottomWidth: 1,
     borderBottomColor: colors.outline,
   },
   backButton: {
-    padding: 8,
     borderRadius: 8,
-    backgroundColor: colors.background,
-    marginRight: wp(3),
+    marginRight: wp(2),
   },
-  headerContent: {
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: colors.lightGreen,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: wp(3),
+    alignSelf: 'flex-start',
+    marginTop: hp(0.75),
+  },
+  headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
     color: colors.lightGreen,
-    fontWeight: '600',
   },
   headerSubtitle: {
     color: colors.onSurfaceVariant,

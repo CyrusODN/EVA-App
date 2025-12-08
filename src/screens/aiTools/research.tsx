@@ -14,13 +14,14 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowLeft,
+  ChevronLeft,
   GraduationCap,
   Microscope,
   Brain,
   ArrowRight,
   X,
 } from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 
@@ -171,18 +172,23 @@ const Research = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.onSurface} />
+          <ChevronLeft size={24} color={colors.onSurface} />
         </TouchableOpacity>
         
         <View style={styles.headerTitleContainer}>
-          <View style={styles.headerIconContainer}>
-            <GraduationCap size={24} color="white" />
-          </View>
+          <LinearGradient
+            colors={['#53A0CD', '#44C2AD']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.headerIconContainer}
+          >
+            <GraduationCap size={20} color="white" />
+          </LinearGradient>
           <View style={styles.headerTextContainer}>
             <Text variant="headlineLarge" style={styles.headerTitle}>
               {t('remediusResearch.main.title')}
             </Text>
-            <Text variant="bodyMedium" style={styles.headerSubtitle}>
+            <Text variant="bodySmall" style={styles.headerSubtitle}>
               {t('remediusResearch.main.subtitle')}
             </Text>
           </View>
@@ -228,54 +234,37 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(4),
-    paddingVertical: hp(2.5),
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(2),
     backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    borderBottomColor: colors.outlineVariant,
   },
   backButton: {
-    padding: 8,
     borderRadius: 8,
-    backgroundColor: colors.surface,
-    marginRight: wp(3),
+    marginRight: wp(2),
   },
   headerTitleContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   headerIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     backgroundColor: colors.lightGreen,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    elevation: 3,
-    shadowColor: colors.lightGreen,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    marginRight: wp(3),
+    alignSelf: 'flex-start',
+    marginTop: hp(0.75),
   },
   headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
     color: colors.lightGreen,
-    fontWeight: '700',
   },
   headerSubtitle: {
     color: colors.onSurfaceVariant,

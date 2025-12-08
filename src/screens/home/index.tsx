@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.outline,
   },
   logo: {
-    width: wp(30),
+    width: wp(35),
     height: hp(4),
   },
   calendarButton: {
@@ -686,14 +686,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 10,
     marginRight: 6,
   },
   legendText: {
     color: colors.onSurfaceVariant,
-    fontSize: 12,
+    // fontSize: 12,
   },
   tabsContainer: {
     marginVertical: hp(1),

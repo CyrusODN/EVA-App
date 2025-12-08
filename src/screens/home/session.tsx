@@ -16,7 +16,7 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowLeft,
+  ChevronLeft,
   Mic,
   Square,
   Upload,
@@ -310,7 +310,7 @@ const Session = () => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <ArrowLeft size={24} color={colors.onSurface} />
+          <ChevronLeft size={24} color={colors.onSurface} />
         </TouchableOpacity>
         
         <View style={styles.sessionInfo}>

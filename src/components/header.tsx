@@ -12,7 +12,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import { ArrowLeft, Bell } from 'lucide-react-native';
+import { ChevronLeft, Bell } from 'lucide-react-native';
 import { colors } from '../constants/colors';
 
 interface HeaderProps {
@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* Left Icon */}
         {leftIcon && (
           <TouchableOpacity onPress={onLeftPress} style={styles.leftButton}>
-            <ArrowLeft size={24} color={colors.onSurface} />
+            <ChevronLeft size={24} color={colors.onSurface} />
           </TouchableOpacity>
         )}
 
