@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
-  Platform,
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +16,6 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   Search,
   Calendar,
@@ -30,6 +28,8 @@ import {
   Upload,
   CheckCircle,
   Plus,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'react-native';
@@ -45,7 +45,7 @@ const Home = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showVisitDialog, setShowVisitDialog] = useState(false);
   const [visitDialogType, setVisitDialogType] = useState('patient');
 
@@ -201,13 +201,6 @@ const Home = () => {
     });
   };
 
-  const onDateChange = (event, date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (date) {
-      setSelectedDate(date);
-    }
-  };
-
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
       style={[
@@ -252,6 +245,65 @@ const Home = () => {
     </TouchableOpacity>
   );
 
+  const getCalendarDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+
+    // Add all days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+
+    return days;
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newDate = new Date(currentMonth);
+    if (direction === 'prev') {
+      newDate.setMonth(newDate.getMonth() - 1);
+    } else {
+      newDate.setMonth(newDate.getMonth() + 1);
+    }
+    setCurrentMonth(newDate);
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  const isSameDay = (date1: Date | null, date2: Date | null) => {
+    if (!date1 || !date2) return false;
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    );
+  };
+
+  const getEventTypeForDate = (date: Date | null) => {
+    if (!date) return null;
+    const dateString = date.toISOString().split('T')[0];
+    const event = mockEvents.find(e => {
+      const eventDate = new Date(e.date).toISOString().split('T')[0];
+      return eventDate === dateString;
+    });
+    return event ? event.type : null;
+  };
+
   const renderCalendarLegend = () => (
     <View style={styles.calendarLegend}>
       <View style={styles.legendItem}>
@@ -275,88 +327,103 @@ const Home = () => {
     </View>
   );
 
-  const renderCalendarView = () => (
-    <View style={styles.calendarContainer}>
-      <Text variant="headlineMedium" style={styles.calendarTitle}>
-        {t('common.calendar')}
-      </Text>
+  const renderCalendarView = () => {
+    const calendarDays = getCalendarDays();
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-      {/* Date Picker Button */}
-      <TouchableOpacity
-        style={styles.datePickerButton}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <LinearGradient
-          colors={['#53A0CD', '#44C2AD']}
-          style={styles.datePickerGradient}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: wp(4),
-              paddingVertical: hp(1.5),
-            }}
+    return (
+      <View style={styles.calendarContainer}>
+        {/* Month Navigation Header */}
+        <View style={styles.calendarHeader}>
+          <TouchableOpacity
+            onPress={() => navigateMonth('prev')}
+            style={styles.monthNavButton}
           >
-            <Calendar size={20} color="white" />
-            <Text variant="titleMedium" style={styles.datePickerText}>
-              {selectedDate.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+            <ChevronLeft size={24} color={colors.onSurface} />
+          </TouchableOpacity>
+
+          <View style={styles.monthYearContainer}>
+            <Text
+              variant="headlineLarge"
+              // style={styles.monthYearText}
+              numberOfLines={1}
+            >
+              {formatMonthYear(currentMonth)}
             </Text>
           </View>
-        </LinearGradient>
-      </TouchableOpacity>
 
-      {/* Calendar Events for Selected Date */}
-      <View style={styles.calendarEvents}>
-        <Text variant="titleMedium" style={styles.calendarEventsTitle}>
-          Events on {selectedDate.toLocaleDateString()}
-        </Text>
+          <TouchableOpacity
+            onPress={() => navigateMonth('next')}
+            style={styles.monthNavButton}
+          >
+            <ChevronRight size={24} color={colors.onSurface} />
+          </TouchableOpacity>
+        </View>
 
-        {/* Mock events for demonstration */}
-        <View style={styles.calendarEventsList}>
-          {filteredEvents.slice(0, 3).map((event, index) => (
-            <TouchableOpacity
-              key={event.id}
-              style={styles.calendarEventItem}
-              onPress={() => handleEventPress(event)}
-            >
-              <View style={styles.calendarEventTime}>
-                <Text variant="bodySmall" style={styles.calendarEventTimeText}>
-                  {`${9 + index}:00`}
-                </Text>
-              </View>
-              <View style={styles.calendarEventDetails}>
-                <Text variant="bodyMedium" style={styles.calendarEventTitle}>
-                  {event.title}
-                </Text>
-                <Text variant="bodySmall" style={styles.calendarEventType}>
-                  {event.type}
-                </Text>
-              </View>
-              {getStatusIcon(event)}
-            </TouchableOpacity>
+        {/* Week Days Header */}
+        <View style={styles.weekDaysContainer}>
+          {weekDays.map((day, index) => (
+            <View key={index} style={styles.weekDay}>
+              <Text variant="bodySmall" style={styles.weekDayText}>
+                {day}
+              </Text>
+            </View>
           ))}
         </View>
+
+        {/* Calendar Grid */}
+        <View style={styles.calendarGrid}>
+          {calendarDays.map((date, index) => {
+            const isSelected = date && isSameDay(date, selectedDate);
+            const eventType = date ? getEventTypeForDate(date) : null;
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.calendarDay,
+                  isSelected && styles.calendarDaySelected,
+                ]}
+                onPress={() => date && setSelectedDate(date)}
+                disabled={!date}
+              >
+                {date && (
+                  <>
+                    <Text
+                      variant="bodyMedium"
+                      style={[
+                        styles.calendarDayText,
+                        isSelected && styles.calendarDayTextSelected,
+                      ]}
+                    >
+                      {date.getDate()}
+                    </Text>
+                    {eventType && (
+                      <View
+                        style={[
+                          styles.eventIndicator,
+                          {
+                            backgroundColor:
+                              eventType === 'patient'
+                                ? '#53A0CD'
+                                : eventType === 'meeting'
+                                ? '#10b981'
+                                : '#8b5cf6',
+                          },
+                        ]}
+                      />
+                    )}
+                  </>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {renderCalendarLegend()}
       </View>
-
-      {renderCalendarLegend()}
-
-      {/* Date Picker Modal */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onDateChange}
-        />
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -537,66 +604,77 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
   },
-  calendarTitle: {
-    color: colors.onSurface,
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: hp(2),
-    fontWeight: '600',
+    paddingHorizontal: wp(2),
   },
-  datePickerButton: {
-    marginBottom: hp(3),
-    borderRadius: 12,
-    overflow: 'hidden',
+  monthNavButton: {
+    padding: wp(2),
+    minWidth: 40,
   },
-  datePickerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // paddingHorizontal: wp(4),
-    // paddingVertical: hp(1.5),
-  },
-  datePickerText: {
-    color: 'white',
-    marginLeft: wp(2),
-    fontWeight: '500',
-  },
-  calendarEvents: {
-    marginBottom: hp(3),
-  },
-  calendarEventsTitle: {
-    color: colors.onSurface,
-    marginBottom: hp(1.5),
-    fontWeight: '600',
-  },
-  calendarEventsList: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: wp(3),
-  },
-  calendarEventItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: hp(1.5),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  calendarEventTime: {
-    width: wp(15),
-    alignItems: 'center',
-  },
-  calendarEventTimeText: {
-    color: colors.onSurfaceVariant,
-    fontWeight: '500',
-  },
-  calendarEventDetails: {
+  monthYearContainer: {
     flex: 1,
-    marginLeft: wp(3),
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(2),
   },
-  calendarEventTitle: {
+  monthYearText: {
     color: colors.onSurface,
+    fontWeight: '600',
+    fontSize: hp(2.5),
+    textAlign: 'center',
+  },
+  weekDaysContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(1),
+    marginBottom: hp(1),
+  },
+  weekDay: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  weekDayText: {
+    color: colors.onSurfaceVariant,
+    fontSize: hp(1.5),
     fontWeight: '500',
   },
-  calendarEventType: {
-    color: colors.onSurfaceVariant,
-    textTransform: 'capitalize',
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(1),
+    marginBottom: hp(3),
+  },
+  calendarDay: {
+    width: wp(12),
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(1),
+    position: 'relative',
+  },
+  calendarDaySelected: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+  },
+  calendarDayText: {
+    color: colors.onSurface,
+    fontSize: hp(1.8),
+  },
+  calendarDayTextSelected: {
+    color: '#1976D2',
+    fontWeight: '600',
+  },
+  eventIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
   calendarLegend: {
     flexDirection: 'row',
