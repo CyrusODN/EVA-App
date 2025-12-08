@@ -1,29 +1,20 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
-import React, { useEffect, useState, useRef } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { Text, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from 'react-native-responsive-screen';
+import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Provider, BottomNavigation } from 'react-native-paper';
+import { BottomNavigation } from 'react-native-paper';
 import { screens } from '../screens';
 import useLanguageStore from '../store/language';
-import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18next from '../localization/i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../constants/linearGradientColors';
-import {
-  CommonActions,
-  createStaticNavigation,
-} from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 import { images } from '../constants/images';
-import { colors } from '../constants/colors';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();

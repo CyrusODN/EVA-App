@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -7,6 +8,7 @@ import {
   Image,
   Animated,
   Platform,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -107,21 +109,6 @@ const AI_TOOLS = [
     screenName: 'consult',
   },
   {
-    id: 'drugs',
-    title: 'aiTools.drugs.title',
-    description: 'aiTools.drugs.description',
-    icon: Pill,
-    color: colors.primary,
-    bgImage:
-      'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    features: [
-      'aiTools.drugs.features.0',
-      'aiTools.drugs.features.1',
-      'aiTools.drugs.features.2',
-    ],
-    screenName: 'pharmcoedia',
-  },
-  {
     id: 'report',
     title: 'aiTools.report.title',
     description: 'aiTools.report.description',
@@ -151,6 +138,21 @@ const AI_TOOLS = [
     ],
     screenName: 'pathFinder',
   },
+  {
+    id: 'drugs',
+    title: 'aiTools.drugs.title',
+    description: 'aiTools.drugs.description',
+    icon: Pill,
+    color: colors.primary,
+    bgImage:
+      'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    features: [
+      'aiTools.drugs.features.0',
+      'aiTools.drugs.features.1',
+      'aiTools.drugs.features.2',
+    ],
+    screenName: 'pharmcoedia',
+  },
 ];
 
 const ToolCard: React.FC<ToolCardProps> = ({
@@ -162,16 +164,20 @@ const ToolCard: React.FC<ToolCardProps> = ({
   t,
 }) => {
   const Icon = tool.icon;
-  const animatedHeight = useState(new Animated.Value(hp(15)))[0];
-  const animatedOpacity = useState(new Animated.Value(0))[0];
+  const animatedHeight = React.useRef(new Animated.Value(hp(15))).current;
+  const animatedOpacity = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
+    // Stop any ongoing animations
+    animatedHeight.stopAnimation();
+    animatedOpacity.stopAnimation();
+
+    // Start new animation
     Animated.parallel([
-      Animated.spring(animatedHeight, {
+      Animated.timing(animatedHeight, {
         toValue: isExpanded ? hp(35) : hp(15),
+        duration: 300,
         useNativeDriver: false,
-        tension: 50,
-        friction: 8,
       }),
       Animated.timing(animatedOpacity, {
         toValue: isExpanded ? 1 : 0,
@@ -179,53 +185,53 @@ const ToolCard: React.FC<ToolCardProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [isExpanded, animatedHeight, animatedOpacity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded]);
 
   return (
     <Animated.View
       style={[
         styles.toolCard,
-        { height: animatedHeight },
+        { height: animatedHeight, overflow: 'hidden' },
         index > 0 && { marginTop: hp(1.5) },
       ]}
     >
-      <Image
-        source={{ uri: tool.bgImage }}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-      <View style={styles.overlay} />
+      <Pressable onPress={onPress} style={styles.overlay}>
+        <Image
+          source={{ uri: tool.bgImage }}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+        <View style={styles.overlay} />
 
-      <View style={styles.cardContent}>
-        <TouchableOpacity
-          onPress={onPress}
-          activeOpacity={0.9}
-          style={styles.cardHeaderTouchable}
-        >
-          <View style={styles.cardHeader}>
-            <View style={styles.iconContainer}>
-              <Icon size={22} color="white" />
-            </View>
-            <View style={styles.titleContainer}>
-              <Text
-                variant="titleMedium"
-                style={styles.toolTitle}
-                numberOfLines={isExpanded ? undefined : 1}
-              >
-                {t(tool.title)}
-              </Text>
-              <Text
-                variant="bodySmall"
-                style={styles.toolDescription}
-                numberOfLines={isExpanded ? undefined : 2}
-              >
-                {t(tool.description)}
-              </Text>
+        <View style={styles.cardContent}>
+          <View
+            // activeOpacity={0.9}
+            style={styles.cardHeaderTouchable}
+          >
+            <View style={styles.cardHeader}>
+              <View style={styles.iconContainer}>
+                <Icon size={22} color="white" />
+              </View>
+              <View style={styles.titleContainer}>
+                <Text
+                  variant="titleMedium"
+                  style={styles.toolTitle}
+                  numberOfLines={isExpanded ? undefined : 1}
+                >
+                  {t(tool.title)}
+                </Text>
+                <Text
+                  variant="bodySmall"
+                  style={styles.toolDescription}
+                  numberOfLines={isExpanded ? undefined : 2}
+                >
+                  {t(tool.description)}
+                </Text>
+              </View>
             </View>
           </View>
-        </TouchableOpacity>
 
-        {isExpanded && (
           <Animated.View
             style={[
               styles.expandedContent,
@@ -233,6 +239,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
                 opacity: animatedOpacity,
               },
             ]}
+            pointerEvents={isExpanded ? 'auto' : 'none'}
           >
             <View style={styles.featuresContainer}>
               {tool.features.map((feature: string, featureIndex: number) => (
@@ -256,8 +263,8 @@ const ToolCard: React.FC<ToolCardProps> = ({
               <ArrowRight size={18} color="white" />
             </TouchableOpacity>
           </Animated.View>
-        )}
-      </View>
+        </View>
+      </Pressable>
     </Animated.View>
   );
 };
@@ -268,11 +275,8 @@ const AITools = () => {
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
 
   const handleToolPress = (tool: (typeof AI_TOOLS)[0]) => {
-    if (expandedTool === tool.id) {
-      navigation.navigate(tool.screenName as never);
-    } else {
-      setExpandedTool(expandedTool === tool.id ? null : tool.id);
-    }
+    // Toggle expansion: if already expanded, close it; otherwise expand it
+    setExpandedTool(expandedTool === tool.id ? null : tool.id);
   };
 
   return (
@@ -280,13 +284,6 @@ const AITools = () => {
       <View style={styles.contentWrapper}>
         {/* Header */}
         <View style={styles.header}>
-          {/* <TouchableOpacity
-          onPress={handleBackPress}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity> */}
-
           <View style={styles.headerTitleContainer}>
             <Text variant="headlineLarge" style={styles.headerTitle}>
               {t('aiTools.title')}
@@ -412,12 +409,12 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   cardContent: {
-    flex: 1,
     padding: wp(5),
+    flex: 1,
     justifyContent: 'space-between',
   },
   cardHeaderTouchable: {
-    flex: 1,
+    width: '100%',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -452,6 +449,8 @@ const styles = StyleSheet.create({
   },
   expandedContent: {
     marginTop: hp(2.5),
+    alignSelf: 'flex-end',
+    width: '100%',
   },
   featuresContainer: {
     marginBottom: hp(2),
