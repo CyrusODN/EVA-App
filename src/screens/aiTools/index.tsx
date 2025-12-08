@@ -29,6 +29,8 @@ import {
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
 
 interface ToolCardProps {
   tool: {
@@ -202,68 +204,75 @@ const ToolCard: React.FC<ToolCardProps> = ({
           style={styles.backgroundImage}
           resizeMode="cover"
         />
-        <View style={styles.overlay} />
+        {/* <View style={styles.overlay} /> */}
 
-        <View style={styles.cardContent}>
-          <View
-            // activeOpacity={0.9}
-            style={styles.cardHeaderTouchable}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.iconContainer}>
-                <Icon size={22} color="white" />
-              </View>
-              <View style={styles.titleContainer}>
-                <Text
-                  variant="titleMedium"
-                  style={styles.toolTitle}
-                  numberOfLines={isExpanded ? undefined : 1}
-                >
-                  {t(tool.title)}
-                </Text>
-                <Text
-                  variant="bodySmall"
-                  style={styles.toolDescription}
-                  numberOfLines={isExpanded ? undefined : 2}
-                >
-                  {t(tool.description)}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <Animated.View
-            style={[
-              styles.expandedContent,
-              {
-                opacity: animatedOpacity,
-              },
-            ]}
-            pointerEvents={isExpanded ? 'auto' : 'none'}
-          >
-            <View style={styles.featuresContainer}>
-              {tool.features.map((feature: string, featureIndex: number) => (
-                <View key={featureIndex} style={styles.featureItem}>
-                  <View style={styles.featureBullet} />
-                  <Text variant="bodySmall" style={styles.featureText}>
-                    {t(feature)}
+        <LinearGradient
+          colors={LinearGradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.overlay}
+        >
+          <View style={styles.cardContent}>
+            <View
+              // activeOpacity={0.9}
+              style={styles.cardHeaderTouchable}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.iconContainer}>
+                  <Icon size={22} color="white" />
+                </View>
+                <View style={styles.titleContainer}>
+                  <Text
+                    variant="titleMedium"
+                    style={styles.toolTitle}
+                    numberOfLines={isExpanded ? undefined : 1}
+                  >
+                    {t(tool.title)}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={styles.toolDescription}
+                    numberOfLines={isExpanded ? undefined : 2}
+                  >
+                    {t(tool.description)}
                   </Text>
                 </View>
-              ))}
+              </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.startButton}
-              onPress={onNavigate}
-              activeOpacity={0.8}
+            <Animated.View
+              style={[
+                styles.expandedContent,
+                {
+                  opacity: animatedOpacity,
+                },
+              ]}
+              pointerEvents={isExpanded ? 'auto' : 'none'}
             >
-              <Text variant="labelMedium" style={styles.startButtonText}>
-                {t('buttons.start')}
-              </Text>
-              <ArrowRight size={18} color="white" />
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
+              <View style={styles.featuresContainer}>
+                {tool.features.map((feature: string, featureIndex: number) => (
+                  <View key={featureIndex} style={styles.featureItem}>
+                    <View style={styles.featureBullet} />
+                    <Text variant="bodySmall" style={styles.featureText}>
+                      {t(feature)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={onNavigate}
+                activeOpacity={0.8}
+              >
+                <Text variant="labelMedium" style={styles.startButtonText}>
+                  {t('buttons.start')}
+                </Text>
+                <ArrowRight size={18} color="white" />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </LinearGradient>
       </Pressable>
     </Animated.View>
   );
