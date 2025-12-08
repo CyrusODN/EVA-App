@@ -31,18 +31,15 @@ import {
   CheckCircle,
   Plus,
 } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import Input from '../../components/input';
+import { Image } from 'react-native';
 import PrimaryButton from '../../components/primaryButton';
 import VisitDialogModal from '../../components/visitDialogueModal';
 import { colors } from '../../constants/colors';
-import i18next from '../../localization/i18next';
-import useLanguageStore from '../../store/language';
+import { images } from '../../constants/images';
 
 const Home = () => {
-  const { t, i18n } = useTranslation();
-  const { setLanguage } = useLanguageStore();
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('patients');
   const [showCalendar, setShowCalendar] = useState(false);
@@ -112,23 +109,6 @@ const Home = () => {
     if (activeTab === 'lectures') return event.type === 'lecture';
     return true;
   });
-
-  const changeToLanguage = async () => {
-    try {
-      const currentLanguage = await AsyncStorage.getItem('language');
-      const newLanguage = currentLanguage === 'en' ? 'pl' : 'en';
-      i18next.changeLanguage(newLanguage);
-      setLanguage(newLanguage);
-    } catch (error) {
-      console.log('Error changing language:', error);
-      i18next.changeLanguage('en');
-      setLanguage('en');
-    }
-  };
-
-  const getInitial = email => {
-    return email ? email.charAt(0).toUpperCase() : 'U';
-  };
 
   const formatEventDate = dateString => {
     const date = new Date(dateString);
@@ -386,34 +366,11 @@ const Home = () => {
       >
         {/* Header Section */}
         <View style={styles.header}>
-          <View style={styles.profileSection}>
-            <TouchableOpacity style={styles.profileImageContainer}>
-              <LinearGradient
-                colors={['#53A0CD', '#44C2AD']}
-                style={styles.profileGradient}
-              >
-                <Text variant="titleMedium" style={styles.profileInitial}>
-                  {getInitial('user@example.com')}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <View style={styles.profileInfo}>
-              <Text variant="titleMedium" style={styles.emailText}>
-                user@example.com
-              </Text>
-              <TouchableOpacity
-                onPress={changeToLanguage}
-                style={styles.languageButton}
-              >
-                <Text variant="bodySmall" style={styles.languageText}>
-                  {i18next.language === 'en'
-                    ? t('common.polski')
-                    : t('common.english')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <Image
+            source={images.logo}
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
           <TouchableOpacity
             style={styles.calendarButton}
@@ -551,42 +508,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.outline,
   },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  profileImageContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  profileGradient: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInitial: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  profileInfo: {
-    marginLeft: wp(3),
-    flex: 1,
-  },
-  emailText: {
-    color: colors.onSurface,
-    fontSize: 14,
-  },
-  languageButton: {
-    marginTop: 2,
-  },
-  languageText: {
-    color: colors.primary,
-    fontSize: 12,
+  logo: {
+    width: wp(30),
+    height: hp(4),
   },
   calendarButton: {
     padding: 8,
