@@ -106,7 +106,7 @@ export const en = {
 		"resetting": "Resetting...",
 		"reset": "Reset",
 		"success": "Success",
-        "error": "Error",
+		"error": "Error",
 	},
 	"lectureNotes": {
 		"title": "Lecture Notes",
@@ -1472,7 +1472,7 @@ export const en = {
 		"sessionReset": "Session reset successfully"
 	},
 	"preScreening": {
-		"title": "Remedius Pre-Screening system",
+		"title": "Remedius Pre-Screening",
 		"subtitle": "Enter data for patient qualification analysis",
 		"aiModel": {
 			"label": "AI Model:",
@@ -1510,12 +1510,19 @@ export const en = {
 			"analyzeNewPatient": "Analyze new patient",
 			"clearAnonymizedData": "Remove loaded data and return to manual entry",
 			"clearDataFirst": "First remove loaded data to upload new ones",
-			"uploadPdf": "Upload PDF"
+			"uploadPdf": "Upload PDF",
+			"uploadTxt": "Upload TXT",
+			"patientHistory": "Patient History"
 		},
 		"labels": {
 			"medicalHistory": "Medical History",
 			"pdfFilesLoaded": "📄 {{fileCount}} PDF files loaded",
-			"manualOrPdfData": "Data entered manually or from PDF"
+			"manualOrPdfData": "Data entered manually or from PDF",
+			"manualOrTxtData": "Data entered manually or from TXT file"
+		},
+		"studyProtocol": {
+			"title": "MM120-301 - Badanie kliniczne w lęku uogólnionym (GAD)",
+			"description": "Badanie III fazy oceniające skuteczność i bezpieczeństwo MM120 (LSD) w leczeniu zaburzenia lękowego uogólnionego (GAD)."
 		},
 		"placeholders": {
 			"medicalHistory": "Enter or paste medical history...",
@@ -1978,48 +1985,48 @@ export const en = {
 		}
 	},
 	"login": {
-    "email": "Email",
-    "emailPlaceholder": "Enter your email",
-    "password": "Password",
-    "passwordPlaceholder": "Enter your password",
-    "confirmPassword": "Confirm Password",
-    "confirmPasswordPlaceholder": "Confirm your password",
-    "rememberMe": "Remember me",
-    "forgotPassword": "Forgot password?",
-    "signIn": "Sign In",
-    "signUp": "Sign Up",
-    "or": "or",
-    "signInWithGoogle": "Sign in with Google",
-    "signUpWithGoogle": "Sign up with Google",
-    "noAccount": "Don't have an account?",
-    "alreadyHaveAccount": "Already have an account?",
-    "backToLogin": "Back to Login",
-    "protectedBy": "Protected by",
-    "resetPassword": "Reset Password",
-    "sendResetLink": "Send Reset Link",
-    "resetInstructions": "Enter your email address and we'll send you a link to reset your password.",
-    "resetLinkSent": "Reset Link Sent!",
-    "checkEmail": "Check your email for reset instructions."
-  },
-  "session": {
-    "stopRecordingConfirm": "Stop recording and process audio?",
-    "error": "Error",
-    "failedToPickAudio": "Failed to pick audio file",
-    "transcriptionComplete": "Transcription Complete",
-    "transcriptionCompleteDescription": "Your session has been transcribed and is ready for review.",
-    "viewTranscription": "View Transcription",
-    "processingAudio": "Processing Audio",
-    "processingDescription": "Please wait while we transcribe your recording...",
-    "recordingInProgress": "Recording in Progress",
-    "startRecording": "Start Recording",
-    "uploadAudioFile": "Upload Audio File",
-    "selectAudioFile": "Select an audio file from your device",
-    "supportedFormats": "Supported: MP3, WAV, M4A",
-    "connectExternalDevice": "Connect External Device",
-    "scanToConnect": "Scan to connect another device with microphone"
-  },
-  "home": {
-    "meetingNamePlaceholder": "Enter meeting name...",
-    "lectureNamePlaceholder": "Enter lecture name..."
-  },
+		"email": "Email",
+		"emailPlaceholder": "Enter your email",
+		"password": "Password",
+		"passwordPlaceholder": "Enter your password",
+		"confirmPassword": "Confirm Password",
+		"confirmPasswordPlaceholder": "Confirm your password",
+		"rememberMe": "Remember me",
+		"forgotPassword": "Forgot password?",
+		"signIn": "Sign In",
+		"signUp": "Sign Up",
+		"or": "or",
+		"signInWithGoogle": "Sign in with Google",
+		"signUpWithGoogle": "Sign up with Google",
+		"noAccount": "Don't have an account?",
+		"alreadyHaveAccount": "Already have an account?",
+		"backToLogin": "Back to Login",
+		"protectedBy": "Protected by",
+		"resetPassword": "Reset Password",
+		"sendResetLink": "Send Reset Link",
+		"resetInstructions": "Enter your email address and we'll send you a link to reset your password.",
+		"resetLinkSent": "Reset Link Sent!",
+		"checkEmail": "Check your email for reset instructions."
+	},
+	"session": {
+		"stopRecordingConfirm": "Stop recording and process audio?",
+		"error": "Error",
+		"failedToPickAudio": "Failed to pick audio file",
+		"transcriptionComplete": "Transcription Complete",
+		"transcriptionCompleteDescription": "Your session has been transcribed and is ready for review.",
+		"viewTranscription": "View Transcription",
+		"processingAudio": "Processing Audio",
+		"processingDescription": "Please wait while we transcribe your recording...",
+		"recordingInProgress": "Recording in Progress",
+		"startRecording": "Start Recording",
+		"uploadAudioFile": "Upload Audio File",
+		"selectAudioFile": "Select an audio file from your device",
+		"supportedFormats": "Supported: MP3, WAV, M4A",
+		"connectExternalDevice": "Connect External Device",
+		"scanToConnect": "Scan to connect another device with microphone"
+	},
+	"home": {
+		"meetingNamePlaceholder": "Enter meeting name...",
+		"lectureNamePlaceholder": "Enter lecture name..."
+	},
 }

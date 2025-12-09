@@ -18,18 +18,18 @@ import { useTranslation } from 'react-i18next';
 import {
   ChevronLeft,
   Brain,
-  Upload,
   FileText,
   BarChart3,
   Activity,
   User,
-  Calendar,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Clock,
   Download,
-  Sparkles,
+  FolderOpen,
+  ChevronUp,
+  RotateCcw,
 } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -40,12 +40,12 @@ const Prescreening = () => {
   const navigation = useNavigation();
 
   // State management
-  const [selectedModel, setSelectedModel] = useState('gemini');
   const [medicalHistory, setMedicalHistory] = useState('');
-  const [specialistAnalysis, setSpecialistAnalysis] = useState(false);
-  const [pdfFiles, setPdfFiles] = useState([]);
+  const [pdfFiles, setPdfFiles] = useState<
+    Array<{ name: string; size: number; type: string }>
+  >([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState(null);
+  const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [showResults, setShowResults] = useState(false);
 
   // Mock analysis results
@@ -79,22 +79,23 @@ const Prescreening = () => {
     navigation.goBack();
   };
 
-  const handleModelSelect = model => {
-    setSelectedModel(model);
+  const handleSavedAnalyses = () => {
+    // Navigate to saved analyses screen or show modal
+    // This can be implemented based on your navigation structure
+    Alert.alert(
+      t('preScreening.buttons.savedAnalyses'),
+      'Saved analyses feature',
+    );
   };
 
   const handleUploadPDF = () => {
-    // Mock PDF upload
+    // Mock TXT upload
     const mockFile = {
-      name: `medical_history_${Date.now()}.pdf`,
-      size: 1024 * 1024 * 2.1, // 2.1MB
-      type: 'application/pdf',
+      name: `medical_history_${Date.now()}.txt`,
+      size: 1024 * 2.1, // 2.1KB
+      type: 'text/plain',
     };
     setPdfFiles(prev => [...prev, mockFile]);
-  };
-
-  const handleRemovePDF = fileName => {
-    setPdfFiles(prev => prev.filter(file => file.name !== fileName));
   };
 
   const handleLoadDemoData = () => {
@@ -155,14 +156,7 @@ Social History:
     }, 3000);
   };
 
-  const handleClearHistory = () => {
-    setMedicalHistory('');
-    setPdfFiles([]);
-    setAnalysisResults(null);
-    setShowResults(false);
-  };
-
-  const getQualificationColor = qualification => {
+  const getQualificationColor = (qualification: string) => {
     switch (qualification) {
       case 'probablyQualifies':
         return colors.lightGreen;
@@ -175,7 +169,7 @@ Social History:
     }
   };
 
-  const getQualificationIcon = qualification => {
+  const getQualificationIcon = (qualification: string) => {
     switch (qualification) {
       case 'probablyQualifies':
         return CheckCircle;
@@ -187,34 +181,6 @@ Social History:
         return Clock;
     }
   };
-
-  const renderPDFFile = (file, index) => (
-    <View key={index} style={styles.pdfFileItem}>
-      <View style={styles.pdfFileIcon}>
-        <FileText size={16} color={colors.error} />
-      </View>
-      <View style={styles.pdfFileInfo}>
-        <Text
-          variant="labelMedium"
-          style={styles.pdfFileName}
-          numberOfLines={1}
-        >
-          {file.name}
-        </Text>
-        <Text variant="bodySmall" style={styles.pdfFileSize}>
-          {(file.size / 1024 / 1024).toFixed(1)} MB
-        </Text>
-      </View>
-      <TouchableOpacity
-        onPress={() => handleRemovePDF(file.name)}
-        style={styles.removePdfButton}
-      >
-        <Text variant="labelSmall" style={styles.removePdfText}>
-          {t('common.delete')}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -246,114 +212,109 @@ Social History:
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              specialistAnalysis && styles.toggleButtonActive,
-            ]}
-            onPress={() => setSpecialistAnalysis(!specialistAnalysis)}
+            style={styles.savedAnalysisButton}
+            onPress={handleSavedAnalyses}
           >
-            <Sparkles
-              size={16}
-              color={specialistAnalysis ? 'white' : colors.lightGreen}
-            />
-            <Text
-              variant="labelSmall"
-              style={[
-                styles.toggleButtonText,
-                specialistAnalysis && styles.toggleButtonTextActive,
-              ]}
+            <LinearGradient
+              colors={['#53A0CD', '#44C2AD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.savedAnalysisButtonGradient}
             >
-              {t('preScreening.specialistAnalysis.label')}
-            </Text>
+              <View style={{ width: wp(1) }} />
+              <FolderOpen size={16} color="white" />
+              <Text
+                variant="labelMedium"
+                style={styles.savedAnalysisButtonText}
+              >
+                {t('preScreening.buttons.savedAnalyses')}
+              </Text>
+              <View style={{ width: wp(1) }} />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {!showResults ? (
             // Input Screen
             <View style={styles.inputContainer}>
-              {/* AI Model Selection */}
+              {/* Select Study Protocol Section */}
               <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  {t('preScreening.aiModel.label')}
+                <Text variant="headlineSmall" style={styles.sectionTitle}>
+                  {t('preScreening.protocolSelector.title')}
                 </Text>
-                <View style={styles.modelSelector}>
-                  <TouchableOpacity
-                    style={[
-                      styles.modelButton,
-                      selectedModel === 'gemini' && styles.selectedModelButton,
-                    ]}
-                    onPress={() => handleModelSelect('gemini')}
-                  >
-                    <Brain
-                      size={20}
-                      color={
-                        selectedModel === 'gemini' ? 'white' : colors.lightGreen
-                      }
-                    />
-                    <Text
-                      variant="labelMedium"
-                      style={[
-                        styles.modelButtonText,
-                        selectedModel === 'gemini' &&
-                          styles.selectedModelButtonText,
-                      ]}
-                    >
-                      {t('preScreening.aiModel.gemini')}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.modelButton,
-                      selectedModel === 'claude' && styles.selectedModelButton,
-                    ]}
-                    onPress={() => handleModelSelect('claude')}
-                  >
-                    <Brain
-                      size={20}
-                      color={
-                        selectedModel === 'claude' ? 'white' : colors.lightGreen
-                      }
-                    />
-                    <Text
-                      variant="labelMedium"
-                      style={[
-                        styles.modelButtonText,
-                        selectedModel === 'claude' &&
-                          styles.selectedModelButtonText,
-                      ]}
-                    >
-                      {t('preScreening.aiModel.claude')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity style={styles.protocolCard}>
+                  <View style={styles.protocolCardContent}>
+                    <FileText size={20} color={colors.lightGreen} />
+                    <View style={styles.protocolCardText}>
+                      <Text
+                        variant="titleMedium"
+                        style={styles.protocolCardTitle}
+                      >
+                        {t('preScreening.studyProtocol.title')}
+                      </Text>
+                      <Text
+                        variant="bodySmall"
+                        style={styles.protocolCardDescription}
+                      >
+                        {t('preScreening.studyProtocol.description')}
+                      </Text>
+                    </View>
+                  </View>
+                  <ChevronUp size={20} color={colors.onSurfaceVariant} />
+                </TouchableOpacity>
               </View>
 
               {/* Medical History Input */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text variant="titleMedium" style={styles.sectionTitle}>
+                  <Text variant="headlineMedium" style={styles.sectionTitle}>
                     {t('preScreening.labels.medicalHistory')}
                   </Text>
-                  <TouchableOpacity
-                    style={styles.demoButton}
-                    onPress={handleLoadDemoData}
-                  >
-                    <Text variant="labelSmall" style={styles.demoButtonText}>
-                      {t('preScreening.buttons.demoMode')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {pdfFiles.length > 0 && (
-                  <View style={styles.pdfFilesContainer}>
-                    <Text variant="labelMedium" style={styles.pdfFilesTitle}>
-                      {t('preScreening.labels.pdfFilesLoaded', {
-                        fileCount: pdfFiles.length,
-                      })}
-                    </Text>
-                    {pdfFiles.map((file, index) => renderPDFFile(file, index))}
+                  <View style={styles.medicalHistoryActions}>
+                    <TouchableOpacity
+                      style={styles.uploadTxtButton}
+                      onPress={handleUploadPDF}
+                    >
+                      <LinearGradient
+                        colors={['#53A0CD', '#44C2AD']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.uploadTxtButtonGradient}
+                      >
+                        <View style={{ width: wp(1) }} />
+                        <FileText size={16} color="white" />
+                        <Text
+                          variant="labelMedium"
+                          style={styles.uploadTxtButtonText}
+                        >
+                          {t('preScreening.buttons.uploadTxt')}
+                        </Text>
+                        <View style={{ width: wp(1) }} />
+                      </LinearGradient>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.patientHistoryButton}
+                      onPress={handleLoadDemoData}
+                    >
+                      <LinearGradient
+                        colors={['#53A0CD', '#44C2AD']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.patientHistoryButtonGradient}
+                      >
+                        <View style={{ width: wp(1) }} />
+                        <RotateCcw size={16} color="white" />
+                        <Text
+                          variant="labelMedium"
+                          style={styles.patientHistoryButtonText}
+                        >
+                          {t('preScreening.buttons.patientHistory')}
+                        </Text>
+                        <View style={{ width: wp(1) }} />
+                      </LinearGradient>
+                    </TouchableOpacity>
                   </View>
-                )}
+                </View>
 
                 <TextInput
                   style={styles.medicalHistoryInput}
@@ -364,41 +325,20 @@ Social History:
                   numberOfLines={8}
                   placeholderTextColor={colors.placeholderColor}
                 />
+                <View style={styles.dataSourceInfo}>
+                  <FileText size={14} color={colors.onSurfaceVariant} />
+                  <Text variant="bodySmall" style={styles.dataSourceText}>
+                    {t('preScreening.labels.manualOrTxtData')}
+                  </Text>
+                </View>
               </View>
 
-              {/* PDF Upload */}
-              <View style={styles.section}>
-                <TouchableOpacity
-                  style={styles.uploadArea}
-                  onPress={handleUploadPDF}
-                >
-                  <Upload size={24} color={colors.onSurfaceVariant} />
-                  <Text variant="bodyMedium" style={styles.uploadText}>
-                    {t('preScreening.buttons.uploadPdf')}
-                  </Text>
-                  <Text variant="bodySmall" style={styles.uploadSubtext}>
-                    {t('preScreening.pdfUpload.description')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Action Buttons */}
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={handleClearHistory}
-                >
-                  <Text variant="labelMedium" style={styles.clearButtonText}>
-                    {t('preScreening.buttons.clearHistory')}
-                  </Text>
-                </TouchableOpacity>
-
+              {/* Start Analysis Button */}
+              <View style={styles.startAnalysisContainer}>
                 <TouchableOpacity
                   style={[
-                    styles.analyzeButton,
-                    !medicalHistory.trim() &&
-                      pdfFiles.length === 0 &&
-                      styles.analyzeButtonDisabled,
+                    styles.startAnalysisButton,
+                    !medicalHistory.trim() && pdfFiles.length === 0 && {},
                   ]}
                   onPress={handleStartAnalysis}
                   disabled={
@@ -406,30 +346,32 @@ Social History:
                     (!medicalHistory.trim() && pdfFiles.length === 0)
                   }
                 >
-                  {isAnalyzing ? (
-                    <>
+                  <LinearGradient
+                    colors={['#53A0CD', '#44C2AD']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.startAnalysisButtonGradient}
+                  >
+                    {isAnalyzing ? (
                       <Text
-                        variant="labelMedium"
-                        style={styles.analyzeButtonText}
+                        variant="labelLarge"
+                        style={styles.startAnalysisButtonText}
                       >
                         {t('preScreening.loading.title')}
                       </Text>
-                    </>
-                  ) : (
-                    <>
-                      <Brain size={16} color="white" />
+                    ) : (
                       <Text
-                        variant="labelMedium"
-                        style={styles.analyzeButtonText}
+                        variant="labelLarge"
+                        style={styles.startAnalysisButtonText}
                       >
                         {t('preScreening.buttons.startAnalysis')}
                       </Text>
-                    </>
-                  )}
+                    )}
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
-          ) : (
+          ) : analysisResults ? (
             // Results Screen
             <View style={styles.resultsContainer}>
               {/* Patient Data Overview */}
@@ -464,7 +406,7 @@ Social History:
                     </Text>
                     <View style={styles.comorbiditiesList}>
                       {analysisResults.patientData.comorbidities.map(
-                        (comorbidity, index) => (
+                        (comorbidity: string, index: number) => (
                           <View key={index} style={styles.comorbidityItem}>
                             <Text
                               variant="bodySmall"
@@ -621,14 +563,16 @@ Social History:
                   </Text>
                 </View>
                 <View style={styles.problemsList}>
-                  {analysisResults.mainProblems.map((problem, index) => (
-                    <View key={index} style={styles.problemItem}>
-                      <View style={styles.problemBullet} />
-                      <Text variant="bodyMedium" style={styles.problemText}>
-                        {problem}
-                      </Text>
-                    </View>
-                  ))}
+                  {analysisResults.mainProblems.map(
+                    (problem: string, index: number) => (
+                      <View key={index} style={styles.problemItem}>
+                        <View style={styles.problemBullet} />
+                        <Text variant="bodyMedium" style={styles.problemText}>
+                          {problem}
+                        </Text>
+                      </View>
+                    ),
+                  )}
                 </View>
               </View>
 
@@ -641,17 +585,19 @@ Social History:
                   </Text>
                 </View>
                 <View style={styles.criticalInfoList}>
-                  {analysisResults.criticalInfo.map((info, index) => (
-                    <View key={index} style={styles.criticalInfoItem}>
-                      <CheckCircle size={16} color={colors.lightGreen} />
-                      <Text
-                        variant="bodyMedium"
-                        style={styles.criticalInfoText}
-                      >
-                        {info}
-                      </Text>
-                    </View>
-                  ))}
+                  {analysisResults.criticalInfo.map(
+                    (info: string, index: number) => (
+                      <View key={index} style={styles.criticalInfoItem}>
+                        <CheckCircle size={16} color={colors.lightGreen} />
+                        <Text
+                          variant="bodyMedium"
+                          style={styles.criticalInfoText}
+                        >
+                          {info}
+                        </Text>
+                      </View>
+                    ),
+                  )}
                 </View>
               </View>
 
@@ -680,7 +626,7 @@ Social History:
                 </TouchableOpacity>
               </View>
             </View>
-          )}
+          ) : null}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -698,8 +644,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
     borderBottomWidth: 1,
     borderBottomColor: colors.outline,
   },
@@ -739,24 +683,18 @@ const styles = StyleSheet.create({
     marginRight: wp(4),
     alignItems: 'center',
   },
-  toggleButton: {
+  savedAnalysisButton: {
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  savedAnalysisButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.lightGreen,
-    borderRadius: 6,
-    backgroundColor: 'white',
+    height: hp(4),
   },
-  toggleButtonActive: {
-    backgroundColor: colors.lightGreen,
-  },
-  toggleButtonText: {
-    color: colors.lightGreen,
-  },
-  toggleButtonTextActive: {
+  savedAnalysisButtonText: {
     color: 'white',
   },
   content: {
@@ -777,18 +715,79 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.onSurface,
+  },
+  medicalHistoryActions: {
+    flexDirection: 'row',
+    gap: wp(2),
+  },
+  uploadTxtButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: hp(4),
+  },
+  uploadTxtButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  uploadTxtButtonText: {
+    color: 'white',
+  },
+  patientHistoryButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: hp(4),
+  },
+  patientHistoryButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  patientHistoryButtonText: {
+    color: 'white',
     fontWeight: '600',
   },
-  demoButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  protocolCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: wp(4),
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 4,
-    backgroundColor: colors.surface,
+    borderColor: '#B3E5FC',
+    backgroundColor: '#E1F5FE',
+    marginTop: hp(1),
   },
-  demoButtonText: {
-    color: colors.primary,
+  protocolCardContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    gap: wp(3),
+  },
+  protocolCardText: {
+    flex: 1,
+  },
+  protocolCardTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: hp(0.5),
+  },
+  protocolCardDescription: {
+    color: colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  dataSourceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: hp(1),
+  },
+  dataSourceText: {
+    color: colors.onSurfaceVariant,
   },
   // AI Model Selection
   modelSelector: {
@@ -904,41 +903,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
-  // Action Buttons
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: hp(2),
-  },
-  clearButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 8,
+  // Start Analysis Button
+  startAnalysisContainer: {
     alignItems: 'center',
-    backgroundColor: 'white',
   },
-  clearButtonText: {
-    color: colors.onSurface,
+  startAnalysisButton: {
+    width: '100%',
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: hp(5),
   },
-  analyzeButton: {
-    flex: 1,
-    flexDirection: 'row',
+  startAnalysisButtonGradient: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    backgroundColor: colors.lightGreen,
-    borderRadius: 8,
+    flex: 1,
   },
-  analyzeButtonDisabled: {
-    backgroundColor: colors.onSurfaceVariant,
-    opacity: 0.6,
+  startAnalysisButtonDisabled: {
+    // opacity: 0.6,
   },
-  analyzeButtonText: {
+  startAnalysisButtonText: {
     color: 'white',
-    fontWeight: '600',
   },
   // Results Screen Styles
   resultsContainer: {
