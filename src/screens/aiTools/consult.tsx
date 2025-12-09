@@ -34,7 +34,12 @@ import {
   X,
   Calendar,
   User,
-  Pill,
+  TestTube,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Shield,
+  Brain,
 } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -91,6 +96,11 @@ const Consult = () => {
   const [importedVisits, setImportedVisits] = useState(new Set());
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
+  
+  // Pharmacopedia state
+  const [selectedDrugs, setSelectedDrugs] = useState([]);
+  const [drugInput, setDrugInput] = useState('');
+  const [drugInteractions, setDrugInteractions] = useState([]);
 
   // Get unique values for filters
   const uniqueTypes = useMemo(() => 
@@ -198,6 +208,28 @@ const Consult = () => {
       };
       setMessages(prev => [...prev, aiResponse]);
     }, 1000);
+  };
+
+  const handleAddDrug = () => {
+    if (drugInput.trim() && !selectedDrugs.includes(drugInput.trim())) {
+      const newDrug = drugInput.trim();
+      setSelectedDrugs(prev => [...prev, newDrug]);
+      setDrugInput('');
+      
+      // Mock interaction generation
+      if (selectedDrugs.length >= 1) {
+        const severities = ['high', 'moderate', 'low'];
+        const newInteraction = {
+          id: Date.now().toString(),
+          severity: severities[Math.floor(Math.random() * severities.length)],
+          description: `Potential interaction between ${selectedDrugs[selectedDrugs.length - 1]} and ${newDrug}.`,
+          mechanism: 'CYP450 enzyme inhibition/induction pathway competition.',
+          recommendation: 'Monitor patient closely, consider dosage adjustment or alternative therapy.',
+          drugs: [selectedDrugs[selectedDrugs.length - 1], newDrug],
+        };
+        setDrugInteractions(prev => [...prev, newInteraction]);
+      }
+    }
   };
 
   const renderVisitItem = ({ item }) => (
@@ -356,6 +388,73 @@ const Consult = () => {
     </View>
   );
 
+  const renderDrug = ({ item }) => (
+    <View style={styles.drugCard}>
+      <View style={styles.drugHeader}>
+        <TestTube size={18} color={colors.primary} />
+        <Text variant="titleMedium" style={styles.drugName}>{item}</Text>
+        <TouchableOpacity
+          onPress={() => setSelectedDrugs(prev => prev.filter(d => d !== item))}
+          style={styles.removeDrugButton}
+        >
+          <Trash2 size={16} color={colors.error} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderInteraction = ({ item }) => {
+    const getSeverityColor = (severity) => {
+      switch (severity) {
+        case 'high': return '#EF4444';
+        case 'moderate': return '#F59E0B';
+        case 'low': return '#10B981';
+        default: return colors.onSurfaceVariant;
+      }
+    };
+
+    const getSeverityIcon = (severity) => {
+      switch (severity) {
+        case 'high': return <AlertTriangle size={16} color="white" />;
+        case 'moderate': return <AlertTriangle size={16} color="white" />;
+        case 'low': return <Shield size={16} color="white" />;
+        default: return <AlertTriangle size={16} color="white" />;
+      }
+    };
+
+    return (
+      <View style={styles.interactionCard}>
+        <View style={styles.interactionHeader}>
+          <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(item.severity) }]}>
+            {getSeverityIcon(item.severity)}
+            <Text variant="labelMedium" style={styles.severityText}>
+              {item.severity.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.drugPair}>
+          {item.drugs.map((drug, index) => (
+            <View key={index} style={styles.drugTag}>
+              <Text variant="labelSmall" style={styles.drugTagText}>{drug}</Text>
+            </View>
+          ))}
+        </View>
+        
+        <Text variant="bodyMedium" style={styles.interactionDescription}>
+          {item.description}
+        </Text>
+        
+        <View style={styles.interactionDetails}>
+          <Text variant="labelMedium" style={styles.detailLabel}>Mechanism:</Text>
+          <Text variant="bodySmall" style={styles.detailText}>{item.mechanism}</Text>
+          <Text variant="labelMedium" style={styles.detailLabel}>Recommendation:</Text>
+          <Text variant="bodySmall" style={styles.detailText}>{item.recommendation}</Text>
+        </View>
+      </View>
+    );
+  };
+
   const renderChatTab = () => (
     <View style={styles.tabContent}>
       <View style={styles.chatHeader}>
@@ -398,6 +497,82 @@ const Consult = () => {
     </View>
   );
 
+  const renderPharmacopediaTab = () => (
+    <View style={styles.tabContent}>
+      {/* Drug Input Header */}
+      <View style={styles.drugInputHeader}>
+        <Text variant="titleLarge" style={styles.sectionTitle}>
+          Drug Interaction Checker
+        </Text>
+        <Text variant="bodySmall" style={styles.sectionSubtitle}>
+          Add medications to check for interactions
+        </Text>
+        
+        <View style={styles.drugInputContainer}>
+          <TextInput
+            style={styles.drugInput}
+            placeholder="Enter medication name..."
+            value={drugInput}
+            onChangeText={setDrugInput}
+            placeholderTextColor={colors.onSurfaceVariant}
+          />
+          <TouchableOpacity
+            style={[styles.addDrugButton, !drugInput.trim() && styles.addDrugButtonDisabled]}
+            onPress={handleAddDrug}
+            disabled={!drugInput.trim()}
+          >
+            <Plus size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView style={styles.interactionContent} showsVerticalScrollIndicator={false}>
+        {/* Selected Drugs */}
+        <View style={styles.selectedDrugsSection}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Selected Medications ({selectedDrugs.length})
+          </Text>
+          {selectedDrugs.length > 0 ? (
+            <FlatList
+              data={selectedDrugs}
+              renderItem={renderDrug}
+              keyExtractor={(item, index) => index.toString()}
+              contentContainerStyle={styles.drugsGrid}
+              numColumns={1}
+              scrollEnabled={false}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <TestTube size={48} color={colors.onSurfaceVariant} />
+              <Text variant="bodyMedium" style={styles.emptyStateText}>
+                No medications added yet
+              </Text>
+              <Text variant="bodySmall" style={styles.emptyStateSubtext}>
+                Add medications above to check for interactions
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Drug Interactions */}
+        {drugInteractions.length > 0 && (
+          <View style={styles.interactionsSection}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Detected Interactions ({drugInteractions.length})
+            </Text>
+            <FlatList
+              data={drugInteractions}
+              renderItem={renderInteraction}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              contentContainerStyle={styles.interactionsList}
+            />
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -428,7 +603,7 @@ const Consult = () => {
       </View>
 
       {/* Tab Content */}
-      {activeTab === 'visits' ? renderVisitsTab() : activeTab === 'chat' ? renderChatTab() : null}
+      {activeTab === 'visits' ? renderVisitsTab() : activeTab === 'chat' ? renderChatTab() : activeTab === 'pharmacopedia' ? renderPharmacopediaTab() : null}
 
       {/* Bottom Tab Navigation */}
       <View style={styles.bottomTabs}>
@@ -449,12 +624,12 @@ const Consult = () => {
           style={[styles.tab, activeTab === 'chat' && styles.activeTab]}
           onPress={() => setActiveTab('chat')}
         >
-          <MessageSquare size={20} color={activeTab === 'chat' ? colors.lightGreen : colors.onSurfaceVariant} />
+          <Brain size={20} color={activeTab === 'chat' ? colors.lightGreen : colors.onSurfaceVariant} />
           <Text variant="labelSmall" style={[
             styles.tabText,
             activeTab === 'chat' && styles.activeTabText
           ]}>
-            AI Consult
+            {t('remediusConsult.chat.tabTitle')}
           </Text>
           {messages.length > 0 && (
             <View style={styles.messageBadge}>
@@ -467,15 +642,22 @@ const Consult = () => {
         
         <TouchableOpacity
           style={[styles.tab, activeTab === 'pharmacopedia' && styles.activeTab]}
-          onPress={() => navigation.navigate('pharmcoedia' as never)}
+          onPress={() => setActiveTab('pharmacopedia')}
         >
-          <Pill size={20} color={activeTab === 'pharmacopedia' ? colors.lightGreen : colors.onSurfaceVariant} />
+          <TestTube size={20} color={activeTab === 'pharmacopedia' ? colors.lightGreen : colors.onSurfaceVariant} />
           <Text variant="labelSmall" style={[
             styles.tabText,
             activeTab === 'pharmacopedia' && styles.activeTabText
           ]}>
             {t('aiTools.drugs.title')}
           </Text>
+          {drugInteractions.length > 0 && (
+            <View style={styles.messageBadge}>
+              <Text variant="labelSmall" style={styles.messageBadgeText}>
+                {drugInteractions.length}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -999,6 +1181,172 @@ const styles = StyleSheet.create({
   },
   activeFilterOptionText: {
     color: 'white',
+  },
+
+  // Pharmacopedia Styles
+  drugInputHeader: {
+    padding: wp(4),
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  sectionTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: 4,
+    fontSize: hp(2),
+  },
+  sectionSubtitle: {
+    color: colors.onSurfaceVariant,
+    marginBottom: 16,
+    fontSize: hp(1.6),
+  },
+  drugInputContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  drugInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.onSurface,
+    backgroundColor: '#F8FAFC',
+  },
+  addDrugButton: {
+    backgroundColor: colors.lightGreen,
+    borderRadius: 12,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addDrugButtonDisabled: {
+    backgroundColor: '#94A3B8',
+  },
+  interactionContent: {
+    flex: 1,
+  },
+  selectedDrugsSection: {
+    padding: wp(4),
+    backgroundColor: 'white',
+    borderBottomWidth: 8,
+    borderBottomColor: '#F8FAFC',
+  },
+  drugsGrid: {
+    gap: 12,
+  },
+  drugCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  drugHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  drugName: {
+    flex: 1,
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  removeDrugButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateText: {
+    color: colors.onSurfaceVariant,
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  emptyStateSubtext: {
+    color: colors.onSurfaceVariant,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  interactionsSection: {
+    padding: wp(4),
+    backgroundColor: 'white',
+  },
+  interactionsList: {
+    gap: 12,
+  },
+  interactionCard: {
+    padding: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  interactionHeader: {
+    marginBottom: 12,
+  },
+  severityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  severityText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  drugPair: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  drugTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+  },
+  drugTagText: {
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  interactionDescription: {
+    color: colors.onSurface,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  interactionDetails: {
+    gap: 8,
+  },
+  detailLabel: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  detailText: {
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
   },
 });
 

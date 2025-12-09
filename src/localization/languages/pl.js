@@ -327,6 +327,7 @@ export const pl = {
         "chat": {
             "title": "Asystent kliniczny",
             "subtitle": "Konsultacja wspomagana AI",
+            "tabTitle": "Remedius Consult",
             "placeholder": "Zapytaj o stan pacjenta...",
             "confidenceSuffix": "pewność",
             "sources": {
@@ -937,7 +938,7 @@ export const pl = {
             }
         },
         "pharmacopedia": {
-            "title": "Remedius Pharmacopedia",
+            "title": "Pharmacopedia",
             "description": "Kompleksowe informacje o lekach",
             "features": {
                 "0": "Dostęp do bazy danych leków",
@@ -946,7 +947,7 @@ export const pl = {
             }
         },
         "drugs": {
-            "title": "Remedius Pharmacopedia",
+            "title": "Pharmacopedia",
             "description": "Zaawansowana analiza interakcji leków",
             "features": {
                 "0": "Interakcje lekowe",

@@ -311,6 +311,7 @@ export const en = {
 		"chat": {
 			"title": "Clinical Assistant",
 			"subtitle": "AI-powered consultation",
+			"tabTitle": "Remedius Consult",
 			"placeholder": "Ask about patient's condition...",
 			"confidenceSuffix": "confidence",
 			"sources": {
@@ -891,7 +892,7 @@ export const en = {
 			}
 		},
 		"pharmacopedia": {
-			"title": "Remedius Pharmacopedia",
+			"title": "Pharmacopedia",
 			"description": "Comprehensive drug information",
 			"features": {
 				"0": "Drug Database Access",
@@ -900,7 +901,7 @@ export const en = {
 			}
 		},
 		"drugs": {
-			"title": "Remedius Pharmacopedia",
+			"title": "Pharmacopedia",
 			"description": "Advanced drug interaction analysis",
 			"features": {
 				"0": "Drug interactions",
