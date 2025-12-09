@@ -40,10 +40,14 @@ import {
   AlertTriangle,
   Shield,
   Brain,
+  ChevronRight,
+  Pill,
+  FlaskConical,
 } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -101,6 +105,10 @@ const Consult = () => {
   const [selectedDrugs, setSelectedDrugs] = useState([]);
   const [drugInput, setDrugInput] = useState('');
   const [drugInteractions, setDrugInteractions] = useState([]);
+  const [drugQueries, setDrugQueries] = useState([]);
+  const [selectedQuery, setSelectedQuery] = useState(null);
+  const [showQueriesModal, setShowQueriesModal] = useState(false);
+  const [pharmacopediaMessage, setPharmacopediaMessage] = useState('');
 
   // Get unique values for filters
   const uniqueTypes = useMemo(() => 
@@ -391,7 +399,7 @@ const Consult = () => {
   const renderDrug = ({ item }) => (
     <View style={styles.drugCard}>
       <View style={styles.drugHeader}>
-        <TestTube size={18} color={colors.primary} />
+        <Pill size={18} color={colors.primary} />
         <Text variant="titleMedium" style={styles.drugName}>{item}</Text>
         <TouchableOpacity
           onPress={() => setSelectedDrugs(prev => prev.filter(d => d !== item))}
@@ -497,79 +505,159 @@ const Consult = () => {
     </View>
   );
 
+  const handleStartNewQuery = () => {
+    const newQuery = {
+      id: Date.now().toString(),
+      title: `Query ${drugQueries.length + 1}`,
+      createdAt: new Date(),
+      drugs: [],
+      interactions: [],
+    };
+    setDrugQueries(prev => [...prev, newQuery]);
+    setSelectedQuery(newQuery.id);
+    setShowQueriesModal(false);
+  };
+
   const renderPharmacopediaTab = () => (
-    <View style={styles.tabContent}>
-      {/* Drug Input Header */}
-      <View style={styles.drugInputHeader}>
-        <Text variant="titleLarge" style={styles.sectionTitle}>
-          Drug Interaction Checker
-        </Text>
-        <Text variant="bodySmall" style={styles.sectionSubtitle}>
-          Add medications to check for interactions
-        </Text>
-        
-        <View style={styles.drugInputContainer}>
+    <View style={styles.pharmacopediaContainer}>
+      {/* Header Section */}
+      <View style={styles.pharmacopediaHeader}>
+        <View style={styles.pharmacopediaHeaderContent}>
+          <Text variant="titleLarge" style={styles.pharmacopediaHeaderTitle}>
+            Drug Queries
+          </Text>
+          <View style={styles.pharmacopediaHeaderActions}>
+            <TouchableOpacity
+              style={styles.addQueryHeaderButton}
+              onPress={handleStartNewQuery}
+            >
+              <Plus size={20} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.queriesButton}
+              onPress={() => setShowQueriesModal(true)}
+            >
+              <View style={styles.queriesButtonContent}>
+                <Pill size={18} color={colors.primary} />
+                <Text variant="labelMedium" style={styles.queriesButtonText}>
+                  {drugQueries.length > 0 ? `${drugQueries.length} Queries` : 'View Queries'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* Main Content Area */}
+      <ScrollView 
+        style={styles.pharmacopediaMainContent}
+        contentContainerStyle={styles.pharmacopediaContentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {selectedQuery ? (
+          <View style={styles.queryContent}>
+            {/* Query details will go here */}
+            <Text variant="bodyMedium">Query content</Text>
+          </View>
+        ) : (
+          <View style={styles.pharmacopediaEmptyState}>
+            <Pill size={hp(12)} color={colors.onSurfaceVariant} />
+            <Text variant="bodyLarge" style={styles.pharmacopediaEmptyText}>
+              Get evidence-based drug information from Stahl's Essential Psychopharmacology Prescriber's Guide with AI-powered search.
+            </Text>
+          </View>
+        )}
+          </ScrollView>
+
+      {/* Input Section */}
+      <View style={styles.chatInputContainer}>
+        <View style={styles.chatInput}>
           <TextInput
-            style={styles.drugInput}
-            placeholder="Enter medication name..."
-            value={drugInput}
-            onChangeText={setDrugInput}
+            style={styles.messageInput}
+            placeholder="Ask about drug info.."
+            value={pharmacopediaMessage}
+            onChangeText={setPharmacopediaMessage}
+            multiline
             placeholderTextColor={colors.onSurfaceVariant}
           />
           <TouchableOpacity
-            style={[styles.addDrugButton, !drugInput.trim() && styles.addDrugButtonDisabled]}
-            onPress={handleAddDrug}
-            disabled={!drugInput.trim()}
+            style={[
+              styles.sendButton,
+              !pharmacopediaMessage.trim() && styles.sendButtonDisabled
+            ]}
+            onPress={() => {
+              if (pharmacopediaMessage.trim()) {
+                handleStartNewQuery();
+                setPharmacopediaMessage('');
+              }
+            }}
+            disabled={!pharmacopediaMessage.trim()}
           >
-            <Plus size={18} color="white" />
+            <Send size={18} color="white" />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView style={styles.interactionContent} showsVerticalScrollIndicator={false}>
-        {/* Selected Drugs */}
-        <View style={styles.selectedDrugsSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Selected Medications ({selectedDrugs.length})
-          </Text>
-          {selectedDrugs.length > 0 ? (
-            <FlatList
-              data={selectedDrugs}
-              renderItem={renderDrug}
-              keyExtractor={(item, index) => index.toString()}
-              contentContainerStyle={styles.drugsGrid}
-              numColumns={1}
-              scrollEnabled={false}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <TestTube size={48} color={colors.onSurfaceVariant} />
-              <Text variant="bodyMedium" style={styles.emptyStateText}>
-                No medications added yet
-              </Text>
-              <Text variant="bodySmall" style={styles.emptyStateSubtext}>
-                Add medications above to check for interactions
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Drug Interactions */}
-        {drugInteractions.length > 0 && (
-          <View style={styles.interactionsSection}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Detected Interactions ({drugInteractions.length})
+      {/* Queries Modal */}
+      <Modal
+        visible={showQueriesModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowQueriesModal(false)}
+      >
+        <SafeAreaView style={styles.queriesModalContainer}>
+          <View style={styles.queriesModalHeader}>
+            <Text variant="titleLarge" style={styles.queriesModalTitle}>
+              Drug Queries
             </Text>
-            <FlatList
-              data={drugInteractions}
-              renderItem={renderInteraction}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-              contentContainerStyle={styles.interactionsList}
-            />
+            <TouchableOpacity onPress={() => setShowQueriesModal(false)}>
+              <X size={24} color={colors.onSurface} />
+            </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
+          
+          <ScrollView style={styles.queriesModalContent} showsVerticalScrollIndicator={false}>
+            {drugQueries.length === 0 ? (
+              <View style={styles.queriesModalEmptyState}>
+                <Pill size={64} color={colors.onSurfaceVariant} />
+                <Text variant="bodyLarge" style={styles.queriesModalEmptyText}>
+                  No sessions yet
+                </Text>
+                <Text variant="bodyMedium" style={styles.queriesModalEmptySubtext}>
+                  Start your first drug query
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.queriesList}>
+                {drugQueries.map((query) => (
+                  <TouchableOpacity
+                    key={query.id}
+                    style={[
+                      styles.queryCard,
+                      selectedQuery === query.id && styles.queryCardActive
+                    ]}
+                    onPress={() => {
+                      setSelectedQuery(query.id);
+                      setShowQueriesModal(false);
+                    }}
+                  >
+                    <View style={styles.queryCardContent}>
+                      <Pill size={20} color={selectedQuery === query.id ? colors.primary : colors.onSurfaceVariant} />
+                      <View style={styles.queryCardText}>
+                        <Text variant="titleMedium" style={styles.queryCardTitle}>
+                          {query.title}
+                        </Text>
+                        <Text variant="bodySmall" style={styles.queryCardDate}>
+                          {query.createdAt.toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 
@@ -589,7 +677,7 @@ const Consult = () => {
             end={{ x: 1, y: 0 }}
             style={styles.headerIconContainer}
           >
-            <MessageSquare size={20} color="white" />
+            <Brain size={20} color="white" />
           </LinearGradient>
           <View style={styles.headerTextContainer}>
             <Text variant="headlineLarge" style={styles.headerTitle}>
@@ -644,7 +732,7 @@ const Consult = () => {
           style={[styles.tab, activeTab === 'pharmacopedia' && styles.activeTab]}
           onPress={() => setActiveTab('pharmacopedia')}
         >
-          <TestTube size={20} color={activeTab === 'pharmacopedia' ? colors.lightGreen : colors.onSurfaceVariant} />
+          <FlaskConical size={20} color={activeTab === 'pharmacopedia' ? colors.lightGreen : colors.onSurfaceVariant} />
           <Text variant="labelSmall" style={[
             styles.tabText,
             activeTab === 'pharmacopedia' && styles.activeTabText
@@ -1347,6 +1435,180 @@ const styles = StyleSheet.create({
   detailText: {
     color: colors.onSurfaceVariant,
     lineHeight: 18,
+  },
+
+  // Pharmacopedia Mobile-Friendly UI Styles
+  pharmacopediaContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  pharmacopediaHeader: {
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2),
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  pharmacopediaHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pharmacopediaHeaderTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    fontSize: hp(2.2),
+  },
+  pharmacopediaHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addQueryHeaderButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  queriesButton: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  queriesButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  queriesButtonText: {
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
+  pharmacopediaMainContent: {
+    flex: 1,
+  },
+  pharmacopediaContentContainer: {
+    flexGrow: 1,
+  },
+  pharmacopediaEmptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(6),
+    paddingVertical: hp(8),
+    minHeight: hp(60),
+  },
+  pharmacopediaEmptyText: {
+    color: colors.onSurfaceVariant,
+    marginTop: hp(3),
+    textAlign: 'center',
+    lineHeight: hp(2.8),
+    fontSize: hp(1.9),
+  },
+  startNewQueryButton: {
+    marginTop: hp(5),
+    borderRadius: 16,
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: wp(80),
+  },
+  startNewQueryButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(2.5),
+    paddingHorizontal: wp(8),
+    gap: 10,
+  },
+  startNewQueryButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: hp(2),
+  },
+  queryContent: {
+    flex: 1,
+    padding: wp(4),
+  },
+  // Queries Modal Styles
+  queriesModalContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  queriesModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  queriesModalTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
+  queriesModalContent: {
+    flex: 1,
+    padding: wp(4),
+  },
+  queriesModalEmptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(10),
+  },
+  queriesModalEmptyText: {
+    color: colors.onSurfaceVariant,
+    marginTop: hp(3),
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  queriesModalEmptySubtext: {
+    color: colors.onSurfaceVariant,
+    marginTop: hp(1),
+    textAlign: 'center',
+  },
+  queriesList: {
+    gap: 12,
+  },
+  queryCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: wp(4),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  queryCardActive: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    backgroundColor: '#F0F9FF',
+  },
+  queryCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  queryCardText: {
+    flex: 1,
+  },
+  queryCardTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  queryCardDate: {
+    color: colors.onSurfaceVariant,
   },
 });
 
