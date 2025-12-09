@@ -72,22 +72,21 @@ const DNAHelix = () => {
       />,
     );
 
-    // Connection lines (every few dots)
-    if (i % 6 === 0) {
-      const lineAngle = Math.atan2(
-        amplitude * (Math.sin(angle + 0.1) - Math.sin(angle)),
-        0.1,
-      );
+    // Connection lines/rungs (every few dots) - DNA steps connecting corresponding dots
+    if (i % 4 === 0) {
+      const lineWidth = Math.abs(rightX - leftX);
+      const lineStartX = Math.min(leftX, rightX);
+
       dots.push(
         <View
           key={`line-${i}`}
           style={[
             styles.dnaLine,
             {
-              left: Math.min(leftX, rightX) - 1,
-              top: y - 0.5,
-              width: Math.abs(rightX - leftX) + 2,
-              transform: [{ rotate: `${(lineAngle * 180) / Math.PI}deg` }],
+              left: lineStartX,
+              top: y - 1,
+              width: lineWidth,
+              height: 2,
             },
           ]}
         />,
@@ -434,9 +433,9 @@ const styles = StyleSheet.create({
   },
   dnaLine: {
     position: 'absolute',
-    height: 1.5,
     backgroundColor: colors.bluish || '#53A0CD',
-    opacity: 0.3,
+    opacity: 0.5,
+    borderRadius: 1,
   },
   header: {
     flexDirection: 'row',
