@@ -297,8 +297,8 @@ export const en = {
 		"placeholder": "e.g., JS45"
 	},
 	"remediusConsult": {
-		"title": "Remedius Consult",
-		"subtitle": "Clinical Decision Support System",
+		"title": "Clinical Tools",
+		"subtitle": "AI-powered clinical consultation and drug information",
 		"visitHistory": {
 			"title": "Visit History",
 			"searchPlaceholder": "Search visits..."
@@ -909,8 +909,8 @@ export const en = {
 			}
 		},
 		"consult": {
-			"title": "Remedius Consult",
-			"description": "Clinical decision support",
+			"title": "Clinical Tools",
+			"description": "AI-powered clinical consultation and drug information",
 			"features": {
 				"0": "Clinical Decision Support",
 				"1": "Treatment Recommendations",

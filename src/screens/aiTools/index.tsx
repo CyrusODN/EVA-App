@@ -18,7 +18,6 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  Pill,
   Brain,
   BookOpen,
   Stethoscope,
@@ -139,21 +138,6 @@ const AI_TOOLS = [
       'aiTools.pathfinder.features.2',
     ],
     screenName: 'pathFinder',
-  },
-  {
-    id: 'drugs',
-    title: 'aiTools.drugs.title',
-    description: 'aiTools.drugs.description',
-    icon: Pill,
-    color: colors.primary,
-    bgImage:
-      'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-    features: [
-      'aiTools.drugs.features.0',
-      'aiTools.drugs.features.1',
-      'aiTools.drugs.features.2',
-    ],
-    screenName: 'pharmcoedia',
   },
 ];
 

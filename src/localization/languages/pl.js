@@ -313,8 +313,8 @@ export const pl = {
         "placeholder": "np. JS45"
     },
     "remediusConsult": {
-        "title": "Remedius Consult",
-        "subtitle": "System Wsparcia Decyzji Klinicznych",
+        "title": "Narzędzia Kliniczne",
+        "subtitle": "Konsultacja kliniczna wspomagana AI i informacje o lekach",
         "visitHistory": {
             "title": "Historia wizyt",
             "searchPlaceholder": "Szukaj wizyt..."
@@ -955,8 +955,8 @@ export const pl = {
             }
         },
         "consult": {
-            "title": "Remedius Consult",
-            "description": "Wsparcie decyzji klinicznych",
+            "title": "Narzędzia Kliniczne",
+            "description": "Konsultacja kliniczna wspomagana AI i informacje o lekach",
             "features": {
                 "0": "Wsparcie decyzji klinicznych",
                 "1": "Rekomendacje leczenia",

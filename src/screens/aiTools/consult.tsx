@@ -34,6 +34,7 @@ import {
   X,
   Calendar,
   User,
+  Pill,
 } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -417,17 +418,17 @@ const Consult = () => {
           </LinearGradient>
           <View style={styles.headerTextContainer}>
             <Text variant="headlineLarge" style={styles.headerTitle}>
-              Medical Consultation
+              {t('remediusConsult.title')}
             </Text>
             <Text variant="bodySmall" style={styles.headerSubtitle}>
-              AI-powered case analysis
+              {t('remediusConsult.subtitle')}
             </Text>
           </View>
         </View>
       </View>
 
       {/* Tab Content */}
-      {activeTab === 'visits' ? renderVisitsTab() : renderChatTab()}
+      {activeTab === 'visits' ? renderVisitsTab() : activeTab === 'chat' ? renderChatTab() : null}
 
       {/* Bottom Tab Navigation */}
       <View style={styles.bottomTabs}>
@@ -462,6 +463,19 @@ const Consult = () => {
               </Text>
             </View>
           )}
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'pharmacopedia' && styles.activeTab]}
+          onPress={() => navigation.navigate('pharmcoedia' as never)}
+        >
+          <Pill size={20} color={activeTab === 'pharmacopedia' ? colors.lightGreen : colors.onSurfaceVariant} />
+          <Text variant="labelSmall" style={[
+            styles.tabText,
+            activeTab === 'pharmacopedia' && styles.activeTabText
+          ]}>
+            {t('aiTools.drugs.title')}
+          </Text>
         </TouchableOpacity>
       </View>
 
