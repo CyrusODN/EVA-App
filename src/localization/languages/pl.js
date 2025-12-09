@@ -40,6 +40,13 @@ export const pl = {
         "meetings": "Spotkania",
         "lectures": "Wykłady"
     },
+    "navigation": {
+        "tabs": {
+            "home": "Strona główna",
+            "aiTools": "Narzędzia AI",
+            "profile": "Profil"
+        }
+    },
     "common": {
         "logout": "Wyloguj się",
         "goToApplication": "Przejdź do aplikacji",
@@ -303,7 +310,12 @@ export const pl = {
         "navigation": {
             "previous": "Poprzedni",
             "next": "Następny",
-            "getStarted": "Zaczynamy"
+            "getStarted": "Zaczynamy",
+            "tabs": {
+                "home": "Strona główna",
+                "aiTools": "Narzędzia AI",
+                "profile": "Profil"
+            }
         }
     },
     "visitNameInput": {

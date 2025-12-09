@@ -40,6 +40,13 @@ export const en = {
 		"meetings": "Meetings",
 		"lectures": "Lectures"
 	},
+	"navigation": {
+		"tabs": {
+			"home": "Home",
+			"aiTools": "AI Tools",
+			"profile": "Profile"
+		}
+	},
 	"common": {
 		"logout": "Log out",
 		"goToApplication": "Go to application",
@@ -287,7 +294,12 @@ export const en = {
 		"navigation": {
 			"previous": "Previous",
 			"next": "Next",
-			"getStarted": "Get Started"
+			"getStarted": "Get Started",
+			"tabs": {
+				"home": "Home",
+				"aiTools": "AI Tools",
+				"profile": "Profile"
+			}
 		}
 	},
 	"visitNameInput": {

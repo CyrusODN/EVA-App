@@ -202,8 +202,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(4),
   },
   logo: {
-    width: wp(40),
-    height: hp(8),
+    width: wp(50),
+    height: hp(10),
   },
   formContainer: {
     flex: 1,

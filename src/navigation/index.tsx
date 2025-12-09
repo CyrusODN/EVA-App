@@ -1,12 +1,14 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
-import React, { useEffect } from 'react';
-import { Image } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Image, View, Text, Animated, Platform, Pressable } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import {
+  heightPercentageToDP as hp,
+  widthPercentageToDP as wp,
+} from 'react-native-responsive-screen';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BottomNavigation } from 'react-native-paper';
 import { screens } from '../screens';
 import useLanguageStore from '../store/language';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,21 +17,196 @@ import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../constants/linearGradientColors';
 import { CommonActions } from '@react-navigation/native';
 import { images } from '../constants/images';
+import { useTranslation } from 'react-i18next';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const TabIcon = ({ source, color }) => {
+const TabIcon = ({ source, color, focused, size = hp(3) }) => {
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+
+  React.useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: focused ? 1.1 : 1,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  }, [focused]);
+
   return (
-    <Image
-      source={source}
+    <Animated.View
       style={{
-        tintColor: color,
-        width: hp(3),
-        height: hp(3),
-        resizeMode: 'contain',
+        transform: [{ scale: scaleAnim }],
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-    />
+    >
+      <Image
+        source={source}
+        style={{
+          tintColor: color,
+          width: size,
+          height: size,
+          resizeMode: 'contain',
+        }}
+      />
+    </Animated.View>
+  );
+};
+
+const CustomTabBar = ({ state, descriptors, navigation, insets }) => {
+  const { t } = useTranslation();
+  const tabBarHeight = hp(8.5);
+
+  const tabLabels = {
+    Home: t('navigation.tabs.home') || 'Home',
+    AITools: t('navigation.tabs.aiTools') || 'AI Tools',
+    Profile: t('navigation.tabs.profile') || 'Profile',
+  };
+
+  const handleTabPress = (
+    route: { key: any; name: string; params: object | undefined },
+    isFocused: boolean,
+  ) => {
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
+
+    if (!isFocused && !event.defaultPrevented) {
+      navigation.dispatch({
+        ...CommonActions.navigate(route.name, route.params),
+        target: state.key,
+      });
+    }
+  };
+
+  return (
+    <LinearGradient
+      colors={LinearGradientColors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: -4,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 12,
+        overflow: 'hidden',
+        height: hp(12),
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          height: tabBarHeight,
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          paddingHorizontal: wp(4),
+          backgroundColor: 'transparent',
+          paddingTop: hp(2),
+        }}
+      >
+        {state.routes.map(
+          (
+            route: { key: React.Key | null | undefined; name: string | number },
+            index: any,
+          ) => {
+            const { options } = descriptors[route.key];
+            const isFocused = state.index === index;
+            const icon = options.tabBarIcon;
+
+            return (
+              <Pressable
+                key={route.key}
+                onPress={() => handleTabPress(route, isFocused)}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: hp(1),
+                  position: 'relative',
+                }}
+                android_ripple={{
+                  color: 'rgba(255, 255, 255, 0.2)',
+                  borderless: true,
+                  radius: wp(15),
+                }}
+              >
+                <View
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Icon */}
+                  <View
+                    style={{
+                      marginBottom: hp(0.3),
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {icon &&
+                      icon({
+                        focused: isFocused,
+                        color: isFocused
+                          ? '#ffffff'
+                          : 'rgba(255, 255, 255, 0.65)',
+                        size: isFocused ? hp(3.2) : hp(2.8),
+                      })}
+                  </View>
+
+                  {/* Label */}
+                  <Text
+                    style={{
+                      fontSize: hp(1.2),
+                      fontWeight: isFocused ? '600' : '400',
+                      color: isFocused
+                        ? '#ffffff'
+                        : 'rgba(255, 255, 255, 0.65)',
+                      marginTop: hp(0.2),
+                      letterSpacing: 0.2,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {tabLabels[route.name] || route.name}
+                  </Text>
+
+                  {/* Active background highlight */}
+                  {isFocused && (
+                    <Animated.View
+                      style={{
+                        position: 'absolute',
+                        top: -hp(1.5),
+                        left: -wp(8),
+                        right: -wp(8),
+                        bottom: -hp(1),
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: 200,
+                        zIndex: -1,
+                      }}
+                    />
+                  )}
+                </View>
+              </Pressable>
+            );
+          },
+        )}
+      </View>
+    </LinearGradient>
   );
 };
 
@@ -38,86 +215,19 @@ const BottomTabNavigator = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: {
+          display: 'none',
+        },
       }}
-      tabBar={({ navigation, state, descriptors, insets }) => (
-        <LinearGradient
-          colors={LinearGradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            shadowColor: '#000',
-            shadowOffset: {
-              width: 0,
-              height: -2,
-            },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 8,
-          }}
-        >
-          <BottomNavigation.Bar
-            navigationState={state}
-            safeAreaInsets={insets}
-            activeColor="#ffffff"
-            inactiveColor="rgba(255, 255, 255, 0.65)"
-            style={{
-              backgroundColor: 'transparent',
-              paddingTop: hp(1),
-              paddingBottom: hp(0.5),
-            }}
-            theme={{
-              colors: {
-                onSurface: 'rgba(255, 255, 255, 0.65)',
-                primary: '#ffffff',
-                surface: 'red',
-              },
-            }}
-            onTabPress={({ route, preventDefault }) => {
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-
-              if (event.defaultPrevented) {
-                preventDefault();
-              } else {
-                navigation.dispatch({
-                  ...CommonActions.navigate(route.name, route.params),
-                  target: state.key,
-                });
-              }
-            }}
-            renderIcon={({ route, focused, color }) =>
-              descriptors[route.key].options.tabBarIcon?.({
-                focused,
-                color,
-                size: focused ? 26 : 24,
-              }) || null
-            }
-            getLabelText={({ route }) => {
-              const { options } = descriptors[route.key];
-              const label =
-                typeof options.tabBarLabel === 'string'
-                  ? options.tabBarLabel
-                  : typeof options.title === 'string'
-                  ? options.title
-                  : route.name;
-
-              return label;
-            }}
-          />
-        </LinearGradient>
-      )}
+      tabBar={props => <CustomTabBar {...props} />}
     >
       <Tab.Screen
         name="Home"
         component={screens.Home}
         options={{
-          tabBarIcon: ({ color }) => (
-            <TabIcon source={images.homeIcon} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon source={images.homeIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -125,8 +235,8 @@ const BottomTabNavigator = () => {
         name="AITools"
         component={screens.AITools}
         options={{
-          tabBarIcon: ({ color }) => (
-            <TabIcon source={images.aiIcon} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon source={images.aiIcon} color={color} focused={focused} />
           ),
         }}
       />
@@ -134,8 +244,12 @@ const BottomTabNavigator = () => {
         name="Profile"
         component={screens.Profile}
         options={{
-          tabBarIcon: ({ color }) => (
-            <TabIcon source={images.profileIcon} color={color} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon
+              source={images.profileIcon}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />

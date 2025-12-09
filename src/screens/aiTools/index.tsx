@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     padding: wp(5),
   },
   toolsGrid: {
-    gap: 0,
+    paddingBottom: hp(8),
   },
   toolCard: {
     borderRadius: 20,
