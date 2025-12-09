@@ -36,6 +36,8 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
+import Gap from '../../components/gap';
 
 // Certificate types data
 const CERTIFICATE_TYPES_DATA = [
@@ -96,7 +98,7 @@ const MOCK_VISITS = [
 const Report = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  
+
   // State management
   const [selectedCertificateType, setSelectedCertificateType] = useState('ol9');
   const [importedVisitData, setImportedVisitData] = useState([]);
@@ -105,7 +107,7 @@ const Report = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   // Dialog states
   const [showVisitSelectDialog, setShowVisitSelectDialog] = useState(false);
   const [showDocumentPreview, setShowDocumentPreview] = useState(false);
@@ -117,11 +119,11 @@ const Report = () => {
     navigation.goBack();
   };
 
-  const handleCertificateTypeSelect = (typeId) => {
+  const handleCertificateTypeSelect = typeId => {
     setSelectedCertificateType(typeId);
   };
 
-  const handleVisitSelect = (visitId) => {
+  const handleVisitSelect = visitId => {
     setSelectedVisits(prev => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
@@ -130,12 +132,14 @@ const Report = () => {
   };
 
   const handleImportVisits = () => {
-    const selectedVisitData = MOCK_VISITS.filter(visit => selectedVisits.has(visit.id));
+    const selectedVisitData = MOCK_VISITS.filter(visit =>
+      selectedVisits.has(visit.id),
+    );
     setImportedVisitData(selectedVisitData);
     setShowVisitSelectDialog(false);
   };
 
-  const handleRemoveVisit = (visitId) => {
+  const handleRemoveVisit = visitId => {
     setImportedVisitData(prev => prev.filter(visit => visit.id !== visitId));
     setSelectedVisits(prev => {
       const next = new Set(prev);
@@ -154,21 +158,25 @@ const Report = () => {
     setPdfFiles(prev => [...prev, mockFile]);
   };
 
-  const handleRemoveDocument = (fileName) => {
+  const handleRemoveDocument = fileName => {
     setPdfFiles(prev => prev.filter(file => file.name !== fileName));
   };
 
-  const handlePreviewDocument = (file) => {
+  const handlePreviewDocument = file => {
     setPreviewFile(file);
     setShowDocumentPreview(true);
   };
 
   const handleGenerate = () => {
-    if (!selectedCertificateType || 
-        (importedVisitData.length === 0 && !observations.trim() && pdfFiles.length === 0)) {
+    if (
+      !selectedCertificateType ||
+      (importedVisitData.length === 0 &&
+        !observations.trim() &&
+        pdfFiles.length === 0)
+    ) {
       Alert.alert(
         t('common.error'),
-        t('remediusReport.generate.requirementsTooltip')
+        t('remediusReport.generate.requirementsTooltip'),
       );
       return;
     }
@@ -191,14 +199,28 @@ const Report = () => {
             confidence: 94,
             details: t('remediusReport.preview.sourcesDetails'),
           },
-          { 
-            type: 'analysis', 
-            title: t('remediusReport.preview.sourceTypes.analysis'), 
-            confidence: 75 
+          {
+            type: 'analysis',
+            title: t('remediusReport.preview.sourceTypes.analysis'),
+            confidence: 75,
           },
         ],
         certificateType: selectedCertificateType,
-        certificateContent: `# ${t(CERTIFICATE_TYPES_DATA.find(type => type.id === selectedCertificateType)?.nameKey || '')}\n\n**${t('common.date')}:** ${new Date().toLocaleDateString()}\n\n**${t('remediusReport.patientData.observations')}:**\n${observations || 'Generated based on imported data'}\n\n**${t('remediusReport.preview.visitHistory')}:**\n${importedVisitData.map(visit => `- ${visit.name} (${visit.date.toLocaleDateString()})`).join('\n')}\n\n**${t('remediusReport.preview.certificateContent')}:**\nThis is a mock generated certificate content that would be created by the AI system based on the provided patient data, observations, and imported visit information.`,
+        certificateContent: `# ${t(
+          CERTIFICATE_TYPES_DATA.find(
+            type => type.id === selectedCertificateType,
+          )?.nameKey || '',
+        )}\n\n**${t(
+          'common.date',
+        )}:** ${new Date().toLocaleDateString()}\n\n**${t(
+          'remediusReport.patientData.observations',
+        )}:**\n${observations || 'Generated based on imported data'}\n\n**${t(
+          'remediusReport.preview.visitHistory',
+        )}:**\n${importedVisitData
+          .map(visit => `- ${visit.name} (${visit.date.toLocaleDateString()})`)
+          .join('\n')}\n\n**${t(
+          'remediusReport.preview.certificateContent',
+        )}:**\nThis is a mock generated certificate content that would be created by the AI system based on the provided patient data, observations, and imported visit information.`,
       };
       setSelectedCertificate(newCertificate);
       setShowPreview(true);
@@ -210,7 +232,9 @@ const Report = () => {
     if (!selectedCertificate) return;
     Alert.alert(
       t('remediusReport.preview.export'),
-      t('remediusReport.export.success', { defaultValue: 'Certificate exported successfully' })
+      t('remediusReport.export.success', {
+        defaultValue: 'Certificate exported successfully',
+      }),
     );
   };
 
@@ -219,7 +243,7 @@ const Report = () => {
     // Mock copy functionality
     Alert.alert(
       t('success.copied'),
-      t('success.copied', { defaultValue: 'Copied to clipboard' })
+      t('success.copied', { defaultValue: 'Copied to clipboard' }),
     );
   };
 
@@ -228,30 +252,36 @@ const Report = () => {
     setSelectedVisits(new Set(importedVisitData.map(visit => visit.id)));
   };
 
-  const filteredVisits = MOCK_VISITS.filter(visit => 
-    visit.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredVisits = MOCK_VISITS.filter(visit =>
+    visit.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const renderCertificateType = ({ item }) => {
     const Icon = item.icon;
     const isSelected = selectedCertificateType === item.id;
-    
+
     return (
       <TouchableOpacity
         style={[
           styles.certificateTypeCard,
-          isSelected && styles.selectedCertificateTypeCard
+          isSelected && styles.selectedCertificateTypeCard,
         ]}
         onPress={() => handleCertificateTypeSelect(item.id)}
       >
         <View style={styles.certificateTypeIcon}>
-          <Icon size={20} color={isSelected ? colors.lightGreen : colors.onSurfaceVariant} />
+          <Icon
+            size={20}
+            color={isSelected ? colors.lightGreen : colors.onSurfaceVariant}
+          />
         </View>
         <View style={styles.certificateTypeContent}>
-          <Text variant="titleMedium" style={[
-            styles.certificateTypeName,
-            isSelected && styles.selectedCertificateTypeName
-          ]}>
+          <Text
+            variant="titleMedium"
+            style={[
+              styles.certificateTypeName,
+              isSelected && styles.selectedCertificateTypeName,
+            ]}
+          >
             {t(item.nameKey)}
           </Text>
           <Text variant="bodySmall" style={styles.certificateTypeDescription}>
@@ -275,10 +305,14 @@ const Report = () => {
         </View>
         <View style={styles.importedVisitTags}>
           <View style={styles.visitTag}>
-            <Text variant="labelSmall" style={styles.visitTagText}>{item.type}</Text>
+            <Text variant="labelSmall" style={styles.visitTagText}>
+              {item.type}
+            </Text>
           </View>
           <View style={styles.visitTag}>
-            <Text variant="labelSmall" style={styles.visitTagText}>{item.specialization}</Text>
+            <Text variant="labelSmall" style={styles.visitTagText}>
+              {item.specialization}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={() => handleRemoveVisit(item.id)}
@@ -297,7 +331,11 @@ const Report = () => {
         <FileText size={16} color={colors.error} />
       </View>
       <View style={styles.documentInfo}>
-        <Text variant="labelMedium" style={styles.documentName} numberOfLines={1}>
+        <Text
+          variant="labelMedium"
+          style={styles.documentName}
+          numberOfLines={1}
+        >
           {item.name}
         </Text>
         <Text variant="bodySmall" style={styles.documentSize}>
@@ -325,7 +363,7 @@ const Report = () => {
     <TouchableOpacity
       style={[
         styles.visitSelectItem,
-        selectedVisits.has(item.id) && styles.selectedVisitSelectItem
+        selectedVisits.has(item.id) && styles.selectedVisitSelectItem,
       ]}
       onPress={() => handleVisitSelect(item.id)}
     >
@@ -341,10 +379,14 @@ const Report = () => {
         </View>
         <View style={styles.visitSelectTags}>
           <View style={styles.visitTag}>
-            <Text variant="labelSmall" style={styles.visitTagText}>{item.type}</Text>
+            <Text variant="labelSmall" style={styles.visitTagText}>
+              {item.type}
+            </Text>
           </View>
           <View style={styles.visitTag}>
-            <Text variant="labelSmall" style={styles.visitTagText}>{item.specialization}</Text>
+            <Text variant="labelSmall" style={styles.visitTagText}>
+              {item.specialization}
+            </Text>
           </View>
         </View>
       </View>
@@ -357,297 +399,419 @@ const Report = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ChevronLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <ChevronLeft size={24} color={colors.onSurface} />
+          </TouchableOpacity>
 
-        <View style={styles.headerTitleContainer}>
-          <LinearGradient
-            colors={['#53A0CD', '#44C2AD']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.headerIconContainer}
-          >
-            <FileText size={20} color="white" />
-          </LinearGradient>
-          <View style={styles.headerTextContainer}>
-            <Text variant="headlineLarge" style={styles.headerTitle}>
-              {t('remediusReport.title')}
-            </Text>
-            <Text variant="bodySmall" style={styles.headerSubtitle}>
-              {t('remediusReport.subtitle')}
-            </Text>
+          <View style={styles.headerTitleContainer}>
+            <LinearGradient
+              colors={['#53A0CD', '#44C2AD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.headerIconContainer}
+            >
+              <FileText size={20} color="white" />
+            </LinearGradient>
+            <View style={styles.headerTextContainer}>
+              <Text variant="headlineLarge" style={styles.headerTitle}>
+                {t('remediusReport.title')}
+              </Text>
+              <Text variant="bodySmall" style={styles.headerSubtitle}>
+                {t('remediusReport.subtitle')}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.content}>
-        {/* Main Content */}
-        <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
-          {/* Certificate Type Selection */}
-          <View style={styles.section}>
-            <Text variant="titleLarge" style={styles.sectionTitle}>
-              {t('remediusReport.certificateType.title')}
-            </Text>
-            <FlatList
-              data={CERTIFICATE_TYPES_DATA}
-              renderItem={renderCertificateType}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              scrollEnabled={false}
-              columnWrapperStyle={styles.certificateTypeRow}
-            />
-          </View>
-
-          {/* Patient Data */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+        <View style={styles.content}>
+          {/* Main Content */}
+          <ScrollView
+            style={styles.mainContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Certificate Type Selection */}
+            <View style={[styles.section, styles.certificateTypeSection]}>
               <Text variant="titleLarge" style={styles.sectionTitle}>
-                {t('remediusReport.patientData.title')}
+                {t('remediusReport.certificateType.title')}
               </Text>
-              <TouchableOpacity
-                style={styles.importButton}
-                onPress={openVisitSelectDialog}
-              >
-                <Plus size={16} color="white" />
-                <Text variant="labelMedium" style={styles.importButtonText}>
-                  {t('remediusReport.patientData.importButton')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Imported Visits */}
-            {importedVisitData.length > 0 && (
-              <View style={styles.importedVisitsContainer}>
-                <FlatList
-                  data={importedVisitData}
-                  renderItem={renderImportedVisit}
-                  keyExtractor={(item) => item.id}
-                  scrollEnabled={false}
-                />
-              </View>
-            )}
-
-            {/* Observations */}
-            <View style={styles.observationsContainer}>
-              <Text variant="labelMedium" style={styles.observationsLabel}>
-                {t('remediusReport.patientData.observations')}
-              </Text>
-              <TextInput
-                style={styles.observationsInput}
-                placeholder={t('remediusReport.patientData.observationsPlaceholder')}
-                value={observations}
-                onChangeText={setObservations}
-                multiline
-                numberOfLines={4}
-                placeholderTextColor={colors.placeholderColor}
+              <Gap height={hp(1)} />
+              <FlatList
+                data={CERTIFICATE_TYPES_DATA}
+                renderItem={renderCertificateType}
+                keyExtractor={item => item.id}
+                numColumns={2}
+                scrollEnabled={false}
+                columnWrapperStyle={styles.certificateTypeRow}
               />
             </View>
 
-            {/* Document Upload */}
-            <View style={styles.documentUploadContainer}>
-              <TouchableOpacity
-                style={styles.uploadArea}
-                onPress={handleAddDocument}
-              >
-                <Upload size={24} color={colors.onSurfaceVariant} />
-                <Text variant="bodyMedium" style={styles.uploadText}>
-                  {t('remediusReport.patientData.dropDocuments')}
+            {/* Patient Data */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text variant="titleLarge" style={styles.sectionTitle}>
+                  {t('remediusReport.patientData.title')}
                 </Text>
-                <Text variant="bodySmall" style={styles.uploadSubtext}>
-                  {t('remediusReport.patientData.supportedFormat')} • {t('remediusReport.patientData.maxDocuments', { count: 5 })}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.importButton}
+                  onPress={openVisitSelectDialog}
+                >
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.importButtonGradient}
+                  >
+                    <View style={{ width: wp(2) }} />
+                    <Plus size={16} color="white" />
+                    <Text variant="titleMedium" style={styles.importButtonText}>
+                      {t('remediusReport.patientData.importButton')}
+                    </Text>
+                    <View style={{ width: wp(2) }} />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
 
-              {/* Uploaded Documents */}
-              {pdfFiles.length > 0 && (
-                <View style={styles.uploadedDocumentsContainer}>
-                  <Text variant="labelMedium" style={styles.uploadedDocumentsTitle}>
-                    {t('remediusReport.patientData.uploadedDocuments', { count: pdfFiles.length })} ({pdfFiles.length})
-                  </Text>
+              {/* Imported Visits */}
+              {importedVisitData.length > 0 && (
+                <View style={styles.importedVisitsContainer}>
                   <FlatList
-                    data={pdfFiles}
-                    renderItem={renderDocument}
-                    keyExtractor={(item, index) => index.toString()}
+                    data={importedVisitData}
+                    renderItem={renderImportedVisit}
+                    keyExtractor={item => item.id}
                     scrollEnabled={false}
                   />
                 </View>
               )}
+
+              {/* Observations */}
+              <View style={styles.observationsContainer}>
+                <Text variant="titleMedium" style={styles.observationsLabel}>
+                  {t('remediusReport.patientData.observations')}
+                </Text>
+                <TextInput
+                  style={styles.observationsInput}
+                  placeholder={t(
+                    'remediusReport.patientData.observationsPlaceholder',
+                  )}
+                  value={observations}
+                  onChangeText={setObservations}
+                  multiline
+                  numberOfLines={4}
+                  placeholderTextColor={colors.placeholderColor}
+                />
+              </View>
+
+              {/* Document Upload */}
+              <View style={styles.documentUploadContainer}>
+                <TouchableOpacity
+                  style={styles.uploadArea}
+                  onPress={handleAddDocument}
+                >
+                  <Upload size={24} color={colors.onSurfaceVariant} />
+                  <Text variant="bodyMedium" style={styles.uploadText}>
+                    {t('remediusReport.patientData.dropDocuments')}
+                  </Text>
+                  <Text variant="bodySmall" style={styles.uploadSubtext}>
+                    {t('remediusReport.patientData.supportedFormat')} •{' '}
+                    {t('remediusReport.patientData.maxDocuments', { count: 5 })}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Uploaded Documents */}
+                {pdfFiles.length > 0 && (
+                  <View style={styles.uploadedDocumentsContainer}>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.uploadedDocumentsTitle}
+                    >
+                      {t('remediusReport.patientData.uploadedDocuments', {
+                        count: pdfFiles.length,
+                      })}{' '}
+                      ({pdfFiles.length})
+                    </Text>
+                    <FlatList
+                      data={pdfFiles}
+                      renderItem={renderDocument}
+                      keyExtractor={(item, index) => index.toString()}
+                      scrollEnabled={false}
+                    />
+                  </View>
+                )}
+              </View>
+
+              {/* Generate and Preview Buttons */}
+              <View style={styles.generateButtonsContainer}>
+                <TouchableOpacity
+                  style={styles.previewButton}
+                  onPress={() => {
+                    if (selectedCertificate) {
+                      setShowPreview(true);
+                    } else {
+                      handleGenerate();
+                      setTimeout(() => setShowPreview(true), 500);
+                    }
+                  }}
+                  disabled={
+                    isGenerating ||
+                    !selectedCertificateType ||
+                    (importedVisitData.length === 0 &&
+                      !observations.trim() &&
+                      pdfFiles.length === 0)
+                  }
+                >
+                  <LinearGradient
+                    colors={
+                      !selectedCertificateType ||
+                      (importedVisitData.length === 0 &&
+                        !observations.trim() &&
+                        pdfFiles.length === 0)
+                        ? ['#94A3B8', '#94A3B8']
+                        : LinearGradientColors
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.previewButtonGradient}
+                  >
+                    <Eye size={16} color="white" />
+                    <Text variant="labelLarge" style={styles.previewButtonText}>
+                      Preview
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.generateButton}
+                  onPress={handleGenerate}
+                  disabled={
+                    isGenerating ||
+                    !selectedCertificateType ||
+                    (importedVisitData.length === 0 &&
+                      !observations.trim() &&
+                      pdfFiles.length === 0)
+                  }
+                >
+                  <LinearGradient
+                    colors={
+                      isGenerating ||
+                      !selectedCertificateType ||
+                      (importedVisitData.length === 0 &&
+                        !observations.trim() &&
+                        pdfFiles.length === 0)
+                        ? ['#94A3B8', '#94A3B8']
+                        : LinearGradientColors
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.generateButtonGradient}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Text
+                          variant="labelLarge"
+                          style={styles.generateButtonText}
+                        >
+                          {t('remediusReport.generate.generating')}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Brain size={16} color="white" />
+                        <Text
+                          variant="labelLarge"
+                          style={styles.generateButtonText}
+                        >
+                          {t('remediusReport.generate.button')}
+                        </Text>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             </View>
+          </ScrollView>
 
-            {/* Generate Button */}
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                (!selectedCertificateType || 
-                (importedVisitData.length === 0 && !observations.trim() && pdfFiles.length === 0)) && 
-                styles.generateButtonDisabled
-              ]}
-              onPress={handleGenerate}
-              disabled={isGenerating || (!selectedCertificateType || 
-                (importedVisitData.length === 0 && !observations.trim() && pdfFiles.length === 0))}
-            >
-              {isGenerating ? (
-                <>
-                  <Text variant="labelMedium" style={styles.generateButtonText}>
-                    {t('remediusReport.generate.generating')}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Brain size={16} color="white" />
-                  <Text variant="labelMedium" style={styles.generateButtonText}>
-                    {t('remediusReport.generate.button')}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        {/* Preview Panel */}
-        {showPreview && selectedCertificate && (
-          <View style={styles.previewPanel}>
-            <View style={styles.previewHeader}>
-              <View>
-                <Text variant="titleLarge" style={styles.previewTitle}>
-                  {t('remediusReport.preview.title')}
-                </Text>
-                <Text variant="bodySmall" style={styles.previewSubtitle}>
-                  {t(CERTIFICATE_TYPES_DATA.find(type => type.id === selectedCertificate.certificateType)?.nameKey || '')}
-                </Text>
-              </View>
-              <View style={styles.previewActions}>
-                <TouchableOpacity
-                  style={styles.previewActionButton}
-                  onPress={handleCopyCertificateContent}
-                >
-                  <Copy size={16} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.previewActionButton}
-                  onPress={handleExport}
-                >
-                  <Download size={16} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.previewActionButton}
-                  onPress={() => setShowPreview(false)}
-                >
-                  <X size={16} color={colors.onSurfaceVariant} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <ScrollView style={styles.previewContent} showsVerticalScrollIndicator={false}>
-              <View style={styles.previewDateContainer}>
-                <Text variant="bodySmall" style={styles.previewDateLabel}>
-                  {t('common.date')}
-                </Text>
-                <Text variant="bodyMedium" style={styles.previewDateValue}>
-                  {selectedCertificate.date.toLocaleDateString()}
-                </Text>
-              </View>
-
-              {selectedCertificate.certificateContent && (
-                <View style={styles.certificateContentContainer}>
-                  <Text variant="labelMedium" style={styles.certificateContentTitle}>
-                    {t('remediusReport.preview.certificateContent')}
-                  </Text>
-                  <View style={styles.certificateContentBox}>
-                    <Text variant="bodySmall" style={styles.certificateContentText}>
-                      {selectedCertificate.certificateContent}
+          {/* Preview Panel */}
+          {showPreview && selectedCertificate && (
+            <View style={styles.previewOverlay}>
+              <View style={styles.previewPanel}>
+                <View style={styles.previewHeader}>
+                  <View style={styles.previewHeaderContent}>
+                    <Text variant="titleLarge" style={styles.previewTitle}>
+                      {t('remediusReport.preview.title')}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.previewSubtitle}>
+                      {t(
+                        CERTIFICATE_TYPES_DATA.find(
+                          type =>
+                            type.id === selectedCertificate.certificateType,
+                        )?.nameKey || '',
+                      )}
                     </Text>
                   </View>
+                  <View style={styles.previewActions}>
+                    <TouchableOpacity
+                      style={styles.previewActionButton}
+                      onPress={handleCopyCertificateContent}
+                    >
+                      <Copy size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.previewActionButton}
+                      onPress={handleExport}
+                    >
+                      <Download size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.previewActionButton}
+                      onPress={() => setShowPreview(false)}
+                    >
+                      <X size={18} color={colors.onSurfaceVariant} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              )}
-            </ScrollView>
-          </View>
-        )}
-      </View>
 
-      {/* Visit Select Dialog */}
-      {showVisitSelectDialog && (
-        <View style={styles.dialogOverlay}>
-          <View style={styles.dialogContainer}>
-            <View style={styles.dialogHeader}>
-              <Text variant="headlineSmall" style={styles.dialogTitle}>
-                {t('remediusReport.visitSelectDialog.title')}
-              </Text>
-              <TouchableOpacity onPress={() => setShowVisitSelectDialog(false)}>
-                <X size={24} color={colors.onSurface} />
-              </TouchableOpacity>
+                <ScrollView
+                  style={styles.previewContent}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.previewContentContainer}
+                >
+                  <View style={styles.previewDateContainer}>
+                    <Text variant="bodySmall" style={styles.previewDateLabel}>
+                      {t('common.date')}
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.previewDateValue}>
+                      {selectedCertificate.date.toLocaleDateString()}
+                    </Text>
+                  </View>
+
+                  {selectedCertificate.certificateContent && (
+                    <View style={styles.certificateContentContainer}>
+                      <Text
+                        variant="labelMedium"
+                        style={styles.certificateContentTitle}
+                      >
+                        {t('remediusReport.preview.certificateContent')}
+                      </Text>
+                      <View style={styles.certificateContentBox}>
+                        <Text
+                          variant="bodySmall"
+                          style={styles.certificateContentText}
+                        >
+                          {selectedCertificate.certificateContent}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
             </View>
-
-            <View style={styles.searchContainer}>
-              <Search size={16} color={colors.onSurfaceVariant} style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder={t('remediusReport.visitSelectDialog.searchPlaceholder')}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholderTextColor={colors.placeholderColor}
-              />
-            </View>
-
-            <FlatList
-              data={filteredVisits}
-              renderItem={renderVisitItem}
-              keyExtractor={(item) => item.id}
-              style={styles.visitSelectList}
-              showsVerticalScrollIndicator={false}
-            />
-
-            <View style={styles.dialogActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowVisitSelectDialog(false)}
-              >
-                <Text variant="labelMedium" style={styles.cancelButtonText}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.importVisitsButton}
-                onPress={handleImportVisits}
-              >
-                <Text variant="labelMedium" style={styles.importVisitsButtonText}>
-                  {t('remediusReport.visitSelectDialog.importButton')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          )}
         </View>
-      )}
 
-      {/* Document Preview Dialog */}
-      {showDocumentPreview && previewFile && (
-        <View style={styles.dialogOverlay}>
-          <View style={styles.dialogContainer}>
-            <View style={styles.dialogHeader}>
-              <Text variant="headlineSmall" style={styles.dialogTitle}>
-                {t('remediusReport.documentPreview.title')}
-              </Text>
-              <TouchableOpacity onPress={() => setShowDocumentPreview(false)}>
-                <X size={24} color={colors.onSurface} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.documentPreviewContent}>
-              <Text variant="bodySmall" style={styles.documentPreviewFileName}>
-                {t('remediusReport.documentPreview.fileName')}: {previewFile.name}
-              </Text>
-              <View style={styles.documentPreviewContainer}>
-                <Text variant="bodyMedium" style={styles.documentPreviewText}>
-                  Document preview would be displayed here
+        {/* Visit Select Dialog */}
+        {showVisitSelectDialog && (
+          <View style={styles.dialogOverlay}>
+            <View style={styles.dialogContainer}>
+              <View style={styles.dialogHeader}>
+                <Text variant="headlineSmall" style={styles.dialogTitle}>
+                  {t('remediusReport.visitSelectDialog.title')}
                 </Text>
+                <TouchableOpacity
+                  onPress={() => setShowVisitSelectDialog(false)}
+                >
+                  <X size={24} color={colors.onSurface} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.searchContainer}>
+                <Search
+                  size={16}
+                  color={colors.onSurfaceVariant}
+                  style={styles.searchIcon}
+                />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={t(
+                    'remediusReport.visitSelectDialog.searchPlaceholder',
+                  )}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor={colors.placeholderColor}
+                />
+              </View>
+
+              <FlatList
+                data={filteredVisits}
+                renderItem={renderVisitItem}
+                keyExtractor={item => item.id}
+                style={styles.visitSelectList}
+                showsVerticalScrollIndicator={false}
+              />
+
+              <View style={styles.dialogActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowVisitSelectDialog(false)}
+                >
+                  <Text variant="labelMedium" style={styles.cancelButtonText}>
+                    {t('common.cancel')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.importVisitsButton}
+                  onPress={handleImportVisits}
+                >
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.importVisitsButtonGradient}
+                  >
+                    <Text
+                      variant="labelMedium"
+                      style={styles.importVisitsButtonText}
+                    >
+                      {t('remediusReport.visitSelectDialog.importButton')}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
-        </View>
-      )}
+        )}
+
+        {/* Document Preview Dialog */}
+        {showDocumentPreview && previewFile && (
+          <View style={styles.dialogOverlay}>
+            <View style={styles.dialogContainer}>
+              <View style={styles.dialogHeader}>
+                <Text variant="headlineSmall" style={styles.dialogTitle}>
+                  {t('remediusReport.documentPreview.title')}
+                </Text>
+                <TouchableOpacity onPress={() => setShowDocumentPreview(false)}>
+                  <X size={24} color={colors.onSurface} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.documentPreviewContent}>
+                <Text
+                  variant="bodySmall"
+                  style={styles.documentPreviewFileName}
+                >
+                  {t('remediusReport.documentPreview.fileName')}:{' '}
+                  {previewFile.name}
+                </Text>
+                <View style={styles.documentPreviewContainer}>
+                  <Text variant="bodyMedium" style={styles.documentPreviewText}>
+                    Document preview would be displayed here
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -665,9 +829,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(2),
     backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: '#D1D5DB',
   },
   backButton: {
     borderRadius: 8,
@@ -701,7 +863,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    flexDirection: 'row',
   },
   mainContent: {
     flex: 1,
@@ -721,19 +882,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   importButton: {
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  importButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.lightGreen,
-    borderRadius: 6,
+    height: hp(4),
   },
   importButtonText: {
     color: 'white',
     fontWeight: '600',
   },
   // Certificate Type Styles
+  certificateTypeSection: {
+    marginBottom: hp(4),
+  },
   certificateTypeRow: {
     justifyContent: 'space-between',
     marginBottom: 12,
@@ -744,7 +910,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     backgroundColor: colors.surface,
   },
@@ -779,7 +945,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
   },
   importedVisitHeader: {
     flexDirection: 'row',
@@ -817,12 +983,12 @@ const styles = StyleSheet.create({
   },
   observationsLabel: {
     color: colors.onSurface,
-    fontWeight: '600',
     marginBottom: 8,
+    fontWeight: '600',
   },
   observationsInput: {
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 12,
     height: 100,
@@ -839,7 +1005,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
     borderWidth: 2,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderStyle: 'dashed',
     borderRadius: 8,
     backgroundColor: colors.surface,
@@ -870,7 +1036,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
   },
   documentIcon: {
     width: 32,
@@ -902,18 +1068,47 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   // Generate Button Styles
-  generateButton: {
+  generateButtonsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: hp(2),
+  },
+  previewButton: {
+    flex: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: 48,
+  },
+  previewButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 12,
-    backgroundColor: colors.lightGreen,
+    width: '100%',
+    height: '100%',
+  },
+  previewButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  previewButtonDisabled: {
+    opacity: 0.6,
+  },
+  generateButton: {
+    flex: 1,
     borderRadius: 8,
-    marginTop: hp(2),
+    overflow: 'hidden',
+    height: 48,
+  },
+  generateButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    height: '100%',
   },
   generateButtonDisabled: {
-    backgroundColor: colors.onSurfaceVariant,
     opacity: 0.6,
   },
   generateButtonText: {
@@ -921,11 +1116,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   // Preview Panel Styles
+  previewOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
   previewPanel: {
-    width: wp(45),
+    width: wp(95),
+    maxHeight: hp(85),
     backgroundColor: 'white',
-    borderLeftWidth: 1,
-    borderLeftColor: colors.outline,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   previewHeader: {
     flexDirection: 'row',
@@ -933,7 +1140,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: wp(4),
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: '#D1D5DB',
+  },
+  previewHeaderContent: {
+    flex: 1,
+    marginRight: wp(2),
   },
   previewTitle: {
     color: colors.onSurface,
@@ -941,25 +1152,27 @@ const styles = StyleSheet.create({
   },
   previewSubtitle: {
     color: colors.onSurfaceVariant,
-    marginTop: 2,
+    marginTop: 4,
   },
   previewActions: {
     flexDirection: 'row',
     gap: 8,
   },
   previewActionButton: {
-    padding: 8,
-    borderRadius: 6,
+    padding: 10,
+    borderRadius: 8,
     backgroundColor: colors.background,
   },
   previewContent: {
     flex: 1,
+  },
+  previewContentContainer: {
     padding: wp(4),
   },
   previewDateContainer: {
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: '#D1D5DB',
     marginBottom: 16,
   },
   previewDateLabel: {
@@ -981,7 +1194,7 @@ const styles = StyleSheet.create({
   certificateContentBox: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 16,
   },
@@ -1014,7 +1227,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: wp(4),
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: '#D1D5DB',
   },
   dialogTitle: {
     color: colors.onSurface,
@@ -1029,7 +1242,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
   },
   searchIcon: {
     marginRight: 8,
@@ -1050,7 +1263,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     backgroundColor: colors.surface,
   },
@@ -1085,23 +1298,29 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: wp(4),
     borderTopWidth: 1,
-    borderTopColor: colors.outline,
+    borderTopColor: '#D1D5DB',
   },
   cancelButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderRadius: 6,
   },
   cancelButtonText: {
     color: colors.onSurface,
   },
   importVisitsButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: colors.lightGreen,
     borderRadius: 6,
+    overflow: 'hidden',
+    height: hp(4),
+    minWidth: 100,
+  },
+  importVisitsButtonGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   importVisitsButtonText: {
     color: 'white',
@@ -1119,7 +1338,7 @@ const styles = StyleSheet.create({
     height: hp(50),
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
