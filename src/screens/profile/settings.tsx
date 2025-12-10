@@ -24,7 +24,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Camera } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Input from '../../components/input';
 import PrimaryButton from '../../components/primaryButton';
@@ -33,6 +33,9 @@ import { colors } from '../../constants/colors';
 import Header from '../../components/header';
 import { useNavigation } from '@react-navigation/native';
 import Gap from '../../components/gap';
+import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
+import { textStyles } from '../../constants/textStyles';
 
 // Mock user data - replace with actual user data from your state management
 const mockUser = {
@@ -67,17 +70,11 @@ const Settings = () => {
 
   const handlePasswordChange = () => {
     if (newPassword !== confirmPassword) {
-      customToast(
-        'error',
-        t('settings.password.alertMatch'),
-      );
+      customToast('error', t('settings.password.alertMatch'));
       return;
     }
     console.log('Password changed');
-    customToast(
-      'success',
-      t('settings.password.alertChanged'),
-    );
+    customToast('success', t('settings.password.alertChanged'));
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -89,10 +86,7 @@ const Settings = () => {
       return;
     }
     console.log('Support message sent');
-    customToast(
-      'success',
-      t('settings.support.alertSent'),
-    );
+    customToast('success', t('settings.support.alertSent'));
     setSupportEmail('');
     setSupportSubject('');
     setSupportMessage('');
@@ -123,7 +117,7 @@ const Settings = () => {
 
   const Section = ({ title, children }) => (
     <View style={styles.section}>
-      <Text variant="titleMedium" style={styles.sectionTitle}>
+      <Text variant="headlineMedium" style={textStyles.sectionTitle}>
         {title}
       </Text>
       {children}
@@ -164,22 +158,38 @@ const Settings = () => {
                 >
                   <IconButton
                     icon="camera"
-                    size={16}
+                    size={14}
                     iconColor="white"
                     style={styles.editIcon}
                   />
                 </TouchableOpacity>
               </View>
-              <PrimaryButton
-                text={t('settings.profile.changeAvatar')}
+              <TouchableOpacity
+                style={styles.changeAvatarTextContainer}
                 onPress={handleImagePicker}
-                width={200}
-              />
+              >
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.changeAvatarTextContainer}
+                >
+                  <View style={{ width: wp(3) }} />
+                  <Camera size={16} color="white" />
+                  <Text
+                    variant="labelLarge"
+                    style={[textStyles.labelLargeWhite, { marginLeft: wp(2) }]}
+                  >
+                    {t('settings.profile.changeAvatar')}
+                  </Text>
+                  <View style={{ width: wp(3) }} />
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </Section>
 
           {/* Change Password Section */}
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="headlineMedium" style={textStyles.sectionTitle}>
             {t('settings.password.title')}
           </Text>
           <View style={styles.passwordSection}>
@@ -215,7 +225,7 @@ const Settings = () => {
           </View>
           <Gap height={hp(2)} />
           {/* Customer Support Section */}
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="headlineMedium" style={textStyles.sectionTitle}>
             {t('settings.support.title')}
           </Text>
           <View style={styles.supportSection}>
@@ -364,12 +374,6 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
-  sectionTitle: {
-    color: colors.darkPrimary,
-    marginBottom: 16,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
-  },
   divider: {
     marginTop: 16,
     backgroundColor: colors.borderColor,
@@ -386,9 +390,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
     borderWidth: 2,
     borderColor: colors.lightGreen,
     backgroundColor: colors.primaryContainer,
@@ -398,9 +402,9 @@ const styles = StyleSheet.create({
     bottom: -2,
     right: -2,
     backgroundColor: colors.lightGreen,
-    borderRadius: 16,
-    width: 32,
-    height: 32,
+    borderRadius: 14,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -451,6 +455,14 @@ const styles = StyleSheet.create({
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     marginBottom: 12,
+  },
+  changeAvatarTextContainer: {
+    backgroundColor: colors.lightGreen,
+    borderRadius: 10,
+    height: hp(4),
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
 });
 

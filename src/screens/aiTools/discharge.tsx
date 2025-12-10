@@ -18,9 +18,8 @@ import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   ChevronLeft,
-  Stethoscope,
-  Plus,
   FileText,
+  Plus,
   Settings,
   Copy,
   Download,
@@ -138,7 +137,7 @@ Stable condition, ready for outpatient management
               end={{ x: 1, y: 0 }}
               style={styles.headerIconContainer}
             >
-              <Stethoscope size={20} color="white" />
+              <FileText size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
               <Text variant="headlineLarge" style={styles.headerTitle}>

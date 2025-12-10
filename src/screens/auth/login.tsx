@@ -20,6 +20,7 @@ import { colors } from '../../constants/colors';
 import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
+import { textStyles } from '../../constants/textStyles';
 //@ts-ignore
 import CheckBox from 'react-native-check-box';
 
@@ -149,7 +150,7 @@ const Login = () => {
                   onPress={handleGoogleLogin}
                 >
                   <Image source={images.googleIcon} style={styles.googleIcon} />
-                  <Text variant="titleMedium" style={styles.googleButtonText}>
+                  <Text variant="titleMedium" style={textStyles.titleMedium}>
                     {t('login.signInWithGoogle')}
                   </Text>
                 </TouchableOpacity>

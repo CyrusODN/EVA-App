@@ -28,6 +28,7 @@ import { colors } from '../../constants/colors';
 import Header from '../../components/header';
 import PrimaryButton from '../../components/primaryButton';
 import { useNavigation } from '@react-navigation/native';
+import { textStyles } from '../../constants/textStyles';
 
 interface Plan {
   id: number;
@@ -478,7 +479,7 @@ const Subscription = () => {
         {/* Current Subscriptions */}
         {MOCK_PLANS.length > 0 && (
           <View style={styles.section}>
-            <Text variant="headlineMedium" style={styles.sectionTitle}>
+            <Text variant="headlineMedium" style={textStyles.sectionTitle}>
               {t('subscription.title')}
             </Text>
             {MOCK_PLANS.map(plan => (
@@ -489,7 +490,7 @@ const Subscription = () => {
 
         {/* Available Plans */}
         <View style={styles.section}>
-          <Text variant="headlineMedium" style={styles.sectionTitle}>
+          <Text variant="headlineMedium" style={textStyles.sectionTitle}>
             {t('subscription.availablePlansTitle')}
           </Text>
 

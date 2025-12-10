@@ -20,6 +20,7 @@ import { colors } from '../../constants/colors';
 import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
+import { textStyles } from '../../constants/textStyles';
 
 const ForgotPassword = () => {
     const { t } = useTranslation();
@@ -63,7 +64,7 @@ const ForgotPassword = () => {
                   <>
                     {/* Title */}
                     <View style={styles.titleContainer}>
-                      <Text variant="headlineMedium" style={styles.title}>
+                      <Text variant="headlineMedium" style={textStyles.headlineMedium}>
                         {t('login.resetPassword')}
                       </Text>
                       <Text variant="bodyMedium" style={styles.subtitle}>
@@ -100,9 +101,9 @@ const ForgotPassword = () => {
                   // Success State
                   <View style={styles.successContainer}>
                     <View style={styles.successIcon}>
-                      <Text variant="headlineLarge" style={styles.checkmark}>✓</Text>
+                      <Text variant="headlineLarge" style={textStyles.headlineLarge}>✓</Text>
                     </View>
-                    <Text variant="headlineMedium" style={styles.successTitle}>
+                    <Text variant="headlineMedium" style={textStyles.headlineMedium}>
                       {t('login.resetLinkSent')}
                     </Text>
                     <Text variant="bodyMedium" style={styles.successSubtitle}>

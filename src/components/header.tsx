@@ -14,6 +14,7 @@ import {
 } from 'react-native-responsive-screen';
 import { ChevronLeft, Bell } from 'lucide-react-native';
 import { colors } from '../constants/colors';
+import { textStyles } from '../constants/textStyles';
 
 interface HeaderProps {
   title: string;
@@ -54,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleContainer}>
           <Text
             variant="headlineMedium"
-            style={[styles.title, { color: textColor }]}
+            style={[textStyles.headlineMedium, styles.title, { color: textColor }]}
           >
             {title}
           </Text>

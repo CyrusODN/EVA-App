@@ -34,6 +34,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import { textStyles } from '../../constants/textStyles';
 
 const Prescreening = () => {
   const { t } = useTranslation();
@@ -201,7 +202,7 @@ Social History:
               <Brain size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={styles.headerTitle}>
+              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
                 {t('preScreening.title')}
               </Text>
               <Text variant="bodySmall" style={styles.headerSubtitle}>
@@ -239,7 +240,7 @@ Social History:
             <View style={styles.inputContainer}>
               {/* Select Study Protocol Section */}
               <View style={styles.section}>
-                <Text variant="headlineSmall" style={styles.sectionTitle}>
+                <Text variant="headlineSmall" style={textStyles.sectionTitle}>
                   {t('preScreening.protocolSelector.title')}
                 </Text>
                 <TouchableOpacity style={styles.protocolCard}>
@@ -267,7 +268,7 @@ Social History:
               {/* Medical History Input */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text variant="headlineMedium" style={styles.sectionTitle}>
+                  <Text variant="headlineMedium" style={textStyles.sectionTitle}>
                     {t('preScreening.labels.medicalHistory')}
                   </Text>
                   <View style={styles.medicalHistoryActions}>

@@ -36,6 +36,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import { textStyles } from '../../constants/textStyles';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import Gap from '../../components/gap';
 
@@ -415,7 +416,7 @@ const Report = () => {
               <FileText size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={styles.headerTitle}>
+              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
                 {t('remediusReport.title')}
               </Text>
               <Text variant="bodySmall" style={styles.headerSubtitle}>
@@ -715,7 +716,7 @@ const Report = () => {
           <View style={styles.dialogOverlay}>
             <View style={styles.dialogContainer}>
               <View style={styles.dialogHeader}>
-                <Text variant="headlineSmall" style={styles.dialogTitle}>
+                <Text variant="headlineSmall" style={textStyles.headlineSmall}>
                   {t('remediusReport.visitSelectDialog.title')}
                 </Text>
                 <TouchableOpacity
@@ -787,7 +788,7 @@ const Report = () => {
           <View style={styles.dialogOverlay}>
             <View style={styles.dialogContainer}>
               <View style={styles.dialogHeader}>
-                <Text variant="headlineSmall" style={styles.dialogTitle}>
+                <Text variant="headlineSmall" style={textStyles.headlineSmall}>
                   {t('remediusReport.documentPreview.title')}
                 </Text>
                 <TouchableOpacity onPress={() => setShowDocumentPreview(false)}>

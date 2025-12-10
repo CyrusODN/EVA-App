@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Brain,
   BookOpen,
-  Stethoscope,
+  FileText,
   ClipboardList,
   GraduationCap,
   ListChecks,
@@ -30,6 +30,8 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
+import { textStyles } from '../../constants/textStyles';
+import { BlurView } from '@react-native-community/blur';
 
 interface ToolCardProps {
   tool: {
@@ -53,7 +55,7 @@ const AI_TOOLS = [
     id: 'discharge',
     title: 'aiTools.discharge.title',
     description: 'aiTools.discharge.description',
-    icon: Stethoscope,
+    icon: FileText,
     color: colors.primary,
     bgImage:
       'https://images.pexels.com/photos/3846005/pexels-photo-3846005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
@@ -203,7 +205,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
             >
               <View style={styles.cardHeader}>
                 <View style={styles.iconContainer}>
-                  <Icon size={22} color="white" />
+                  <Icon size={22} color={'white'} />
                 </View>
                 <View style={styles.titleContainer}>
                   <Text
@@ -278,7 +280,7 @@ const AITools = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTitleContainer}>
-            <Text variant="headlineLarge" style={styles.headerTitle}>
+            <Text variant="headlineLarge" style={textStyles.headlineLarge}>
               {t('aiTools.title')}
             </Text>
             <Text variant="bodySmall" style={styles.headerSubtitle}>
@@ -417,12 +419,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.30)',
   },
   titleContainer: {
     flex: 1,

@@ -89,12 +89,10 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       ) : (
         text && (
           <Text
-            variant="titleMedium"
+            variant="labelLarge"
             style={[
-              styles.buttonText,
               {
                 color: isDisabled ? colors.onSurfaceDisabled : textColor,
-                fontSize: Platform.OS === 'ios' ? hp(1.9) : hp(1.8),
               },
             ]}
           >

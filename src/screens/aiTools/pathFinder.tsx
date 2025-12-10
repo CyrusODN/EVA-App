@@ -40,6 +40,7 @@ import Input from '../../components/input';
 import { colors } from '../../constants/colors';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
+import { textStyles } from '../../constants/textStyles';
 
 // Content types and citation styles
 const CONTENT_TYPES = [
@@ -278,7 +279,7 @@ const Pathfinder = () => {
             </View>
 
             {/* Title */}
-            <Text variant="headlineLarge" style={styles.createProjectTitle}>
+            <Text variant="headlineLarge" style={textStyles.headlineLarge}>
               Create Your First Research Project
             </Text>
 
@@ -491,7 +492,7 @@ const Pathfinder = () => {
 
         {/* Quick Actions */}
         <View style={styles.quickActionsSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={textStyles.sectionTitle}>
             Quick Actions
           </Text>
           <View style={styles.quickActionsGrid}>
@@ -530,7 +531,7 @@ const Pathfinder = () => {
         {/* Documents Section */}
         <View style={styles.documentsSection}>
           <View style={styles.sectionHeader}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
+            <Text variant="titleMedium" style={textStyles.sectionTitle}>
               Documents ({documents.length})
             </Text>
             <TouchableOpacity onPress={handleAddDocument}>
@@ -640,7 +641,7 @@ const Pathfinder = () => {
           {/* Selected Documents Summary */}
           {selectedDocuments.size > 0 && (
             <View style={styles.selectedDocumentsCard}>
-              <Text variant="titleMedium" style={styles.selectedDocumentsTitle}>
+              <Text variant="titleMedium" style={textStyles.sectionTitle}>
                 Selected Documents ({selectedDocuments.size})
               </Text>
               <View style={styles.selectedDocumentsList}>
@@ -942,7 +943,7 @@ const Pathfinder = () => {
               <FileText size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={styles.headerTitle}>
+              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
                 {getHeaderTitle()}
               </Text>
               {currentView === 'projects' && (
