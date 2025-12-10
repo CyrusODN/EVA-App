@@ -28,6 +28,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
+import { textStyles } from '../../constants/textStyles';
 
 interface ResearchToolCardProps {
   tool: {
@@ -255,7 +256,7 @@ const Research = () => {
               <GraduationCap size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={styles.headerTitle}>
+              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
                 {t('remediusResearch.main.title')}
               </Text>
               <Text variant="bodySmall" style={styles.headerSubtitle}>

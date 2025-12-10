@@ -22,6 +22,7 @@ import CheckBox from 'react-native-check-box';
 import Input from './input';
 import PrimaryButton from './primaryButton';
 import { colors } from '../constants/colors';
+import { textStyles } from '../constants/textStyles';
 
 // DNA Helix Decorative Component
 const DNAHelix = () => {
@@ -230,7 +231,7 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
                   <View style={styles.header}>
                     <View style={styles.headerContent}>
                       <View style={styles.titleContainer}>
-                        <Text variant="headlineLarge" style={styles.title}>
+                        <Text variant="headlineLarge" style={textStyles.headlineLarge}>
                           {t('dialog.phi.title')}
                         </Text>
                         <Text variant="bodySmall" style={styles.phiDescription}>
@@ -301,7 +302,7 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
                         ]}
                       >
                         <View style={styles.inputLabelContainer}>
-                          <Text variant="titleMedium" style={styles.inputLabel}>
+                          <Text variant="titleMedium" style={textStyles.titleMedium}>
                             Visit Name
                           </Text>
                           <Info

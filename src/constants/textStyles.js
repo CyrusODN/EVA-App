@@ -9,21 +9,29 @@ export const textStyles = StyleSheet.create({
   // Headline Styles
   headlineMedium: {
     color: 'black',
+    fontSize: 18,
+    lineHeight: 22,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   headlineMediumBlack: {
     color: 'black',
+    fontSize: 18,
+    lineHeight: 22,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   headlineLarge: {
-    color: 'black',
+    color: colors.onSecondary,
+    fontSize: 22,
+    lineHeight: 28,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
   },
   headlineSmall: {
     color: 'black',
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
@@ -31,12 +39,16 @@ export const textStyles = StyleSheet.create({
   // Section Title Styles
   sectionTitle: {
     color: 'black',
+    fontSize: 18,
+    lineHeight: 22,
     marginBottom: 16,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   sectionTitleWithMargin: {
     color: 'black',
+    fontSize: 18,
+    lineHeight: 22,
     marginBottom: 16,
     marginTop: 8,
     fontFamily:
@@ -74,11 +86,15 @@ export const textStyles = StyleSheet.create({
   // Title Styles
   titleMedium: {
     color: colors.darkPrimary,
+    fontSize: 16,
+    lineHeight: 24,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   titleMediumBlack: {
     color: 'black',
+    fontSize: 16,
+    lineHeight: 24,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },

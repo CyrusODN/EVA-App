@@ -3,61 +3,45 @@ import {
   StyleSheet,
   View,
   TouchableOpacity,
-  Image,
   Platform,
-  ImageSourcePropType,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import { ChevronLeft, Bell } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { colors } from '../constants/colors';
 import { textStyles } from '../constants/textStyles';
 import { LinearGradientColors } from '../constants/linearGradientColors';
 
-interface HeaderProps {
+interface CommonHeaderProps {
   title: string;
   subtitle?: string;
-  onLeftPress: () => void;
-  onRightPress?: () => void;
-  rightIcon?: boolean;
-  leftIcon?: boolean | React.ComponentType<any> | ImageSourcePropType;
-  rightIconSource?: React.ComponentType<any> | ImageSourcePropType;
+  onBackPress: () => void;
   icon?: React.ComponentType<any>;
   showIcon?: boolean;
-  textColor?: string;
   backgroundColor?: string;
-  showSubtitle?: boolean;
   showBorder?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({
+const CommonHeader: React.FC<CommonHeaderProps> = ({
   title,
   subtitle,
-  onLeftPress,
-  onRightPress,
-  rightIcon = false,
-  leftIcon = true,
-  rightIconSource = 'bell',
+  onBackPress,
   icon: Icon,
   showIcon = false,
-  textColor = colors.onSecondary,
   backgroundColor = colors.surface,
-  showSubtitle = true,
   showBorder = true,
 }) => {
   return (
     <View style={[styles.headerContainer, { backgroundColor }, !showBorder && styles.noBorder]}>
       <View style={styles.headerContent}>
-        {/* Left Icon */}
-        {leftIcon && (
-          <TouchableOpacity onPress={onLeftPress} style={styles.leftButton}>
-            <ChevronLeft size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-        )}
+        {/* Back Button */}
+        <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+          <ChevronLeft size={24} color={colors.onSurface} />
+        </TouchableOpacity>
 
         {/* Title Container */}
         <View style={styles.headerTitleContainer}>
@@ -72,31 +56,15 @@ const Header: React.FC<HeaderProps> = ({
             </LinearGradient>
           )}
           <View style={styles.headerTextContainer}>
-            <Text
-              variant="headlineLarge"
-              style={[textStyles.headlineLarge, { color: textColor }]}
-            >
+            <Text variant="headlineLarge" style={textStyles.headlineLarge}>
               {title}
             </Text>
-            {showSubtitle && subtitle && (
-              <Text variant="bodySmall" style={styles.subtitle}>
+            {subtitle && (
+              <Text variant="bodySmall" style={styles.headerSubtitle}>
                 {subtitle}
               </Text>
             )}
           </View>
-        </View>
-
-        {/* Right Icon */}
-        <View style={styles.rightContainer}>
-          {rightIcon && onRightPress && (
-            <TouchableOpacity onPress={onRightPress} style={styles.rightButton}>
-              <Image
-                source={rightIconSource as ImageSourcePropType}
-                style={styles.iconImage}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     </View>
@@ -117,9 +85,8 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  leftButton: {
+  backButton: {
     borderRadius: 8,
     marginRight: wp(2),
     padding: 4,
@@ -142,28 +109,13 @@ const styles = StyleSheet.create({
   headerTextContainer: {
     flex: 1,
   },
-  rightContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rightButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  subtitle: {
+  headerSubtitle: {
     color: colors.onSurfaceVariant,
     marginTop: 2,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
-  iconImage: {
-    width: 24,
-    height: 24,
-  },
 });
 
-export default Header;
+export default CommonHeader;
+

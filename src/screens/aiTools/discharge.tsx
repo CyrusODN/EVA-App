@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
+import { textStyles } from '../../constants/textStyles';
 
 interface Observation {
   id: string;
@@ -140,7 +141,7 @@ Stable condition, ready for outpatient management
               <FileText size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={styles.headerTitle}>
+              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
                 {t('dischargeAssistant.headerTitle')}
               </Text>
               <Text variant="bodySmall" style={styles.headerSubtitle}>
@@ -154,7 +155,7 @@ Stable condition, ready for outpatient management
           {/* Observations Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text variant="titleMedium" style={textStyles.sectionTitle}>
                 {t('dischargeAssistant.observationsPanel.title')}
               </Text>
               <View style={styles.sectionActions}>
@@ -307,7 +308,7 @@ Stable condition, ready for outpatient management
           {/* Summary Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text variant="titleMedium" style={textStyles.sectionTitle}>
                 {t('dischargeAssistant.summaryPanel.title')}
               </Text>
               <View style={styles.sectionActions}>

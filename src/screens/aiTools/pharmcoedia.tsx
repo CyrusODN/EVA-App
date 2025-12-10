@@ -40,6 +40,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import 'react-native-get-random-values';
 import { nanoid } from 'nanoid';
+import { textStyles } from '../../constants/textStyles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -470,7 +471,7 @@ const Pharmcoedia = () => {
     <View style={styles.tabContent}>
       {/* Drug Input Header */}
       <View style={styles.drugInputHeader}>
-        <Text variant="titleLarge" style={styles.sectionTitle}>
+        <Text variant="titleLarge" style={textStyles.sectionTitle}>
           Drug Interaction Checker
         </Text>
         <Text variant="bodySmall" style={styles.sectionSubtitle}>
@@ -498,7 +499,7 @@ const Pharmcoedia = () => {
       <ScrollView style={styles.interactionContent} showsVerticalScrollIndicator={false}>
         {/* Selected Drugs */}
         <View style={styles.selectedDrugsSection}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={textStyles.sectionTitle}>
             Selected Medications ({selectedDrugs.length})
           </Text>
           {selectedDrugs.length > 0 ? (
@@ -526,7 +527,7 @@ const Pharmcoedia = () => {
         {/* Drug Interactions */}
         {drugInteractions.length > 0 && (
           <View style={styles.interactionsSection}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
+            <Text variant="titleMedium" style={textStyles.sectionTitle}>
               Detected Interactions ({drugInteractions.length})
             </Text>
             <FlatList
@@ -561,7 +562,7 @@ const Pharmcoedia = () => {
             <Pill size={20} color="white" />
           </LinearGradient>
           <View style={styles.headerTextContainer}>
-            <Text variant="headlineLarge" style={styles.headerTitle}>
+            <Text variant="headlineLarge" style={textStyles.headlineLarge}>
               Pharmcoedia
             </Text>
             <Text variant="bodySmall" style={styles.headerSubtitle}>

@@ -37,6 +37,7 @@ import PrimaryButton from '../../components/primaryButton';
 import VisitDialogModal from '../../components/visitDialogueModal';
 import { colors } from '../../constants/colors';
 import { images } from '../../constants/images';
+import { textStyles } from '../../constants/textStyles';
 
 const Home = () => {
   const { t } = useTranslation();
@@ -211,7 +212,7 @@ const Home = () => {
     >
       <View style={styles.eventHeader}>
         <View style={styles.eventTitleContainer}>
-          <Text variant="titleMedium" style={styles.eventTitle}>
+          <Text variant="titleMedium" style={textStyles.titleMedium}>
             {item.title}
           </Text>
           {getStatusIcon(item)}
