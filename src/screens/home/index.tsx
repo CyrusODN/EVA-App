@@ -346,7 +346,6 @@ const Home = () => {
           <View style={styles.monthYearContainer}>
             <Text
               variant="headlineLarge"
-              // style={styles.monthYearText}
               numberOfLines={1}
             >
               {formatMonthYear(currentMonth)}
@@ -694,7 +693,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     color: colors.onSurfaceVariant,
-    // fontSize: 12,
   },
   tabsContainer: {
     marginVertical: hp(1),

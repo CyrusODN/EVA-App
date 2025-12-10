@@ -30,11 +30,11 @@ const ForgotPassword = () => {
     const [resetSent, setResetSent] = useState(false);
   
     const handleResetPassword = () => {
-    //   setLoading(true);
-    //   setTimeout(() => {
-    //     setLoading(false);
-    //     setResetSent(true);
-    //   }, 2000);
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setResetSent(true);
+      }, 2000);
     };
   
     return (

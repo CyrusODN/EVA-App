@@ -11,10 +11,8 @@ import {
 import { customToast } from '../../utils/toastMessage';
 import {
   Text,
-  List,
   Divider,
   IconButton,
-  TextInput,
   Button,
   Dialog,
   Portal,
@@ -24,7 +22,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import { ChevronLeft, Camera } from 'lucide-react-native';
+import { Camera } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Input from '../../components/input';
 import PrimaryButton from '../../components/primaryButton';
@@ -111,10 +109,6 @@ const Settings = () => {
     }
   };
 
-  const handleGoBack = () => {
-    navigation.goBack();
-  };
-
   const Section = ({ title, children }) => (
     <View style={styles.section}>
       <Text variant="headlineMedium" style={textStyles.sectionTitle}>
@@ -131,9 +125,6 @@ const Settings = () => {
         title={t('settings.title')}
         subtitle={t('settings.subtitle')}
         onLeftPress={() => navigation.goBack()}
-        //   rightIcon={true}
-        //   onRightPress={() => handleNotifications()}
-        //   rightIconSource="bell"
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -259,21 +250,6 @@ const Settings = () => {
               disabled={!supportEmail || !supportSubject || !supportMessage}
             />
           </View>
-
-          {/* Delete Account Section */}
-          {/* <Section title={t('settings.deleteAccount.title')}>
-          <View style={styles.deleteSection}>
-            <Text variant="bodyMedium" style={styles.warningText}>
-              {t('settings.deleteAccount.warning')}
-            </Text>
-            <PrimaryButton
-              text={t('settings.deleteAccount.button')}
-              onPress={() => setShowDeleteDialog(true)}
-              backgroundColor={colors.error}
-              borderColor={colors.error}
-            />
-          </View>
-        </Section> */}
         </ScrollView>
 
         {/* Delete Account Dialog */}

@@ -31,7 +31,6 @@ import { colors } from '../../constants/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { textStyles } from '../../constants/textStyles';
-import { BlurView } from '@react-native-community/blur';
 
 interface ToolCardProps {
   tool: {
@@ -199,10 +198,7 @@ const ToolCard: React.FC<ToolCardProps> = ({
           style={styles.overlay}
         >
           <View style={styles.cardContent}>
-            <View
-              // activeOpacity={0.9}
-              style={styles.cardHeaderTouchable}
-            >
+            <View style={styles.cardHeaderTouchable}>
               <View style={styles.cardHeader}>
                 <View style={styles.iconContainer}>
                   <Icon size={22} color={'white'} />

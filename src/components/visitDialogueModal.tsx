@@ -408,7 +408,6 @@ const styles = StyleSheet.create({
     maxHeight: hp(90),
     position: 'relative',
     overflow: 'hidden',
-    // minHeight: hp(35),
   },
   dnaHelixBackground: {
     position: 'absolute',
@@ -573,7 +572,6 @@ const styles = StyleSheet.create({
   inputWrapper: {
     width: '98%',
     marginTop: hp(0.5),
-    // borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.outlineVariant,
     borderRadius: 10,

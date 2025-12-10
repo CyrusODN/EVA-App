@@ -131,18 +131,7 @@ const Transactions = () => {
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
         >
-          {/* <View style={styles.exportSection}>
-            <PrimaryButton
-              text={t('transactions.export')}
-              onPress={handleExport}
-              width={wp(90)}
-            />
-          </View> */}
-
           <View style={styles.transactionsSection}>
-            {/* <Text variant="headlineMedium" style={styles.sectionTitle}>
-              {t('transactions.title')}
-            </Text> */}
             
             {MOCK_TRANSACTIONS_DATA.length > 0 ? (
               <View style={styles.transactionsList}>

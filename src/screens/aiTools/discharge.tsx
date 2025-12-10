@@ -417,7 +417,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.outlineVariant,
   },
   backButton: {
-    // padding: 8,
     borderRadius: 8,
     marginRight: wp(2),
   },
