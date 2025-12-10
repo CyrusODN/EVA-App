@@ -454,7 +454,7 @@ const Home = () => {
           <TextInput
             placeholder={t('common.search')}
             style={styles.searchInput}
-            placeholderTextColor={colors.onSurfaceVariant}
+            placeholderTextColor="rgba(74, 69, 78, 0.5)"
             onChangeText={setSearchText}
             value={searchText}
           />

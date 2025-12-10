@@ -39,6 +39,7 @@ import { colors } from '../../constants/colors';
 import { textStyles } from '../../constants/textStyles';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import Gap from '../../components/gap';
+import Header from '../../components/header';
 
 // Certificate types data
 const CERTIFICATE_TYPES_DATA = [
@@ -483,7 +484,7 @@ const Report = () => {
                   onChangeText={setObservations}
                   multiline
                   numberOfLines={4}
-                  placeholderTextColor={colors.placeholderColor}
+                  placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 />
               </View>
 
@@ -722,7 +723,7 @@ const Report = () => {
                   )}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  placeholderTextColor={colors.placeholderColor}
+                  placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 />
               </View>
 

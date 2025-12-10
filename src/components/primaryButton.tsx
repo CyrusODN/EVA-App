@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
   StyleSheet,
   View,
@@ -29,7 +30,7 @@ interface PrimaryButtonProps {
   iconSourceRight?: any;
   iconRight?: boolean;
   iconComponent?: React.ComponentType<any>;
-  width?: number;
+  width?: number | string;
   loaderColor?: string;
   useGradient?: boolean;
   accessibilityLabel?: string;

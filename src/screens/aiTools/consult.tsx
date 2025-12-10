@@ -391,7 +391,7 @@ const Consult = () => {
             placeholder={t('remediusConsult.visitHistory.searchPlaceholder')}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor={colors.onSurfaceVariant}
+            placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
         </View>
 
@@ -566,7 +566,7 @@ const Consult = () => {
             value={currentMessage}
             onChangeText={setCurrentMessage}
             multiline
-            placeholderTextColor={colors.onSurfaceVariant}
+            placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
           <TouchableOpacity
             style={[
@@ -677,7 +677,7 @@ const Consult = () => {
             value={pharmacopediaMessage}
             onChangeText={setPharmacopediaMessage}
             multiline
-            placeholderTextColor={colors.onSurfaceVariant}
+            placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
           <TouchableOpacity
             style={[

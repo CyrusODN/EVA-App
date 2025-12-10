@@ -324,7 +324,7 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
                               overflow: 'hidden',
                               borderColor: 'transparent',
                             }}
-                            placeholderTextColor={colors.placeholderColor}
+                            placeholderTextColor="rgba(74, 69, 78, 0.5)"
                             underlineColor="transparent"
                             outlineColor="transparent"
                           />

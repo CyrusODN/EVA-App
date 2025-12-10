@@ -72,7 +72,7 @@ const Login = () => {
                   backgroundColor={colors.inputBackground}
                   borderColor={colors.borderColor}
                   borderRadius={12}
-                  width={wp(80)}
+                  width="100%"
                   autoCapitalize="none"
                   autoCorrect={false}
                   accessibilityLabel={t('login.emailPlaceholder')}
@@ -88,7 +88,7 @@ const Login = () => {
                   backgroundColor={colors.inputBackground}
                   borderColor={colors.borderColor}
                   borderRadius={12}
-                  width={wp(80)}
+                  width="100%"
                   autoCapitalize="none"
                   autoCorrect={false}
                   accessibilityLabel={t('login.passwordPlaceholder')}
@@ -129,7 +129,7 @@ const Login = () => {
                   onPress={handleLogin}
                   loading={loading}
                   disabled={loading}
-                  width={wp(80)}
+                  width="100%"
                   accessibilityLabel={t('login.signIn')}
                 />
               </View>
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: hp(2),
-    alignSelf: 'center',
+    width: '100%',
   },
   optionsRow: {
     flexDirection: 'row',
@@ -261,6 +261,7 @@ const styles = StyleSheet.create({
   buttonGroup: {
     alignItems: 'center',
     marginBottom: hp(2.5),
+    width: '100%',
   },
   divider: {
     flexDirection: 'row',
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: hp(1.8),
     paddingHorizontal: wp(6),
-    width: wp(80),
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

@@ -35,6 +35,7 @@ import { textStyles } from '../../constants/textStyles';
 import Header from '../../components/header';
 import EmptyState from '../../components/emptyState';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
+import PrimaryButton from '../../components/primaryButton';
 
 interface Observation {
   id: string;
@@ -149,19 +150,48 @@ Stable condition, ready for outpatient management
                   style={styles.actionButtonWithText}
                   onPress={() => setShowFilters(!showFilters)}
                 >
-                  <Filter size={16} color={colors.onSurface} />
-                  <Text variant="bodySmall" style={styles.actionButtonText}>
-                    Filters
-                  </Text>
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      height: '100%',
+                    }}
+                  >
+                    <View style={{ width: wp(1) }} />
+                    <Filter size={16} color={'white'} />
+                    <Text variant="bodySmall" style={styles.actionButtonText}>
+                      Filters
+                    </Text>
+                    <View style={{ width: wp(1) }} />
+                  </LinearGradient>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.actionButtonWithText}
                   onPress={() => setShowHistory(!showHistory)}
                 >
-                  <History size={16} color={colors.onSurface} />
-                  <Text variant="bodySmall" style={styles.actionButtonText}>
-                    History
-                  </Text>
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      height: '100%',
+                    }}
+                  >
+                    <View style={{ width: wp(1) }} />
+                    <History size={16} color={'white'} />
+                    <Text variant="bodySmall" style={styles.actionButtonText}>
+                      History
+                    </Text>
+                    <View style={{ width: wp(1) }} />
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
@@ -171,7 +201,7 @@ Stable condition, ready for outpatient management
               <TextInput
                 style={styles.textInput}
                 placeholder="Add category (press Enter to add)"
-                placeholderTextColor={colors.onSurfaceVariant}
+                placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 value={category}
                 onChangeText={setCategory}
                 onSubmitEditing={() => {
@@ -186,7 +216,7 @@ Stable condition, ready for outpatient management
               <TextInput
                 style={styles.textInput}
                 placeholder="Add tags (press Enter to add)"
-                placeholderTextColor={colors.onSurfaceVariant}
+                placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 value={tags}
                 onChangeText={setTags}
                 onSubmitEditing={() => {
@@ -201,7 +231,7 @@ Stable condition, ready for outpatient management
               <TextInput
                 style={styles.textArea}
                 placeholder="Add your observation notes here..."
-                placeholderTextColor={colors.onSurfaceVariant}
+                placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 value={currentObservation}
                 onChangeText={setCurrentObservation}
                 multiline
@@ -219,19 +249,14 @@ Stable condition, ready for outpatient management
               onPress={addObservation}
               disabled={!currentObservation.trim()}
             >
-              <LinearGradient
-                colors={['#53A0CD', '#44C2AD']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.addButtonGradient}
-              >
-                <Plus size={20} color="white" />
-                <Text variant="labelMedium" style={styles.addButtonText}>
-                  {t(
-                    'dischargeAssistant.observationsPanel.addObservationButtonText',
-                  )}
-                </Text>
-              </LinearGradient>
+              <PrimaryButton
+                iconComponent={Plus}
+                text={t(
+                  'dischargeAssistant.observationsPanel.addObservationButtonText',
+                )}
+                onPress={addObservation}
+                disabled={!currentObservation.trim()}
+              />
             </TouchableOpacity>
 
             {/* Document Upload Section */}
@@ -256,9 +281,7 @@ Stable condition, ready for outpatient management
             {/* Observations List */}
             <View style={styles.observationsList}>
               {observations.length === 0 ? (
-                <EmptyState
-                  message="No observations added yet. Add one above or upload a document."
-                />
+                <EmptyState message="No observations added yet. Add one above or upload a document." />
               ) : (
                 observations.map(obs => (
                   <View key={obs.id} style={styles.observationItem}>
@@ -383,14 +406,22 @@ Stable condition, ready for outpatient management
                 {isGenerating ? (
                   <>
                     <View style={styles.loadingSpinner} />
-                    <Text variant="labelMedium" style={styles.generateButtonText}>
-                      {t('dischargeAssistant.summaryPanel.generatingButtonText')}
+                    <Text
+                      variant="labelMedium"
+                      style={styles.generateButtonText}
+                    >
+                      {t(
+                        'dischargeAssistant.summaryPanel.generatingButtonText',
+                      )}
                     </Text>
                   </>
                 ) : (
                   <>
                     <Save size={16} color="white" />
-                    <Text variant="labelMedium" style={styles.generateButtonText}>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.generateButtonText}
+                    >
                       {t('dischargeAssistant.summaryPanel.generateButtonText')}
                     </Text>
                   </>
@@ -487,16 +518,13 @@ const styles = StyleSheet.create({
   actionButtonWithText: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: hp(1),
-    paddingHorizontal: wp(3),
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    backgroundColor: 'white',
+    height: hp(3.5),
     gap: 6,
+    overflow: 'hidden',
   },
   actionButtonText: {
-    color: colors.onSurface,
+    color: 'white',
     fontSize: hp(1.6),
   },
   inputContainer: {
@@ -548,7 +576,7 @@ const styles = StyleSheet.create({
   },
   documentUploadArea: {
     borderWidth: 2,
-    borderColor: colors.outlineVariant,
+    borderColor: colors.onSecondary,
     borderStyle: 'dashed',
     borderRadius: 12,
     paddingVertical: hp(4),

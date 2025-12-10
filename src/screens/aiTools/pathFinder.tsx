@@ -768,7 +768,7 @@ const Pathfinder = () => {
               onChangeText={setPrompt}
               multiline
               numberOfLines={4}
-              placeholderTextColor={colors.placeholderColor}
+              placeholderTextColor="rgba(74, 69, 78, 0.5)"
             />
           </View>
 
@@ -992,7 +992,7 @@ const Pathfinder = () => {
                   onChangeText={setNewProjectDescription}
                   multiline
                   numberOfLines={3}
-                  placeholderTextColor={colors.placeholderColor}
+                  placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 />
                 <PrimaryButton
                   text={t('remediusPathfinder.buttons.createProject')}

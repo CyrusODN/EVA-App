@@ -455,7 +455,7 @@ const Pharmcoedia = () => {
               ));
             }}
             multiline
-            placeholderTextColor={colors.onSurfaceVariant}
+            placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
           <TouchableOpacity
             style={[styles.sendButton, !activeChat?.currentMessage?.trim() && styles.sendButtonDisabled]}
@@ -486,7 +486,7 @@ const Pharmcoedia = () => {
             placeholder="Enter medication name..."
             value={drugInput}
             onChangeText={setDrugInput}
-            placeholderTextColor={colors.onSurfaceVariant}
+            placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
           <TouchableOpacity
             style={[styles.addDrugButton, !drugInput.trim() && styles.addDrugButtonDisabled]}
@@ -719,7 +719,7 @@ const Pharmcoedia = () => {
                   value={manualProfileText}
                   onChangeText={setManualProfileText}
                   multiline
-                  placeholderTextColor={colors.onSurfaceVariant}
+                  placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 />
                 <TouchableOpacity
                   style={[styles.saveProfileButton, !manualProfileText.trim() && styles.saveProfileButtonDisabled]}
@@ -758,7 +758,7 @@ const Pharmcoedia = () => {
               placeholder="Search visits..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor={colors.onSurfaceVariant}
+              placeholderTextColor="rgba(74, 69, 78, 0.5)"
             />
           </View>
 

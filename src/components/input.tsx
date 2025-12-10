@@ -23,7 +23,7 @@ interface InputProps {
   backgroundColor?: string;
   borderColor?: string;
   borderRadius?: number;
-  width?: number;
+  width?: number | string;
   leftIcon?: React.ReactNode;
   rightIcon?: ImageSourcePropType;
   isPassword?: boolean;
@@ -139,7 +139,7 @@ const Input: React.FC<InputProps> = ({
       <TextInput
         inputMode={mode}
         placeholder={placeholder}
-        placeholderTextColor={colors.placeholderColor}
+        placeholderTextColor="rgba(74, 69, 78, 0.5)"
         value={value}
         onChangeText={handleChangeText}
         style={[
@@ -150,7 +150,7 @@ const Input: React.FC<InputProps> = ({
             paddingRight: inputPaddingRight,
             height: multiline ? height || hp(12) : height || hp(6.5),
             fontSize: Platform.OS === 'ios' ? 15 : 14,
-            paddingTop: multiline ? hp(1.5) : 0,
+            // paddingTop: multiline ? hp(1.5) : 0,
           },
         ]}
         secureTextEntry={isPassword && !showPassword}

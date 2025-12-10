@@ -310,7 +310,7 @@ Social History:
                   onChangeText={setMedicalHistory}
                   multiline
                   numberOfLines={8}
-                  placeholderTextColor={colors.placeholderColor}
+                  placeholderTextColor="rgba(74, 69, 78, 0.5)"
                 />
                 <View style={styles.dataSourceInfo}>
                   <FileText size={14} color={colors.onSurfaceVariant} />
