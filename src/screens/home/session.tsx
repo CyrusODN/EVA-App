@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -16,7 +17,6 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ChevronLeft,
   Mic,
   Square,
   Upload,
@@ -36,6 +36,7 @@ import DocumentPicker from '@react-native-documents/picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
+import Header from '../../components/header';
 import { colors } from '../../constants/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
@@ -46,10 +47,10 @@ const Session = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
-  
+
   // Get session data from route params
   const { sessionData, sessionType } = route.params || {};
-  
+
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -78,10 +79,12 @@ const Session = () => {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  const formatTime = (seconds) => {
+  const formatTime = seconds => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
   };
 
   const handleStartRecording = () => {
@@ -91,24 +94,20 @@ const Session = () => {
 
   const handleStopRecording = () => {
     setIsRecording(false);
-    Alert.alert(
-      t('common.confirm'),
-      t('session.stopRecordingConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { 
-          text: t('common.confirm'), 
-          onPress: () => {
-            setIsTranscribing(true);
-            // Simulate transcription process
-            setTimeout(() => {
-              setIsTranscribing(false);
-              setHasTranscription(true);
-            }, 3000);
-          }
+    Alert.alert(t('common.confirm'), t('session.stopRecordingConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.confirm'),
+        onPress: () => {
+          setIsTranscribing(true);
+          // Simulate transcription process
+          setTimeout(() => {
+            setIsTranscribing(false);
+            setHasTranscription(true);
+          }, 3000);
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleFileUpload = async () => {
@@ -117,7 +116,7 @@ const Session = () => {
         type: [DocumentPicker.types.audio],
         allowMultiSelection: false,
       });
-      
+
       if (result && result.length > 0) {
         setUploadedFile(result[0]);
         setIsTranscribing(true);
@@ -144,13 +143,13 @@ const Session = () => {
   const getSessionIcon = () => {
     switch (session.type) {
       case 'patient':
-        return <Users size={24} color="#53A0CD" />;
+        return Users;
       case 'meeting':
-        return <FileText size={24} color="#53A0CD" />;
+        return FileText;
       case 'lecture':
-        return <Brain size={24} color="#53A0CD" />;
+        return Brain;
       default:
-        return <FileText size={24} color="#53A0CD" />;
+        return FileText;
     }
   };
 
@@ -172,8 +171,8 @@ const Session = () => {
       return (
         <View style={styles.completedSection}>
           <View style={styles.completedCard}>
-            <FileText size={48} color="#10b981" />
-            <Text variant="headlineSmall" style={styles.completedTitle}>
+            <FileText size={58} color={colors.onSecondary} />
+            <Text variant="headlineMedium" style={styles.completedTitle}>
               {t('session.transcriptionComplete')}
             </Text>
             <Text variant="bodyMedium" style={styles.completedDescription}>
@@ -182,7 +181,7 @@ const Session = () => {
             <PrimaryButton
               text={t('session.viewTranscription')}
               onPress={handleViewTranscription}
-              width={wp(60)}
+              width={wp(75)}
             />
           </View>
         </View>
@@ -210,33 +209,33 @@ const Session = () => {
       <>
         {/* Recording Section */}
         <View style={styles.recordingSection}>
-          <View style={[
-            styles.recordingCard,
-            { backgroundColor: isRecording ? '#fef2f2' : '#f0f9ff' }
-          ]}>
+          <View
+            style={[
+              styles.recordingCard,
+              { backgroundColor: isRecording ? '#fef2f2' : '#f0f9ff' },
+            ]}
+          >
             <View style={styles.recordingHeader}>
               <Text variant="titleLarge" style={styles.recordingTitle}>
-                {isRecording ? t('session.recordingInProgress') : t('session.startRecording')}
+                {isRecording
+                  ? t('session.recordingInProgress')
+                  : t('session.startRecording')}
               </Text>
-              {isRecording && (
-                <View style={styles.timerContainer}>
-                  <Clock size={16} color="#ef4444" />
-                  <Text variant="titleMedium" style={styles.timer}>
-                    {formatTime(recordingTime)}
-                  </Text>
-                </View>
-              )}
             </View>
-            
+
             <TouchableOpacity
               style={[
                 styles.recordButton,
-                isRecording && styles.recordButtonActive
+                isRecording && styles.recordButtonActive,
               ]}
               onPress={isRecording ? handleStopRecording : handleStartRecording}
             >
               <LinearGradient
-                colors={isRecording ? ['#ef4444', '#dc2626', '#b91c1c'] : LinearGradientColors}
+                colors={
+                  isRecording
+                    ? ['#ef4444', '#dc2626', '#b91c1c']
+                    : LinearGradientColors
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.recordButtonGradient}
@@ -248,6 +247,18 @@ const Session = () => {
                 )}
               </LinearGradient>
             </TouchableOpacity>
+
+            {
+              <View style={styles.timerContainer}>
+                <Clock size={16} color={isRecording ? '#ef4444' : '#64748b'} />
+                <Text
+                  variant="titleSmall"
+                  style={{ color: isRecording ? '#ef4444' : '#64748b' }}
+                >
+                  {formatTime(recordingTime)}
+                </Text>
+              </View>
+            }
           </View>
         </View>
 
@@ -309,34 +320,24 @@ const Session = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <ChevronLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity>
-        
-        <View style={styles.sessionInfo}>
-          {getSessionIcon()}
-          <View style={styles.sessionTextContainer}>
-            <Text variant="titleMedium" style={styles.sessionTitle}>
-              {session.title}
-            </Text>
-            <Text variant="bodySmall" style={styles.sessionType}>
-              {getSessionTypeText()}
-            </Text>
-          </View>
-        </View>
+      <Header
+        title={session.title}
+        subtitle={getSessionTypeText()}
+        onLeftPress={() => navigation.goBack()}
+        icon={getSessionIcon()}
+        showIcon={true}
+        backgroundColor={colors.surface}
+        textColor={colors.onSurface}
+      />
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Edit3 size={20} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Trash2 size={20} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Edit3 size={20} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <Trash2 size={20} color="#ef4444" />
+        </TouchableOpacity>
       </View>
 
       {/* Content */}
@@ -354,39 +355,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  header: {
+  actionButtonsContainer: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  sessionInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: wp(3),
-  },
-  sessionTextContainer: {
-    marginLeft: wp(2),
-  },
-  sessionTitle: {
-    color: colors.onSurface,
-    fontWeight: '600',
-  },
-  sessionType: {
-    color: colors.onSurfaceVariant,
-  },
-  actionButtons: {
-    flexDirection: 'row',
+    paddingVertical: hp(1),
     gap: 8,
+    backgroundColor: colors.surface,
   },
   actionButton: {
     padding: 8,
@@ -403,12 +379,12 @@ const styles = StyleSheet.create({
   },
   recordingCard: {
     borderRadius: 16,
-    padding: wp(5),
+    height: hp(25),
+    justifyContent: 'space-evenly',
     alignItems: 'center',
   },
   recordingHeader: {
     alignItems: 'center',
-    marginBottom: hp(3),
   },
   recordingTitle: {
     color: colors.onSurface,
@@ -418,16 +394,16 @@ const styles = StyleSheet.create({
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: hp(1),
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    gap: 4,
   },
   timer: {
     marginLeft: 6,
     color: '#ef4444',
-    fontWeight: '600',
+    // fontWeight: '600',
   },
   recordButton: {
     borderRadius: 40,
@@ -454,14 +430,13 @@ const styles = StyleSheet.create({
   uploadCard: {
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.outline,
+    borderColor: colors.onSecondary,
     borderStyle: 'dashed',
     overflow: 'hidden',
   },
   uploadContent: {
     padding: wp(5),
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
   },
   uploadTitle: {
     color: colors.onSurface,
@@ -516,7 +491,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   processingSection: {
-    marginVertical: hp(5),
+    // marginVertical: hp(5),
   },
   processingCard: {
     borderRadius: 16,
@@ -529,7 +504,7 @@ const styles = StyleSheet.create({
   },
   processingTitle: {
     color: colors.onSurface,
-    fontWeight: '600',
+    // fontWeight: '600',
     textAlign: 'center',
   },
   processingDescription: {
@@ -537,7 +512,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   completedSection: {
-    marginVertical: hp(5),
+    // marginVertical: hp(5),
   },
   completedCard: {
     borderRadius: 16,
@@ -547,7 +522,7 @@ const styles = StyleSheet.create({
   },
   completedTitle: {
     color: colors.onSurface,
-    fontWeight: '600',
+    // fontWeight: '600',
     textAlign: 'center',
     marginTop: hp(2),
   },

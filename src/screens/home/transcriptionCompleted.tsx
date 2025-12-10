@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -15,8 +16,8 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 import {
-  ChevronLeft,
   FileText,
   Users,
   Brain,
@@ -32,7 +33,9 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
+import Header from '../../components/header';
 import { colors } from '../../constants/colors';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -126,13 +129,13 @@ const TranscriptionComplete = () => {
   const getSessionIcon = () => {
     switch (session.type) {
       case 'patient':
-        return <Users size={24} color={colors.lightGreen} />;
+        return Users;
       case 'meeting':
-        return <FileText size={24} color={colors.lightGreen} />;
+        return FileText;
       case 'lecture':
-        return <Brain size={24} color={colors.lightGreen} />;
+        return Brain;
       default:
-        return <FileText size={24} color={colors.lightGreen} />;
+        return FileText;
     }
   };
 
@@ -232,77 +235,111 @@ const TranscriptionComplete = () => {
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'medical' && styles.selectedNoteTypeButton,
+                noteType === 'medical' && { borderColor: 'transparent' },
               ]}
               onPress={() => setNoteType('medical')}
             >
-              <Brain
-                size={24}
-                color={noteType === 'medical' ? 'white' : colors.subText}
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'medical' && styles.selectedNoteTypeText,
-                ]}
-              >
-                {t(
-                  'mainContent.transcriptionComplete.noteOptions.medicalLecture',
-                )}
-              </Text>
+              {noteType === 'medical' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <Brain size={24} color="white" />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.medicalLecture',
+                    )}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Brain size={24} color={colors.subText} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.medicalLecture',
+                    )}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'scientific' && styles.selectedNoteTypeButton,
+                noteType === 'scientific' && { borderColor: 'transparent' },
               ]}
               onPress={() => setNoteType('scientific')}
             >
-              <FileText
-                size={24}
-                color={noteType === 'scientific' ? 'white' : colors.subText}
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'scientific' && styles.selectedNoteTypeText,
-                ]}
-              >
-                {t(
-                  'mainContent.transcriptionComplete.noteOptions.scientificResearch',
-                )}
-              </Text>
+              {noteType === 'scientific' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <FileText size={24} color="white" />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.scientificResearch',
+                    )}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <FileText size={24} color={colors.subText} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.scientificResearch',
+                    )}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'clinicalPractice' &&
-                  styles.selectedNoteTypeButton,
+                noteType === 'clinicalPractice' && {
+                  borderColor: 'transparent',
+                },
               ]}
               onPress={() => setNoteType('clinicalPractice')}
             >
-              <Users
-                size={24}
-                color={
-                  noteType === 'clinicalPractice' ? 'white' : colors.subText
-                }
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'clinicalPractice' &&
-                    styles.selectedNoteTypeText,
-                ]}
-              >
-                {t(
-                  'mainContent.transcriptionComplete.noteOptions.clinicalPractice',
-                )}
-              </Text>
+              {noteType === 'clinicalPractice' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <Users size={24} color="white" />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.clinicalPractice',
+                    )}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Users size={24} color={colors.subText} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.clinicalPractice',
+                    )}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -318,49 +355,73 @@ const TranscriptionComplete = () => {
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'general' && styles.selectedNoteTypeButton,
+                noteType === 'general' && { borderColor: 'transparent' },
               ]}
               onPress={() => setNoteType('general')}
             >
-              <FileText
-                size={24}
-                color={noteType === 'general' ? 'white' : colors.subText}
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'general' && styles.selectedNoteTypeText,
-                ]}
-              >
-                {t(
-                  'mainContent.transcriptionComplete.noteOptions.generalSummary',
-                )}
-              </Text>
+              {noteType === 'general' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <FileText size={24} color="white" />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.generalSummary',
+                    )}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <FileText size={24} color={colors.subText} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.generalSummary',
+                    )}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'detailed' && styles.selectedNoteTypeButton,
+                noteType === 'detailed' && { borderColor: 'transparent' },
               ]}
               onPress={() => setNoteType('detailed')}
             >
-              <Brain
-                size={24}
-                color={noteType === 'detailed' ? 'white' : colors.subText}
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'detailed' && styles.selectedNoteTypeText,
-                ]}
-              >
-                {t(
-                  'mainContent.transcriptionComplete.noteOptions.detailedReport',
-                )}
-              </Text>
+              {noteType === 'detailed' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <Brain size={24} color="white" />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.detailedReport',
+                    )}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Brain size={24} color={colors.subText} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.detailedReport',
+                    )}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -377,45 +438,78 @@ const TranscriptionComplete = () => {
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'SOAP' && styles.selectedNoteTypeButton,
+                noteType === 'SOAP' && { borderColor: 'transparent' },
               ]}
               onPress={() => setNoteType('SOAP')}
             >
-              <FileText
-                size={24}
-                color={noteType === 'SOAP' ? 'white' : colors.subText}
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'SOAP' && styles.selectedNoteTypeText,
-                ]}
-              >
-                {t('mainContent.transcriptionComplete.noteOptions.soap')}
-              </Text>
+              {noteType === 'SOAP' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <View style={{ width: wp(3) }} />
+                  <FileText size={24} color="white" />
+                  <View style={{ width: wp(2) }} />
+
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t('mainContent.transcriptionComplete.noteOptions.soap')}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <View style={{ width: wp(3) }} />
+                  <FileText size={24} color={colors.subText} />
+                  <View style={{ width: wp(2) }} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t('mainContent.transcriptionComplete.noteOptions.soap')}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'Clinical' && styles.selectedNoteTypeButton,
+                noteType === 'Clinical' && { borderColor: 'transparent' },
               ]}
               onPress={() => setNoteType('Clinical')}
             >
-              <Brain
-                size={24}
-                color={noteType === 'Clinical' ? 'white' : colors.subText}
-              />
-              <Text
-                variant="bodyMedium"
-                style={[
-                  styles.noteTypeText,
-                  noteType === 'Clinical' && styles.selectedNoteTypeText,
-                ]}
-              >
-                {t('mainContent.transcriptionComplete.noteOptions.clinical')}
-              </Text>
+              {noteType === 'Clinical' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <View style={{ width: wp(3) }} />
+                  <Brain size={24} color="white" />
+                  <View style={{ width: wp(2) }} />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.clinical',
+                    )}
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <View style={{ width: wp(3) }} />
+                  <Brain size={24} color={colors.subText} />
+                  <View style={{ width: wp(2) }} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    {t(
+                      'mainContent.transcriptionComplete.noteOptions.clinical',
+                    )}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -642,52 +736,44 @@ const TranscriptionComplete = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <Header
+        title={session.title}
+        subtitle={getSessionTypeText()}
+        onLeftPress={() => navigation.goBack()}
+        icon={getSessionIcon()}
+        showIcon={true}
+        backgroundColor={colors.surface}
+        textColor={colors.onSurface}
+      />
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
+          style={styles.actionButton}
+          onPress={() => setShowRenameModal(true)}
         >
-          <ChevronLeft size={24} color={colors.onSurface} />
+          <Edit3 size={20} color={colors.onSurfaceVariant} />
         </TouchableOpacity>
-
-        <View style={styles.sessionInfo}>
-          {getSessionIcon()}
-          <View style={styles.sessionTextContainer}>
-            <Text variant="titleMedium" style={styles.sessionTitle}>
-              {session.title}
-            </Text>
-            <Text variant="bodySmall" style={styles.sessionType}>
-              {getSessionTypeText()}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setShowRenameModal(true)}
-          >
-            <Edit3 size={20} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setShowDeleteModal(true)}
-          >
-            <Trash2 size={20} color="#ef4444" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => setShowResetModal(true)}
-          >
-            <RotateCcw size={20} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowDeleteModal(true)}
+        >
+          <Trash2 size={20} color="#ef4444" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowResetModal(true)}
+        >
+          <RotateCcw size={20} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
       </View>
 
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderNoteTypeButtons()}
+        <View style={{ height: hp(1) }} />
         {renderSpecializationSection()}
+        <View style={{ height: hp(1) }} />
         {renderVisitTypeSection()}
         {renderFollowUpSection()}
         {renderTranscriptionSection()}
@@ -950,7 +1036,7 @@ const TranscriptionComplete = () => {
                 </TouchableOpacity>
               ))}
             </View>
-            
+
             <View style={{ alignSelf: 'center' }}>
               <PrimaryButton
                 width={wp(77)}
@@ -1063,39 +1149,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  header: {
+  actionButtonsContainer: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  sessionInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: wp(3),
-  },
-  sessionTextContainer: {
-    marginLeft: wp(2),
-  },
-  sessionTitle: {
-    color: colors.onSurface,
-    fontWeight: '600',
-  },
-  sessionType: {
-    color: colors.onSurfaceVariant,
-  },
-  actionButtons: {
-    flexDirection: 'row',
+    paddingVertical: hp(1),
     gap: 8,
+    backgroundColor: colors.surface,
   },
   actionButton: {
     padding: 8,
@@ -1107,7 +1168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
   },
   noteTypeContainer: {
-    marginVertical: hp(2),
+    // marginVertical: hp(2),
   },
   sectionTitle: {
     color: colors.onSurface,
@@ -1120,19 +1181,19 @@ const styles = StyleSheet.create({
   noteTypeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: wp(4),
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.outline,
-    backgroundColor: 'white',
+    backgroundColor: '#f2f2f2',
     minHeight: hp(8),
+    overflow: 'hidden',
   },
   selectedNoteTypeButton: {
-    backgroundColor: colors.lightGreen,
-    borderColor: colors.lightGreen,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    flex: 1,
+    minHeight: hp(8),
   },
   noteTypeText: {
-    marginLeft: wp(3),
     color: colors.onSurface,
     flex: 1,
   },
@@ -1140,7 +1201,6 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   selectionSection: {
-    marginVertical: hp(1.5),
     backgroundColor: colors.background,
     borderRadius: 12,
     padding: wp(4),
