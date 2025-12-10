@@ -16,7 +16,6 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ChevronLeft,
   Brain,
   FileText,
   BarChart3,
@@ -35,6 +34,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { textStyles } from '../../constants/textStyles';
+import Header from '../../components/header';
 
 const Prescreening = () => {
   const { t } = useTranslation();
@@ -186,31 +186,14 @@ Social History:
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <ChevronLeft size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-
-          <View style={styles.headerTitleContainer}>
-            <LinearGradient
-              colors={['#53A0CD', '#44C2AD']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
-              <Brain size={20} color="white" />
-            </LinearGradient>
-            <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-                {t('preScreening.title')}
-              </Text>
-              <Text variant="bodySmall" style={styles.headerSubtitle}>
-                {t('preScreening.subtitle')}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <Header
+          title={t('preScreening.title')}
+          subtitle={t('preScreening.subtitle')}
+          onLeftPress={handleBack}
+          icon={Brain}
+          showIcon={true}
+          backgroundColor={colors.surface}
+        />
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.savedAnalysisButton}
@@ -268,7 +251,10 @@ Social History:
               {/* Medical History Input */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text variant="headlineMedium" style={textStyles.sectionTitle}>
+                  <Text
+                    variant="headlineMedium"
+                    style={textStyles.sectionTitle}
+                  >
                     {t('preScreening.labels.medicalHistory')}
                   </Text>
                   <View style={styles.medicalHistoryActions}>

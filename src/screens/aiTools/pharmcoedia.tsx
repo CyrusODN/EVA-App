@@ -41,6 +41,8 @@ import { colors } from '../../constants/colors';
 import 'react-native-get-random-values';
 import { nanoid } from 'nanoid';
 import { textStyles } from '../../constants/textStyles';
+import Header from '../../components/header';
+import EmptyState from '../../components/emptyState';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -512,15 +514,13 @@ const Pharmcoedia = () => {
               scrollEnabled={false}
             />
           ) : (
-            <View style={styles.emptyState}>
-              <Pill size={48} color={colors.onSurfaceVariant} />
-              <Text variant="bodyMedium" style={styles.emptyStateText}>
-                No medications added yet
-              </Text>
-              <Text variant="bodySmall" style={styles.emptyStateSubtext}>
-                Add medications above to check for interactions
-              </Text>
-            </View>
+            <EmptyState
+              icon={Pill}
+              iconSize={48}
+              iconColor={colors.onSurfaceVariant}
+              message="No medications added yet"
+              subtext="Add medications above to check for interactions"
+            />
           )}
         </View>
 
@@ -546,31 +546,14 @@ const Pharmcoedia = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ChevronLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <LinearGradient
-            colors={['#53A0CD', '#44C2AD']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.headerIconContainer}
-          >
-            <Pill size={20} color="white" />
-          </LinearGradient>
-          <View style={styles.headerTextContainer}>
-            <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-              Pharmcoedia
-            </Text>
-            <Text variant="bodySmall" style={styles.headerSubtitle}>
-              AI-powered pharmaceutical assistant
-            </Text>
-          </View>
-        </View>
-      </View>
+        <Header
+          title="Pharmcoedia"
+          subtitle="AI-powered pharmaceutical assistant"
+          onLeftPress={handleBack}
+          icon={Pill}
+          showIcon={true}
+          backgroundColor={colors.surface}
+        />
 
       {/* Tab Content */}
       {activeTab === 'assistant' ? renderAssistantTab() : renderInteractionTab()}

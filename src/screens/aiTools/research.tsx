@@ -28,6 +28,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
+import Header from '../../components/header';
 import { textStyles } from '../../constants/textStyles';
 
 interface ResearchToolCardProps {
@@ -240,35 +241,14 @@ const Research = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentWrapper}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <ChevronLeft size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-
-          <View style={styles.headerTitleContainer}>
-            <LinearGradient
-              colors={['#53A0CD', '#44C2AD']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
-              <GraduationCap size={20} color="white" />
-            </LinearGradient>
-            <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-                {t('remediusResearch.main.title')}
-              </Text>
-              <Text variant="bodySmall" style={styles.headerSubtitle}>
-                {t('remediusResearch.main.subtitle')}
-              </Text>
-            </View>
-          </View>
-
-          <TouchableOpacity onPress={handleBack} style={styles.closeButton}>
-            <X size={20} color={colors.onSurfaceVariant} />
-          </TouchableOpacity>
-        </View>
+        <Header
+          title={t('remediusResearch.main.title')}
+          subtitle={t('remediusResearch.main.subtitle')}
+          onLeftPress={handleBack}
+          icon={GraduationCap}
+          showIcon={true}
+          backgroundColor={colors.surface}
+        />
 
         {/* Content */}
         <ScrollView

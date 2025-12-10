@@ -32,6 +32,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { textStyles } from '../../constants/textStyles';
+import Header from '../../components/header';
 
 interface Observation {
   id: string;
@@ -125,31 +126,14 @@ Stable condition, ready for outpatient management
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ backgroundColor: colors.background, flex: 1 }}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <ChevronLeft size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-
-          <View style={styles.headerTitleContainer}>
-            <LinearGradient
-              colors={['#53A0CD', '#44C2AD']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
-              <FileText size={20} color="white" />
-            </LinearGradient>
-            <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-                {t('dischargeAssistant.headerTitle')}
-              </Text>
-              <Text variant="bodySmall" style={styles.headerSubtitle}>
-                {t('dischargeAssistant.headerSubtitle')}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <Header
+          title={t('dischargeAssistant.headerTitle')}
+          subtitle={t('dischargeAssistant.headerSubtitle')}
+          onLeftPress={handleBackPress}
+          icon={FileText}
+          showIcon={true}
+          backgroundColor={colors.surface}
+        />
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Observations Section */}
@@ -270,12 +254,9 @@ Stable condition, ready for outpatient management
             {/* Observations List */}
             <View style={styles.observationsList}>
               {observations.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Text variant="bodySmall" style={styles.emptyText}>
-                    No observations added yet. Add one above or upload a
-                    document.
-                  </Text>
-                </View>
+                <EmptyState
+                  message="No observations added yet. Add one above or upload a document."
+                />
               ) : (
                 observations.map(obs => (
                   <View key={obs.id} style={styles.observationItem}>

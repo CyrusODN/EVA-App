@@ -400,31 +400,14 @@ const Report = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <ChevronLeft size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-
-          <View style={styles.headerTitleContainer}>
-            <LinearGradient
-              colors={['#53A0CD', '#44C2AD']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
-              <FileText size={20} color="white" />
-            </LinearGradient>
-            <View style={styles.headerTextContainer}>
-              <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-                {t('remediusReport.title')}
-              </Text>
-              <Text variant="bodySmall" style={styles.headerSubtitle}>
-                {t('remediusReport.subtitle')}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <Header
+          title={t('remediusReport.title')}
+          subtitle={t('remediusReport.subtitle')}
+          onLeftPress={handleBack}
+          icon={FileText}
+          showIcon={true}
+          backgroundColor={colors.surface}
+        />
 
         <View style={styles.content}>
           {/* Main Content */}

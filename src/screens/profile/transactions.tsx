@@ -19,6 +19,7 @@ import Header from '../../components/header';
 import PrimaryButton from '../../components/primaryButton';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
+import EmptyState from '../../components/emptyState';
 
 interface Transaction {
   id: number;
@@ -140,11 +141,7 @@ const Transactions = () => {
                 ))}
               </View>
             ) : (
-              <View style={styles.emptyContainer}>
-                <Text variant="bodyMedium" style={styles.emptyText}>
-                  No transactions found
-                </Text>
-              </View>
+              <EmptyState message="No transactions found" />
             )}
           </View>
         </ScrollView>

@@ -38,6 +38,7 @@ import VisitDialogModal from '../../components/visitDialogueModal';
 import { colors } from '../../constants/colors';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
+import EmptyState from '../../components/emptyState';
 
 const Home = () => {
   const { t } = useTranslation();
@@ -533,12 +534,12 @@ const Home = () => {
                   contentContainerStyle={styles.eventsList}
                 />
               ) : (
-                <View style={styles.emptyContainer}>
-                  <FileText size={48} color={colors.surfaceDisabled} />
-                  <Text variant="bodyMedium" style={styles.emptyText}>
-                    {t('messages.noRecords')}
-                  </Text>
-                </View>
+                <EmptyState
+                  icon={FileText}
+                  iconSize={48}
+                  iconColor={colors.surfaceDisabled}
+                  message={t('messages.noRecords')}
+                />
               )}
             </View>
           </>

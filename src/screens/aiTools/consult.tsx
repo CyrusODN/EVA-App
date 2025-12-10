@@ -49,6 +49,8 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { textStyles } from '../../constants/textStyles';
+import Header from '../../components/header';
+import EmptyState from '../../components/emptyState';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -665,31 +667,14 @@ const Consult = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ChevronLeft size={24} color={colors.onSurface} />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <LinearGradient
-            colors={['#53A0CD', '#44C2AD']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.headerIconContainer}
-          >
-            <Brain size={20} color="white" />
-          </LinearGradient>
-          <View style={styles.headerTextContainer}>
-            <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-              {t('remediusConsult.title')}
-            </Text>
-            <Text variant="bodySmall" style={styles.headerSubtitle}>
-              {t('remediusConsult.subtitle')}
-            </Text>
-          </View>
-        </View>
-      </View>
+        <Header
+          title={t('remediusConsult.title')}
+          subtitle={t('remediusConsult.subtitle')}
+          onLeftPress={handleBack}
+          icon={Brain}
+          showIcon={true}
+          backgroundColor={colors.surface}
+        />
 
       {/* Tab Content */}
       {activeTab === 'visits' ? renderVisitsTab() : activeTab === 'chat' ? renderChatTab() : activeTab === 'pharmacopedia' ? renderPharmacopediaTab() : null}
