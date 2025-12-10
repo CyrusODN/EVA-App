@@ -87,7 +87,7 @@ const MOCK_VISITS = [
 const Consult = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  
+
   // State management
   const [activeTab, setActiveTab] = useState('visits');
   const [selectedVisits, setSelectedVisits] = useState(new Set());
@@ -103,7 +103,7 @@ const Consult = () => {
   const [importedVisits, setImportedVisits] = useState(new Set());
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
-  
+
   // Pharmacopedia state
   const [selectedDrugs, setSelectedDrugs] = useState([]);
   const [drugInput, setDrugInput] = useState('');
@@ -114,26 +114,31 @@ const Consult = () => {
   const [pharmacopediaMessage, setPharmacopediaMessage] = useState('');
 
   // Get unique values for filters
-  const uniqueTypes = useMemo(() => 
-    Array.from(new Set(MOCK_VISITS.map(visit => visit.type))), 
-    []
+  const uniqueTypes = useMemo(
+    () => Array.from(new Set(MOCK_VISITS.map(visit => visit.type))),
+    [],
   );
-  const uniqueSpecializations = useMemo(() => 
-    Array.from(new Set(MOCK_VISITS.map(visit => visit.specialization))), 
-    []
+  const uniqueSpecializations = useMemo(
+    () => Array.from(new Set(MOCK_VISITS.map(visit => visit.specialization))),
+    [],
   );
 
   // Filter and sort visits
   const filteredAndSortedVisits = useMemo(() => {
     return MOCK_VISITS.filter(visit => {
-      const matchesSearch = visit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch =
+        visit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         visit.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
         visit.specialization.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesType = filters.type.size === 0 || filters.type.has(visit.type);
-      const matchesSpecialization = filters.specialization.size === 0 || 
+      const matchesType =
+        filters.type.size === 0 || filters.type.has(visit.type);
+      const matchesSpecialization =
+        filters.specialization.size === 0 ||
         filters.specialization.has(visit.specialization);
       const matchesImported = !filters.imported || importedVisits.has(visit.id);
-      return matchesSearch && matchesType && matchesSpecialization && matchesImported;
+      return (
+        matchesSearch && matchesType && matchesSpecialization && matchesImported
+      );
     }).sort((a, b) => {
       const order = sortOrder === 'asc' ? 1 : -1;
       switch (sortBy) {
@@ -155,7 +160,7 @@ const Consult = () => {
     navigation.goBack();
   };
 
-  const handleImport = (visit) => {
+  const handleImport = visit => {
     setImportedVisits(prev => new Set([...prev, visit.id]));
   };
 
@@ -169,9 +174,9 @@ const Consult = () => {
     });
   };
 
-  const handleSort = (field) => {
+  const handleSort = field => {
     if (sortBy === field) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortBy(field);
       setSortOrder('desc');
@@ -180,17 +185,17 @@ const Consult = () => {
 
   const handleSendMessage = () => {
     if (!currentMessage.trim()) return;
-    
+
     const newMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: currentMessage,
       timestamp: new Date(),
     };
-    
+
     setMessages(prev => [...prev, newMessage]);
     setCurrentMessage('');
-    
+
     // Simulate AI response
     setTimeout(() => {
       const aiResponse = {
@@ -205,15 +210,15 @@ const Consult = () => {
             confidence: 92,
             details: t('remediusConsult.chat.aiAnalysisDetails'),
           },
-          { 
-            type: 'literature', 
-            title: t('remediusConsult.chat.sources.literature'), 
-            confidence: 85 
+          {
+            type: 'literature',
+            title: t('remediusConsult.chat.sources.literature'),
+            confidence: 85,
           },
-          { 
-            type: 'guideline', 
-            title: t('remediusConsult.chat.sources.guideline'), 
-            confidence: 78 
+          {
+            type: 'guideline',
+            title: t('remediusConsult.chat.sources.guideline'),
+            confidence: 78,
           },
         ],
       };
@@ -226,16 +231,19 @@ const Consult = () => {
       const newDrug = drugInput.trim();
       setSelectedDrugs(prev => [...prev, newDrug]);
       setDrugInput('');
-      
+
       // Mock interaction generation
       if (selectedDrugs.length >= 1) {
         const severities = ['high', 'moderate', 'low'];
         const newInteraction = {
           id: Date.now().toString(),
           severity: severities[Math.floor(Math.random() * severities.length)],
-          description: `Potential interaction between ${selectedDrugs[selectedDrugs.length - 1]} and ${newDrug}.`,
+          description: `Potential interaction between ${
+            selectedDrugs[selectedDrugs.length - 1]
+          } and ${newDrug}.`,
           mechanism: 'CYP450 enzyme inhibition/induction pathway competition.',
-          recommendation: 'Monitor patient closely, consider dosage adjustment or alternative therapy.',
+          recommendation:
+            'Monitor patient closely, consider dosage adjustment or alternative therapy.',
           drugs: [selectedDrugs[selectedDrugs.length - 1], newDrug],
         };
         setDrugInteractions(prev => [...prev, newInteraction]);
@@ -252,7 +260,9 @@ const Consult = () => {
               <User size={16} color="white" />
             </View>
             <View style={styles.visitDetails}>
-              <Text variant="titleMedium" style={styles.visitName}>{item.name}</Text>
+              <Text variant="titleMedium" style={styles.visitName}>
+                {item.name}
+              </Text>
               <View style={styles.visitMeta}>
                 <Calendar size={12} color={colors.onSurfaceVariant} />
                 <Text variant="bodySmall" style={styles.visitMetaText}>
@@ -266,7 +276,7 @@ const Consult = () => {
             </View>
           </View>
         </View>
-        
+
         {importedVisits.has(item.id) ? (
           <View style={styles.importedBadge}>
             <Check size={14} color="white" />
@@ -276,42 +286,64 @@ const Consult = () => {
             style={styles.importButton}
             onPress={() => handleImport(item)}
           >
-            <Import size={14} color="white" />
+            <LinearGradient
+              colors={LinearGradientColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.importButtonGradient}
+            >
+              <Import size={14} color="white" />
+            </LinearGradient>
           </TouchableOpacity>
         )}
       </View>
 
       <View style={styles.visitTags}>
         <View style={[styles.tag, styles.typeTag]}>
-          <Text variant="labelSmall" style={styles.tagText}>{item.type}</Text>
+          <Text variant="labelSmall" style={styles.tagText}>
+            {item.type}
+          </Text>
         </View>
         <View style={[styles.tag, styles.specializationTag]}>
-          <Text variant="labelSmall" style={styles.tagText}>{item.specialization}</Text>
+          <Text variant="labelSmall" style={styles.tagText}>
+            {item.specialization}
+          </Text>
         </View>
       </View>
 
       <View style={styles.visitActions}>
         <TouchableOpacity style={styles.actionButton}>
           <FileText size={16} color={colors.primary} />
-          <Text variant="labelSmall" style={styles.actionButtonText}>View Notes</Text>
+          <Text variant="labelSmall" style={styles.actionButtonText}>
+            View Notes
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <MessageSquare size={16} color={colors.lightGreen} />
-          <Text variant="labelSmall" style={styles.actionButtonText}>Discuss</Text>
+          <Text variant="labelSmall" style={styles.actionButtonText}>
+            Discuss
+          </Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 
   const renderMessage = ({ item }) => (
-    <View style={[
-      styles.messageContainer,
-      item.role === 'user' ? styles.userMessage : styles.assistantMessage
-    ]}>
-      <Text variant="bodyMedium" style={[
-        styles.messageText,
-        item.role === 'user' ? styles.userMessageText : styles.assistantMessageText
-      ]}>
+    <View
+      style={[
+        styles.messageContainer,
+        item.role === 'user' ? styles.userMessage : styles.assistantMessage,
+      ]}
+    >
+      <Text
+        variant="bodyMedium"
+        style={[
+          styles.messageText,
+          item.role === 'user'
+            ? styles.userMessageText
+            : styles.assistantMessageText,
+        ]}
+      >
         {item.content}
       </Text>
       <Text variant="bodySmall" style={styles.messageTime}>
@@ -319,7 +351,9 @@ const Consult = () => {
       </Text>
       {item.sources && (
         <View style={styles.sourcesContainer}>
-          <Text variant="labelMedium" style={styles.sourcesLabel}>Sources:</Text>
+          <Text variant="labelMedium" style={styles.sourcesLabel}>
+            Sources:
+          </Text>
           {item.sources.map((source, index) => (
             <TouchableOpacity key={index} style={styles.sourceItem}>
               <View style={styles.sourceHeader}>
@@ -360,21 +394,34 @@ const Consult = () => {
             placeholderTextColor={colors.onSurfaceVariant}
           />
         </View>
-        
+
         <View style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterChip, showFilters && styles.activeFilterChip]}
             onPress={() => setShowFilters(!showFilters)}
           >
-            <Filter size={14} color={showFilters ? 'white' : colors.onSurface} />
-            <Text variant="labelSmall" style={[
-              styles.filterChipText,
-              showFilters && styles.activeFilterChipText
-            ]}>
-              Filters
-            </Text>
+            {showFilters ? (
+              <LinearGradient
+                colors={LinearGradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.activeFilterChipGradient}
+              >
+                <Filter size={14} color="white" />
+                <Text variant="labelSmall" style={styles.activeFilterChipText}>
+                  Filters
+                </Text>
+              </LinearGradient>
+            ) : (
+              <>
+                <Filter size={14} color={colors.onSurface} />
+                <Text variant="labelSmall" style={styles.filterChipText}>
+                  Filters
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.filterChip}
             onPress={() => handleSort('date')}
@@ -391,7 +438,7 @@ const Consult = () => {
       <FlatList
         data={filteredAndSortedVisits}
         renderItem={renderVisitItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         style={styles.visitsList}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.visitsListContent}
@@ -403,7 +450,9 @@ const Consult = () => {
     <View style={styles.drugCard}>
       <View style={styles.drugHeader}>
         <Pill size={18} color={colors.primary} />
-        <Text variant="titleMedium" style={styles.drugName}>{item}</Text>
+        <Text variant="titleMedium" style={styles.drugName}>
+          {item}
+        </Text>
         <TouchableOpacity
           onPress={() => setSelectedDrugs(prev => prev.filter(d => d !== item))}
           style={styles.removeDrugButton}
@@ -415,52 +464,75 @@ const Consult = () => {
   );
 
   const renderInteraction = ({ item }) => {
-    const getSeverityColor = (severity) => {
+    const getSeverityColor = severity => {
       switch (severity) {
-        case 'high': return '#EF4444';
-        case 'moderate': return '#F59E0B';
-        case 'low': return '#10B981';
-        default: return colors.onSurfaceVariant;
+        case 'high':
+          return '#EF4444';
+        case 'moderate':
+          return '#F59E0B';
+        case 'low':
+          return '#10B981';
+        default:
+          return colors.onSurfaceVariant;
       }
     };
 
-    const getSeverityIcon = (severity) => {
+    const getSeverityIcon = severity => {
       switch (severity) {
-        case 'high': return <AlertTriangle size={16} color="white" />;
-        case 'moderate': return <AlertTriangle size={16} color="white" />;
-        case 'low': return <Shield size={16} color="white" />;
-        default: return <AlertTriangle size={16} color="white" />;
+        case 'high':
+          return <AlertTriangle size={16} color="white" />;
+        case 'moderate':
+          return <AlertTriangle size={16} color="white" />;
+        case 'low':
+          return <Shield size={16} color="white" />;
+        default:
+          return <AlertTriangle size={16} color="white" />;
       }
     };
 
     return (
       <View style={styles.interactionCard}>
         <View style={styles.interactionHeader}>
-          <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(item.severity) }]}>
+          <View
+            style={[
+              styles.severityBadge,
+              { backgroundColor: getSeverityColor(item.severity) },
+            ]}
+          >
             {getSeverityIcon(item.severity)}
             <Text variant="labelMedium" style={styles.severityText}>
               {item.severity.toUpperCase()}
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.drugPair}>
           {item.drugs.map((drug, index) => (
             <View key={index} style={styles.drugTag}>
-              <Text variant="labelSmall" style={styles.drugTagText}>{drug}</Text>
+              <Text variant="labelSmall" style={styles.drugTagText}>
+                {drug}
+              </Text>
             </View>
           ))}
         </View>
-        
+
         <Text variant="bodyMedium" style={styles.interactionDescription}>
           {item.description}
         </Text>
-        
+
         <View style={styles.interactionDetails}>
-          <Text variant="labelMedium" style={styles.detailLabel}>Mechanism:</Text>
-          <Text variant="bodySmall" style={styles.detailText}>{item.mechanism}</Text>
-          <Text variant="labelMedium" style={styles.detailLabel}>Recommendation:</Text>
-          <Text variant="bodySmall" style={styles.detailText}>{item.recommendation}</Text>
+          <Text variant="labelMedium" style={styles.detailLabel}>
+            Mechanism:
+          </Text>
+          <Text variant="bodySmall" style={styles.detailText}>
+            {item.mechanism}
+          </Text>
+          <Text variant="labelMedium" style={styles.detailLabel}>
+            Recommendation:
+          </Text>
+          <Text variant="bodySmall" style={styles.detailText}>
+            {item.recommendation}
+          </Text>
         </View>
       </View>
     );
@@ -480,7 +552,7 @@ const Consult = () => {
       <FlatList
         data={messages}
         renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         style={styles.chatMessages}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.chatMessagesContent}
@@ -497,11 +569,32 @@ const Consult = () => {
             placeholderTextColor={colors.onSurfaceVariant}
           />
           <TouchableOpacity
-            style={[styles.sendButton, !currentMessage.trim() && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              !currentMessage.trim() && styles.sendButtonDisabled,
+            ]}
             onPress={handleSendMessage}
             disabled={!currentMessage.trim()}
           >
-            <Send size={18} color="white" />
+            {currentMessage.trim() ? (
+              <LinearGradient
+                colors={LinearGradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.sendButtonGradient}
+              >
+                <Send size={18} color="white" />
+              </LinearGradient>
+            ) : (
+              <LinearGradient
+                colors={['#94A3B8', '#94A3B8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.sendButtonGradient}
+              >
+                <Send size={18} color="white" />
+              </LinearGradient>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -543,7 +636,9 @@ const Consult = () => {
               <View style={styles.queriesButtonContent}>
                 <Pill size={18} color={colors.primary} />
                 <Text variant="labelMedium" style={styles.queriesButtonText}>
-                  {drugQueries.length > 0 ? `${drugQueries.length} Queries` : 'View Queries'}
+                  {drugQueries.length > 0
+                    ? `${drugQueries.length} Queries`
+                    : 'View Queries'}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -552,7 +647,7 @@ const Consult = () => {
       </View>
 
       {/* Main Content Area */}
-      <ScrollView 
+      <ScrollView
         style={styles.pharmacopediaMainContent}
         contentContainerStyle={styles.pharmacopediaContentContainer}
         showsVerticalScrollIndicator={false}
@@ -566,11 +661,12 @@ const Consult = () => {
           <View style={styles.pharmacopediaEmptyState}>
             <Pill size={hp(12)} color={colors.onSurfaceVariant} />
             <Text variant="bodyLarge" style={styles.pharmacopediaEmptyText}>
-              Get evidence-based drug information from Stahl's Essential Psychopharmacology Prescriber's Guide with AI-powered search.
+              Get evidence-based drug information from Stahl's Essential
+              Psychopharmacology Prescriber's Guide with AI-powered search.
             </Text>
           </View>
         )}
-          </ScrollView>
+      </ScrollView>
 
       {/* Input Section */}
       <View style={styles.chatInputContainer}>
@@ -586,7 +682,7 @@ const Consult = () => {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              !pharmacopediaMessage.trim() && styles.sendButtonDisabled
+              !pharmacopediaMessage.trim() && styles.sendButtonDisabled,
             ]}
             onPress={() => {
               if (pharmacopediaMessage.trim()) {
@@ -596,7 +692,25 @@ const Consult = () => {
             }}
             disabled={!pharmacopediaMessage.trim()}
           >
-            <Send size={18} color="white" />
+            {pharmacopediaMessage.trim() ? (
+              <LinearGradient
+                colors={LinearGradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.sendButtonGradient}
+              >
+                <Send size={18} color="white" />
+              </LinearGradient>
+            ) : (
+              <LinearGradient
+                colors={['#94A3B8', '#94A3B8']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.sendButtonGradient}
+              >
+                <Send size={18} color="white" />
+              </LinearGradient>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -617,26 +731,32 @@ const Consult = () => {
               <X size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
-          
-          <ScrollView style={styles.queriesModalContent} showsVerticalScrollIndicator={false}>
+
+          <ScrollView
+            style={styles.queriesModalContent}
+            showsVerticalScrollIndicator={false}
+          >
             {drugQueries.length === 0 ? (
               <View style={styles.queriesModalEmptyState}>
                 <Pill size={64} color={colors.onSurfaceVariant} />
                 <Text variant="bodyLarge" style={styles.queriesModalEmptyText}>
                   No sessions yet
                 </Text>
-                <Text variant="bodyMedium" style={styles.queriesModalEmptySubtext}>
+                <Text
+                  variant="bodyMedium"
+                  style={styles.queriesModalEmptySubtext}
+                >
                   Start your first drug query
                 </Text>
               </View>
             ) : (
               <View style={styles.queriesList}>
-                {drugQueries.map((query) => (
+                {drugQueries.map(query => (
                   <TouchableOpacity
                     key={query.id}
                     style={[
                       styles.queryCard,
-                      selectedQuery === query.id && styles.queryCardActive
+                      selectedQuery === query.id && styles.queryCardActive,
                     ]}
                     onPress={() => {
                       setSelectedQuery(query.id);
@@ -644,9 +764,19 @@ const Consult = () => {
                     }}
                   >
                     <View style={styles.queryCardContent}>
-                      <Pill size={20} color={selectedQuery === query.id ? colors.primary : colors.onSurfaceVariant} />
+                      <Pill
+                        size={20}
+                        color={
+                          selectedQuery === query.id
+                            ? colors.primary
+                            : colors.onSurfaceVariant
+                        }
+                      />
                       <View style={styles.queryCardText}>
-                        <Text variant="titleMedium" style={styles.queryCardTitle}>
+                        <Text
+                          variant="titleMedium"
+                          style={styles.queryCardTitle}
+                        >
                           {query.title}
                         </Text>
                         <Text variant="bodySmall" style={styles.queryCardDate}>
@@ -676,139 +806,195 @@ const Consult = () => {
           backgroundColor={colors.surface}
         />
 
-      {/* Tab Content */}
-      {activeTab === 'visits' ? renderVisitsTab() : activeTab === 'chat' ? renderChatTab() : activeTab === 'pharmacopedia' ? renderPharmacopediaTab() : null}
+        {/* Tab Content */}
+        {activeTab === 'visits'
+          ? renderVisitsTab()
+          : activeTab === 'chat'
+          ? renderChatTab()
+          : activeTab === 'pharmacopedia'
+          ? renderPharmacopediaTab()
+          : null}
 
-      {/* Bottom Tab Navigation */}
-      <View style={styles.bottomTabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'visits' && styles.activeTab]}
-          onPress={() => setActiveTab('visits')}
-        >
-          <FileSearch size={20} color={activeTab === 'visits' ? colors.lightGreen : colors.onSurfaceVariant} />
-          <Text variant="labelSmall" style={[
-            styles.tabText,
-            activeTab === 'visits' && styles.activeTabText
-          ]}>
-            Visit History
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'chat' && styles.activeTab]}
-          onPress={() => setActiveTab('chat')}
-        >
-          <Brain size={20} color={activeTab === 'chat' ? colors.lightGreen : colors.onSurfaceVariant} />
-          <Text variant="labelSmall" style={[
-            styles.tabText,
-            activeTab === 'chat' && styles.activeTabText
-          ]}>
-            {t('remediusConsult.chat.tabTitle')}
-          </Text>
-          {messages.length > 0 && (
-            <View style={styles.messageBadge}>
-              <Text variant="labelSmall" style={styles.messageBadgeText}>
-                {messages.length}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'pharmacopedia' && styles.activeTab]}
-          onPress={() => setActiveTab('pharmacopedia')}
-        >
-          <FlaskConical size={20} color={activeTab === 'pharmacopedia' ? colors.lightGreen : colors.onSurfaceVariant} />
-          <Text variant="labelSmall" style={[
-            styles.tabText,
-            activeTab === 'pharmacopedia' && styles.activeTabText
-          ]}>
-            {t('aiTools.drugs.title')}
-          </Text>
-          {drugInteractions.length > 0 && (
-            <View style={styles.messageBadge}>
-              <Text variant="labelSmall" style={styles.messageBadgeText}>
-                {drugInteractions.length}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+        {/* Bottom Tab Navigation */}
+        <View style={styles.bottomTabs}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'visits' && styles.activeTab]}
+            onPress={() => setActiveTab('visits')}
+          >
+            <FileSearch
+              size={20}
+              color={
+                activeTab === 'visits'
+                  ? colors.lightGreen
+                  : colors.onSurfaceVariant
+              }
+            />
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.tabText,
+                activeTab === 'visits' && styles.activeTabText,
+              ]}
+            >
+              Visit History
+            </Text>
+          </TouchableOpacity>
 
-      {/* Filters Modal */}
-      <Modal
-        visible={showFilters}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowFilters(false)}
-      >
-        <SafeAreaView style={styles.filtersModal}>
-          <View style={styles.filtersHeader}>
-            <Text variant="titleLarge" style={styles.filtersTitle}>Filters</Text>
-            <TouchableOpacity onPress={() => setShowFilters(false)}>
-              <X size={24} color={colors.onSurface} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.filtersContent}>
-            <View style={styles.filterSection}>
-              <Text variant="titleMedium" style={styles.filterSectionTitle}>
-                Visit Type
-              </Text>
-              <View style={styles.filterOptions}>
-                {uniqueTypes.map(type => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.filterOption,
-                      filters.type.has(type) && styles.activeFilterOption
-                    ]}
-                    onPress={() => toggleFilter('type', type)}
-                  >
-                    <Text variant="bodyMedium" style={[
-                      styles.filterOptionText,
-                      filters.type.has(type) && styles.activeFilterOptionText
-                    ]}>
-                      {type}
-                    </Text>
-                    {filters.type.has(type) && (
-                      <Check size={16} color="white" />
-                    )}
-                  </TouchableOpacity>
-                ))}
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'chat' && styles.activeTab]}
+            onPress={() => setActiveTab('chat')}
+          >
+            <Brain
+              size={20}
+              color={
+                activeTab === 'chat'
+                  ? colors.lightGreen
+                  : colors.onSurfaceVariant
+              }
+            />
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.tabText,
+                activeTab === 'chat' && styles.activeTabText,
+              ]}
+            >
+              {t('remediusConsult.chat.tabTitle')}
+            </Text>
+            {messages.length > 0 && (
+              <View style={styles.messageBadge}>
+                <Text variant="labelSmall" style={styles.messageBadgeText}>
+                  {messages.length}
+                </Text>
               </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeTab === 'pharmacopedia' && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab('pharmacopedia')}
+          >
+            <FlaskConical
+              size={20}
+              color={
+                activeTab === 'pharmacopedia'
+                  ? colors.lightGreen
+                  : colors.onSurfaceVariant
+              }
+            />
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.tabText,
+                activeTab === 'pharmacopedia' && styles.activeTabText,
+              ]}
+            >
+              {t('aiTools.drugs.title')}
+            </Text>
+            {drugInteractions.length > 0 && (
+              <View style={styles.messageBadge}>
+                <Text variant="labelSmall" style={styles.messageBadgeText}>
+                  {drugInteractions.length}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Filters Modal */}
+        <Modal
+          visible={showFilters}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowFilters(false)}
+        >
+          <SafeAreaView style={styles.filtersModal}>
+            <View style={styles.filtersHeader}>
+              <Text variant="titleLarge" style={styles.filtersTitle}>
+                Filters
+              </Text>
+              <TouchableOpacity onPress={() => setShowFilters(false)}>
+                <X size={24} color={colors.onSurface} />
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.filterSection}>
-              <Text variant="titleMedium" style={styles.filterSectionTitle}>
-                Specialization
-              </Text>
-              <View style={styles.filterOptions}>
-                {uniqueSpecializations.map(spec => (
-                  <TouchableOpacity
-                    key={spec}
-                    style={[
-                      styles.filterOption,
-                      filters.specialization.has(spec) && styles.activeFilterOption
-                    ]}
-                    onPress={() => toggleFilter('specialization', spec)}
-                  >
-                    <Text variant="bodyMedium" style={[
-                      styles.filterOptionText,
-                      filters.specialization.has(spec) && styles.activeFilterOptionText
-                    ]}>
-                      {spec}
-                    </Text>
-                    {filters.specialization.has(spec) && (
-                      <Check size={16} color="white" />
-                    )}
-                  </TouchableOpacity>
-                ))}
+            <ScrollView style={styles.filtersContent}>
+              <View style={styles.filterSection}>
+                <Text variant="titleMedium" style={styles.filterSectionTitle}>
+                  Visit Type
+                </Text>
+                <View style={styles.filterOptions}>
+                  {uniqueTypes.map(type => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.filterOption,
+                        filters.type.has(type) && styles.activeFilterOption,
+                      ]}
+                      onPress={() => toggleFilter('type', type)}
+                    >
+                      <Text
+                        variant="bodyMedium"
+                        style={[
+                          styles.filterOptionText,
+                          filters.type.has(type) &&
+                            styles.activeFilterOptionText,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                      {filters.type.has(type) && (
+                        <Check size={16} color="white" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+
+              <View style={styles.filterSection}>
+                <Text variant="titleMedium" style={styles.filterSectionTitle}>
+                  Specialization
+                </Text>
+                <View style={styles.filterOptions}>
+                  {uniqueSpecializations.map(spec => (
+                    <TouchableOpacity
+                      key={spec}
+                      style={styles.filterOption}
+                      onPress={() => toggleFilter('specialization', spec)}
+                    >
+                      {filters.specialization.has(spec) ? (
+                        <LinearGradient
+                          colors={LinearGradientColors}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.activeFilterOptionGradient}
+                        >
+                          <Text
+                            variant="bodyMedium"
+                            style={styles.activeFilterOptionText}
+                          >
+                            {spec}
+                          </Text>
+                          <Check size={16} color="white" />
+                        </LinearGradient>
+                      ) : (
+                        <Text
+                          variant="bodyMedium"
+                          style={styles.filterOptionText}
+                        >
+                          {spec}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -825,8 +1011,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     shadowColor: '#000',
@@ -868,7 +1052,7 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
   },
-  
+
   // Visits Tab Styles
   searchAndFilters: {
     padding: wp(4),
@@ -907,8 +1091,15 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   activeFilterChip: {
-    backgroundColor: colors.lightGreen,
     borderColor: colors.lightGreen,
+    overflow: 'hidden',
+  },
+  activeFilterChipGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
   },
   filterChipText: {
     color: colors.onSurface,
@@ -974,8 +1165,12 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   importButton: {
-    backgroundColor: colors.lightGreen,
     borderRadius: 20,
+    width: 36,
+    height: 36,
+    overflow: 'hidden',
+  },
+  importButtonGradient: {
     width: 36,
     height: 36,
     justifyContent: 'center',
@@ -1143,12 +1338,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   sendButton: {
-    backgroundColor: colors.lightGreen,
-    borderRadius: 20,
+    borderRadius: 90,
+    width: 44,
+    height: 44,
+    overflow: 'hidden',
+  },
+  sendButtonGradient: {
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   sendButtonDisabled: {
     backgroundColor: '#94A3B8',
@@ -1246,8 +1446,16 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   activeFilterOption: {
-    backgroundColor: colors.lightGreen,
     borderColor: colors.lightGreen,
+    overflow: 'hidden',
+  },
+  activeFilterOptionGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
   },
   filterOptionText: {
     color: colors.onSurface,

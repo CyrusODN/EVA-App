@@ -33,6 +33,8 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { textStyles } from '../../constants/textStyles';
 import Header from '../../components/header';
+import EmptyState from '../../components/emptyState';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
 
 interface Observation {
   id: string;
@@ -306,25 +308,39 @@ Stable condition, ready for outpatient management
                     style={styles.summaryActionButton}
                     onPress={copyToClipboard}
                   >
-                    <Copy size={16} color={colors.bluish} />
-                    <Text
-                      variant="labelMedium"
-                      style={styles.summaryActionText}
+                    <LinearGradient
+                      colors={LinearGradientColors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.summaryActionButtonGradient}
                     >
-                      {t('dischargeAssistant.summaryPanel.copyButtonText')}
-                    </Text>
+                      <Copy size={16} color="white" />
+                      <Text
+                        variant="labelMedium"
+                        style={styles.summaryActionTextWhite}
+                      >
+                        {t('dischargeAssistant.summaryPanel.copyButtonText')}
+                      </Text>
+                    </LinearGradient>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.summaryActionButton}
                     onPress={exportSummary}
                   >
-                    <Download size={16} color={colors.bluish} />
-                    <Text
-                      variant="labelMedium"
-                      style={styles.summaryActionText}
+                    <LinearGradient
+                      colors={LinearGradientColors}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.summaryActionButtonGradient}
                     >
-                      {t('dischargeAssistant.summaryPanel.exportButtonText')}
-                    </Text>
+                      <Download size={16} color="white" />
+                      <Text
+                        variant="labelMedium"
+                        style={styles.summaryActionTextWhite}
+                      >
+                        {t('dischargeAssistant.summaryPanel.exportButtonText')}
+                      </Text>
+                    </LinearGradient>
                   </TouchableOpacity>
                 </View>
                 <ScrollView style={styles.summaryContent}>
@@ -358,21 +374,28 @@ Stable condition, ready for outpatient management
               onPress={generateSummary}
               disabled={isGenerating}
             >
-              {isGenerating ? (
-                <>
-                  <View style={styles.loadingSpinner} />
-                  <Text variant="labelMedium" style={styles.generateButtonText}>
-                    {t('dischargeAssistant.summaryPanel.generatingButtonText')}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Save size={16} color="white" />
-                  <Text variant="labelMedium" style={styles.generateButtonText}>
-                    {t('dischargeAssistant.summaryPanel.generateButtonText')}
-                  </Text>
-                </>
-              )}
+              <LinearGradient
+                colors={LinearGradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.generateButtonGradient}
+              >
+                {isGenerating ? (
+                  <>
+                    <View style={styles.loadingSpinner} />
+                    <Text variant="labelMedium" style={styles.generateButtonText}>
+                      {t('dischargeAssistant.summaryPanel.generatingButtonText')}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} color="white" />
+                    <Text variant="labelMedium" style={styles.generateButtonText}>
+                      {t('dischargeAssistant.summaryPanel.generateButtonText')}
+                    </Text>
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         )}
@@ -586,16 +609,21 @@ const styles = StyleSheet.create({
     gap: wp(3),
   },
   summaryActionButton: {
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  summaryActionButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: colors.surfaceVariant,
     gap: 6,
   },
   summaryActionText: {
     color: colors.lightGreen,
+  },
+  summaryActionTextWhite: {
+    color: 'white',
   },
   summaryContent: {
     backgroundColor: colors.surfaceVariant,
@@ -629,12 +657,14 @@ const styles = StyleSheet.create({
     borderTopColor: colors.outlineVariant,
   },
   generateButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  generateButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.lightGreen,
     paddingVertical: hp(2),
-    borderRadius: 8,
     gap: 8,
   },
   generateButtonText: {

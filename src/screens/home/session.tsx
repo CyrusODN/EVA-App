@@ -37,6 +37,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
 import { colors } from '../../constants/colors';
+import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradientColors } from '../../constants/linearGradientColors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -233,16 +235,18 @@ const Session = () => {
               ]}
               onPress={isRecording ? handleStopRecording : handleStartRecording}
             >
-              <View style={[
-                styles.recordButtonGradient,
-                { backgroundColor: isRecording ? '#ef4444' : '#53A0CD' }
-              ]}>
+              <LinearGradient
+                colors={isRecording ? ['#ef4444', '#dc2626', '#b91c1c'] : LinearGradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.recordButtonGradient}
+              >
                 {isRecording ? (
                   <Square size={32} color="white" fill="white" />
                 ) : (
                   <Mic size={32} color="white" />
                 )}
-              </View>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
