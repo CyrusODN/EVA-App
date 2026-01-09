@@ -16,6 +16,7 @@ import Settings from './profile/settings';
 import Subscription from './profile/subscription';
 import Transactions from './profile/transactions';
 import TranscriptionComplete from './home/transcriptionCompleted';
+import OtpVerification from './auth/otpVerification';
  
 export const screens = {
   Login,
@@ -36,4 +37,5 @@ export const screens = {
   Subscription,
   Transactions,
   TranscriptionComplete,
+  OtpVerification,
 };

@@ -21,6 +21,8 @@ import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
+import { forgetPassword } from '../../services/authService';
+import { customToast } from '../../utils/toastMessage';
 
 const ForgotPassword = () => {
     const { t } = useTranslation();
@@ -29,12 +31,30 @@ const ForgotPassword = () => {
     const [loading, setLoading] = useState(false);
     const [resetSent, setResetSent] = useState(false);
   
-    const handleResetPassword = () => {
+    const handleResetPassword = async () => {
+      if (!email) {
+        customToast('error', 'Error', 'Please enter your email');
+        return;
+      }
       setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
+      try {
+        const resp = await forgetPassword({ email });
+        const raw = resp?.data;
+        const message =
+          raw?.message ||
+          raw?.data ||
+          'Password reset link sent. Check your email.';
+        customToast('success', 'Success', String(message));
         setResetSent(true);
-      }, 2000);
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to send reset link';
+        customToast('error', 'Error', message);
+      } finally {
+        setLoading(false);
+      }
     };
   
     return (
@@ -114,7 +134,7 @@ const ForgotPassword = () => {
   
                 {/* Back to Login Link */}
                 <View style={styles.backToLoginContainer}>
-                  <TouchableOpacity onPress={() => navigation.navigate('login')}>
+                  <TouchableOpacity onPress={() => navigation.navigate('login' as never)}>
                     <Text variant="bodyMedium" style={styles.backToLoginText}>
                       ← {t('login.backToLogin')}
                     </Text>
@@ -267,8 +287,10 @@ const ForgotPassword = () => {
     successIcon: {
       width: hp(8),
       height: hp(8),
+      borderWidth: hp(0.14),
       borderRadius: hp(4),
-      backgroundColor: '#4CAF50',
+      borderColor: colors.primary,
+      backgroundColor: '#ffffffff',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: hp(3),

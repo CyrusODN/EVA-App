@@ -797,6 +797,12 @@ export const en = {
 				"firstVisit": "First Visit",
 				"followUp": "Follow-up"
 			},
+			"noteLength": {
+				"select": "Note length",
+				"small": "Small",
+				"medium": "Medium",
+				"large": "Large"
+			},
 			"transcriptionTitle": "Real-time transcription",
 			"addTranscription": "Add Transcription",
 			"speaker": "Speaker",
@@ -2036,7 +2042,10 @@ export const en = {
 		"selectAudioFile": "Select an audio file from your device",
 		"supportedFormats": "Supported: MP3, WAV, M4A",
 		"connectExternalDevice": "Connect External Device",
-		"scanToConnect": "Scan to connect another device with microphone"
+		"scanToConnect": "Scan to connect another device with microphone",
+		"recordingComplete": "Recording Complete",
+		"recordingCompleteDescription": "Your recording is ready. You can play it back or generate notes.",
+		"generateNotes": "Generate Notes"
 	},
 	"home": {
 		"meetingNamePlaceholder": "Enter meeting name...",

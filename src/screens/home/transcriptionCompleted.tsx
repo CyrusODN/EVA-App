@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -29,6 +28,8 @@ import {
   Check,
   X,
   Search,
+  MessageSquare,
+  Lock,
 } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PrimaryButton from '../../components/primaryButton';
@@ -37,8 +38,9 @@ import Header from '../../components/header';
 import { colors } from '../../constants/colors';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
+import { sessionStorage } from '../../utils/sessionStorage';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+Dimensions.get('window');
 
 const TranscriptionComplete = () => {
   const { t } = useTranslation();
@@ -46,27 +48,50 @@ const TranscriptionComplete = () => {
   const route = useRoute();
 
   // Get session data from route params
-  const { sessionData, sessionType } = route.params || {};
+  const { sessionData, sessionType } = ((route as any).params || {}) as {
+    sessionData?: any;
+    sessionType?: string;
+  };
 
   // State management
-  const [noteType, setNoteType] = useState(null);
-  const [selectedSpecialization, setSelectedSpecialization] = useState('');
-  const [visitType, setVisitType] = useState('');
+  const [noteType, setNoteType] = useState<string | null>(null);
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string>('');
+  const [visitType, setVisitType] = useState<string>('');
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showSpecializationModal, setShowSpecializationModal] = useState(false);
   const [showVisitTypeModal, setShowVisitTypeModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
-  const [newSessionName, setNewSessionName] = useState('');
-  const [selectedFollowUpVisits, setSelectedFollowUpVisits] = useState(
-    new Set(),
+  const [newSessionName, setNewSessionName] = useState<string>('');
+  const [selectedFollowUpVisits, setSelectedFollowUpVisits] = useState<Set<string>>(
+    new Set<string>(),
   );
-  const [importedFollowUpVisits, setImportedFollowUpVisits] = useState([]);
-  const [visitSearchQuery, setVisitSearchQuery] = useState('');
+  const [importedFollowUpVisits, setImportedFollowUpVisits] = useState<
+    Array<{ _id: string; title: string; date: Date | string }>
+  >([]);
+  const [visitSearchQuery, setVisitSearchQuery] = useState<string>('');
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [noteLength, setNoteLength] = useState<'Small' | 'Medium' | 'Large'>(
+    'Medium',
+  );
+  const [customNote, setCustomNote] = useState<string>('');
+  const noteLengthOptions: Array<'Small' | 'Medium' | 'Large'> = [
+    'Small',
+    'Medium',
+    'Large',
+  ];
+  const [showCustomPromptModal, setShowCustomPromptModal] = useState(false);
+  const [customPromptTitle, setCustomPromptTitle] = useState<string>('');
+  const isCustomLocked = noteType === 'custom' || !!customNote.trim();
+  const handleClearCustomPrompt = () => {
+    setCustomNote('');
+    setCustomPromptTitle('');
+    setNoteType(null);
+    customToast('success', t('common.success'), 'Custom prompt cleared');
+  };
 
   // Mock session data if not provided
   const session = sessionData || {
@@ -74,8 +99,10 @@ const TranscriptionComplete = () => {
     title: t('mainContent.recording.newSession'),
     type: sessionType || 'patient',
     date: new Date().toISOString(),
+    duration: null,
     hasRecording: true,
     hasTranscription: true,
+    status: 'transcribed',
   };
 
   // Mock transcription data
@@ -135,7 +162,7 @@ const TranscriptionComplete = () => {
       case 'lecture':
         return Brain;
       default:
-        return FileText;
+        return FileText; 
     }
   };
 
@@ -152,7 +179,7 @@ const TranscriptionComplete = () => {
     }
   };
 
-  const formatTime = milliseconds => {
+  const formatTime = (milliseconds: number) => {
     const seconds = Math.floor(milliseconds / 1000);
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -161,7 +188,7 @@ const TranscriptionComplete = () => {
       .padStart(2, '0')}`;
   };
 
-  const formatTimeFromSeconds = seconds => {
+  const formatTimeFromSeconds = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs
@@ -171,38 +198,41 @@ const TranscriptionComplete = () => {
 
   const handleRename = async () => {
     if (!newSessionName.trim()) return;
-
     setIsRenaming(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsRenaming(false);
+    try {
+      await sessionStorage.updateSessionTitle(session.id, newSessionName.trim());
       setShowRenameModal(false);
       customToast('success', t('common.success'), t('success.sessionRenamed'));
-    }, 1000);
+    } finally {
+      setIsRenaming(false);
+    }
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsDeleting(false);
+    try {
+      await sessionStorage.deleteSession(session.id);
       setShowDeleteModal(false);
       customToast('success', t('common.success'), t('success.sessionDeleted'));
-      navigation.goBack();
-    }, 1000);
+      (navigation as any).goBack();
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleReset = async () => {
     setIsResetting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsResetting(false);
+    try {
+      await sessionStorage.resetSession(session.id);
       setShowResetModal(false);
       customToast('success', t('common.success'), t('success.sessionReset'));
-    }, 1000);
+      (navigation as any).goBack();
+    } finally {
+      setIsResetting(false);
+    }
   };
 
-  const handleFollowUpVisitSelect = visitId => {
+  const handleFollowUpVisitSelect = (visitId: string) => {
     setSelectedFollowUpVisits(prev => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
@@ -223,140 +253,174 @@ const TranscriptionComplete = () => {
     setVisitSearchQuery('');
   };
 
+  const handleNoteTypeSelect = (type: string) => {
+    if (type !== 'custom') {
+      setCustomNote('');
+      setCustomPromptTitle('');
+      setShowCustomPromptModal(false);
+    }
+    setNoteType(type);
+  };
+
   const renderNoteTypeButtons = () => {
     if (session.type === 'lecture') {
       return (
         <View style={styles.noteTypeContainer}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            {t('mainContent.transcriptionComplete.noteOptions.soap')}
-          </Text>
-
           <View style={styles.buttonGrid}>
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
                 noteType === 'medical' && { borderColor: 'transparent' },
+                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
               ]}
-              onPress={() => setNoteType('medical')}
+              disabled={isCustomLocked && noteType !== 'custom'}
+              onPress={() => handleNoteTypeSelect('medical')}
             >
-              {noteType === 'medical' ? (
+              {noteType === 'medical' && (
                 <LinearGradient
                   colors={LinearGradientColors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <Brain size={24} color="white" />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.medicalLecture',
-                    )}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <Brain size={24} color={colors.subText} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.medicalLecture',
-                    )}
-                  </Text>
-                </>
+                  style={styles.noteTypeOverlayGradient}
+                />
               )}
+              <View style={{ width: wp(5) }} />
+              <Brain size={24} color={noteType === 'medical' ? 'white' : colors.subText} />
+              <View style={{ width: wp(2) }} />
+              <Text
+                variant="bodyMedium"
+                style={noteType === 'medical' ? styles.selectedNoteTypeText : styles.noteTypeText}
+              >
+                {t('mainContent.transcriptionComplete.noteOptions.medicalLecture')}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
                 noteType === 'scientific' && { borderColor: 'transparent' },
+                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
               ]}
-              onPress={() => setNoteType('scientific')}
+              disabled={isCustomLocked && noteType !== 'custom'}
+              onPress={() => handleNoteTypeSelect('scientific')}
             >
-              {noteType === 'scientific' ? (
+              {noteType === 'scientific' && (
                 <LinearGradient
                   colors={LinearGradientColors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <FileText size={24} color="white" />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.scientificResearch',
-                    )}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <FileText size={24} color={colors.subText} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.scientificResearch',
-                    )}
-                  </Text>
-                </>
+                  style={styles.noteTypeOverlayGradient}
+                />
               )}
+              <View style={{ width: wp(5) }} />
+              <FileText size={24} color={noteType === 'scientific' ? 'white' : colors.subText} />
+              <View style={{ width: wp(2) }} />
+              <Text
+                variant="bodyMedium"
+                style={noteType === 'scientific' ? styles.selectedNoteTypeText : styles.noteTypeText}
+              >
+                {t('mainContent.transcriptionComplete.noteOptions.scientificResearch')}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'clinicalPractice' && {
-                  borderColor: 'transparent',
-                },
+                noteType === 'clinical' && { borderColor: 'transparent' },
+                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
               ]}
-              onPress={() => setNoteType('clinicalPractice')}
+              disabled={isCustomLocked && noteType !== 'custom'}
+              onPress={() => handleNoteTypeSelect('clinical')}
             >
-              {noteType === 'clinicalPractice' ? (
+              {noteType === 'clinical' && (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.noteTypeOverlayGradient}
+                />
+              )}
+              <View style={{ width: wp(5) }} />
+              <Users size={24} color={noteType === 'clinical' ? 'white' : colors.subText} />
+              <View style={{ width: wp(2) }} />
+              <Text
+                variant="bodyMedium"
+                style={noteType === 'clinical' ? styles.selectedNoteTypeText : styles.noteTypeText}
+              >
+                {t('mainContent.transcriptionComplete.noteOptions.clinicalPractice')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.noteTypeButton,
+                noteType === 'custom' && { borderColor: 'transparent' },
+              ]}
+              onPress={() => {
+                setNoteType('custom');
+                setShowCustomPromptModal(true);
+              }}
+            >
+              {noteType === 'custom' ? (
                 <LinearGradient
                   colors={LinearGradientColors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.selectedNoteTypeButton}
                 >
-                  <Users size={24} color="white" />
+                  <View style={{ width: wp(5) }} />
+                  <Plus size={24} color="white" />
                   <Text
                     variant="bodyMedium"
                     style={styles.selectedNoteTypeText}
                   >
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.clinicalPractice',
-                    )}
+                    Custom Note
                   </Text>
                 </LinearGradient>
               ) : (
                 <>
-                  <Users size={24} color={colors.subText} />
+                  <View style={{ width: wp(5) }} />
+                  <Plus size={24} color={colors.subText} />
                   <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.clinicalPractice',
-                    )}
+                    Custom Note
                   </Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
+          {isCustomLocked && (
+            <View style={styles.customNotePreview}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(1) }}>
+                <Text variant="titleMedium" style={styles.customNoteTitle}>
+                  {customPromptTitle || 'Custom Prompt'}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: wp(2) }}>
+                  <TouchableOpacity onPress={() => setShowCustomPromptModal(true)}>
+                    <Edit3 size={18} color={colors.subText} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleClearCustomPrompt}>
+                    <X size={18} color={colors.subText} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text variant="bodyMedium" style={styles.customNoteText}>
+                {customNote}
+              </Text>
+            </View>
+          )}
         </View>
       );
     } else if (session.type === 'meeting') {
       return (
         <View style={styles.noteTypeContainer}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            {t('mainContent.transcriptionComplete.noteOptions.soap')}
-          </Text>
-
           <View style={styles.buttonGrid}>
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
                 noteType === 'general' && { borderColor: 'transparent' },
+                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
               ]}
+              disabled={isCustomLocked && noteType !== 'custom'}
               onPress={() => setNoteType('general')}
             >
               {noteType === 'general' ? (
@@ -366,6 +430,7 @@ const TranscriptionComplete = () => {
                   end={{ x: 1, y: 0 }}
                   style={styles.selectedNoteTypeButton}
                 >
+                  <View style={{ width: wp(5) }} />
                   <FileText size={24} color="white" />
                   <Text
                     variant="bodyMedium"
@@ -378,6 +443,7 @@ const TranscriptionComplete = () => {
                 </LinearGradient>
               ) : (
                 <>
+                  <View style={{ width: wp(5) }} />
                   <FileText size={24} color={colors.subText} />
                   <Text variant="bodyMedium" style={styles.noteTypeText}>
                     {t(
@@ -392,7 +458,9 @@ const TranscriptionComplete = () => {
               style={[
                 styles.noteTypeButton,
                 noteType === 'detailed' && { borderColor: 'transparent' },
+                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
               ]}
+              disabled={isCustomLocked && noteType !== 'custom'}
               onPress={() => setNoteType('detailed')}
             >
               {noteType === 'detailed' ? (
@@ -402,6 +470,7 @@ const TranscriptionComplete = () => {
                   end={{ x: 1, y: 0 }}
                   style={styles.selectedNoteTypeButton}
                 >
+                  <View style={{ width: wp(5) }} />
                   <Brain size={24} color="white" />
                   <Text
                     variant="bodyMedium"
@@ -414,6 +483,7 @@ const TranscriptionComplete = () => {
                 </LinearGradient>
               ) : (
                 <>
+                  <View style={{ width: wp(5) }} />
                   <Brain size={24} color={colors.subText} />
                   <Text variant="bodyMedium" style={styles.noteTypeText}>
                     {t(
@@ -423,24 +493,84 @@ const TranscriptionComplete = () => {
                 </>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.noteTypeButton,
+                noteType === 'custom' && { borderColor: 'transparent' },
+              ]}
+              onPress={() => {
+                setNoteType('custom');
+                setShowCustomPromptModal(true);
+              }}
+            >
+              {noteType === 'custom' ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.selectedNoteTypeButton}
+                >
+                  <View style={{ width: wp(5) }} />
+                  <Plus size={24} color="white" />
+                  <Text
+                    variant="bodyMedium"
+                    style={styles.selectedNoteTypeText}
+                  >
+                    Custom Note
+                  </Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <View style={{ width: wp(5) }} />
+                  <Plus size={24} color={colors.subText} />
+                  <Text variant="bodyMedium" style={styles.noteTypeText}>
+                    Custom Note
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
+          {isCustomLocked && (
+            <View style={styles.customNotePreview}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(1) }}>
+                <Text variant="titleMedium" style={styles.customNoteTitle}>
+                  {customPromptTitle || 'Custom Prompt'}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: wp(2) }}>
+                  <TouchableOpacity onPress={() => setShowCustomPromptModal(true)}>
+                    <Edit3 size={18} color={colors.subText} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleClearCustomPrompt}>
+                    <X size={18} color={colors.subText} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text variant="bodyMedium" style={styles.customNoteText}>
+                {customNote}
+              </Text>
+            </View>
+          )}
         </View>
       );
     } else {
       // Patient session
       return (
         <View style={styles.noteTypeContainer}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            {t('mainContent.transcriptionComplete.noteOptions.soap')}
-          </Text>
-
           <View style={styles.buttonGrid}>
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
                 noteType === 'SOAP' && { borderColor: 'transparent' },
+                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
               ]}
-              onPress={() => setNoteType('SOAP')}
+              disabled={isCustomLocked && noteType !== 'custom'}
+              onPress={() => {
+                setNoteType('SOAP');
+                setShowCustomPromptModal(false);
+                setCustomNote('');
+                setCustomPromptTitle('');
+              }}
             >
               {noteType === 'SOAP' ? (
                 <LinearGradient
@@ -449,7 +579,7 @@ const TranscriptionComplete = () => {
                   end={{ x: 1, y: 0 }}
                   style={styles.selectedNoteTypeButton}
                 >
-                  <View style={{ width: wp(3) }} />
+                  <View style={{ width: wp(5) }} />
                   <FileText size={24} color="white" />
                   <View style={{ width: wp(2) }} />
 
@@ -462,7 +592,7 @@ const TranscriptionComplete = () => {
                 </LinearGradient>
               ) : (
                 <>
-                  <View style={{ width: wp(3) }} />
+                  <View style={{ width: wp(5) }} />
                   <FileText size={24} color={colors.subText} />
                   <View style={{ width: wp(2) }} />
                   <Text variant="bodyMedium" style={styles.noteTypeText}>
@@ -472,46 +602,67 @@ const TranscriptionComplete = () => {
               )}
             </TouchableOpacity>
 
+            <View />
+
             <TouchableOpacity
               style={[
                 styles.noteTypeButton,
-                noteType === 'Clinical' && { borderColor: 'transparent' },
+                noteType === 'custom' && { borderColor: 'transparent' },
               ]}
-              onPress={() => setNoteType('Clinical')}
+              onPress={() => {
+                setNoteType('custom');
+                setShowCustomPromptModal(true);
+              }}
             >
-              {noteType === 'Clinical' ? (
+              {noteType === 'custom' ? (
                 <LinearGradient
                   colors={LinearGradientColors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.selectedNoteTypeButton}
                 >
-                  <View style={{ width: wp(3) }} />
-                  <Brain size={24} color="white" />
+                  <View style={{ width: wp(5) }} />
+                  <Plus size={24} color="white" />
                   <View style={{ width: wp(2) }} />
                   <Text
                     variant="bodyMedium"
                     style={styles.selectedNoteTypeText}
                   >
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.clinical',
-                    )}
+                    Custom Note
                   </Text>
                 </LinearGradient>
               ) : (
                 <>
-                  <View style={{ width: wp(3) }} />
-                  <Brain size={24} color={colors.subText} />
+                  <View style={{ width: wp(5) }} />
+                  <Plus size={24} color={colors.subText} />
                   <View style={{ width: wp(2) }} />
                   <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.clinical',
-                    )}
+                    Custom Note
                   </Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
+          {isCustomLocked && (
+            <View style={styles.customNotePreview}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(1) }}>
+                <Text variant="titleMedium" style={styles.customNoteTitle}>
+                  {customPromptTitle || 'Custom Prompt'}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: wp(2) }}>
+                  <TouchableOpacity onPress={() => setShowCustomPromptModal(true)}>
+                    <Edit3 size={18} color={colors.subText} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleClearCustomPrompt}>
+                    <X size={18} color={colors.subText} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text variant="bodyMedium" style={styles.customNoteText}>
+                {customNote}
+              </Text>
+            </View>
+          )}
         </View>
       );
     }
@@ -544,19 +695,54 @@ const TranscriptionComplete = () => {
     ];
 
     return (
-      <View style={styles.selectionSection}>
-        <TouchableOpacity
-          style={styles.selectionButton}
-          onPress={() => setShowSpecializationModal(true)}
-        >
-          <Text variant="titleMedium" style={styles.selectionButtonText}>
-            {selectedSpecialization
-              ? specializations.find(s => s.key === selectedSpecialization)
-                  ?.label || selectedSpecialization
-              : t('mainContent.transcriptionComplete.specialization.select')}
+      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
+        <View style={styles.selectionHeader}>
+          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
+            {t('mainContent.transcriptionComplete.specialization.select')}
           </Text>
-          <Plus size={20} color={colors.lightGreen} />
-        </TouchableOpacity>
+          <Plus size={18} color={colors.lightGreen} />
+        </View>
+        <View style={styles.pillRow}>
+          {specializations.map(s => {
+            const selected = selectedSpecialization === s.key;
+            if (selected) {
+              return (
+                <TouchableOpacity
+                  key={s.key}
+                  style={[styles.pill, styles.pillSelected]}
+                  disabled={isCustomLocked}
+                  onPress={() =>
+                    isCustomLocked ? undefined : setSelectedSpecialization(s.key)
+                  }
+                >
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.pillOverlayGradient}
+                  />
+                  <Text variant="labelMedium" style={styles.pillSelectedText}>
+                    {s.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }
+            return (
+              <TouchableOpacity
+                key={s.key}
+                style={styles.pill}
+                disabled={isCustomLocked}
+                onPress={() =>
+                  isCustomLocked ? undefined : setSelectedSpecialization(s.key)
+                }
+              >
+                <Text variant="labelMedium" style={styles.pillText}>
+                  {s.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     );
   };
@@ -576,18 +762,116 @@ const TranscriptionComplete = () => {
     ];
 
     return (
-      <View style={styles.selectionSection}>
-        <TouchableOpacity
-          style={styles.selectionButton}
-          onPress={() => setShowVisitTypeModal(true)}
-        >
-          <Text variant="titleMedium" style={styles.selectionButtonText}>
-            {visitType
-              ? visitTypes.find(v => v.key === visitType)?.label || visitType
-              : t('mainContent.transcriptionComplete.visitType.select')}
+      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
+        <View style={styles.selectionHeader}>
+          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
+            {t('mainContent.transcriptionComplete.visitType.select')}
           </Text>
-          <Plus size={20} color={colors.lightGreen} />
-        </TouchableOpacity>
+          <Plus size={18} color={colors.lightGreen} />
+        </View>
+        <View style={styles.pillRow}>
+          {visitTypes.map(v => {
+            const selected = visitType === v.key;
+            if (selected) {
+              return (
+                <TouchableOpacity
+                  key={v.key}
+                  style={[styles.pill, styles.pillSelected]}
+                  disabled={isCustomLocked}
+                  onPress={() =>
+                    isCustomLocked ? undefined : setVisitType(v.key)
+                  }
+                >
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.pillOverlayGradient}
+                  />
+                  <Text variant="labelMedium" style={styles.pillSelectedText}>
+                    {v.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }
+            return (
+              <TouchableOpacity
+                key={v.key}
+                style={styles.pill}
+                disabled={isCustomLocked}
+                onPress={() =>
+                  isCustomLocked ? undefined : setVisitType(v.key)
+                }
+              >
+                <Text variant="labelMedium" style={styles.pillText}>
+                  {v.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  const renderNoteLengthSection = () => {
+    if (session.type !== 'patient') return null;
+
+    const noteLengthLabels = {
+      Small: t('mainContent.transcriptionComplete.noteLength.small'),
+      Medium: t('mainContent.transcriptionComplete.noteLength.medium'),
+      Large: t('mainContent.transcriptionComplete.noteLength.large'),
+    };
+
+    return (
+      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
+        <View style={styles.selectionHeader}>
+          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
+            {t('mainContent.transcriptionComplete.noteLength.select')}
+          </Text>
+          <Plus size={18} color={colors.lightGreen} />
+        </View>
+        <View style={styles.pillRow}>
+          {noteLengthOptions.map(length => {
+            const selected = noteLength === length;
+            if (selected) {
+              return (
+                <TouchableOpacity
+                  key={length}
+                  style={[styles.pill, styles.pillSelected]}
+                  disabled={isCustomLocked}
+                  onPress={() =>
+                    isCustomLocked ? undefined : setNoteLength(length)
+                  }
+                >
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.pillOverlayGradient}
+                  />
+                  <Text variant="labelMedium" style={styles.pillSelectedText}>
+                    {noteLengthLabels[length]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }
+            return (
+              <TouchableOpacity
+                key={length}
+                style={styles.pill}
+                disabled={isCustomLocked}
+                onPress={() =>
+                  isCustomLocked ? undefined : setNoteLength(length)
+                }
+              >
+                <Text variant="labelMedium" style={styles.pillText}>
+                  {noteLengthLabels[length]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     );
   };
@@ -596,14 +880,17 @@ const TranscriptionComplete = () => {
     if (session.type !== 'patient' || visitType !== 'Follow-up') return null;
 
     return (
-      <View style={styles.selectionSection}>
+      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
         <View style={styles.followUpHeader}>
           <Text variant="titleMedium" style={styles.selectionSectionTitle}>
             {t('mainContent.transcriptionComplete.followUpVisits.select')}
           </Text>
           <TouchableOpacity
             style={styles.addVisitsButton}
-            onPress={() => setShowFollowUpModal(true)}
+            disabled={isCustomLocked}
+            onPress={() =>
+              isCustomLocked ? undefined : setShowFollowUpModal(true)
+            }
           >
             <Plus size={16} color={colors.lightGreen} />
             <Text variant="bodyMedium" style={styles.addVisitsText}>
@@ -689,8 +976,9 @@ const TranscriptionComplete = () => {
                   <Text variant="bodySmall" style={styles.timestamp}>
                     {formatTime(utterance.start)} - {formatTime(utterance.end)}
                   </Text>
-                </View>
-              </View>
+          </View>
+
+        </View>
               <Text variant="bodyMedium" style={styles.utteranceText}>
                 {utterance.text}
               </Text>
@@ -704,14 +992,17 @@ const TranscriptionComplete = () => {
   const renderGenerateButton = () => {
     const canGenerate =
       noteType &&
-      (session.type !== 'patient' || (selectedSpecialization && visitType));
+      (noteType === 'custom' ||
+        session.type !== 'patient' ||
+        (selectedSpecialization && visitType));
 
     return (
       <View style={styles.generateButtonContainer}>
         <PrimaryButton
           text={t('noteGenerator.generate')}
-          onPress={() => {
+          onPress={async () => {
             if (canGenerate) {
+              await sessionStorage.updateSessionStatus(session.id, 'completed');
               customToast(
                 'success',
                 t('common.success'),
@@ -748,6 +1039,14 @@ const TranscriptionComplete = () => {
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
+        {session.type === 'patient' && (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => (navigation as any).navigate('consult')}
+          >
+            <MessageSquare size={20} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() => setShowRenameModal(true)}
@@ -772,9 +1071,13 @@ const TranscriptionComplete = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderNoteTypeButtons()}
         <View style={{ height: hp(1) }} />
+        <View style={{ height: hp(1) }} />
         {renderSpecializationSection()}
         <View style={{ height: hp(1) }} />
         {renderVisitTypeSection()}
+        <View style={{ height: hp(1) }} />
+        {renderNoteLengthSection()}
+        <View style={{ height: hp(1) }} />
         {renderFollowUpSection()}
         {renderTranscriptionSection()}
         {renderGenerateButton()}
@@ -1138,6 +1441,67 @@ const TranscriptionComplete = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Prompt Modal */}
+      <Modal
+        visible={showCustomPromptModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCustomPromptModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              onPress={() => setShowCustomPromptModal(false)}
+              style={{
+                position: 'absolute',
+                top: hp(2),
+                right: wp(4),
+                zIndex: 2,
+              }}
+            >
+              <X size={20} color={colors.subText} />
+            </TouchableOpacity>
+            <Text variant="titleLarge" style={styles.modalTitle}>
+              Create Custom Prompt
+            </Text>
+            <Input
+              placeholder="Prompt Title"
+              value={customPromptTitle}
+              setValue={setCustomPromptTitle}
+              width={wp(80)}
+              leftIcon={<FileText size={16} color={colors.subText} />}
+            />
+            <View style={{ height: hp(1.5) }} />
+            <Input
+              placeholder="Enter your custom prompt..."
+              value={customNote}
+              setValue={setCustomNote}
+              width={wp(80)}
+              // leftIcon={<Edit3 size={16} color={colors.subText} />}
+              multiline={true}
+              height={hp(20)}
+              numberOfLines={8}
+            />
+            <View style={{ alignSelf: 'center', marginTop: hp(2) }}>
+              <PrimaryButton
+                text="Save Custom Prompt"
+                onPress={() => {
+                  if (!customPromptTitle.trim() || !customNote.trim()) {
+                    customToast('error', 'Error', 'Please add title and prompt');
+                    return;
+                  }
+                  setShowCustomPromptModal(false);
+                  customToast('success', 'Success', 'Custom prompt saved');
+                }}
+                width={wp(77)}
+                iconComponent={Lock}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 };
@@ -1176,7 +1540,27 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   buttonGrid: {
-    gap: hp(1.5),
+    gap: hp(0.5),
+  },
+  disabledNoteTypeButton: {
+    opacity: 0.35,
+    backgroundColor: colors.surfaceDisabled,
+  },
+  customNotePreview: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    padding: wp(4),
+    marginTop: hp(0.7),
+  },
+  customNoteTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    marginBottom: hp(1),
+  },
+  customNoteText: {
+    color: colors.onSurface,
   },
   noteTypeButton: {
     flexDirection: 'row',
@@ -1185,6 +1569,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f2f2f2',
     minHeight: hp(8),
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.outline,
   },
   selectedNoteTypeButton: {
     flexDirection: 'row',
@@ -1193,17 +1579,33 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: hp(8),
   },
+  noteTypeOverlayGradient: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 12,
+  },
   noteTypeText: {
     color: colors.onSurface,
     flex: 1,
+    marginLeft: wp(3),
   },
   selectedNoteTypeText: {
     color: 'white',
+    marginLeft: wp(3),
   },
   selectionSection: {
     backgroundColor: colors.background,
     borderRadius: 12,
     padding: wp(4),
+  },
+  selectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(1),
   },
   selectionSectionTitle: {
     color: colors.onSurface,
@@ -1225,7 +1627,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: hp(1),
+    marginBottom: hp(2),
+    // marginTop:hp(2)
   },
   addVisitsButton: {
     flexDirection: 'row',
@@ -1412,6 +1815,52 @@ const styles = StyleSheet.create({
   },
   selectedOptionText: {
     color: 'white',
+  },
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 0,
+  },
+  pill: {
+    backgroundColor: 'white',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    marginRight: wp(2),
+    marginBottom: hp(1),
+    overflow: 'hidden',
+  },
+  pillText: {
+    color: colors.onSurface,
+  },
+  pillSelected: {
+    borderColor: 'transparent',
+  },
+  pillOverlayGradient: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 16,
+  },
+  pillGradient: {
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: wp(2),
+    marginBottom: hp(1),
+    minHeight: 32,
+  },
+  pillSelectedText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  disabledContainer: {
+    opacity: 0.35,
   },
   visitsList: {
     marginVertical: hp(1),

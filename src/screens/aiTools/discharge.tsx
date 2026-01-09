@@ -28,6 +28,7 @@ import {
   Filter,
   History,
   Upload,
+  BookOpen,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
@@ -120,6 +121,14 @@ Stable condition, ready for outpatient management
   const exportSummary = () => {
     // Implementation would handle PDF export
     Alert.alert('Export', 'Summary exported successfully');
+  };
+
+  const openPrompts = () => {
+    Alert.alert('Prompts', 'Open prompts panel');
+  };
+
+  const openAiCustomize = () => {
+    Alert.alert(t('dischargeAssistant.customizeDialog.title'));
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -318,9 +327,6 @@ Stable condition, ready for outpatient management
                 {t('dischargeAssistant.summaryPanel.title')}
               </Text>
               <View style={styles.sectionActions}>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Settings size={16} color={colors.onSurfaceVariant} />
-                </TouchableOpacity>
               </View>
             </View>
 
@@ -328,23 +334,37 @@ Stable condition, ready for outpatient management
               <View style={styles.summaryContainer}>
                 <View style={styles.summaryActions}>
                   <TouchableOpacity
-                    style={styles.summaryActionButton}
+                    style={[styles.summaryActionButton, styles.summaryActionButtonWhite]}
+                    onPress={openPrompts}
+                  >
+                    <View style={styles.summaryActionButtonContent}>
+                      <BookOpen size={16} color={colors.lightGreen} />
+                      <Text variant="labelMedium" style={styles.summaryActionText}>
+                        Prompts
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.summaryActionButton, styles.summaryActionButtonWhite]}
+                    onPress={openAiCustomize}
+                  >
+                    <View style={styles.summaryActionButtonContent}>
+                      <Settings size={16} color={colors.lightGreen} />
+                      <Text variant="labelMedium" style={styles.summaryActionText}>
+                        {t('dischargeAssistant.summaryPanel.customizeButtonText')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.summaryActionButton, styles.summaryActionButtonWhite]}
                     onPress={copyToClipboard}
                   >
-                    <LinearGradient
-                      colors={LinearGradientColors}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.summaryActionButtonGradient}
-                    >
-                      <Copy size={16} color="white" />
-                      <Text
-                        variant="labelMedium"
-                        style={styles.summaryActionTextWhite}
-                      >
+                    <View style={styles.summaryActionButtonContent}>
+                      <Copy size={16} color={colors.lightGreen} />
+                      <Text variant="labelMedium" style={styles.summaryActionText}>
                         {t('dischargeAssistant.summaryPanel.copyButtonText')}
                       </Text>
-                    </LinearGradient>
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.summaryActionButton}
@@ -500,7 +520,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: hp(2),
+    // marginBottom: hp(0.5),
   },
   sectionTitle: {
     color: colors.onSurface,
@@ -630,21 +650,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   summaryContainer: {
-    gap: hp(2),
+    gap: hp(1.5),
   },
   summaryActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: wp(3),
   },
   summaryActionButton: {
     borderRadius: 6,
     overflow: 'hidden',
   },
+  summaryActionButtonWhite: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+  },
   summaryActionButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    justifyContent: 'center',
+    height: hp(3.5),
+    width: wp(32),
+    gap: 6,
+  },
+  summaryActionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: hp(3.5),
+    width: wp(32),
     gap: 6,
   },
   summaryActionText: {
@@ -678,8 +713,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   generateButtonContainer: {
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
+    paddingHorizontal: wp(6),
+    paddingVertical: hp(1.5),
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: colors.outlineVariant,
@@ -692,12 +727,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: hp(2),
+    height: hp(5),  
+    // paddingVertical: hp(2),
+    // paddingHorizontal: wp(5),
     gap: 8,
   },
   generateButtonText: {
     color: 'white',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   loadingSpinner: {
     width: 16,

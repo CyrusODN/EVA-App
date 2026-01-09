@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -21,6 +21,8 @@ import {
   Search,
   Filter,
   ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
   Check,
   Import,
   Clock,
@@ -43,6 +45,7 @@ import {
   ChevronRight,
   Pill,
   FlaskConical,
+  Stethoscope,
 } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -51,11 +54,72 @@ import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { textStyles } from '../../constants/textStyles';
 import Header from '../../components/header';
 import EmptyState from '../../components/emptyState';
+import PrimaryButton from '../../components/primaryButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getChatbotServiceToken } from '../../services/authService';
+
+type SourceType = 'graph' | 'literature' | 'guideline';
+
+type Visit = {
+  id: string;
+  name: string;
+  date: Date;
+  type: string;
+  specialization: string;
+  transcription: string;
+  duration: string;
+  note: {
+    type: string;
+    content: string;
+  };
+};
+
+type Source = {
+  type: SourceType;
+  title: string;
+  confidence: number;
+  details?: string;
+};
+
+type Message = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  sources?: Source[];
+};
+
+type Interaction = {
+  id: string;
+  severity: 'high' | 'moderate' | 'low';
+  description: string;
+  mechanism: string;
+  recommendation: string;
+  drugs: string[];
+};
+
+type DrugQuery = {
+  id: string;
+  title: string;
+  createdAt: Date;
+  drugs: string[];
+  interactions: Interaction[];
+  messages?: Message[];
+};
+
+type Filters = {
+  type: Set<string>;
+  specialization: Set<string>;
+  imported: boolean;
+};
+
+type SortBy = 'date' | 'name' | 'type' | 'specialization';
+type SortOrder = 'asc' | 'desc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Mock data for visits
-const MOCK_VISITS = [
+const MOCK_VISITS: Visit[] = [
   {
     id: '1',
     name: 'JS45',
@@ -86,46 +150,75 @@ const MOCK_VISITS = [
 
 const Consult = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   // State management
-  const [activeTab, setActiveTab] = useState('visits');
-  const [selectedVisits, setSelectedVisits] = useState(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    type: new Set(),
-    specialization: new Set(),
+  const [activeTab, setActiveTab] = useState<'visits' | 'chat' | 'pharmacopedia'>('visits');
+  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [filters, setFilters] = useState<Filters>({
+    type: new Set<string>(),
+    specialization: new Set<string>(),
     imported: false,
   });
-  const [sortBy, setSortBy] = useState('date');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [importedVisits, setImportedVisits] = useState(new Set());
-  const [messages, setMessages] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await getChatbotServiceToken();
+        const raw = resp?.data;
+        const payload = raw?.data || raw;
+        const svcToken =
+          payload?.token ||
+          payload?.chatbotToken ||
+          payload?.serviceToken;
+        if (svcToken) {
+          try {
+            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
+          } catch (_) {}
+        }
+      } catch (_) {}
+    })();
+  }, []);
+  const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [importedVisits, setImportedVisits] = useState<Set<string>>(new Set());
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentMessage, setCurrentMessage] = useState<string>('');
+  const [selectedSpeciality, setSelectedSpeciality] = useState<string | null>(
+    'Child Psychiatry',
+  );
+  const [showSpecialityDropdown, setShowSpecialityDropdown] =
+    useState<boolean>(false);
+  const [hasStartedConsultation, setHasStartedConsultation] =
+    useState<boolean>(false);
 
   // Pharmacopedia state
-  const [selectedDrugs, setSelectedDrugs] = useState([]);
-  const [drugInput, setDrugInput] = useState('');
-  const [drugInteractions, setDrugInteractions] = useState([]);
-  const [drugQueries, setDrugQueries] = useState([]);
-  const [selectedQuery, setSelectedQuery] = useState(null);
-  const [showQueriesModal, setShowQueriesModal] = useState(false);
-  const [pharmacopediaMessage, setPharmacopediaMessage] = useState('');
+  const [selectedDrugs, setSelectedDrugs] = useState<string[]>([]);
+  const [drugInput, setDrugInput] = useState<string>('');
+  const [drugInteractions, setDrugInteractions] = useState<Interaction[]>([]);
+  const [drugQueries, setDrugQueries] = useState<DrugQuery[]>([]);
+  const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
+  const [showQueriesModal, setShowQueriesModal] = useState<boolean>(false);
+  const [pharmacopediaMessage, setPharmacopediaMessage] = useState<string>('');
 
   // Get unique values for filters
-  const uniqueTypes = useMemo(
-    () => Array.from(new Set(MOCK_VISITS.map(visit => visit.type))),
+  const uniqueTypes = useMemo<string[]>(
+    () => Array.from(new Set(MOCK_VISITS.map((visit: Visit) => visit.type))),
     [],
   );
-  const uniqueSpecializations = useMemo(
-    () => Array.from(new Set(MOCK_VISITS.map(visit => visit.specialization))),
+  const uniqueSpecializations = useMemo<string[]>(
+    () =>
+      Array.from(
+        new Set(MOCK_VISITS.map((visit: Visit) => visit.specialization)),
+      ),
     [],
   );
 
   // Filter and sort visits
-  const filteredAndSortedVisits = useMemo(() => {
-    return MOCK_VISITS.filter(visit => {
+  const filteredAndSortedVisits = useMemo<Visit[]>(() => {
+    return MOCK_VISITS.filter((visit: Visit) => {
       const matchesSearch =
         visit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         visit.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -160,11 +253,11 @@ const Consult = () => {
     navigation.goBack();
   };
 
-  const handleImport = visit => {
+  const handleImport = (visit: Visit) => {
     setImportedVisits(prev => new Set([...prev, visit.id]));
   };
 
-  const toggleFilter = (type, value) => {
+  const toggleFilter = (type: 'type' | 'specialization', value: string) => {
     setFilters(prev => {
       const newFilters = { ...prev };
       const set = new Set(prev[type]);
@@ -174,7 +267,7 @@ const Consult = () => {
     });
   };
 
-  const handleSort = field => {
+  const handleSort = (field: SortBy) => {
     if (sortBy === field) {
       setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -186,7 +279,7 @@ const Consult = () => {
   const handleSendMessage = () => {
     if (!currentMessage.trim()) return;
 
-    const newMessage = {
+    const newMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: currentMessage,
@@ -198,7 +291,7 @@ const Consult = () => {
 
     // Simulate AI response
     setTimeout(() => {
-      const aiResponse = {
+      const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: t('remediusConsult.chat.aiDefaultResponse'),
@@ -234,8 +327,8 @@ const Consult = () => {
 
       // Mock interaction generation
       if (selectedDrugs.length >= 1) {
-        const severities = ['high', 'moderate', 'low'];
-        const newInteraction = {
+        const severities: Interaction['severity'][] = ['high', 'moderate', 'low'];
+        const newInteraction: Interaction = {
           id: Date.now().toString(),
           severity: severities[Math.floor(Math.random() * severities.length)],
           description: `Potential interaction between ${
@@ -251,7 +344,7 @@ const Consult = () => {
     }
   };
 
-  const renderVisitItem = ({ item }) => (
+  const renderVisitItem = ({ item }: { item: Visit }) => (
     <TouchableOpacity style={styles.visitCard}>
       <View style={styles.visitCardHeader}>
         <View style={styles.visitInfo}>
@@ -328,7 +421,7 @@ const Consult = () => {
     </TouchableOpacity>
   );
 
-  const renderMessage = ({ item }) => (
+  const renderMessage = ({ item }: { item: Message }) => (
     <View
       style={[
         styles.messageContainer,
@@ -446,7 +539,7 @@ const Consult = () => {
     </View>
   );
 
-  const renderDrug = ({ item }) => (
+  const renderDrug = ({ item }: { item: string }) => (
     <View style={styles.drugCard}>
       <View style={styles.drugHeader}>
         <Pill size={18} color={colors.primary} />
@@ -463,8 +556,8 @@ const Consult = () => {
     </View>
   );
 
-  const renderInteraction = ({ item }) => {
-    const getSeverityColor = severity => {
+  const renderInteraction = ({ item }: { item: Interaction }) => {
+    const getSeverityColor = (severity: Interaction['severity']) => {
       switch (severity) {
         case 'high':
           return '#EF4444';
@@ -477,7 +570,7 @@ const Consult = () => {
       }
     };
 
-    const getSeverityIcon = severity => {
+    const getSeverityIcon = (severity: Interaction['severity']) => {
       switch (severity) {
         case 'high':
           return <AlertTriangle size={16} color="white" />;
@@ -540,78 +633,201 @@ const Consult = () => {
 
   const renderChatTab = () => (
     <View style={styles.tabContent}>
-      <View style={styles.chatHeader}>
-        <Text variant="titleMedium" style={styles.chatTitle}>
-          AI Medical Consultation
-        </Text>
-        <Text variant="bodySmall" style={styles.chatSubtitle}>
-          Ask questions about patient cases and get AI-powered insights
-        </Text>
-      </View>
-
-      <FlatList
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={item => item.id}
-        style={styles.chatMessages}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.chatMessagesContent}
-      />
-
-      <View style={styles.chatInputContainer}>
-        <View style={styles.chatInput}>
-          <TextInput
-            style={styles.messageInput}
-            placeholder="Ask about a patient case..."
-            value={currentMessage}
-            onChangeText={setCurrentMessage}
-            multiline
-            placeholderTextColor="rgba(74, 69, 78, 0.5)"
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !currentMessage.trim() && styles.sendButtonDisabled,
-            ]}
-            onPress={handleSendMessage}
-            disabled={!currentMessage.trim()}
-          >
-            {currentMessage.trim() ? (
-              <LinearGradient
-                colors={LinearGradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.sendButtonGradient}
-              >
-                <Send size={18} color="white" />
-              </LinearGradient>
-            ) : (
-              <LinearGradient
-                colors={['#94A3B8', '#94A3B8']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.sendButtonGradient}
-              >
-                <Send size={18} color="white" />
-              </LinearGradient>
+      {!hasStartedConsultation ? (
+        <View style={styles.specialitySection}>
+          <View style={styles.startConsultationIntro}>
+            <MessageSquare size={22} color={colors.lightGreen} />
+            <Text variant="bodyMedium" style={styles.startConsultationIntroText}>
+              Start a new consultation session to get AI-powered medical guidance and support
+            </Text>
+          </View>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Select Speciality
+          </Text>
+          <View style={styles.dropdownContainer}>
+            <TouchableOpacity
+              style={styles.dropdownSelected}
+              onPress={() =>
+                setShowSpecialityDropdown(!showSpecialityDropdown)
+              }
+            >
+              <Text variant="bodyMedium" style={styles.dropdownSelectedText}>
+                {selectedSpeciality || 'Select Speciality'}
+              </Text>
+              {showSpecialityDropdown ? (
+                <ChevronUp size={18} color={colors.onSurfaceVariant} />
+              ) : (
+                <ChevronDown size={18} color={colors.onSurfaceVariant} />
+              )}
+            </TouchableOpacity>
+            {showSpecialityDropdown && (
+              <View style={[styles.dropdownMenu, styles.dropdownMenuShadow]}>
+                {['Child Psychiatry', 'Adult Psychiatry', 'Internal Medicine'].map(
+                  spec => (
+                    <TouchableOpacity
+                      key={spec}
+                      style={[
+                        styles.dropdownOption,
+                        selectedSpeciality === spec && styles.activeDropdownOption,
+                      ]}
+                      onPress={() => {
+                        setSelectedSpeciality(spec);
+                        setShowSpecialityDropdown(false);
+                      }}
+                    >
+                      <View style={styles.dropdownOptionContent}>
+                        {spec === 'Internal Medicine' ? (
+                          <Stethoscope size={16} color={colors.onSurfaceVariant} />
+                        ) : (
+                          <User size={16} color={colors.onSurfaceVariant} />
+                        )}
+                        <Text
+                          variant="bodyMedium"
+                          style={styles.dropdownOptionText}
+                        >
+                          {spec}
+                        </Text>
+                      </View>
+                      {selectedSpeciality === spec && (
+                        <Check size={16} color={colors.lightGreen} />
+                      )}
+                    </TouchableOpacity>
+                  ),
+                )}
+              </View>
             )}
-          </TouchableOpacity>
+          </View>
+          <Text variant="bodySmall" style={styles.dropdownHelpText}>
+            Choose a speciality to tailor guidance for your case
+          </Text>
+          <View style={styles.startConsultationButton}>
+            <PrimaryButton
+              iconComponent={Plus}
+              text="Start New Consultation"
+              onPress={() => selectedSpeciality && setHasStartedConsultation(true)}
+              disabled={!selectedSpeciality}
+              width={wp(85)}
+            />
+          </View>
         </View>
-      </View>
+      ) : (
+        <>
+          <View style={styles.chatHeader}>
+            <Text variant="titleMedium" style={styles.chatTitle}>
+              AI Medical Consultation
+            </Text>
+            <Text variant="bodySmall" style={styles.chatSubtitle}>
+              Ask questions about patient cases and get AI-powered insights
+            </Text>
+            <View style={styles.selectedSpecialityRow}>
+              <Stethoscope size={16} color={colors.lightGreen} />
+              <Text variant="labelSmall" style={styles.selectedSpecialityBadge}>
+                {selectedSpeciality}
+              </Text>
+            </View>
+          </View>
+
+          <FlatList
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={item => item.id}
+            style={styles.chatMessages}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.chatMessagesContent}
+          />
+
+          <View style={styles.chatInputContainer}>
+            <View style={styles.chatInput}>
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Ask about a patient case..."
+                value={currentMessage}
+                onChangeText={setCurrentMessage}
+                multiline
+                placeholderTextColor="rgba(74, 69, 78, 0.5)"
+              />
+              <TouchableOpacity
+                style={[
+                  styles.sendButton,
+                  !currentMessage.trim() && styles.sendButtonDisabled,
+                ]}
+                onPress={handleSendMessage}
+                disabled={!currentMessage.trim()}
+              >
+                {currentMessage.trim() ? (
+                  <LinearGradient
+                    colors={LinearGradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.sendButtonGradient}
+                  >
+                    <Send size={18} color="white" />
+                  </LinearGradient>
+                ) : (
+                  <LinearGradient
+                    colors={['#94A3B8', '#94A3B8']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.sendButtonGradient}
+                  >
+                    <Send size={18} color="white" />
+                  </LinearGradient>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </>
+      )}
     </View>
   );
 
   const handleStartNewQuery = () => {
-    const newQuery = {
+    const newQuery: DrugQuery = {
       id: Date.now().toString(),
       title: `Query ${drugQueries.length + 1}`,
       createdAt: new Date(),
       drugs: [],
       interactions: [],
+      messages: [],
     };
     setDrugQueries(prev => [...prev, newQuery]);
     setSelectedQuery(newQuery.id);
     setShowQueriesModal(false);
+  };
+
+  const handleSendPharmacopediaMessage = () => {
+    if (!pharmacopediaMessage.trim() || !selectedQuery) return;
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: pharmacopediaMessage,
+      timestamp: new Date(),
+    };
+    setDrugQueries(prev =>
+      prev.map(q =>
+        q.id === selectedQuery
+          ? { ...q, messages: [...(q.messages || []), newMessage] }
+          : q,
+      ),
+    );
+    setPharmacopediaMessage('');
+
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content:
+          'Analyzing your query in Pharmacopedia and compiling evidence-based information...',
+        timestamp: new Date(),
+      };
+      setDrugQueries(prev =>
+        prev.map(q =>
+          q.id === selectedQuery
+            ? { ...q, messages: [...(q.messages || []), aiResponse] }
+            : q,
+        ),
+      );
+    }, 800);
   };
 
   const renderPharmacopediaTab = () => (
@@ -654,66 +870,115 @@ const Consult = () => {
       >
         {selectedQuery ? (
           <View style={styles.queryContent}>
-            {/* Query details will go here */}
-            <Text variant="bodyMedium">Query content</Text>
+            {drugQueries.find(q => q.id === selectedQuery)?.messages &&
+            (drugQueries.find(q => q.id === selectedQuery)?.messages as Message[]).length >
+              0 ? (
+              <View style={styles.chatMessagesContent}>
+                {(drugQueries.find(q => q.id === selectedQuery)?.messages as Message[]).map(
+                  m => renderMessage({ item: m }),
+                )}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text variant="bodyMedium" style={styles.emptyStateText}>
+                  No messages yet
+                </Text>
+                <Text variant="bodySmall" style={styles.emptyStateSubtext}>
+                  Type a question below to start your Pharmacopedia conversation
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.pharmacopediaEmptyState}>
-            <Pill size={hp(12)} color={colors.onSurfaceVariant} />
-            <Text variant="bodyLarge" style={styles.pharmacopediaEmptyText}>
-              Get evidence-based drug information from Stahl's Essential
-              Psychopharmacology Prescriber's Guide with AI-powered search.
-            </Text>
+            <View style={styles.pharmacopediaEmptyCard}>
+              <View style={styles.pharmacopediaEmptyIconRow}>
+                <Pill size={hp(12)} color={colors.lightGreen} />
+              </View>
+              <Text variant="titleMedium" style={styles.pharmacopediaEmptyTitle}>
+                AI Pharmacopedia
+              </Text>
+              <Text variant="bodyMedium" style={styles.pharmacopediaEmptyText}>
+                Get evidence-based drug information from trusted references with AI-powered search.
+              </Text>
+              <View style={styles.pharmacopediaFeatureRow}>
+                <View style={styles.pharmacopediaFeatureChip}>
+                  <Pill size={16} color={colors.lightGreen} />
+                  <Text variant="labelSmall" style={styles.pharmacopediaFeatureText}>
+                    Drug Info
+                  </Text>
+                </View>
+                <View style={styles.pharmacopediaFeatureChip}>
+                  <AlertTriangle size={16} color={colors.lightGreen} />
+                  <Text variant="labelSmall" style={styles.pharmacopediaFeatureText}>
+                    Interactions
+                  </Text>
+                </View>
+                <View style={styles.pharmacopediaFeatureChip}>
+                  <BookOpen size={16} color={colors.lightGreen} />
+                  <Text variant="labelSmall" style={styles.pharmacopediaFeatureText}>
+                    Guidelines
+                  </Text>
+                </View>
+              </View>
+              <Text variant="bodySmall" style={styles.pharmacopediaEmptySubtext}>
+                Start a new query to begin chatting with the AI Pharmacopedia
+              </Text>
+              <View style={styles.startNewQueryButton}>
+                <PrimaryButton
+                  iconComponent={Plus}
+                  text="Start New Query"
+                  onPress={handleStartNewQuery}
+                  width={wp(80)}
+                />
+              </View>
+            </View>
           </View>
         )}
       </ScrollView>
 
-      {/* Input Section */}
-      <View style={styles.chatInputContainer}>
-        <View style={styles.chatInput}>
-          <TextInput
-            style={styles.messageInput}
-            placeholder="Ask about drug info.."
-            value={pharmacopediaMessage}
-            onChangeText={setPharmacopediaMessage}
-            multiline
-            placeholderTextColor="rgba(74, 69, 78, 0.5)"
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !pharmacopediaMessage.trim() && styles.sendButtonDisabled,
-            ]}
-            onPress={() => {
-              if (pharmacopediaMessage.trim()) {
-                handleStartNewQuery();
-                setPharmacopediaMessage('');
-              }
-            }}
-            disabled={!pharmacopediaMessage.trim()}
-          >
-            {pharmacopediaMessage.trim() ? (
-              <LinearGradient
-                colors={LinearGradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.sendButtonGradient}
-              >
-                <Send size={18} color="white" />
-              </LinearGradient>
-            ) : (
-              <LinearGradient
-                colors={['#94A3B8', '#94A3B8']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.sendButtonGradient}
-              >
-                <Send size={18} color="white" />
-              </LinearGradient>
-            )}
-          </TouchableOpacity>
+      {selectedQuery && (
+        <View style={styles.chatInputContainer}>
+          <View style={styles.chatInput}>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Ask about drug info.."
+              value={pharmacopediaMessage}
+              onChangeText={setPharmacopediaMessage}
+              multiline
+              placeholderTextColor="rgba(74, 69, 78, 0.5)"
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                !pharmacopediaMessage.trim() && styles.sendButtonDisabled,
+              ]}
+              onPress={handleSendPharmacopediaMessage}
+              disabled={!pharmacopediaMessage.trim()}
+            >
+              {pharmacopediaMessage.trim() ? (
+                <LinearGradient
+                  colors={LinearGradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.sendButtonGradient}
+                >
+                  <Send size={18} color="white" />
+                </LinearGradient>
+              ) : (
+                <LinearGradient
+                  colors={['#94A3B8', '#94A3B8']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.sendButtonGradient}
+                >
+                  <Send size={18} color="white" />
+                </LinearGradient>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Queries Modal */}
       <Modal
@@ -1054,6 +1319,102 @@ const styles = StyleSheet.create({
   },
 
   // Visits Tab Styles
+  specialitySection: {
+    padding: wp(4),
+    backgroundColor: 'white',
+    gap: 12,
+    marginHorizontal: wp(4),
+    marginTop: hp(7),
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  dropdownContainer: {
+    gap: 8,
+  },
+  dropdownSelected: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+  },
+  dropdownSelectedText: {
+    color: colors.onSurface,
+    fontSize: 16,
+  },
+  dropdownMenu: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    backgroundColor: 'white',
+    overflow: 'hidden',
+  },
+  dropdownMenuShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dropdownOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  activeDropdownOption: {
+    backgroundColor: '#F8FAFC',
+  },
+  dropdownOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dropdownOptionText: {
+    color: colors.onSurface,
+    fontSize: 16,
+  },
+  dropdownHelpText: {
+    color: colors.onSurfaceVariant,
+    marginTop: 6,
+  },
+  startConsultationButton: {
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  startConsultationIntro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
+  },
+  startConsultationIntroText: {
+    color: colors.onSurfaceVariant,
+    flex: 1,
+  },
+  selectedSpecialityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  selectedSpecialityBadge: {
+    color: colors.onSurface,
+    fontWeight: '600',
+  },
   searchAndFilters: {
     padding: wp(4),
     backgroundColor: 'white',
@@ -1699,19 +2060,71 @@ const styles = StyleSheet.create({
     paddingVertical: hp(8),
     minHeight: hp(60),
   },
+  pharmacopediaEmptyCard: {
+    width: '100%',
+    maxWidth: wp(85),
+    backgroundColor: 'white',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: wp(5),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  pharmacopediaEmptyIconRow: {
+    alignItems: 'center',
+    marginBottom: hp(2),
+  },
+  pharmacopediaEmptyTitle: {
+    color: colors.onSurface,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: hp(1),
+  },
   pharmacopediaEmptyText: {
     color: colors.onSurfaceVariant,
-    marginTop: hp(3),
+    marginTop: hp(1),
     textAlign: 'center',
     lineHeight: hp(2.8),
     fontSize: hp(1.9),
   },
+  pharmacopediaEmptySubtext: {
+    color: colors.onSurfaceVariant,
+    marginTop: hp(1.5),
+    textAlign: 'center',
+    fontSize: hp(1.7),
+  },
+  pharmacopediaFeatureRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: hp(2),
+  },
+  pharmacopediaFeatureChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  pharmacopediaFeatureText: {
+    color: colors.onSurface,
+    fontWeight: '500',
+  },
   startNewQueryButton: {
-    marginTop: hp(5),
+    marginTop: hp(2),
     borderRadius: 16,
     overflow: 'hidden',
     width: '100%',
-    maxWidth: wp(80),
+    alignSelf: 'center',
+    // maxWidth: wp(80),
   },
   startNewQueryButtonGradient: {
     flexDirection: 'row',
@@ -1734,6 +2147,7 @@ const styles = StyleSheet.create({
   queriesModalContainer: {
     flex: 1,
     backgroundColor: 'white',
+    marginTop: hp(2),
   },
   queriesModalHeader: {
     flexDirection: 'row',

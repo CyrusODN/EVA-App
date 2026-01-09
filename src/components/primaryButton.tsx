@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   Platform,
+  DimensionValue,
 } from 'react-native';
 import React from 'react';
 import {
@@ -30,7 +31,7 @@ interface PrimaryButtonProps {
   iconSourceRight?: any;
   iconRight?: boolean;
   iconComponent?: React.ComponentType<any>;
-  width?: number | string;
+  width?: DimensionValue;
   loaderColor?: string;
   useGradient?: boolean;
   accessibilityLabel?: string;
@@ -66,11 +67,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {(iconSource || IconComponent) && !loading && (
         <>
           {iconSource ? (
-            <Image
-              source={iconSource}
-              style={styles.leftIcon}
-              resizeMode="contain"
-            />
+            <Image source={iconSource} style={styles.leftIcon} resizeMode="contain" />
           ) : IconComponent ? (
             <IconComponent
               size={hp(2)}
@@ -82,11 +79,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       )}
 
       {loading ? (
-        <ActivityIndicator
-          color={loaderColor}
-          size="small"
-          testID="button-loading"
-        />
+        <ActivityIndicator color={loaderColor} size="small" testID="button-loading" />
       ) : (
         text && (
           <Text
@@ -102,16 +95,14 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         )
       )}
 
-      {iconRight && iconSourceRight && !loading && (
+      {iconRight && iconSourceRight && !loading ? (
         <>
           <View style={styles.iconSpacing} />
-          <Image
-            source={iconSourceRight}
-            style={styles.rightIcon}
-            resizeMode="contain"
-          />
+          <Image source={iconSourceRight} style={styles.rightIcon} resizeMode="contain" />
         </>
-      )}
+      ) : (iconSource || IconComponent) && !loading ? (
+        <View style={styles.iconPlaceholder} />
+      ) : null}
     </View>
   );
 
@@ -206,6 +197,9 @@ const styles = StyleSheet.create({
     height: hp(2.5),
   },
   iconSpacing: {
-    width: wp(3),
+    width: wp(1.5),
+  },
+  iconPlaceholder: {
+    width: hp(2.5),
   },
 });

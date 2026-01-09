@@ -25,78 +25,78 @@ import { colors } from '../constants/colors';
 import { textStyles } from '../constants/textStyles';
 
 // DNA Helix Decorative Component
-const DNAHelix = () => {
-  const dots = [];
-  const helixHeight = hp(50);
-  const helixWidth = wp(30);
-  const centerX = helixWidth / 2;
-  const amplitude = helixWidth * 0.2;
-  const frequency = 0.25;
-  const numDots = 80;
+// const DNAHelix = () => {
+//   const dots = [];
+//   const helixHeight = hp(50);
+//   const helixWidth = wp(30);
+//   const centerX = helixWidth / 2;
+//   const amplitude = helixWidth * 0.2;
+//   const frequency = 0.25;
+//   const numDots = 80;
 
-  // Create dots for DNA helix pattern
-  for (let i = 0; i < numDots; i++) {
-    const y = (i / numDots) * helixHeight;
-    const angle = i * frequency;
+//   // Create dots for DNA helix pattern
+//   for (let i = 0; i < numDots; i++) {
+//     const y = (i / numDots) * helixHeight;
+//     const angle = i * frequency;
 
-    // Left strand
-    const leftX = centerX - amplitude * Math.sin(angle);
-    const leftOpacity = 0.3 + (Math.sin(angle) + 1) * 0.25;
-    dots.push(
-      <View
-        key={`left-${i}`}
-        style={[
-          styles.dnaDot,
-          {
-            left: leftX,
-            top: y,
-            opacity: leftOpacity,
-          },
-        ]}
-      />,
-    );
+//     // Left strand
+//     const leftX = centerX - amplitude * Math.sin(angle);
+//     const leftOpacity = 0.3 + (Math.sin(angle) + 1) * 0.25;
+//     dots.push(
+//       <View
+//         key={`left-${i}`}
+//         style={[
+//           styles.dnaDot,
+//           {
+//             left: leftX,
+//             top: y,
+//             opacity: leftOpacity,
+//           },
+//         ]}
+//       />,
+//     );
 
-    // Right strand
-    const rightX = centerX + amplitude * Math.sin(angle);
-    const rightOpacity = 0.9 + (Math.sin(angle + Math.PI) + 1) * 0.15;
-    dots.push(
-      <View
-        key={`right-${i}`}
-        style={[
-          styles.dnaDot,
-          {
-            left: rightX,
-            top: y,
-            opacity: rightOpacity,
-          },
-        ]}
-      />,
-    );
+//     // Right strand
+//     const rightX = centerX + amplitude * Math.sin(angle);
+//     const rightOpacity = 0.9 + (Math.sin(angle + Math.PI) + 1) * 0.15;
+//     dots.push(
+//       <View
+//         key={`right-${i}`}
+//         style={[
+//           styles.dnaDot,
+//           {
+//             left: rightX,
+//             top: y,
+//             opacity: rightOpacity,
+//           },
+//         ]}
+//       />,
+//     );
 
-    // Connection lines/rungs (every few dots) - DNA steps connecting corresponding dots
-    if (i % 4 === 0) {
-      const lineWidth = Math.abs(rightX - leftX);
-      const lineStartX = Math.min(leftX, rightX);
+//     // Connection lines/rungs (every few dots) - DNA steps connecting corresponding dots
+//     if (i % 4 === 0) {
+//       const lineWidth = Math.abs(rightX - leftX);
+//       const lineStartX = Math.min(leftX, rightX);
 
-      dots.push(
-        <View
-          key={`line-${i}`}
-          style={[
-            styles.dnaLine,
-            {
-              left: lineStartX,
-              top: y - 1,
-              width: lineWidth,
-              height: 2,
-            },
-          ]}
-        />,
-      );
-    }
-  }
+//       dots.push(
+//         <View
+//           key={`line-${i}`}
+//           style={[
+//             styles.dnaLine,
+//             {
+//               left: lineStartX,
+//               top: y - 1,
+//               width: lineWidth,
+//               height: 2,
+//             },
+//           ]}
+//         />,
+//       );
+//     }
+//   }
 
-  return <View style={styles.dnaHelixContainer}>{dots}</View>;
-};
+//   return <View style={styles.dnaHelixContainer}>{dots}</View>;
+// };
 
 const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
   const { t } = useTranslation();
@@ -224,7 +224,7 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
                 <View style={styles.modalContent}>
                   {/* DNA Helix Background */}
                   <View style={styles.dnaHelixBackground}>
-                    <DNAHelix />
+                    {/* <DNAHelix /> */}
                   </View>
 
                   {/* Header */}

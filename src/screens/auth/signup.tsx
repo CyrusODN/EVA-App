@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { Text, Checkbox } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   widthPercentageToDP as wp,
@@ -21,22 +21,74 @@ import { Mail, Lock } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
+import { signup, ssoRequest } from '../../services/authService';
+import { customToast } from '../../utils/toastMessage';
 
 const SignUp = () => {
     const { t } = useTranslation();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
+ 
   
-    const handleSignUp = () => {
-    //   setLoading(true);
-    //   setTimeout(() => setLoading(false), 2000);
+    const handleSignUp = async () => {
+      if (!email || !password || !confirmPassword) {
+        customToast('error', t('common.error'), 'Please fill in all fields');
+        return;
+      }
+      if (password !== confirmPassword) {
+        customToast('error', t('common.error'), 'Passwords do not match');
+        return;
+      }
+      setLoading(true);
+      try {
+        await signup({ email, password });
+        customToast(
+          'success',
+          t('common.success'),
+          'Account created. Please verify your email',
+        );
+        navigation.navigate('login');
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to sign up. Please try again';
+        customToast('error', t('common.error'), message);
+      } finally {
+        setLoading(false);
+      }
     };
   
-    const handleGoogleSignUp = () => {
-      // Add Google signup logic here
+    const handleGoogleSignUp = async () => {
+      try {
+        setLoading(true);
+        const resp = await ssoRequest({ provider: 'google', email });
+        const reqId =
+          resp?.data?.requestId ||
+          resp?.data?.data?.requestId ||
+          resp?.data?.id;
+        if (reqId) {
+          navigation.navigate('otpVerification', {
+            context: 'sso',
+            requestId: String(reqId),
+            email,
+            nextRoute: 'tabs',
+          });
+        } else {
+          customToast('error', t('common.error'), 'Failed to initiate Google sign up');
+        }
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to initiate Google sign up';
+        customToast('error', t('common.error'), message);
+      } finally {
+        setLoading(false);
+      }
     };
   
     return (
@@ -139,6 +191,8 @@ const SignUp = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
+  
+                
   
                 {/* Back to Login Link */}
                 <View style={styles.signUpContainer}>

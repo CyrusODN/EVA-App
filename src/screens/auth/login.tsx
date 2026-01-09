@@ -23,24 +23,162 @@ import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 //@ts-ignore
 import CheckBox from 'react-native-check-box';
+import { login, setAuthToken, ssoRequest } from '../../services/authService';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { customToast } from '../../utils/toastMessage';
+import userStore from '../../store/user';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+ 
+  
+GoogleSignin.configure({
+  webClientId: '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
+});
 
-  const handleLogin = () => {
-    // setLoading(true);
-    // setTimeout(() => setLoading(false), 2000);
-    navigation.navigate('tabs');
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      customToast('error', 'Error', 'Please enter email and password');
+      return;
+    }
+    setLoading(true);
+    try {
+      const resp = await login({ email, password });
+      const raw = resp?.data;
+      const payload = raw?.data || raw;
+      const userId =
+        payload?.userId ||
+        payload?.id ||
+        payload?.user?.id ||
+        raw?.userId ||
+        raw?.id ||
+        raw?.user?.id;
+      if (userId) {
+        // eslint-disable-next-line no-console
+        console.log('User ID:', String(userId));
+      }
+      const token = payload?.token || payload?.accessToken;
+      if (token) {
+        setAuthToken(token);
+        userStore.getState().setToken(token);
+        customToast('success', 'Success', 'Logged in successfully');
+        navigation.navigate('tabs');
+      } else if (payload?.loginToken || payload?.requires2FA) {
+        const twoFAUserId =
+          payload?.userId ||
+          payload?.id ||
+          payload?.data?.id ||
+          raw?.userId ||
+          raw?.id ||
+          raw?.data?.id;
+        // eslint-disable-next-line no-console
+        console.log('2FA required. userId:', twoFAUserId, 'requires2FA:', !!payload?.requires2FA);
+        // eslint-disable-next-line no-console
+        console.log('2FA payload message:', payload?.message || raw?.message);
+        navigation.navigate('otpVerification', {
+          context: 'login',
+          email,
+          password,
+          loginToken: payload?.loginToken ? String(payload.loginToken) : undefined,
+          userId: twoFAUserId ? String(twoFAUserId) : undefined,
+          nextRoute: 'tabs',
+        });
+        try {
+          await AsyncStorage.setItem('last_login_email', email);
+          await AsyncStorage.setItem('last_login_password', password);
+        } catch (_) {}
+        const message =
+          payload?.message ||
+          raw?.message ||
+          'Two-factor verification required. Enter the OTP sent to your email';
+        customToast('success', 'Success', message);
+      } else {
+        customToast(
+          'error',
+          'Error',
+          raw?.message || 'Invalid response from server',
+        );
+      }
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to sign in. Please try again';
+      customToast('error', 'Error', message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Add Google login logic here
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      let googleEmail = email;
+      try {
+        // Dynamically require to avoid build errors if the module isn't installed
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+        try {
+          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        } catch (_) {}
+        try {
+          await GoogleSignin.configure({});
+        } catch (_) {}
+        try {
+          const account = await GoogleSignin.signIn();
+          console.log("Google Sign In Account:", account);
+          googleEmail = account?.user?.email || googleEmail;
+        } catch (_) {}
+        try {
+          const silent = await GoogleSignin.signInSilently();
+          googleEmail = silent?.user?.email || googleEmail;
+        } catch (_) {}
+        try {
+          const current = await GoogleSignin.getCurrentUser();
+          googleEmail = current?.user?.email || googleEmail;
+        } catch (_) {}
+      } catch (_) {}
+
+      if (!googleEmail && email) {
+        googleEmail = email;
+      }
+      if (!googleEmail) {
+        customToast('error', t('common.error'), 'Please enter your email or select a Google account');
+        setLoading(false);
+        return;
+      }
+      const resp = await ssoRequest({ provider: 'google', email: googleEmail });
+      const reqId =
+        resp?.data?.requestId ||
+        resp?.data?.data?.requestId ||
+        resp?.data?.id ||
+        resp?.data?.ssoRequestId ||
+        resp?.data?.data?.ssoRequestId;
+      navigation.navigate('otpVerification', {
+        context: 'sso',
+        requestId: reqId ? String(reqId) : undefined,
+        email: googleEmail,
+        nextRoute: 'tabs',
+      });
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to initiate Google login';
+      customToast('error', t('common.error'), message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+ 
 
   return (
     <SafeAreaView style={styles.container}>
@@ -155,6 +293,7 @@ const Login = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
+              
 
               {/* Sign Up Link */}
               <View style={styles.signUpContainer}>

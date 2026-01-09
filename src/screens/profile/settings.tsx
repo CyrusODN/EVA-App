@@ -34,8 +34,13 @@ import Gap from '../../components/gap';
 import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { textStyles } from '../../constants/textStyles';
+import { changePassword, setAuthToken, forgetPassword, getAuthContext } from '../../services/authService';
+import userStore from '../../store/user';
+import { api } from '../../utils/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { launchImageLibrary } from 'react-native-image-picker';
 
-// Mock user data - replace with actual user data from your state management
+// Mock fallback if store does not have a user yet
 const mockUser = {
   email: 'john.doe@example.com',
   profilePicture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
@@ -44,8 +49,11 @@ const mockUser = {
 
 const Settings = () => {
   const { t } = useTranslation();
-  const [user] = useState(mockUser);
+  const storeUser = userStore.getState().loggedInUser;
+  const [user, setUser] = useState(storeUser || mockUser);
   const navigation = useNavigation();
+  const [uploading, setUploading] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Password change states
   const [currentPassword, setCurrentPassword] = useState('');
@@ -61,21 +69,194 @@ const Settings = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const handleImagePicker = () => {
-    // Implement image picker logic here
-    console.log('Open image picker');
+  const uploadProfileImage = async (form: FormData) => {
+    const endpoints = [
+      '/auth/profile-image',
+      '/auth/profile/image',
+      '/user/profile-image',
+      '/users/profile-image',
+    ];
+    let lastError: any = null;
+    for (const ep of endpoints) {
+      try {
+        await api.post(ep, form);
+        return ep;
+      } catch (e: any) {
+        const status = e?.response?.status;
+        if (status === 404 || status === 405) {
+          lastError = e;
+          continue;
+        }
+        throw e;
+      }
+    }
+    throw lastError || new Error('Profile image upload endpoint not found');
   };
 
-  const handlePasswordChange = () => {
+  const handleImagePicker = async () => {
+    if (uploading) return;
+    try {
+      const res = await launchImageLibrary({
+        mediaType: 'photo',
+        selectionLimit: 1,
+        quality: 0.9,
+      });
+      if (res.didCancel) return;
+      if (res.errorMessage || res.errorCode) {
+        customToast('error', t('common.error'), res.errorMessage || 'Failed to open gallery');
+        return;
+      }
+      const asset = res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
+      if (!asset || !asset.uri) {
+        customToast('error', t('common.error'), 'No image selected');
+        return;
+      }
+      const mime = asset.type || 'image/jpeg';
+      if (!String(mime).startsWith('image/')) {
+        customToast('error', t('common.error'), 'Please select an image file');
+        return;
+      }
+      setUser((prev: any) => ({ ...(prev as any), profilePicture: asset.uri }));
+      setUploading(true);
+      const token = userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+      if (token) setAuthToken(token);
+      const form = new FormData();
+      form.append('profileImage', {
+        uri: asset.uri,
+        name: asset.fileName || 'profile.jpg',
+        type: mime,
+      } as any);
+      await uploadProfileImage(form);
+      try {
+        const resp = await getAuthContext();
+        const ctx = resp?.data?.data;
+        if (ctx?.profileImage) {
+          const ctxUser: any = {
+            email: ctx?.email || (user as any).email,
+            name:
+              ctx?.fname ||
+              (ctx?.email ? String(ctx.email).split('@')[0] : (user as any).name),
+            profilePicture: ctx?.profileImage || (user as any).profilePicture,
+            role: ctx?.role,
+            settings: ctx?.settings,
+            whitelist: ctx?.whitelist,
+          };
+          userStore.getState().setAuth({
+            ...ctxUser,
+            token: userStore.getState().token,
+          });
+          await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
+          setUser(ctxUser);
+        }
+      } catch {}
+      customToast('success', t('common.success'), 'Profile image updated');
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || 'Failed to upload image';
+      customToast('error', t('common.error'), message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      customToast('error', t('common.error'), 'Please fill in all fields');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       customToast('error', t('settings.password.alertMatch'));
       return;
     }
-    console.log('Password changed');
-    customToast('success', t('settings.password.alertChanged'));
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    if (String(newPassword).trim().length < 6) {
+      customToast('error', t('common.error'), 'New password must be at least 6 characters');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      customToast('error', t('common.error'), 'New password must differ from current password');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      let token = userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+      if (token) setAuthToken(token);
+      try {
+        const ctxResp = await getAuthContext();
+        const ctx = ctxResp?.data?.data;
+        const nextToken = ctx?.token || token;
+        if (nextToken) {
+          setAuthToken(nextToken);
+          userStore.getState().setToken(nextToken);
+          await AsyncStorage.setItem('auth_token', String(nextToken));
+          token = nextToken;
+        }
+      } catch {}
+      const resp = await changePassword({
+        currentPassword,
+        newPassword,
+      });
+      const raw = resp?.data;
+      const payload = raw?.data || raw;
+      if ((resp?.status && resp.status >= 200 && resp.status < 300) || payload?.success || payload?.message) {
+        customToast('success', t('settings.password.alertChanged'));
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        try {
+          userStore.getState().purgeAuth();
+          await AsyncStorage.removeItem('auth_token');
+          await AsyncStorage.removeItem('auth_user');
+          await AsyncStorage.removeItem('auth_session_expires_at');
+          setAuthToken(null);
+        } catch {}
+        //@ts-ignore
+        (navigation as any).reset({ index: 0, routes: [{ name: 'login' }] });
+      } else {
+        customToast('error', t('common.error'), payload?.message || 'Failed to change password');
+      }
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 401) {
+        customToast('error', t('common.error'), 'Session expired. Please log in again.');
+        try {
+          userStore.getState().purgeAuth();
+          await AsyncStorage.removeItem('auth_token');
+          await AsyncStorage.removeItem('auth_user');
+          await AsyncStorage.removeItem('auth_session_expires_at');
+          setAuthToken(null);
+        } catch {}
+        //@ts-ignore
+        (navigation as any).reset({ index: 0, routes: [{ name: 'login' }] });
+        return;
+      }
+      if (status === 404) {
+        try {
+          const emailToUse = user?.email;
+          if (!emailToUse) {
+            customToast('error', t('common.error'), 'No email found for current user');
+            return;
+          }
+          const resp = await forgetPassword({ email: emailToUse });
+          const raw = resp?.data;
+          const message =
+            raw?.message || raw?.data || 'Password reset link sent. Check your email.';
+          customToast('success', t('common.success'), String(message));
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        } catch (e: any) {
+          const msg =
+            e?.response?.data?.message || e?.message || 'Failed to send reset link';
+          customToast('error', t('common.error'), msg);
+        }
+      } else {
+        const message =
+          error?.response?.data?.message || error?.message || 'Failed to change password';
+        customToast('error', t('common.error'), message);
+      }
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleSupportSubmit = () => {
@@ -109,7 +290,8 @@ const Settings = () => {
     }
   };
 
-  const Section = ({ title, children }) => (
+  type SectionProps = { title: string; children: React.ReactNode };
+  const Section = ({ title, children }: SectionProps) => (
     <View style={styles.section}>
       <Text variant="headlineMedium" style={textStyles.sectionTitle}>
         {title}
@@ -211,6 +393,7 @@ const Settings = () => {
             <PrimaryButton
               text={t('settings.password.update')}
               onPress={handlePasswordChange}
+              loading={changingPassword}
               disabled={!currentPassword || !newPassword || !confirmPassword}
             />
           </View>

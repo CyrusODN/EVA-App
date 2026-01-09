@@ -41,9 +41,76 @@ import { colors } from '../../constants/colors';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
 import { textStyles } from '../../constants/textStyles';
+import * as DocumentPicker from '@react-native-documents/picker';
+
+type ContentTypeId =
+  | 'literature_review'
+  | 'introduction'
+  | 'methodology'
+  | 'discussion'
+  | 'summary'
+  | 'full_article';
+
+type CitationStyle =
+  | 'APA'
+  | 'MLA'
+  | 'Chicago'
+  | 'Harvard'
+  | 'Vancouver'
+  | 'BibTeX';
+
+type CurrentView = 'projects' | 'project-detail' | 'assistant' | 'generated';
+
+type UploadedFile = {
+  id: string;
+  name: string;
+  size: number;
+  uri: string;
+  type: string;
+};
+
+type DocumentStatus = 'pending' | 'processing' | 'indexed' | 'error';
+
+type DocumentItem = {
+  id: string;
+  name: string;
+  size: number;
+  uploadedAt: Date;
+  status: DocumentStatus;
+};
+
+type StatusStyleKey =
+  | 'statusPending'
+  | 'statusProcessing'
+  | 'statusIndexed'
+  | 'statusError';
+
+const statusStyleMap: Record<DocumentStatus, StatusStyleKey> = {
+  pending: 'statusPending',
+  processing: 'statusProcessing',
+  indexed: 'statusIndexed',
+  error: 'statusError',
+};
+type Project = {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  documents: UploadedFile[];
+};
+
+type GeneratedContent = {
+  id: string;
+  content: string;
+  timestamp: Date;
+  type: ContentTypeId;
+  citationStyle: CitationStyle;
+  sources: string[];
+};
 
 // Content types and citation styles
-const CONTENT_TYPES = [
+const CONTENT_TYPES: { id: ContentTypeId }[] = [
   { id: 'literature_review' },
   { id: 'introduction' },
   { id: 'methodology' },
@@ -52,7 +119,7 @@ const CONTENT_TYPES = [
   { id: 'full_article' },
 ];
 
-const CITATION_STYLES = [
+const CITATION_STYLES: CitationStyle[] = [
   'APA',
   'MLA',
   'Chicago',
@@ -63,32 +130,31 @@ const CITATION_STYLES = [
 
 const Pathfinder = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   // State management
-  const [currentView, setCurrentView] = useState('projects'); // projects, project-detail, assistant, generated
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [documents, setDocuments] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [prompt, setPrompt] = useState('');
-  const [selectedContentType, setSelectedContentType] =
-    useState('literature_review');
-  const [selectedCitationStyle, setSelectedCitationStyle] = useState('APA');
-  const [selectedDocuments, setSelectedDocuments] = useState(new Set());
-  const [keywords, setKeywords] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState(null);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [currentView, setCurrentView] = useState<CurrentView>('projects');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>('');
+  const [selectedContentType, setSelectedContentType] = useState<ContentTypeId>('literature_review');
+  const [selectedCitationStyle, setSelectedCitationStyle] = useState<CitationStyle>('APA');
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
+  const [keywords, setKeywords] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
 
   // Dialog states
-  const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [showNewProjectDialog, setShowNewProjectDialog] = useState<boolean>(false);
+  const [newProjectName, setNewProjectName] = useState<string>('');
+  const [newProjectDescription, setNewProjectDescription] = useState<string>('');
 
   // Form states for new project creation
-  const [researchTopic, setResearchTopic] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [researchTopic, setResearchTopic] = useState<string>('');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const handleBack = () => {
     if (currentView === 'projects') {
@@ -110,7 +176,7 @@ const Pathfinder = () => {
       return;
     }
 
-    const newProject = {
+    const newProject: Project = {
       id: Math.random().toString(36).substring(7),
       name: researchTopic,
       description: newProjectDescription,
@@ -130,7 +196,6 @@ const Pathfinder = () => {
 
   const handleFileUpload = async () => {
     try {
-      const DocumentPicker = require('@react-native-documents/picker');
       const result = await DocumentPicker.pick({
         type: [
           DocumentPicker.types.pdf,
@@ -141,7 +206,7 @@ const Pathfinder = () => {
       });
 
       if (result && result.length > 0) {
-        const newFiles = result.map((file: any) => ({
+        const newFiles: UploadedFile[] = result.map((file: any) => ({
           id: Math.random().toString(36).substring(7),
           name: file.name,
           size: file.size,
@@ -151,19 +216,17 @@ const Pathfinder = () => {
         setUploadedFiles(prev => [...prev, ...newFiles]);
       }
     } catch (err: any) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error('Error picking document:', err);
-      }
+      console.error('Error picking document:', err);
     }
   };
 
-  const handleSelectProject = project => {
+  const handleSelectProject = (project: Project) => {
     setSelectedProject(project);
     setCurrentView('project-detail');
   };
 
   const handleAddDocument = () => {
-    const mockDoc = {
+    const mockDoc: DocumentItem = {
       id: Math.random().toString(36).substring(7),
       name: `research_paper_${Date.now()}.pdf`,
       size: 1024 * 1024 * 3.2,
@@ -210,7 +273,7 @@ const Pathfinder = () => {
         'remediusPathfinder.generation.simulatedResponse',
       );
 
-      const newContent = {
+      const newContent: GeneratedContent = {
         id: Math.random().toString(36).substring(7),
         content: `# ${t(
           'remediusPathfinder.generation.generatedTitlePrefix',
@@ -226,13 +289,13 @@ const Pathfinder = () => {
     }, 3000);
   };
 
-  const filteredProjects = useMemo(() => {
-    return projects.filter(p =>
+  const filteredProjects = useMemo<Project[]>(() => {
+    return projects.filter((p: Project) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [projects, searchQuery]);
 
-  const translateDocStatus = status => {
+  const translateDocStatus = (status: DocumentStatus) => {
     return t(`remediusPathfinder.docStatus.${status}`);
   };
 
@@ -583,12 +646,7 @@ const Pathfinder = () => {
                     <View
                       style={[
                         styles.documentStatusBadge,
-                        styles[
-                          `status${
-                            doc.status.charAt(0).toUpperCase() +
-                            doc.status.slice(1)
-                          }`
-                        ],
+                        styles[statusStyleMap[doc.status]],
                       ]}
                     >
                       <Text
@@ -1020,8 +1078,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
     borderBottomWidth: 1,
     borderBottomColor: colors.outline,
   },

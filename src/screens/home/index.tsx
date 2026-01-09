@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -31,7 +31,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { Image } from 'react-native';
 import PrimaryButton from '../../components/primaryButton';
 import VisitDialogModal from '../../components/visitDialogueModal';
@@ -39,80 +40,95 @@ import { colors } from '../../constants/colors';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 import EmptyState from '../../components/emptyState';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getChatbotServiceToken } from '../../services/authService';
+import { sessionStorage, Session } from '../../utils/sessionStorage';
+import { customToast } from '../../utils/toastMessage';
+
+type TabName = 'patients' | 'meetings' | 'lectures';
+type EventStatus = 'new' | 'recorded' | 'transcribed' | 'completed';
+type EventItem = {
+  id: string;
+  title: string;
+  date: string;
+  type: 'patient' | 'meeting' | 'lecture';
+  duration: string | null;
+  hasRecording: boolean;
+  hasTranscription: boolean;
+  status: EventStatus;
+};
 
 const Home = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('patients');
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [showVisitDialog, setShowVisitDialog] = useState(false);
-  const [visitDialogType, setVisitDialogType] = useState('patient');
+  const navigation = useNavigation<any>();
+  const [activeTab, setActiveTab] = useState<TabName>('patients');
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [searchText, setSearchText] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [showVisitDialog, setShowVisitDialog] = useState<boolean>(false);
+  const [visitDialogType, setVisitDialogType] = useState<'patient' | 'meeting' | 'lecture'>('patient');
+  const [events, setEvents] = useState<Session[]>([]);
 
-  // Enhanced mock data with different states
-  const mockEvents = [
-    {
-      id: '1',
-      title: 'JS45',
-      date: '2024-01-15',
-      type: 'patient',
-      duration: '00:15:30',
-      hasRecording: true,
-      hasTranscription: true,
-      status: 'completed',
-    },
-    {
-      id: '2',
-      title: 'MD23',
-      date: '2024-01-14',
-      type: 'patient',
-      duration: '00:22:45',
-      hasRecording: true,
-      hasTranscription: false,
-      status: 'recorded',
-    },
-    {
-      id: '3',
-      title: 'Team Meeting',
-      date: '2024-01-13',
-      type: 'meeting',
-      duration: null,
-      hasRecording: false,
-      hasTranscription: false,
-      status: 'new',
-    },
-    {
-      id: '4',
-      title: 'Medical Lecture',
-      date: '2024-01-12',
-      type: 'lecture',
-      duration: '02:15:30',
-      hasRecording: true,
-      hasTranscription: true,
-      status: 'completed',
-    },
-    {
-      id: '5',
-      title: 'KL89',
-      date: '2024-01-11',
-      type: 'patient',
-      duration: null,
-      hasRecording: false,
-      hasTranscription: false,
-      status: 'new',
-    },
-  ];
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await getChatbotServiceToken();
+        const raw = resp?.data;
+        const payload = raw?.data || raw;
+        const svcToken =
+          payload?.token ||
+          payload?.chatbotToken ||
+          payload?.serviceToken;
+        if (svcToken) {
+          try {
+            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
+          } catch (_) {}
+        }
+      } catch (_) {}
+    })();
 
-  const filteredEvents = mockEvents.filter(event => {
+    loadEvents();
+  }, [activeTab]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadEvents();
+    }, [])
+  );
+
+  const loadEvents = async () => {
+    const allSessions = await sessionStorage.getAllSessions();
+    setEvents(allSessions);
+  };
+
+  const filteredEvents: EventItem[] = events.filter((event: EventItem) => {
     if (activeTab === 'patients') return event.type === 'patient';
     if (activeTab === 'meetings') return event.type === 'meeting';
     if (activeTab === 'lectures') return event.type === 'lecture';
     return true;
   });
 
-  const formatEventDate = dateString => {
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await getChatbotServiceToken();
+        const raw = resp?.data;
+        const payload = raw?.data || raw;
+        const svcToken =
+          payload?.token ||
+          payload?.chatbotToken ||
+          payload?.serviceToken;
+        if (svcToken) {
+          try {
+            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
+          } catch (_) {}
+        }
+      } catch (_) {}
+    })();
+  }, []);
+
+  const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -120,7 +136,19 @@ const Home = () => {
     });
   };
 
-  const getTabIcon = (tabName, focused) => {
+  const toSessionType = (tab: TabName): 'patient' | 'meeting' | 'lecture' => {
+    switch (tab) {
+      case 'patients':
+        return 'patient';
+      case 'meetings':
+        return 'meeting';
+      case 'lectures':
+      default:
+        return 'lecture';
+    }
+  };
+
+  const getTabIcon = (tabName: TabName, focused: boolean): React.ReactNode => {
     switch (tabName) {
       case 'patients':
         return <Users size={16} color={focused ? 'white' : 'black'} />;
@@ -146,8 +174,10 @@ const Home = () => {
     }
   };
 
-  const getStatusIcon = event => {
+  const getStatusIcon = (event: EventItem): React.ReactNode => {
     switch (event.status) {
+      case 'transcribed':
+        return <CheckCircle size={16} color="#10b981" />;
       case 'completed':
         return <CheckCircle size={16} color="#10b981" />;
       case 'recorded':
@@ -159,8 +189,10 @@ const Home = () => {
     }
   };
 
-  const getStatusColor = status => {
+  const getStatusColor = (status: EventStatus) => {
     switch (status) {
+      case 'transcribed':
+        return '#10b981';
       case 'completed':
         return '#10b981';
       case 'recorded':
@@ -173,37 +205,36 @@ const Home = () => {
   };
 
   const handleNewButtonPress = () => {
-    setVisitDialogType(activeTab);
+    setVisitDialogType(toSessionType(activeTab));
     setShowVisitDialog(true);
   };
 
-  const handleCreateVisit = visitName => {
-    const newEvent = {
-      id: Date.now().toString(),
-      title: visitName,
-      date: new Date().toISOString(),
-      type: visitDialogType,
-      duration: null,
-      hasRecording: false,
-      hasTranscription: false,
-      status: 'new',
-    };
-
-    // Navigate to session screen
-    navigation.navigate('session', {
-      sessionData: newEvent,
-      sessionType: visitDialogType,
-    });
+  const handleCreateVisit = async (visitName: string) => {
+    await sessionStorage.createSession(visitName, visitDialogType);
+    setShowVisitDialog(false);
+    
+    // Refresh events list to show the new session
+    await loadEvents();
+    
+    // Show toast notification
+    customToast('success', t('common.success'), `${visitName} created`);
   };
 
-  const handleEventPress = event => {
-    navigation.navigate('session', {
-      sessionData: event,
-      sessionType: event.type,
-    });
+  const handleEventPress = (event: EventItem) => {
+    if (event.status === 'transcribed' || event.status === 'completed') {
+      navigation.navigate('transcriptionCompleted', {
+        sessionData: event,
+        sessionType: event.type,
+      });
+    } else {
+      navigation.navigate('session', {
+        sessionData: event,
+        sessionType: event.type,
+      });
+    }
   };
 
-  const renderEventItem = ({ item }) => (
+  const renderEventItem = ({ item }: { item: EventItem }) => (
     <TouchableOpacity
       style={[
         styles.eventItem,
@@ -238,7 +269,8 @@ const Home = () => {
             variant="bodySmall"
             style={[styles.statusText, { color: getStatusColor(item.status) }]}
           >
-            {item.status === 'completed' && 'Transcribed'}
+            {item.status === 'completed' && 'Completed'}
+            {item.status === 'transcribed' && 'Transcribed'}
             {item.status === 'recorded' && 'Recorded'}
             {item.status === 'new' && 'New Session'}
           </Text>
@@ -299,7 +331,7 @@ const Home = () => {
   const getEventTypeForDate = (date: Date | null) => {
     if (!date) return null;
     const dateString = date.toISOString().split('T')[0];
-    const event = mockEvents.find(e => {
+    const event = events.find((e: EventItem) => {
       const eventDate = new Date(e.date).toISOString().split('T')[0];
       return eventDate === dateString;
     });
@@ -475,7 +507,7 @@ const Home = () => {
                   width: '100%',
                 }}
               >
-                {['patients', 'meetings', 'lectures'].map(tab => (
+                {(['patients', 'meetings', 'lectures'] as TabName[]).map(tab => (
                   <TouchableOpacity
                     key={tab}
                     style={[

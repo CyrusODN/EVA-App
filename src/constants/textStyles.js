@@ -22,7 +22,8 @@ export const textStyles = StyleSheet.create({
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   headlineLarge: {
-    color: colors.onSecondary,
+    color: "black",
+    fontWeight: "500",
     fontSize: 22,
     lineHeight: 28,
     fontFamily:
@@ -41,7 +42,7 @@ export const textStyles = StyleSheet.create({
     color: 'black',
     fontSize: 18,
     lineHeight: 22,
-    marginBottom: 16,
+    marginBottom: 13,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },

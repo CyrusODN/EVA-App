@@ -1,3 +1,3 @@
 export const LinearGradientColors = [
-    '#4A90B9', '#5BA6B6', '#68BFB3'
+    '#318bc0ff', '#359cb4ff', '#27af9dff'
 ] 

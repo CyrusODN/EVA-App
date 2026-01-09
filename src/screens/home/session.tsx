@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Dimensions,
-  Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -16,70 +16,139 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import {
-  Mic,
-  Square,
-  Upload,
-  QrCode,
-  Clock,
-  Play,
-  Pause,
-  FileText,
-  Users,
-  Brain,
-  Settings,
-  Trash2,
-  Edit3,
-} from 'lucide-react-native';
+  import {
+    Mic,
+    Square,
+    Upload,
+    QrCode,
+    Clock,
+    FileText,
+    Users,
+    Brain,
+    Trash2,
+    Edit3,
+    RotateCcw,
+    X,
+    Play,
+    Pause,
+  } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
-import DocumentPicker from '@react-native-documents/picker';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import * as DocumentPicker from '@react-native-documents/picker';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import PrimaryButton from '../../components/primaryButton';
-import Input from '../../components/input';
 import Header from '../../components/header';
 import { colors } from '../../constants/colors';
 import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
+import { customToast } from '../../utils/toastMessage';
+import { sessionStorage, Session as SessionType, SessionType as SessionTypeEnum } from '../../utils/sessionStorage';
 
-const { width: screenWidth } = Dimensions.get('window');
+type PickedAudioFile = DocumentPicker.DocumentPickerResponse;
+ 
 
 const Session = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
-  const route = useRoute();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   // Get session data from route params
-  const { sessionData, sessionType } = route.params || {};
+  const { sessionData, sessionType } = (route.params || {}) as {
+    sessionData?: SessionType;
+    sessionType?: SessionTypeEnum;
+  };
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [hasTranscription, setHasTranscription] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackTime, setPlaybackTime] = useState(0);
+  const [_uploadedFile, setUploadedFile] = useState<PickedAudioFile | null>(null);
+  const initialTitle =
+    (sessionData && sessionData.title) || t('mainContent.recording.newSession');
+  const [sessionTitle, setSessionTitle] = useState(initialTitle);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renameValue, setRenameValue] = useState(initialTitle);
+  const [currentSession, setCurrentSession] = useState<SessionType | null>(null);
 
-  // Mock session data if not provided
-  const session = sessionData || {
+  useEffect(() => {
+    loadSessionData();
+  }, [sessionData?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSessionData();
+    }, [])
+  );
+
+  const loadSessionData = async () => {
+    if (sessionData?.id) {
+      const latestSession = await sessionStorage.getSessionById(sessionData.id);
+      if (latestSession) {
+        setCurrentSession(latestSession);
+        setSessionTitle(latestSession.title);
+        setRenameValue(latestSession.title);
+        if (latestSession.hasRecording && latestSession.duration) {
+          const [mins, secs] = latestSession.duration.split(':').map(Number);
+          setRecordingTime(mins * 60 + secs);
+        }
+      }
+    }
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+    if (!isPlaying) {
+      const interval = setInterval(() => {
+        setPlaybackTime(prev => {
+          if (prev >= recordingTime) {
+            clearInterval(interval);
+            setIsPlaying(false);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+  };
+
+  const handleGenerateNotes = () => {
+    sessionStorage.updateSessionStatus(session.id, 'transcribed');
+    navigation.replace('transcriptionCompleted', {
+      sessionData: session,
+      sessionType: session.type,
+    });
+  };
+
+  const session = currentSession || sessionData || {
     id: '1',
     title: t('mainContent.recording.newSession'),
-    type: sessionType || 'patient',
+    type: (sessionType as SessionTypeEnum) || 'patient',
     date: new Date().toISOString(),
+    duration: null,
     hasRecording: false,
     hasTranscription: false,
+    status: 'new',
   };
 
   // Timer effect for recording
   useEffect(() => {
-    let interval;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isRecording) {
       interval = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [isRecording]);
 
-  const formatTime = seconds => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs
@@ -98,12 +167,13 @@ const Session = () => {
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.confirm'),
-        onPress: () => {
+        onPress: async () => {
           setIsTranscribing(true);
-          // Simulate transcription process
-          setTimeout(() => {
+          const duration = formatTime(recordingTime);
+          await sessionStorage.markSessionAsRecorded(session.id, duration);
+          await loadSessionData();
+          setTimeout(async () => {
             setIsTranscribing(false);
-            setHasTranscription(true);
           }, 3000);
         },
       },
@@ -118,27 +188,20 @@ const Session = () => {
       });
 
       if (result && result.length > 0) {
-        setUploadedFile(result[0]);
+        setUploadedFile(result[0] as PickedAudioFile);
         setIsTranscribing(true);
-        // Simulate transcription process
-        setTimeout(() => {
+        await sessionStorage.markSessionAsRecorded(session.id, '0:00');
+        await loadSessionData();
+        setTimeout(async () => {
           setIsTranscribing(false);
-          setHasTranscription(true);
         }, 3000);
       }
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        Alert.alert(t('session.error'), t('session.failedToPickAudio'));
-      }
+    } catch (err: any) {
+      Alert.alert(t('session.error'), t('session.failedToPickAudio'));
     }
   };
 
-  const handleViewTranscription = () => {
-    navigation.navigate('transcriptionCompleted', {
-      sessionData: session,
-      sessionType: session.type,
-    });
-  };
+
 
   const getSessionIcon = () => {
     switch (session.type) {
@@ -166,28 +229,35 @@ const Session = () => {
     }
   };
 
-  const renderRecordingState = () => {
-    if (hasTranscription) {
-      return (
-        <View style={styles.completedSection}>
-          <View style={styles.completedCard}>
-            <FileText size={58} color={colors.onSecondary} />
-            <Text variant="headlineMedium" style={styles.completedTitle}>
-              {t('session.transcriptionComplete')}
-            </Text>
-            <Text variant="bodyMedium" style={styles.completedDescription}>
-              {t('session.transcriptionCompleteDescription')}
-            </Text>
-            <PrimaryButton
-              text={t('session.viewTranscription')}
-              onPress={handleViewTranscription}
-              width={wp(75)}
-            />
-          </View>
-        </View>
-      );
-    }
+  const handleDeleteConfirm = async () => {
+    setShowDeleteDialog(false);
+    await sessionStorage.deleteSession(session.id);
+    customToast('success', t('common.success'), 'Session deleted');
+    navigation.goBack();
+  };
+  const handleRenameOpen = () => {
+    setRenameValue(sessionTitle);
+    setShowRenameDialog(true);
+  };
+  const handleRenameSave = async () => {
+    const newTitle = renameValue.trim() || sessionTitle;
+    setSessionTitle(newTitle);
+    setShowRenameDialog(false);
+    await sessionStorage.updateSessionTitle(session.id, newTitle);
+    customToast('success', t('common.success'), 'Session renamed');
+  };
 
+  const handleRestart = async () => {
+    await sessionStorage.resetSession(session.id);
+    await loadSessionData();
+    setIsRecording(false);
+    setRecordingTime(0);
+    setIsTranscribing(false);
+    setUploadedFile(null);
+    customToast('success', t('common.success'), 'Session restarted');
+  };
+
+  const renderRecordingState = () => {
     if (isTranscribing) {
       return (
         <View style={styles.processingSection}>
@@ -200,6 +270,54 @@ const Session = () => {
             <Text variant="bodyMedium" style={styles.processingDescription}>
               {t('session.processingDescription')}
             </Text>
+          </View>
+        </View>
+      );
+    }
+
+    if (session.status === 'recorded') {
+      return (
+        <View style={styles.completedSection}>
+          <View style={styles.completedCard}>
+            <Mic size={58} color="#f59e0b" />
+            <Text variant="headlineMedium" style={styles.completedTitle}>
+              {t('session.recordingComplete')}
+            </Text>
+            <Text variant="bodyMedium" style={styles.completedDescription}>
+              {t('session.recordingCompleteDescription')}
+            </Text>
+            
+            <View style={styles.timerContainer}>
+              <Clock size={20} color={colors.onSecondary} />
+              <Text variant="titleMedium" style={{ color: colors.onSecondary }}>
+                {isPlaying ? formatTime(playbackTime) : session.duration}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.playPauseButton}
+              onPress={handlePlayPause}
+            >
+              <LinearGradient
+                colors={['#f59e0b', '#d97706', '#b45309']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.playPauseButtonGradient}
+              >
+                {isPlaying ? (
+                  <Pause size={28} color="white" />
+                ) : (
+                  <Play size={28} color="white" fill="white" />
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <PrimaryButton
+              text={t('session.generateNotes')}
+              onPress={handleGenerateNotes}
+              width={wp(75)}
+              iconComponent={FileText}
+            />
           </View>
         </View>
       );
@@ -321,7 +439,7 @@ const Session = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <Header
-        title={session.title}
+        title={sessionTitle}
         subtitle={getSessionTypeText()}
         onLeftPress={() => navigation.goBack()}
         icon={getSessionIcon()}
@@ -332,10 +450,13 @@ const Session = () => {
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleRenameOpen}>
           <Edit3 size={20} color={colors.onSurfaceVariant} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleRestart}>
+          <RotateCcw size={20} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={() => setShowDeleteDialog(true)}>
           <Trash2 size={20} color="#ef4444" />
         </TouchableOpacity>
       </View>
@@ -344,6 +465,56 @@ const Session = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderRecordingState()}
       </ScrollView>
+
+      <Modal transparent visible={showDeleteDialog} animationType="fade" onRequestClose={() => setShowDeleteDialog(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <TouchableOpacity style={styles.modalClose} onPress={() => setShowDeleteDialog(false)}>
+              <X size={18} color={colors.onSurface} />
+            </TouchableOpacity>
+            <Text variant="headlineLarge" style={styles.modalTitle}>Delete Session</Text>
+            <Text variant="bodyMedium" style={styles.modalDescription}>
+              Are you sure you want to delete this session? This action cannot be undone.
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setShowDeleteDialog(false)}>
+                <Text variant="titleSmall" style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalDangerButton]} onPress={handleDeleteConfirm}>
+                <Text variant="titleSmall" style={styles.modalDangerText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={showRenameDialog} animationType="fade" onRequestClose={() => setShowRenameDialog(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <TouchableOpacity style={styles.modalClose} onPress={() => setShowRenameDialog(false)}>
+              <X size={18} color={colors.onSurface} />
+            </TouchableOpacity>
+            <Text variant="headlineLarge" style={styles.modalTitle}>Rename Session</Text>
+            <View style={styles.renameInputWrapper}>
+              <TextInput
+                value={renameValue}
+                onChangeText={setRenameValue}
+                style={styles.renameInput}
+                placeholder="Session name"
+                placeholderTextColor={colors.onSurfaceVariant}
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setShowRenameDialog(false)}>
+                <Text variant="titleSmall" style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalPrimaryButton]} onPress={handleRenameSave}>
+                <Text variant="titleSmall" style={styles.modalPrimaryText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -421,6 +592,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playPauseButton: {
+    marginTop: hp(2),
+    marginBottom: hp(2),
+  },
+  playPauseButtonGradient: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -531,5 +713,97 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: hp(1),
     marginBottom: hp(3),
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(5),
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    padding: wp(6),
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    position: 'relative',
+  },
+  modalClose: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+  },
+  modalTitle: {
+    color: colors.onSurface,
+    marginBottom: hp(1),
+  },
+  modalDescription: {
+    color: colors.onSurfaceVariant,
+    marginBottom: hp(2),
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: hp(1),
+  },
+  modalButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderColor,
+    backgroundColor: colors.surface,
+  },
+  modalButtonText: {
+    color: colors.onSurface,
+  },
+  modalDangerButton: {
+    backgroundColor: '#ef4444',
+    borderColor: '#ef4444',
+  },
+  modalDangerText: {
+    color: colors.surface,
+    fontWeight: '600',
+  },
+  modalPrimaryButton: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  modalPrimaryText: {
+    color: colors.surface,
+    fontWeight: '600',
+  },
+  renameInputWrapper: {
+    borderWidth: 1.5,
+    borderColor: colors.borderColor,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: hp(1),
+  },
+  renameInput: {
+    color: colors.onSurface,
+    height: 40,
   },
 });

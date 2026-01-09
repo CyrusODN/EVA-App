@@ -271,7 +271,7 @@ const Research = () => {
           </View>
 
           {/* Additional Information */}
-          <View style={[styles.infoContainer, { marginTop: hp(2) }]}>
+          {/* <View style={[styles.infoContainer, { marginTop: hp(2) }]}>
             <Text variant="titleMedium" style={styles.infoTitle}>
               Advanced Research Tools
             </Text>
@@ -281,7 +281,7 @@ const Research = () => {
               Each tool is designed to enhance your research workflow and
               improve outcomes.
             </Text>
-          </View>
+          </View> */}
         </ScrollView>
       </View>
     </SafeAreaView>

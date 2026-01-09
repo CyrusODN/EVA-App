@@ -810,6 +810,12 @@ export const pl = {
                 "firstVisit": "Pierwsza wizyta",
                 "followUp": "Wizyta kontrolna"
             },
+            "noteLength": {
+                "select": "Długość notatki",
+                "small": "Mała",
+                "medium": "Średnia",
+                "large": "Duża"
+            },
             "transcriptionTitle": "Transkrypcja w czasie rzeczywistym",
             "addTranscription": "Dodaj transkrypcję",
             "speaker": "Mówca",
@@ -2045,7 +2051,10 @@ export const pl = {
         "selectAudioFile": "Wybierz plik audio z urządzenia",
         "supportedFormats": "Obsługiwane: MP3, WAV, M4A",
         "connectExternalDevice": "Podłącz Zewnętrzne Urządzenie",
-        "scanToConnect": "Zeskanuj, aby podłączyć inne urządzenie z mikrofonem"
+        "scanToConnect": "Zeskanuj, aby podłączyć inne urządzenie z mikrofonem",
+        "recordingComplete": "Nagrywanie Zakończone",
+        "recordingCompleteDescription": "Twoje nagranie jest gotowe. Możesz je odtworzyć lub wygenerować notatki.",
+        "generateNotes": "Generuj Notatki"
     },
     "home": {
         "meetingNamePlaceholder": "Wprowadź nazwę spotkania...",

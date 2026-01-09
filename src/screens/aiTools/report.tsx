@@ -16,7 +16,6 @@ import {
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
 import {
-  ChevronLeft,
   FileText,
   Plus,
   Search,
@@ -41,8 +40,49 @@ import { LinearGradientColors } from '../../constants/linearGradientColors';
 import Gap from '../../components/gap';
 import Header from '../../components/header';
 
+type CertificateTypeId = 'ol9' | 'sick-leave' | 'medical-report' | 'specialist';
+type CertificateTypeItem = {
+  id: CertificateTypeId;
+  nameKey: string;
+  descriptionKey: string;
+  icon: any;
+};
+type VisitNote = {
+  type: string;
+  content: string;
+};
+type Visit = {
+  id: string;
+  name: string;
+  date: Date;
+  type: string;
+  specialization: string;
+  duration: string;
+  note: VisitNote;
+};
+type DocumentFile = {
+  name: string;
+  size: number;
+  type: string;
+};
+type SourceItem = {
+  type: string;
+  title: string;
+  confidence: number;
+  details?: string;
+};
+type Certificate = {
+  id: string;
+  patientName: string;
+  date: Date;
+  visits: Visit[];
+  sources: SourceItem[];
+  certificateType: CertificateTypeId;
+  certificateContent: string;
+};
+
 // Certificate types data
-const CERTIFICATE_TYPES_DATA = [
+const CERTIFICATE_TYPES_DATA: CertificateTypeItem[] = [
   {
     id: 'ol9',
     nameKey: 'remediusReport.certificateType.ol9.name',
@@ -70,7 +110,7 @@ const CERTIFICATE_TYPES_DATA = [
 ];
 
 // Mock visits data
-const MOCK_VISITS = [
+const MOCK_VISITS: Visit[] = [
   {
     id: '1',
     name: 'JS45',
@@ -99,33 +139,39 @@ const MOCK_VISITS = [
 
 const Report = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   // State management
-  const [selectedCertificateType, setSelectedCertificateType] = useState('ol9');
-  const [importedVisitData, setImportedVisitData] = useState([]);
-  const [observations, setObservations] = useState('');
-  const [pdfFiles, setPdfFiles] = useState([]);
-  const [selectedCertificate, setSelectedCertificate] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedCertificateType, setSelectedCertificateType] =
+    useState<CertificateTypeId>('ol9');
+  const [importedVisitData, setImportedVisitData] = useState<Visit[]>([]);
+  const [observations, setObservations] = useState<string>('');
+  const [pdfFiles, setPdfFiles] = useState<DocumentFile[]>([]);
+  const [selectedCertificate, setSelectedCertificate] =
+    useState<Certificate | null>(null);
+  const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   // Dialog states
-  const [showVisitSelectDialog, setShowVisitSelectDialog] = useState(false);
-  const [showDocumentPreview, setShowDocumentPreview] = useState(false);
-  const [selectedVisits, setSelectedVisits] = useState(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [previewFile, setPreviewFile] = useState(null);
+  const [showVisitSelectDialog, setShowVisitSelectDialog] =
+    useState<boolean>(false);
+  const [showDocumentPreview, setShowDocumentPreview] =
+    useState<boolean>(false);
+  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(
+    new Set(),
+  );
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [previewFile, setPreviewFile] = useState<DocumentFile | null>(null);
 
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleCertificateTypeSelect = typeId => {
+  const handleCertificateTypeSelect = (typeId: CertificateTypeId) => {
     setSelectedCertificateType(typeId);
   };
 
-  const handleVisitSelect = visitId => {
+  const handleVisitSelect = (visitId: string) => {
     setSelectedVisits(prev => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
@@ -141,7 +187,7 @@ const Report = () => {
     setShowVisitSelectDialog(false);
   };
 
-  const handleRemoveVisit = visitId => {
+  const handleRemoveVisit = (visitId: string) => {
     setImportedVisitData(prev => prev.filter(visit => visit.id !== visitId));
     setSelectedVisits(prev => {
       const next = new Set(prev);
@@ -152,7 +198,7 @@ const Report = () => {
 
   const handleAddDocument = () => {
     // Mock document addition
-    const mockFile = {
+    const mockFile: DocumentFile = {
       name: `document_${Date.now()}.pdf`,
       size: 1024 * 1024 * 2.5, // 2.5MB
       type: 'application/pdf',
@@ -160,11 +206,11 @@ const Report = () => {
     setPdfFiles(prev => [...prev, mockFile]);
   };
 
-  const handleRemoveDocument = fileName => {
+  const handleRemoveDocument = (fileName: string) => {
     setPdfFiles(prev => prev.filter(file => file.name !== fileName));
   };
 
-  const handlePreviewDocument = file => {
+  const handlePreviewDocument = (file: DocumentFile) => {
     setPreviewFile(file);
     setShowDocumentPreview(true);
   };
@@ -189,7 +235,7 @@ const Report = () => {
 
     // Mock generation
     setTimeout(() => {
-      const newCertificate = {
+      const newCertificate: Certificate = {
         id: Date.now().toString(),
         patientName: '',
         date: new Date(),
@@ -254,11 +300,11 @@ const Report = () => {
     setSelectedVisits(new Set(importedVisitData.map(visit => visit.id)));
   };
 
-  const filteredVisits = MOCK_VISITS.filter(visit =>
+  const filteredVisits: Visit[] = MOCK_VISITS.filter(visit =>
     visit.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const renderCertificateType = ({ item }) => {
+  const renderCertificateType = ({ item }: { item: CertificateTypeItem }) => {
     const Icon = item.icon;
     const isSelected = selectedCertificateType === item.id;
 
@@ -294,7 +340,7 @@ const Report = () => {
     );
   };
 
-  const renderImportedVisit = ({ item }) => (
+  const renderImportedVisit = ({ item }: { item: Visit }) => (
     <View style={styles.importedVisitCard}>
       <View style={styles.importedVisitHeader}>
         <View>
@@ -327,7 +373,7 @@ const Report = () => {
     </View>
   );
 
-  const renderDocument = ({ item }) => (
+  const renderDocument = ({ item }: { item: DocumentFile }) => (
     <View style={styles.documentItem}>
       <View style={styles.documentIcon}>
         <FileText size={16} color={colors.error} />
@@ -361,7 +407,7 @@ const Report = () => {
     </View>
   );
 
-  const renderVisitItem = ({ item }) => (
+  const renderVisitItem = ({ item }: { item: Visit }) => (
     <TouchableOpacity
       style={[
         styles.visitSelectItem,
@@ -519,7 +565,7 @@ const Report = () => {
                     <FlatList
                       data={pdfFiles}
                       renderItem={renderDocument}
-                      keyExtractor={(item, index) => index.toString()}
+                      keyExtractor={(_, index) => index.toString()}
                       scrollEnabled={false}
                     />
                   </View>

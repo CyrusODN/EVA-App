@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -43,11 +43,73 @@ import { nanoid } from 'nanoid';
 import { textStyles } from '../../constants/textStyles';
 import Header from '../../components/header';
 import EmptyState from '../../components/emptyState';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getChatbotServiceToken } from '../../services/authService';
+
+type Severity = 'high' | 'moderate' | 'low';
+
+type Visit = {
+  id: string;
+  name: string;
+  date: Date;
+  type: string;
+  specialization: string;
+  duration: string;
+  note?: {
+    type: string;
+    content: string;
+  };
+};
+
+type Diagnosis = {
+  name: string;
+  confidence: number;
+};
+
+type Symptom = {
+  name: string;
+  severity?: 'mild' | 'moderate' | 'severe';
+};
+
+type PatientProfile = {
+  symptoms: Symptom[];
+  history: string[];
+  medications: string[];
+  vitals: Record<string, string | number>;
+  riskFactors: string[];
+  diagnosis: Diagnosis[];
+};
+
+type ChatMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+};
+
+type ChatTab = {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  currentMessage: string;
+  patientProfile?: PatientProfile;
+};
+
+type Interaction = {
+  id: string;
+  severity: Severity;
+  description: string;
+  mechanism: string;
+  recommendation: string;
+  drugs: string[];
+};
+
+type ActiveTab = 'assistant' | 'interactions';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 // Mock data for visits
-const MOCK_VISITS = [
+const MOCK_VISITS: Visit[] = [
   {
     id: '1',
     name: 'JS45',
@@ -76,44 +138,64 @@ const MOCK_VISITS = [
 
 const Pharmcoedia = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   
   // Main navigation state
-  const [activeTab, setActiveTab] = useState('assistant');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('assistant');
   
   // Chat state
-  const [chatTabs, setChatTabs] = useState([{
-    id: nanoid(),
-    title: 'Chat 1',
-    messages: [],
-    currentMessage: '',
-    patientProfile: undefined,
-  }]);
-  const [activeTabId, setActiveTabId] = useState(chatTabs[0].id);
+  const [chatTabs, setChatTabs] = useState<ChatTab[]>([
+    {
+      id: nanoid(),
+      title: 'Chat 1',
+      messages: [],
+      currentMessage: '',
+    },
+  ]);
+  const [activeTabId, setActiveTabId] = useState<string>(chatTabs[0].id);
   
   // Dialog states
-  const [showPatientProfileDialog, setShowPatientProfileDialog] = useState(false);
-  const [showVisitSelectDialog, setShowVisitSelectDialog] = useState(false);
-  const [showChatTabsModal, setShowChatTabsModal] = useState(false);
-  const [profileDialogTab, setProfileDialogTab] = useState('import');
-  const [selectedVisits, setSelectedVisits] = useState(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [manualProfileText, setManualProfileText] = useState('');
+  const [showPatientProfileDialog, setShowPatientProfileDialog] = useState<boolean>(false);
+  const [showVisitSelectDialog, setShowVisitSelectDialog] = useState<boolean>(false);
+  const [showChatTabsModal, setShowChatTabsModal] = useState<boolean>(false);
+  const [profileDialogTab, setProfileDialogTab] = useState<'import' | 'manual'>('import');
+  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set(),);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [manualProfileText, setManualProfileText] = useState<string>('');
   
   // Drug interaction state
-  const [selectedDrugs, setSelectedDrugs] = useState([]);
-  const [drugInput, setDrugInput] = useState('');
-  const [drugInteractions, setDrugInteractions] = useState([]);
+  const [selectedDrugs, setSelectedDrugs] = useState<string[]>([]);
+  const [drugInput, setDrugInput] = useState<string>('');
+  const [drugInteractions, setDrugInteractions] = useState<Interaction[]>([],);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await getChatbotServiceToken();
+        const raw = resp?.data;
+        const payload = raw?.data || raw;
+        const svcToken =
+          payload?.token ||
+          payload?.chatbotToken ||
+          payload?.serviceToken;
+        if (svcToken) {
+          try {
+            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
+          } catch (_) {}
+        }
+      } catch (_) {}
+    })();
+  }, []);
 
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleSendMessage = (tabId) => {
+  const handleSendMessage = (tabId: string) => {
     const tab = chatTabs.find(t => t.id === tabId);
     if (!tab || !tab.currentMessage.trim()) return;
     
-    const userMessage = {
+    const userMessage: ChatMessage = {
       id: nanoid(),
       role: 'user',
       content: tab.currentMessage,
@@ -128,7 +210,7 @@ const Pharmcoedia = () => {
     setChatTabs(updatedTabs);
     
     setTimeout(() => {
-      const assistantResponse = {
+      const assistantResponse: ChatMessage = {
         id: nanoid(),
         role: 'assistant',
         content: 'Based on the patient profile and current medications, I recommend...',
@@ -144,7 +226,7 @@ const Pharmcoedia = () => {
   };
 
   const handleNewChatTab = () => {
-    const newTab = {
+    const newTab: ChatTab = {
       id: nanoid(),
       title: `Chat ${chatTabs.length + 1}`,
       messages: [],
@@ -155,14 +237,14 @@ const Pharmcoedia = () => {
     setShowChatTabsModal(false);
   };
 
-  const handleCloseTab = (tabId) => {
+  const handleCloseTab = (tabId: string) => {
     if (chatTabs.length === 1) return;
     const updatedTabs = chatTabs.filter(t => t.id !== tabId);
     setChatTabs(updatedTabs);
     if (activeTabId === tabId) setActiveTabId(updatedTabs[0].id);
   };
 
-  const handleVisitSelect = (visitId) => {
+  const handleVisitSelect = (visitId: string) => {
     setSelectedVisits(prev => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
@@ -171,8 +253,10 @@ const Pharmcoedia = () => {
   };
 
   const handleImportVisits = () => {
-    const selectedVisitData = MOCK_VISITS.filter(visit => selectedVisits.has(visit.id));
-    const newProfile = {
+    const selectedVisitData = MOCK_VISITS.filter((visit: Visit) =>
+      selectedVisits.has(visit.id),
+    );
+    const newProfile: PatientProfile = {
       symptoms: [],
       history: [],
       medications: [],
@@ -181,13 +265,17 @@ const Pharmcoedia = () => {
       diagnosis: [],
     };
     
-    selectedVisitData.forEach(visit => {
+    selectedVisitData.forEach((visit: Visit) => {
       if (visit.note?.content) {
         const lines = visit.note.content.split('\n');
-        lines.forEach(line => {
+        lines.forEach((line: string) => {
           if (line.includes('Assessment:')) {
             const diagnosis = line.replace('- ', '').trim();
-            if (diagnosis) newProfile.diagnosis.push({ name: diagnosis, confidence: 85 });
+            if (diagnosis)
+              newProfile.diagnosis.push({
+                name: diagnosis,
+                confidence: 85,
+              });
           }
         });
       }
@@ -202,7 +290,7 @@ const Pharmcoedia = () => {
 
   const handleSaveManualProfile = () => {
     const lines = manualProfileText.split('\n');
-    const newProfile = {
+    const newProfile: PatientProfile = {
       symptoms: [],
       history: [],
       medications: [],
@@ -211,8 +299,12 @@ const Pharmcoedia = () => {
       diagnosis: [],
     };
     
-    lines.forEach(line => {
-      if (line.trim()) newProfile.symptoms.push({ name: line.trim(), severity: 'moderate' });
+    lines.forEach((line: string) => {
+      if (line.trim())
+        newProfile.symptoms.push({
+          name: line.trim(),
+          severity: 'moderate',
+        });
     });
     
     setChatTabs(prev => prev.map(tab => 
@@ -229,8 +321,8 @@ const Pharmcoedia = () => {
       
       // Mock interaction generation
       if (selectedDrugs.length >= 1) {
-        const severities = ['high', 'moderate', 'low'];
-        const newInteraction = {
+        const severities: Interaction['severity'][] = ['high', 'moderate', 'low'];
+        const newInteraction: Interaction = {
           id: nanoid(),
           severity: severities[Math.floor(Math.random() * severities.length)],
           description: `Potential interaction between ${selectedDrugs[selectedDrugs.length - 1]} and ${newDrug}.`,
@@ -246,7 +338,7 @@ const Pharmcoedia = () => {
   const activeChat = chatTabs.find(tab => tab.id === activeTabId);
 
   // Render functions for components
-  const renderMessage = ({ item }) => (
+  const renderMessage = ({ item }: { item: ChatMessage }) => (
     <View style={[
       styles.messageContainer,
       item.role === 'user' ? styles.userMessage : styles.assistantMessage
@@ -263,7 +355,7 @@ const Pharmcoedia = () => {
     </View>
   );
 
-  const renderDrug = ({ item }) => (
+  const renderDrug = ({ item }: { item: string }) => (
     <View style={styles.drugCard}>
       <View style={styles.drugHeader}>
         <Pill size={18} color={colors.primary} />
@@ -278,8 +370,8 @@ const Pharmcoedia = () => {
     </View>
   );
 
-  const renderInteraction = ({ item }) => {
-    const getSeverityColor = (severity) => {
+  const renderInteraction = ({ item }: { item: Interaction }) => {
+    const getSeverityColor = (severity: Interaction['severity']) => {
       switch (severity) {
         case 'high': return '#EF4444';
         case 'moderate': return '#F59E0B';
@@ -288,7 +380,7 @@ const Pharmcoedia = () => {
       }
     };
 
-    const getSeverityIcon = (severity) => {
+    const getSeverityIcon = (severity: Interaction['severity']) => {
       switch (severity) {
         case 'high': return <AlertTriangle size={16} color="white" />;
         case 'moderate': return <AlertTriangle size={16} color="white" />;
@@ -333,7 +425,7 @@ const Pharmcoedia = () => {
     );
   };
 
-  const renderVisitItem = ({ item }) => (
+  const renderVisitItem = ({ item }: { item: Visit }) => (
     <TouchableOpacity
       style={[
         styles.visitItem,
@@ -574,7 +666,7 @@ const Pharmcoedia = () => {
           {(activeChat?.messages?.length || 0) > 0 && (
             <View style={styles.messageBadge}>
               <Text variant="labelSmall" style={styles.messageBadgeText}>
-                {activeChat.messages.length}
+                {activeChat?.messages?.length || 0}
               </Text>
             </View>
           )}
@@ -811,8 +903,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(5),
     paddingVertical: hp(2),
     backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     shadowColor: '#000',
