@@ -158,6 +158,7 @@ const OtpVerification = () => {
           (email ? String(email).split('@')[0] : undefined);
         const profilePicture = userPayload?.profilePicture || userPayload?.avatar;
         const normalizedUser: any = {
+          id: userPayload?._id || userPayload?.id || undefined,
           email: email || undefined,
           name: name || undefined,
           profilePicture: profilePicture || undefined,
@@ -170,7 +171,7 @@ const OtpVerification = () => {
             'auth_session_expires_at',
             String(Date.now() + 24 * 60 * 60 * 1000),
           );
-        } catch (_) {}
+        } catch (_) { }
         try {
           const ctxResp = await getAuthContext();
           const ctx = ctxResp?.data?.data;
@@ -182,6 +183,7 @@ const OtpVerification = () => {
               await AsyncStorage.setItem('auth_token', String(nextToken));
             }
             const ctxUser: any = {
+              id: ctx?._id || ctx?.id || normalizedUser.id,
               email: ctx?.email || normalizedUser.email,
               name:
                 ctx?.fname ||
@@ -195,7 +197,7 @@ const OtpVerification = () => {
             userStore.getState().setAuth({ ...ctxUser, token: nextToken });
             await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
           }
-        } catch (_) {}
+        } catch (_) { }
         customToast('success', 'Success', 'Verification successful');
         navigation.reset({
           index: 0,
@@ -231,7 +233,7 @@ const OtpVerification = () => {
             const p = await AsyncStorage.getItem('last_login_password');
             if (p) password = p;
           }
-        } catch (_) {}
+        } catch (_) { }
         if (!email || !password) {
           customToast('error', 'Error', 'Missing email or password for resend');
           setLoading(false);

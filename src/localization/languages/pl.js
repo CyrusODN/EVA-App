@@ -822,6 +822,7 @@ export const pl = {
             "speakerA": "Mówca A:",
             "speakerDefaultContent": "Raz, dwa, trzy, cztery, pięć, sześć.",
             "totalDuration": "Całkowity czas",
+            "emptyTranscription": "Brak dostępnej transkrypcji",
             "customPromptDialog": {
                 "editTitle": "Edytuj własny prompt",
                 "createTitle": "Utwórz własny prompt",

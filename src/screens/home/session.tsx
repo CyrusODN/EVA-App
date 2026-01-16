@@ -8,6 +8,8 @@ import {
   Alert,
   Modal,
   TextInput,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -16,22 +18,22 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-  import {
-    Mic,
-    Square,
-    Upload,
-    QrCode,
-    Clock,
-    FileText,
-    Users,
-    Brain,
-    Trash2,
-    Edit3,
-    RotateCcw,
-    X,
-    Play,
-    Pause,
-  } from 'lucide-react-native';
+import {
+  Mic,
+  Square,
+  Upload,
+  QrCode,
+  Clock,
+  FileText,
+  Users,
+  Brain,
+  Trash2,
+  Edit3,
+  RotateCcw,
+  X,
+  Play,
+  Pause,
+} from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -43,9 +45,23 @@ import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage, Session as SessionType, SessionType as SessionTypeEnum } from '../../utils/sessionStorage';
+import Sound, {
+  PlayBackType,
+  RecordBackType,
+} from 'react-native-nitro-sound';
+import { uploadRecording } from '../../services/authService';
+
+const getRNFS = async (): Promise<any | null> => {
+  try {
+    const mod: any = await import('react-native-fs');
+    return mod?.default || mod;
+  } catch {
+    return null;
+  }
+};
 
 type PickedAudioFile = DocumentPicker.DocumentPickerResponse;
- 
+
 
 const Session = () => {
   const { t } = useTranslation();
@@ -65,6 +81,8 @@ const Session = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
   const [_uploadedFile, setUploadedFile] = useState<PickedAudioFile | null>(null);
+  const [recordedPath, setRecordedPath] = useState<string | null>(null);
+  const [isPlaybackStarted, setIsPlaybackStarted] = useState(false);
   const initialTitle =
     (sessionData && sessionData.title) || t('mainContent.recording.newSession');
   const [sessionTitle, setSessionTitle] = useState(initialTitle);
@@ -73,17 +91,7 @@ const Session = () => {
   const [renameValue, setRenameValue] = useState(initialTitle);
   const [currentSession, setCurrentSession] = useState<SessionType | null>(null);
 
-  useEffect(() => {
-    loadSessionData();
-  }, [sessionData?.id]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadSessionData();
-    }, [])
-  );
-
-  const loadSessionData = async () => {
+  const loadSessionData = useCallback(async () => {
     if (sessionData?.id) {
       const latestSession = await sessionStorage.getSessionById(sessionData.id);
       if (latestSession) {
@@ -94,23 +102,66 @@ const Session = () => {
           const [mins, secs] = latestSession.duration.split(':').map(Number);
           setRecordingTime(mins * 60 + secs);
         }
+        if (latestSession.audioPath) {
+          setRecordedPath(latestSession.audioPath);
+          setIsPlaybackStarted(false);
+          setIsPlaying(false);
+          setPlaybackTime(0);
+        }
       }
     }
-  };
+  }, [sessionData?.id]);
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  useFocusEffect(
+    useCallback(() => {
+      loadSessionData();
+    }, [loadSessionData])
+  );
+
+  useEffect(() => {
+    loadSessionData();
+  }, [loadSessionData]);
+
+  const handlePlayPause = async () => {
+    if (!recordedPath) {
+      return;
+    }
     if (!isPlaying) {
-      const interval = setInterval(() => {
-        setPlaybackTime(prev => {
-          if (prev >= recordingTime) {
-            clearInterval(interval);
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 1;
+      try {
+        Sound.removePlayBackListener();
+        Sound.removePlaybackEndListener();
+        Sound.addPlayBackListener((e: PlayBackType) => {
+          const pos = Number(e.currentPosition) || 0;
+          setPlaybackTime(Math.floor(pos / 1000));
         });
-      }, 1000);
+        Sound.addPlaybackEndListener(() => {
+          setIsPlaying(false);
+          setIsPlaybackStarted(false);
+          setPlaybackTime(0);
+        });
+        if (isPlaybackStarted) {
+          await Sound.resumePlayer();
+        } else {
+          await Sound.startPlayer(recordedPath);
+          setIsPlaybackStarted(true);
+        }
+        setIsPlaying(true);
+      } catch {
+        Alert.alert(
+          t('common.error'),
+          'Audio playback module is not linked. Please run pod install and rebuild.'
+        );
+      }
+    } else {
+      try {
+        await Sound.pausePlayer();
+        setIsPlaying(false);
+      } catch {
+        Alert.alert(
+          t('common.error'),
+          'Failed to pause playback. Please ensure pods are installed.'
+        );
+      }
     }
   };
 
@@ -133,20 +184,13 @@ const Session = () => {
     status: 'new',
   };
 
-  // Timer effect for recording
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-    }
     return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+      Sound.removeRecordBackListener();
+      Sound.removePlayBackListener();
+      Sound.removePlaybackEndListener();
     };
-  }, [isRecording]);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -156,9 +200,41 @@ const Session = () => {
       .padStart(2, '0')}`;
   };
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
+  const handleStartRecording = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Audio Recording Permission',
+            message: 'This app needs access to your microphone to record audio.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
     setRecordingTime(0);
+    try {
+      Sound.addRecordBackListener((e: RecordBackType) => {
+        const pos = Number(e.currentPosition) || 0;
+        setRecordingTime(Math.floor(pos / 1000));
+      });
+      await Sound.startRecorder();
+      setIsRecording(true);
+    } catch (error) {
+      Alert.alert(
+        t('common.error'),
+        'Audio module is not linked. Please run pod install and rebuild iOS.'
+      );
+      setIsRecording(false);
+    }
   };
 
   const handleStopRecording = () => {
@@ -168,13 +244,117 @@ const Session = () => {
       {
         text: t('common.confirm'),
         onPress: async () => {
-          setIsTranscribing(true);
-          const duration = formatTime(recordingTime);
-          await sessionStorage.markSessionAsRecorded(session.id, duration);
-          await loadSessionData();
-          setTimeout(async () => {
-            setIsTranscribing(false);
-          }, 3000);
+          try {
+            console.log('[Session] Stopping recorder...');
+            const result = await Sound.stopRecorder();
+            Sound.removeRecordBackListener();
+
+            const path = typeof result === 'string' ? result : null;
+            console.log('[Session] Recording stopped, original path:', path);
+
+            if (!path) {
+              console.error('[Session] No path returned from stopRecorder');
+              Alert.alert(
+                t('common.error'),
+                'Failed to get recording path. Please try again.'
+              );
+              return;
+            }
+
+            let persistedPath: string | null = null;
+            const RNFS = await getRNFS();
+
+            if (RNFS && path) {
+              try {
+                const dir = `${RNFS.DocumentDirectoryPath}/recordings`;
+                console.log('[Session] Creating recordings directory:', dir);
+
+                try {
+                  await RNFS.mkdir(dir);
+                  console.log('[Session] Directory created/verified');
+                } catch (mkdirError) {
+                  console.log('[Session] Directory may already exist:', mkdirError);
+                }
+
+                const ext = path.includes('.') ? `.${path.split('.').pop()}` : '.m4a';
+                const dest = `${dir}/${session.id}${ext}`;
+                const src = path.startsWith('file://') ? path.replace('file://', '') : path;
+
+                console.log('[Session] Preparing to copy audio file...');
+                console.log('[Session] Source:', src);
+                console.log('[Session] Destination:', dest);
+
+                // Verify source file exists
+                const sourceExists = await RNFS.exists(src);
+                if (!sourceExists) {
+                  console.error('[Session] Source file does not exist:', src);
+                  throw new Error('Source audio file not found');
+                }
+
+                const sourceStats = await RNFS.stat(src);
+                console.log('[Session] Source file size:', sourceStats.size, 'bytes');
+
+                if (sourceStats.size === 0) {
+                  console.error('[Session] Source file is empty');
+                  throw new Error('Recorded audio file is empty');
+                }
+
+                // Check if destination file already exists and delete it
+                const destExists = await RNFS.exists(dest);
+                if (destExists) {
+                  console.log('[Session] Destination file already exists, deleting...');
+                  await RNFS.unlink(dest);
+                }
+
+                // Copy file
+                console.log('[Session] Copying file...');
+                await RNFS.copyFile(src, dest);
+
+                // Verify copy succeeded
+                const destExistsAfterCopy = await RNFS.exists(dest);
+                if (!destExistsAfterCopy) {
+                  console.error('[Session] Copy failed - destination file not created');
+                  throw new Error('Failed to copy audio file');
+                }
+
+                const destStats = await RNFS.stat(dest);
+                console.log('[Session] File copied successfully');
+                console.log('[Session] Destination file size:', destStats.size, 'bytes');
+
+                if (destStats.size === 0) {
+                  console.error('[Session] Destination file is empty');
+                  throw new Error('Copied audio file is empty');
+                }
+
+                persistedPath = dest;
+                console.log('[Session] Audio file persisted at:', persistedPath);
+              } catch (copyError: any) {
+                console.error('[Session] File copy error:', copyError);
+                console.error('[Session] Error message:', copyError?.message);
+                // Don't set persistedPath if copy failed
+                // Will use original path as fallback
+              }
+            }
+
+            const finalPath = persistedPath || path;
+            console.log('[Session] Final audio path to use:', finalPath);
+
+            setRecordedPath(finalPath);
+            const duration = formatTime(recordingTime);
+            console.log('[Session] Recording duration:', duration);
+
+            await sessionStorage.markSessionAsRecorded(session.id, duration, finalPath || undefined);
+            await loadSessionData();
+
+            // Don't auto-transcribe - let user listen first and manually trigger transcription
+            console.log('[Session] Recording saved. User can now listen and transcribe manually.');
+          } catch (error: any) {
+            console.error('[Session] Stop recording error:', error);
+            Alert.alert(
+              t('common.error'),
+              `Failed to stop recording: ${error?.message || 'Unknown error'}`
+            );
+          }
         },
       },
     ]);
@@ -182,25 +362,276 @@ const Session = () => {
 
   const handleFileUpload = async () => {
     try {
+      console.log('[Session] Opening file picker...');
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.audio],
         allowMultiSelection: false,
       });
 
       if (result && result.length > 0) {
-        setUploadedFile(result[0] as PickedAudioFile);
-        setIsTranscribing(true);
-        await sessionStorage.markSessionAsRecorded(session.id, '0:00');
+        const pickedFile = result[0] as PickedAudioFile;
+        console.log('[Session] File picked:', pickedFile.name);
+        console.log('[Session] File URI:', pickedFile.uri);
+        console.log('[Session] File type:', pickedFile.type);
+        console.log('[Session] File size:', pickedFile.size);
+
+        setUploadedFile(pickedFile);
+        const uri = pickedFile.uri || null;
+
+        if (!uri) {
+          console.error('[Session] No URI in picked file');
+          Alert.alert(
+            t('session.error'),
+            'Failed to get file path. Please try again.'
+          );
+          return;
+        }
+
+        let persistedPath: string | null = null;
+        const RNFS = await getRNFS();
+
+        if (RNFS && uri) {
+          try {
+            const dir = `${RNFS.DocumentDirectoryPath}/recordings`;
+            console.log('[Session] Creating recordings directory:', dir);
+
+            try {
+              await RNFS.mkdir(dir);
+              console.log('[Session] Directory created/verified');
+            } catch (mkdirError) {
+              console.log('[Session] Directory may already exist:', mkdirError);
+            }
+
+            const ext = uri.includes('.') ? `.${uri.split('.').pop()}` : '.m4a';
+            const dest = `${dir}/${session.id}${ext}`;
+            const src = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
+
+            console.log('[Session] Preparing to copy uploaded file...');
+            console.log('[Session] Source:', src);
+            console.log('[Session] Destination:', dest);
+
+            // Verify source file exists
+            const sourceExists = await RNFS.exists(src);
+            if (!sourceExists) {
+              console.error('[Session] Source file does not exist:', src);
+              throw new Error('Selected audio file not found');
+            }
+
+            const sourceStats = await RNFS.stat(src);
+            console.log('[Session] Source file size:', sourceStats.size, 'bytes');
+
+            if (sourceStats.size === 0) {
+              console.error('[Session] Source file is empty');
+              throw new Error('Selected audio file is empty');
+            }
+
+            // Check if destination file already exists and delete it
+            const destExistsBefore = await RNFS.exists(dest);
+            if (destExistsBefore) {
+              console.log('[Session] Destination file already exists, deleting...');
+              await RNFS.unlink(dest);
+            }
+
+            // Copy file
+            console.log('[Session] Copying file...');
+            await RNFS.copyFile(src, dest);
+
+            // Verify copy succeeded
+            const destExists = await RNFS.exists(dest);
+            if (!destExists) {
+              console.error('[Session] Copy failed - destination file not created');
+              throw new Error('Failed to copy audio file');
+            }
+
+            const destStats = await RNFS.stat(dest);
+            console.log('[Session] File copied successfully');
+            console.log('[Session] Destination file size:', destStats.size, 'bytes');
+
+            if (destStats.size === 0) {
+              console.error('[Session] Destination file is empty');
+              throw new Error('Copied audio file is empty');
+            }
+
+            persistedPath = dest;
+            console.log('[Session] Audio file persisted at:', persistedPath);
+          } catch (copyError: any) {
+            console.error('[Session] File copy error:', copyError);
+            console.error('[Session] Error message:', copyError?.message);
+            Alert.alert(
+              t('session.error'),
+              `Failed to copy audio file: ${copyError?.message || 'Unknown error'}`
+            );
+            return;
+          }
+        }
+
+        const finalPath = persistedPath || uri;
+        console.log('[Session] Final audio path to use:', finalPath);
+
+        setRecordedPath(finalPath);
+        await sessionStorage.markSessionAsRecorded(session.id, '00:00', finalPath || undefined);
         await loadSessionData();
-        setTimeout(async () => {
-          setIsTranscribing(false);
-        }, 3000);
+
+        // Verify file exists before transcription
+        if (finalPath) {
+          const RNFS = await getRNFS();
+          if (RNFS) {
+            const normalizedPath = finalPath.startsWith('file://')
+              ? finalPath.replace('file://', '')
+              : finalPath;
+
+            try {
+              const exists = await RNFS.exists(normalizedPath);
+              if (!exists) {
+                console.error('[Session] Audio file does not exist for transcription:', normalizedPath);
+                Alert.alert(
+                  t('common.error'),
+                  'Audio file not found. Please try selecting the file again.'
+                );
+                return;
+              }
+
+              const stats = await RNFS.stat(normalizedPath);
+              console.log('[Session] Audio file verified for transcription, size:', stats.size);
+
+              if (stats.size === 0) {
+                console.error('[Session] Audio file is empty');
+                Alert.alert(
+                  t('common.error'),
+                  'Audio file is empty. Please select a different file.'
+                );
+                return;
+              }
+            } catch (error) {
+              console.error('[Session] Error verifying audio file:', error);
+            }
+          }
+
+          console.log('[Session] Starting transcription...');
+          await transcribeAudio(finalPath);
+        } else {
+          console.error('[Session] No audio path available for transcription');
+          Alert.alert(
+            t('session.error'),
+            'Failed to process audio file. Please try again.'
+          );
+        }
       }
     } catch (err: any) {
-      Alert.alert(t('session.error'), t('session.failedToPickAudio'));
+      console.error('[Session] File upload error:', err);
+      // Check if user cancelled (DocumentPicker returns specific error code)
+      if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
+        console.log('[Session] User cancelled file picker');
+      } else {
+        Alert.alert(t('session.error'), t('session.failedToPickAudio'));
+      }
     }
   };
 
+  const transcribeAudio = async (path: string) => {
+    console.log('[Session] Starting transcription for path:', path);
+
+    // Check if we have a sessionId from the server
+    if (!session.sessionId) {
+      Alert.alert(
+        t('common.error'),
+        'Session ID not found. Please try creating a new session.'
+      );
+      return;
+    }
+
+    setIsTranscribing(true);
+    try {
+      console.log('[Session] Uploading audio to server...');
+      console.log('[Session] Session ID:', session.sessionId);
+      console.log('[Session] Audio path:', path);
+
+      // Get file name and type
+      const fileName = path.split('/').pop() || 'recording.m4a';
+      const fileType = fileName.endsWith('.m4a') ? 'audio/m4a' : 'audio/mp4';
+
+      // Upload the recording
+      const response = await uploadRecording(session.sessionId, {
+        uri: path,
+        type: fileType,
+        name: fileName,
+      });
+
+      console.log('[Session] ===== UPLOAD RESPONSE =====');
+      console.log('[Session] Response status:', response.status);
+      console.log('[Session] Response data:', JSON.stringify(response.data, null, 2));
+      console.log('[Session] ===== END RESPONSE =====');
+
+      // Check if the request was successful
+      if (response.data?.success === true) {
+        console.log('[Session] Upload successful!');
+
+        // Extract event data from response
+        const eventData = response.data.data?.event;
+
+        if (eventData?.transcription) {
+          const { text, utterances } = eventData.transcription;
+          console.log('[Session] Transcription text:', text);
+          console.log('[Session] Utterances:', utterances);
+
+          // Save transcript to local storage
+          if (text) {
+            await sessionStorage.updateSessionTranscript(session.id, text, utterances || []);
+            await loadSessionData();
+
+            // Navigate to transcription completed screen
+            const updatedSession = await sessionStorage.getSessionById(session.id);
+            console.log('[Session] Navigating to transcription screen...');
+            navigation.replace('transcriptionCompleted', {
+              sessionData: updatedSession,
+              sessionType: session.type,
+            });
+          } else {
+            console.log('[Session] No transcription text in response');
+            customToast('error', 'Warning', 'Transcription completed but no text was returned.');
+          }
+        } else {
+          console.log('[Session] No transcription data in response yet - will be processed asynchronously');
+
+          // Still navigate to transcription screen so user can wait for transcription
+          const updatedSession = await sessionStorage.getSessionById(session.id);
+          console.log('[Session] Navigating to transcription screen (processing)...');
+
+          customToast('info', 'Processing', 'Audio uploaded successfully. Transcription is being processed.');
+
+          navigation.replace('transcriptionCompleted', {
+            sessionData: updatedSession,
+            sessionType: session.type,
+          });
+        }
+      } else {
+        // Handle unsuccessful response
+        const errorMessage = response.data?.message || 'Upload failed';
+        console.error('[Session] Upload failed:', errorMessage);
+        Alert.alert(
+          t('common.error'),
+          errorMessage
+        );
+      }
+    } catch (e: any) {
+      console.error('[Session] Transcription error:', e);
+      console.error('[Session] Error message:', e?.message);
+      console.error('[Session] Error response:', e?.response?.data);
+
+      const msg = String(e?.message || '');
+
+      Alert.alert(
+        t('common.error'),
+        `Transcription failed: ${msg}\n\nPlease check your internet connection and try again.`,
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: 'Retry', onPress: () => transcribeAudio(path) }
+        ]
+      );
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
 
 
   const getSessionIcon = () => {
@@ -286,7 +717,7 @@ const Session = () => {
             <Text variant="bodyMedium" style={styles.completedDescription}>
               {t('session.recordingCompleteDescription')}
             </Text>
-            
+
             <View style={styles.timerContainer}>
               <Clock size={20} color={colors.onSecondary} />
               <Text variant="titleMedium" style={{ color: colors.onSecondary }}>
@@ -312,12 +743,50 @@ const Session = () => {
               </LinearGradient>
             </TouchableOpacity>
 
-            <PrimaryButton
-              text={t('session.generateNotes')}
-              onPress={handleGenerateNotes}
-              width={wp(75)}
-              iconComponent={FileText}
-            />
+            {/* Transcribe Audio Button - only show if not transcribed yet */}
+            {!session.hasTranscription && recordedPath && (
+              <PrimaryButton
+                text={isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
+                onPress={async () => {
+                  if (recordedPath && !isTranscribing) {
+                    // Verify file before transcription
+                    const RNFS = await getRNFS();
+                    if (RNFS) {
+                      const normalizedPath = recordedPath.startsWith('file://')
+                        ? recordedPath.replace('file://', '')
+                        : recordedPath;
+
+                      try {
+                        const exists = await RNFS.exists(normalizedPath);
+                        if (!exists) {
+                          Alert.alert(
+                            t('common.error'),
+                            'Audio file not found. Please try recording again.'
+                          );
+                          return;
+                        }
+
+                        const stats = await RNFS.stat(normalizedPath);
+                        if (stats.size === 0) {
+                          Alert.alert(
+                            t('common.error'),
+                            'Audio file is empty. Please try recording again.'
+                          );
+                          return;
+                        }
+                      } catch (error) {
+                        console.error('[Session] Error verifying audio file:', error);
+                      }
+                    }
+
+                    await transcribeAudio(recordedPath);
+                  }
+                }}
+                width={wp(75)}
+                iconComponent={FileText}
+                disabled={isTranscribing}
+              />
+            )}
           </View>
         </View>
       );

@@ -53,6 +53,7 @@ const Profile = () => {
           await AsyncStorage.setItem('auth_token', String(nextToken));
         }
         const ctxUser: any = {
+          id: ctx?._id || ctx?.id || storeUser?.id,
           email: ctx?.email || '',
           name:
             ctx?.fname ||
@@ -65,7 +66,7 @@ const Profile = () => {
         userStore.getState().setAuth({ ...ctxUser, token: nextToken });
         await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
         if (mounted) setUser(ctxUser);
-      } catch (_) {}
+      } catch (_) { }
     };
     load();
     return () => {
@@ -160,7 +161,7 @@ const Profile = () => {
           await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
           setUser(ctxUser);
         }
-      } catch {}
+      } catch { }
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
@@ -230,7 +231,7 @@ const Profile = () => {
           await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
           setUser(ctxUser);
         }
-      } catch {}
+      } catch { }
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
@@ -251,7 +252,7 @@ const Profile = () => {
       if (token) setAuthToken(token);
       try {
         await api.delete('/auth/profile-image');
-      } catch {}
+      } catch { }
       const cleared = {
         ...(user || {}),
         profilePicture: '',
@@ -306,7 +307,7 @@ const Profile = () => {
           setAuthToken(null);
           //@ts-ignore
           navigation.reset({ index: 0, routes: [{ name: 'login' }] });
-        } catch {}
+        } catch { }
       })();
     } catch (error: any) {
       const message =

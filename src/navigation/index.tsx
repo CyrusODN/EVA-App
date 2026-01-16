@@ -137,87 +137,87 @@ const CustomTabBar = ({
         }}
       >
         {state.routes.map((route, index) => {
-            const { options } = descriptors[route.key as string];
-            const isFocused = state.index === index;
-            const icon = options.tabBarIcon;
+          const { options } = descriptors[route.key as string];
+          const isFocused = state.index === index;
+          const icon = options.tabBarIcon;
 
-            return (
-              <Pressable
-                key={route.key}
-                onPress={() => handleTabPress(route, isFocused)}
+          return (
+            <Pressable
+              key={route.key}
+              onPress={() => handleTabPress(route, isFocused)}
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: hp(1),
+                position: 'relative',
+              }}
+              android_ripple={{
+                color: 'rgba(255, 255, 255, 0.2)',
+                borderless: true,
+                radius: wp(15),
+              }}
+            >
+              <View
                 style={{
-                  flex: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  paddingVertical: hp(1),
                   position: 'relative',
                 }}
-                android_ripple={{
-                  color: 'rgba(255, 255, 255, 0.2)',
-                  borderless: true,
-                  radius: wp(15),
-                }}
               >
+                {/* Icon */}
                 <View
                   style={{
+                    marginBottom: hp(0.3),
                     alignItems: 'center',
                     justifyContent: 'center',
-                    position: 'relative',
                   }}
                 >
-                  {/* Icon */}
-                  <View
-                    style={{
-                      marginBottom: hp(0.3),
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {icon &&
-                      icon({
-                        focused: isFocused,
-                        color: isFocused
-                          ? '#ffffff'
-                          : 'rgba(255, 255, 255, 0.65)',
-                        size: isFocused ? hp(3.2) : hp(2.8),
-                      })}
-                  </View>
-
-                  {/* Label */}
-                  <Text
-                    style={{
-                      fontSize: hp(1.2),
-                      fontWeight: isFocused ? '600' : '400',
+                  {icon &&
+                    icon({
+                      focused: isFocused,
                       color: isFocused
                         ? '#ffffff'
                         : 'rgba(255, 255, 255, 0.65)',
-                      marginTop: hp(0.2),
-                      letterSpacing: 0.2,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {tabLabels[route.name as keyof typeof tabLabels] || route.name}
-                  </Text>
-
-                  {/* Active background highlight */}
-                  {isFocused && (
-                    <Animated.View
-                      style={{
-                        position: 'absolute',
-                        top: -hp(1.5),
-                        left: -wp(8),
-                        right: -wp(8),
-                        bottom: -hp(1),
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: 200,
-                        zIndex: -1,
-                      }}
-                    />
-                  )}
+                      size: isFocused ? hp(3.2) : hp(2.8),
+                    })}
                 </View>
-              </Pressable>
-            );
-          })}
+
+                {/* Label */}
+                <Text
+                  style={{
+                    fontSize: hp(1.2),
+                    fontWeight: isFocused ? '600' : '400',
+                    color: isFocused
+                      ? '#ffffff'
+                      : 'rgba(255, 255, 255, 0.65)',
+                    marginTop: hp(0.2),
+                    letterSpacing: 0.2,
+                  }}
+                  numberOfLines={1}
+                >
+                  {tabLabels[route.name as keyof typeof tabLabels] || route.name}
+                </Text>
+
+                {/* Active background highlight */}
+                {isFocused && (
+                  <Animated.View
+                    style={{
+                      position: 'absolute',
+                      top: -hp(1.5),
+                      left: -wp(8),
+                      right: -wp(8),
+                      bottom: -hp(1),
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: 200,
+                      zIndex: -1,
+                    }}
+                  />
+                )}
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
     </LinearGradient>
   );
@@ -336,32 +336,35 @@ const Navigation = () => {
           screenOptions={{ headerShown: false }}
           initialRouteName={initialRoute}
         >
-        <Stack.Screen name="login" component={screens.Login} />
-        <Stack.Screen name="signUp" component={screens.SignUp} />
-        <Stack.Screen
-          name="forgotPassword"
-          component={screens.ForgotPassword}
-        />
-        <Stack.Screen
-          name="otpVerification"
-          component={screens.OtpVerification}
-        />
-        <Stack.Screen name="tabs" component={BottomTabNavigator} />
-        <Stack.Screen name="session" component={screens.Session} />
-        <Stack.Screen name="discharge" component={screens.Discharge} />
-        <Stack.Screen name="consult" component={screens.Consult} />
-        <Stack.Screen name="pathFinder" component={screens.Pathfinder} />
-        <Stack.Screen name="pharmcoedia" component={screens.Pharmcoedia} />
-        <Stack.Screen name="prescreening" component={screens.Prescreening} />
-        <Stack.Screen name="report" component={screens.Report} />
-        <Stack.Screen name="research" component={screens.Research} />
-        <Stack.Screen name="settings" component={screens.Settings} />
-        <Stack.Screen name="subscription" component={screens.Subscription} />
-        <Stack.Screen name="transactions" component={screens.Transactions} />
-        <Stack.Screen
-          name="transcriptionCompleted"
-          component={screens.TranscriptionComplete}
-        />
+          <Stack.Screen name="login" component={screens.Login} />
+          <Stack.Screen name="signUp" component={screens.SignUp} />
+          <Stack.Screen
+            name="forgotPassword"
+            component={screens.ForgotPassword}
+          />
+          <Stack.Screen
+            name="otpVerification"
+            component={screens.OtpVerification}
+          />
+          <Stack.Screen name="tabs" component={BottomTabNavigator} />
+          <Stack.Screen name="session" component={screens.Session} />
+          <Stack.Screen name="discharge" component={screens.Discharge} />
+          <Stack.Screen name="consult" component={screens.Consult} />
+          <Stack.Screen name="pathFinder" component={screens.Pathfinder} />
+          <Stack.Screen name="pharmcoedia" component={screens.Pharmcoedia} />
+          <Stack.Screen name="prescreening" component={screens.Prescreening} />
+          <Stack.Screen name="report" component={screens.Report} />
+          <Stack.Screen name="research" component={screens.Research} />
+          <Stack.Screen name="researchScholar" component={screens.ResearchScholar} />
+          <Stack.Screen name="researchProtocol" component={screens.ResearchProtocol} />
+          <Stack.Screen name="researchProtocolPro" component={screens.ResearchProtocolPro} />
+          <Stack.Screen name="settings" component={screens.Settings} />
+          <Stack.Screen name="subscription" component={screens.Subscription} />
+          <Stack.Screen name="transactions" component={screens.Transactions} />
+          <Stack.Screen
+            name="transcriptionCompleted"
+            component={screens.TranscriptionComplete}
+          />
         </Stack.Navigator>
       )}
     </NavigationContainer>

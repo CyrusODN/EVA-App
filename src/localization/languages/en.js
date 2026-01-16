@@ -809,6 +809,7 @@ export const en = {
 			"speakerA": "Speaker A:",
 			"speakerDefaultContent": "Raz, dwa, trzy, cztery, pięć, sześć.",
 			"totalDuration": "Total Duration",
+			"emptyTranscription": "No transcription available yet",
 			"customPromptDialog": {
 				"editTitle": "Edit Custom Prompt",
 				"createTitle": "Create Custom Prompt",

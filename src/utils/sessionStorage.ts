@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createEvent } from '../services/authService';
 
 export type SessionType = 'patient' | 'meeting' | 'lecture';
 export type SessionStatus = 'new' | 'recorded' | 'transcribed' | 'completed';
 
 export interface Session {
   id: string;
+  sessionId?: string; // Backend event ID from API
   title: string;
   type: SessionType;
   date: string;
@@ -12,6 +14,10 @@ export interface Session {
   hasRecording: boolean;
   hasTranscription: boolean;
   status: SessionStatus;
+  transcriptText?: string | null;
+  utterances?: any[] | null;
+  audioPath?: string | null;
+  generatedNotes?: string | null; // Generated notes from AI
 }
 
 const STORAGE_KEY = 'remedy_ai_sessions';
@@ -31,13 +37,13 @@ export const sessionStorage = {
     try {
       const sessions = await this.getAllSessions();
       const existingIndex = sessions.findIndex(s => s.id === session.id);
-      
+
       if (existingIndex >= 0) {
         sessions[existingIndex] = session;
       } else {
         sessions.push(session);
       }
-      
+
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
     } catch (error) {
       console.error('Error saving session to storage:', error);
@@ -58,8 +64,27 @@ export const sessionStorage = {
   async deleteSession(id: string): Promise<void> {
     try {
       const sessions = await this.getAllSessions();
+      const sessionToDelete = sessions.find(s => s.id === id);
+
+      // Delete audio file if it exists
+      if (sessionToDelete?.audioPath) {
+        try {
+          const RNFS = require('react-native-fs');
+          const fileExists = await RNFS.exists(sessionToDelete.audioPath);
+          if (fileExists) {
+            await RNFS.unlink(sessionToDelete.audioPath);
+            console.log('[SessionStorage] Deleted audio file:', sessionToDelete.audioPath);
+          }
+        } catch (fileError) {
+          console.error('[SessionStorage] Failed to delete audio file:', fileError);
+          // Continue with session deletion even if file deletion fails
+        }
+      }
+
+      // Remove session from AsyncStorage
       const filteredSessions = sessions.filter(s => s.id !== id);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filteredSessions));
+      console.log('[SessionStorage] Session deleted from storage:', id);
     } catch (error) {
       console.error('Error deleting session from storage:', error);
       throw error;
@@ -99,9 +124,34 @@ export const sessionStorage = {
       hasRecording: false,
       hasTranscription: false,
       status: initialStatus,
+      audioPath: null,
     };
 
+    // Call the API to create the event on the server
+    try {
+      const response = await createEvent({
+        type: type,
+        title: title,
+        date: newSession.date,
+      });
+
+      console.log('[SessionStorage] Event created on server successfully');
+      console.log('[SessionStorage] Server response:', response.data);
+
+      // Store the server-generated ID and other data
+      if (response.data?.data?._id) {
+        newSession.sessionId = response.data.data._id;
+        console.log('[SessionStorage] session ID:', newSession.sessionId);
+      }
+    } catch (error) {
+      console.error('[SessionStorage] Failed to create event on server:', error);
+      // Don't throw the error - we still want to create the session locally
+      // even if the API call fails
+    }
+
+    // Save the session with the sessionId if available
     await this.saveSession(newSession);
+
     return newSession;
   },
 
@@ -112,15 +162,15 @@ export const sessionStorage = {
     const session = await this.getSessionById(id);
     if (session) {
       session.status = status;
-      
+
       if (status === 'recorded' || status === 'transcribed' || status === 'completed') {
         session.hasRecording = true;
       }
-      
+
       if (status === 'transcribed' || status === 'completed') {
         session.hasTranscription = true;
       }
-      
+
       await this.saveSession(session);
     }
   },
@@ -134,12 +184,15 @@ export const sessionStorage = {
     }
   },
 
-  async markSessionAsRecorded(id: string, duration: string): Promise<void> {
+  async markSessionAsRecorded(id: string, duration: string, audioPath?: string): Promise<void> {
     const session = await this.getSessionById(id);
     if (session) {
       session.status = 'recorded';
       session.duration = duration;
       session.hasRecording = true;
+      if (audioPath !== undefined) {
+        session.audioPath = audioPath;
+      }
       await this.saveSession(session);
     }
   },
@@ -155,10 +208,73 @@ export const sessionStorage = {
   async resetSession(id: string): Promise<void> {
     const session = await this.getSessionById(id);
     if (session) {
+      // Preserve the sessionId (backend event ID) when resetting
+      const preservedSessionId = session.sessionId;
+
+      // Delete audio file if it exists
+      if (session.audioPath) {
+        try {
+          const RNFS = require('react-native-fs');
+          const fileExists = await RNFS.exists(session.audioPath);
+          if (fileExists) {
+            await RNFS.unlink(session.audioPath);
+            console.log('[SessionStorage] Deleted audio file during reset:', session.audioPath);
+          }
+        } catch (fileError) {
+          console.error('[SessionStorage] Failed to delete audio file during reset:', fileError);
+          // Continue with reset even if file deletion fails
+        }
+      }
+
       session.status = 'new';
       session.duration = null;
       session.hasRecording = false;
       session.hasTranscription = false;
+      session.transcriptText = null;
+      session.audioPath = null;
+      session.utterances = null;
+      session.generatedNotes = null; // Clear generated notes
+
+      // Restore the sessionId
+      session.sessionId = preservedSessionId;
+
+      await this.saveSession(session);
+      console.log('[SessionStorage] Session reset:', id);
+    }
+  },
+
+  async updateSessionTranscript(id: string, transcriptText: string, utterances?: any[]): Promise<void> {
+    const session = await this.getSessionById(id);
+    if (session) {
+      // Delete audio file after transcription since we no longer need it
+      if (session.audioPath) {
+        try {
+          const RNFS = require('react-native-fs');
+          const fileExists = await RNFS.exists(session.audioPath);
+          if (fileExists) {
+            await RNFS.unlink(session.audioPath);
+            console.log('[SessionStorage] ✅ Deleted audio file after transcription:', session.audioPath);
+          }
+        } catch (fileError) {
+          console.error('[SessionStorage] ❌ Failed to delete audio file after transcription:', fileError);
+          // Continue with transcript save even if file deletion fails
+        }
+      }
+
+      session.transcriptText = transcriptText;
+      session.utterances = utterances || null;
+      session.status = 'transcribed';
+      session.hasTranscription = true;
+      session.audioPath = null; // Clear audio path since file is deleted
+      await this.saveSession(session);
+      console.log('[SessionStorage] 💾 Transcript saved and audio file removed for session:', id);
+    }
+  },
+
+  async updateSessionNotes(id: string, generatedNotes: string): Promise<void> {
+    const session = await this.getSessionById(id);
+    if (session) {
+      session.generatedNotes = generatedNotes;
       await this.saveSession(session);
     }
   },

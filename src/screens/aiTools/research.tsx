@@ -183,7 +183,7 @@ const RESEARCH_TOOLS_DATA = [
       'remediusResearch.main.scholar.features.2',
       'remediusResearch.main.scholar.features.3',
     ],
-    screenName: 'ScholarScreen',
+    screenName: 'researchScholar',
   },
   {
     id: 'protocol',
@@ -199,7 +199,7 @@ const RESEARCH_TOOLS_DATA = [
       'remediusResearch.main.protocol.features.2',
       'remediusResearch.main.protocol.features.3',
     ],
-    screenName: 'ProtocolScreen',
+    screenName: 'researchProtocol',
   },
   {
     id: 'pro',
@@ -215,7 +215,7 @@ const RESEARCH_TOOLS_DATA = [
       'remediusResearch.main.pro.features.2',
       'remediusResearch.main.pro.features.3',
     ],
-    screenName: 'ProtocolProScreen',
+    screenName: 'researchProtocolPro',
   },
 ];
 
@@ -234,8 +234,8 @@ const Research = () => {
   };
 
   const handleStartExploring = (tool: (typeof RESEARCH_TOOLS_DATA)[0]) => {
-    // navigation.navigate(tool.screenName);
-    console.log(`Start exploring ${tool.screenName}`);
+    // Navigate to the screen specified in the tool's screenName
+    navigation.navigate(tool.screenName as never);
   };
 
   return (

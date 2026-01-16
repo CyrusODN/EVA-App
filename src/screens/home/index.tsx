@@ -83,9 +83,9 @@ const Home = () => {
         if (svcToken) {
           try {
             await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
-          } catch (_) {}
+          } catch (_) { }
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
 
     loadEvents();
@@ -102,12 +102,19 @@ const Home = () => {
     setEvents(allSessions);
   };
 
-  const filteredEvents: EventItem[] = events.filter((event: EventItem) => {
-    if (activeTab === 'patients') return event.type === 'patient';
-    if (activeTab === 'meetings') return event.type === 'meeting';
-    if (activeTab === 'lectures') return event.type === 'lecture';
-    return true;
-  });
+  const filteredEvents: EventItem[] = events
+    .filter((event: EventItem) => {
+      if (activeTab === 'patients') return event.type === 'patient';
+      if (activeTab === 'meetings') return event.type === 'meeting';
+      if (activeTab === 'lectures') return event.type === 'lecture';
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort by date in descending order (newest first)
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA;
+    });
 
   useEffect(() => {
     (async () => {
@@ -122,9 +129,9 @@ const Home = () => {
         if (svcToken) {
           try {
             await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
-          } catch (_) {}
+          } catch (_) { }
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
   }, []);
 
@@ -212,10 +219,10 @@ const Home = () => {
   const handleCreateVisit = async (visitName: string) => {
     await sessionStorage.createSession(visitName, visitDialogType);
     setShowVisitDialog(false);
-    
+
     // Refresh events list to show the new session
     await loadEvents();
-    
+
     // Show toast notification
     customToast('success', t('common.success'), `${visitName} created`);
   };
@@ -440,8 +447,8 @@ const Home = () => {
                               eventType === 'patient'
                                 ? '#53A0CD'
                                 : eventType === 'meeting'
-                                ? '#10b981'
-                                : '#8b5cf6',
+                                  ? '#10b981'
+                                  : '#8b5cf6',
                           },
                         ]}
                       />
@@ -478,7 +485,7 @@ const Home = () => {
           >
             <Calendar size={20} color={colors.primary} />
           </TouchableOpacity>
-        </View>
+        </View> 
 
         {/* Search Section */}
         <View style={styles.searchSection}>

@@ -12,6 +12,9 @@ import Pharmcoedia from './aiTools/pharmcoedia';
 import Prescreening from './aiTools/prescreening';
 import Report from './aiTools/report';
 import Research from './aiTools/research';
+import ResearchScholar from './researchAi/researchScholar';
+import ResearchProtocol from './researchAi/researchProtocol';
+import ResearchProtocolPro from './researchAi/researchProtocolPro';
 import Settings from './profile/settings';
 import Subscription from './profile/subscription';
 import Transactions from './profile/transactions';
@@ -33,6 +36,9 @@ export const screens = {
   Prescreening,
   Report,
   Research,
+  ResearchScholar,
+  ResearchProtocol,
+  ResearchProtocolPro,
   Settings,
   Subscription,
   Transactions,

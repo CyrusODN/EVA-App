@@ -549,6 +549,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: hp(1.5),
+    marginTop: hp(1),
   },
   textInput: {
     borderWidth: 1,
