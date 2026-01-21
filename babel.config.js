@@ -1,7 +1,15 @@
 module.exports = {
   presets: [
     'module:@react-native/babel-preset',
-    'babel-preset-expo',
+    [
+      'babel-preset-expo',
+      {
+        // Disable JSX runtime to avoid conflicts with React Native preset
+        jsxRuntime: 'classic',
+        // Use lazy imports for better performance
+        lazyImports: true,
+      },
+    ],
   ],
   plugins: [
     [
