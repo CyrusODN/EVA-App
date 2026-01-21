@@ -20,6 +20,11 @@ import Subscription from './profile/subscription';
 import Transactions from './profile/transactions';
 import TranscriptionComplete from './home/transcriptionCompleted';
 import OtpVerification from './auth/otpVerification';
+import Onboarding from './onboarding';
+import ClinicalWorkspace from './aiTools/ClinicalWorkspace';
+import ConsultChat from './aiTools/consultChat';
+import PharmacopediaChat from './aiTools/pharmacopediaChat';
+import ResearchChat from './aiTools/researchChat';
  
 export const screens = {
   Login,
@@ -44,4 +49,9 @@ export const screens = {
   Transactions,
   TranscriptionComplete,
   OtpVerification,
+  Onboarding,
+  ClinicalWorkspace,
+  ConsultChat,
+  PharmacopediaChat,
+  ResearchChat,
 };

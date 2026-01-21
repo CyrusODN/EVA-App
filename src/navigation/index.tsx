@@ -365,6 +365,13 @@ const Navigation = () => {
             name="transcriptionCompleted"
             component={screens.TranscriptionComplete}
           />
+          {/* Onboarding */}
+          <Stack.Screen name="onboarding" component={screens.Onboarding} />
+          {/* Clinical Workspace & Chat Interfaces */}
+          <Stack.Screen name="clinicalWorkspace" component={screens.ClinicalWorkspace} />
+          <Stack.Screen name="consultChat" component={screens.ConsultChat} />
+          <Stack.Screen name="pharmacopediaChat" component={screens.PharmacopediaChat} />
+          <Stack.Screen name="researchChat" component={screens.ResearchChat} />
         </Stack.Navigator>
       )}
     </NavigationContainer>
