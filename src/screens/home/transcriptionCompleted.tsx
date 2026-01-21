@@ -1,5 +1,5 @@
-/* eslint-disable react/no-unstable-nested-components */
-import React, { useState, useEffect, useRef } from 'react';
+/* eslint-disable react-native/no-inline-styles */
+import React, { useState, useEffect } from 'react';
 import { connectSocket, disconnectSocket, getSocket } from '../../services/socketService';
 import userStore from '../../store/user';
 import {
@@ -9,6 +9,13 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
+  Platform,
+  StatusBar,
+  Clipboard,
+  LayoutAnimation,
+  UIManager,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -17,7 +24,6 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import LinearGradient from 'react-native-linear-gradient';
 import {
   FileText,
   Users,
@@ -25,34 +31,103 @@ import {
   Edit3,
   Trash2,
   RotateCcw,
-  Clock,
   Plus,
   Check,
   X,
   Search,
   MessageSquare,
-  Lock,
-  Copy,
-  Sparkles,
+  ChevronRight,
+  ChevronLeft,
+  Camera,
+  Type,
+  Clipboard as ClipboardIcon,
+  PhoneCall,
 } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
-import Header from '../../components/header';
+import CustomTemplateManager, {
+  CustomTemplate,
+} from '../../components/customTemplateManager';
 import { colors } from '../../constants/colors';
-import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
-import { generateNotes, resetEvent, deleteEvent, updateEvent } from '../../services/authService';
-import { createNotesPrompt, getNotesPrompts, deleteNotesPrompt, type NotesPrompt } from '../../services/promptsApi';
-import Clipboard from '@react-native-clipboard/clipboard';
+import useOnboardingStore from '../../store/onboarding';
+
+// Enable LayoutAnimation for Android
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 Dimensions.get('window');
+
+// Design System Constants
+const DESIGN_TOKENS = {
+  fonts: {
+    regular: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    medium: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    semibold: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    displaySemibold: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+  },
+  colors: {
+    primary: '#46B7C6',
+    text: '#000000',
+    textSecondary: '#A6A6A6',
+    textTertiary: '#86868b',
+    border: '#E5E5E5',
+    borderLight: '#F0F0F0',
+    background: '#FFFFFF',
+    backgroundSecondary: '#FAFAFA',
+    backgroundTertiary: '#F8F8F8',
+    success: '#10b981',
+    error: '#ef4444',
+  },
+  borderRadius: {
+    small: 6,
+    medium: 8,
+    large: 10,
+    xlarge: 12,
+    xxlarge: 16,
+  },
+  shadows: {
+    small: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    medium: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    large: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+  },
+};
 
 const TranscriptionComplete = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
+
+  // Get onboarding defaults
+  const {
+    defaultSpecialization,
+    defaultNoteLength,
+    defaultVisitType,
+  } = useOnboardingStore();
 
   // Get session data from route params
   const { sessionData, sessionType } = ((route as any).params || {}) as {
@@ -60,10 +135,16 @@ const TranscriptionComplete = () => {
     sessionType?: string;
   };
 
-  // State management
+  // --- NEW ARCHITECTURE STATE ---
+  const [generationMode, setGenerationMode] = useState<'standard' | 'custom'>('standard');
+  // ------------------------------
+
+  // State management - initialized with onboarding defaults
   const [noteType, setNoteType] = useState<string | null>(null);
-  const [selectedSpecialization, setSelectedSpecialization] = useState<string>('');
-  const [visitType, setVisitType] = useState<string>('');
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
+    defaultSpecialization || ''
+  );
+  const [visitType, setVisitType] = useState<string>(defaultVisitType || '');
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -78,60 +159,73 @@ const TranscriptionComplete = () => {
     Array<{ _id: string; title: string; date: Date | string }>
   >([]);
   const [visitSearchQuery, setVisitSearchQuery] = useState<string>('');
+  const [manualFollowUpText, setManualFollowUpText] = useState<string>('');
+  const [showManualTextModal, setShowManualTextModal] = useState<boolean>(false);
+  const [tempManualText, setTempManualText] = useState<string>('');
+  // removed unused followUpPhoto state
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
-  const [generatedNotes, setGeneratedNotes] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedNote, setGeneratedNote] = useState<string>('');
+  const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
   const [noteLength, setNoteLength] = useState<'Small' | 'Medium' | 'Large'>(
-    'Medium',
+    defaultNoteLength || 'Medium',
   );
+
+  // Custom Template State
   const [customNote, setCustomNote] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null,
+  );
+  const [selectedTemplateTitle, setSelectedTemplateTitle] = useState<string>('');
+
   const noteLengthOptions: Array<'Small' | 'Medium' | 'Large'> = [
     'Small',
     'Medium',
     'Large',
   ];
-  const [showCustomPromptModal, setShowCustomPromptModal] = useState(false);
-  const [customPromptTitle, setCustomPromptTitle] = useState<string>('');
-  const [savedPrompts, setSavedPrompts] = useState<NotesPrompt[]>([]); // Saved custom prompts
-  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null); // Currently selected prompt
-  const isCustomLocked = noteType === 'custom' || !!customNote.trim();
-  const notesScrollViewRef = useRef<any>(null);
-  const mainScrollViewRef = useRef<any>(null);
-  const notesSectionRef = useRef<any>(null);
-  const generatedNotesRef = useRef<string>(''); // Ref to track latest notes for socket callbacks
-  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
-  const [regenerateInstructions, setRegenerateInstructions] = useState<string>('');
+  const specializationOptions = [
+    { key: 'Psychiatry', label: t('mainContent.transcriptionComplete.specialization.psychiatry') },
+    { key: 'Child Psychiatry', label: t('mainContent.transcriptionComplete.specialization.childPsychiatry') },
+    { key: 'Surgery', label: t('mainContent.transcriptionComplete.specialization.surgery') },
+    { key: 'Smart Select', label: t('mainContent.transcriptionComplete.specialization.smartSelect') },
+  ];
+  const visitTypeOptions = [
+    { key: 'First Visit', label: t('mainContent.transcriptionComplete.visitType.firstVisit') },
+    { key: 'Follow-up', label: t('mainContent.transcriptionComplete.visitType.followUp') },
+  ];
+
+  // Helper to switch modes with animation
+  const handleModeChange = (mode: 'standard' | 'custom') => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setGenerationMode(mode);
+
+    // Optional: Reset logic when switching if needed
+    if (mode === 'standard') {
+      setNoteType('SOAP');
+    } else {
+      setNoteType('custom');
+    }
+  };
 
   const handleClearCustomPrompt = () => {
     setCustomNote('');
-    setCustomPromptTitle('');
+    setSelectedTemplateId(null);
+    setSelectedTemplateTitle('');
     setNoteType(null);
     customToast('success', t('common.success'), 'Custom prompt cleared');
   };
 
-  const handleDeletePrompt = async (promptId: string, promptTitle: string) => {
-    try {
-      await deleteNotesPrompt(promptId);
-
-      // Remove from local state
-      setSavedPrompts(prev => prev.filter(p => p._id !== promptId));
-
-      // Clear selection if deleted prompt was selected
-      if (selectedPromptId === promptId) {
-        setSelectedPromptId(null);
-        setCustomNote('');
-        setCustomPromptTitle('');
-        setNoteType(null);
-      }
-
-      customToast('success', 'Deleted', `"${promptTitle}" has been deleted`);
-      console.log('[TranscriptionComplete] Prompt deleted:', promptId);
-    } catch (error: any) {
-      console.error('[TranscriptionComplete] Failed to delete prompt:', error);
-      customToast('error', 'Error', error?.message || 'Failed to delete prompt');
+  const handleSelectTemplate = (template: CustomTemplate | null) => {
+    if (!template) {
+      handleClearCustomPrompt();
+      return;
     }
+    setSelectedTemplateId(template.id);
+    setSelectedTemplateTitle(template.title);
+    setNoteType('custom');
+    setCustomNote(template.content);
   };
 
   // Mock session data if not provided
@@ -146,215 +240,79 @@ const TranscriptionComplete = () => {
     status: 'transcribed',
   };
 
-  // State for available sessions to use as follow-up visits
-  const [availableSessions, setAvailableSessions] = useState<any[]>([]);
+  const isNoteReady = generatedNote.trim().length > 0;
 
-  // Load available sessions for follow-up visits
-  useEffect(() => {
-    const loadSessions = async () => {
-      try {
-        const allSessions = await sessionStorage.getAllSessions();
-        // Filter to only show sessions with transcriptions, same type, excluding current session
-        const filteredSessions = allSessions
-          .filter(s =>
-            s.type === session.type &&
-            s.id !== session.id &&
-            s.hasTranscription === true
-          )
-          .map(s => ({
-            _id: s.id,
-            title: s.title,
-            date: new Date(s.date),
-          }));
-        setAvailableSessions(filteredSessions);
-        console.log('[TranscriptionComplete] Loaded available sessions for follow-up:', filteredSessions.length);
-      } catch (error) {
-        console.error('[TranscriptionComplete] Failed to load sessions:', error);
-      }
-    };
-    loadSessions();
-  }, [session.type, session.id]);
+  // Mock follow-up visits data
+  const mockFollowUpVisits = [
+    {
+      _id: '1',
+      title: 'Wizyta kontrolna - JS45',
+      date: new Date('2024-01-15'),
+      mode: 'standard',
+      label: 'Psychiatry • First Visit',
+    },
+    {
+      _id: '2',
+      title: 'Konsultacja - JS45',
+      date: new Date('2024-01-20'),
+      mode: 'custom',
+      label: 'Custom • Psychiatry - First Visit',
+    },
+    {
+      _id: '3',
+      title: 'Badania kontrolne - JS45',
+      date: new Date('2024-01-25'),
+      mode: 'standard',
+      label: 'Cardiology • Follow-up',
+    },
+  ];
 
-  // Load saved custom prompts for this session type
-  useEffect(() => {
-    const loadPrompts = async () => {
-      try {
-        const prompts = await getNotesPrompts(session.type as 'patient' | 'meeting' | 'lecture');
-        setSavedPrompts(prompts);
-        console.log('[TranscriptionComplete] Loaded custom prompts:', prompts.length);
-      } catch (error) {
-        console.error('[TranscriptionComplete] Failed to load prompts:', error);
-      }
-    };
-    loadPrompts();
-  }, [session.type]);
-
-  const filteredFollowUpVisits = availableSessions.filter(visit =>
+  const filteredFollowUpVisits = mockFollowUpVisits.filter(visit =>
     visit.title.toLowerCase().includes(visitSearchQuery.toLowerCase()),
   );
 
   useEffect(() => {
     setNewSessionName(session.title);
-  }, [session.title]);
-  const [latestSession, setLatestSession] = useState<any>(null);
-  const [transcriptText, setTranscriptText] = useState<string>('');
-  const [utterances, setUtterances] = useState<any[]>([]);
-  const [isLoadingTranscript, setIsLoadingTranscript] = useState(true);
-  const [transcriptError, setTranscriptError] = useState<string | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        setIsLoadingTranscript(true);
-        setTranscriptError(null);
-        console.log('[TranscriptionComplete] Loading session:', session.id);
-
-        const s = await sessionStorage.getSessionById(session.id);
-        if (s) {
-          console.log('[TranscriptionComplete] Session loaded:', s.title);
-          console.log('[TranscriptionComplete] Has transcript:', !!s.transcriptText);
-          console.log('[TranscriptionComplete] Transcript length:', s.transcriptText?.length || 0);
-          console.log('[TranscriptionComplete] Utterances count:', s.utterances?.length || 0);
-          console.log('[TranscriptionComplete] Has generated notes:', !!s.generatedNotes);
-
-          setLatestSession(s);
-          setTranscriptText(String(s.transcriptText || ''));
-          setUtterances(s.utterances || []);
-
-          // Load previously generated notes if they exist
-          if (s.generatedNotes) {
-            console.log('[TranscriptionComplete] Loading saved notes, length:', s.generatedNotes.length);
-            console.log('[TranscriptionComplete] Notes preview:', s.generatedNotes.substring(0, 100));
-            setGeneratedNotes(s.generatedNotes);
-            console.log('[TranscriptionComplete] Notes set to state');
-          } else {
-            console.log('[TranscriptionComplete] No saved notes found');
-          }
-        } else {
-          console.error('[TranscriptionComplete] Session not found:', session.id);
-          setTranscriptError('Session not found');
-        }
-      } catch (error) {
-        console.error('[TranscriptionComplete] Error loading session:', error);
-        setTranscriptError('Failed to load transcript');
-      } finally {
-        setIsLoadingTranscript(false);
-      }
-    })();
-  }, [session.id]);
-
-  // Get logged in user from store as a reactive hook
-  const loggedInUser = userStore((state: any) => state.loggedInUser);
-
-  // Initialize socket connection with user authentication
-  useEffect(() => {
-    if (!loggedInUser?.id) {
-      console.warn('[TranscriptionComplete] No logged in user, skipping socket connection');
-      return;
+    if (session.type === 'patient') {
+      setNoteType('SOAP');
     }
-
-    console.log('[TranscriptionComplete] Connecting socket with userId:', loggedInUser.id);
-    connectSocket(loggedInUser.id);
-
-    // Cleanup on unmount
-    return () => {
-      console.log('[TranscriptionComplete] Disconnecting socket');
-      disconnectSocket();
-    };
-  }, [loggedInUser?.id]);
-
-  // Auto-scroll to bottom when notes are being generated
-  useEffect(() => {
-    if (isGeneratingNotes && generatedNotes && notesScrollViewRef.current) {
-      // Small delay to ensure content is rendered before scrolling
-      setTimeout(() => {
-        notesScrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [generatedNotes, isGeneratingNotes]);
-
-  // Track the Y position of the notes section
-  const [notesSectionY, setNotesSectionY] = useState(0);
-
-  // Auto-scroll to notes section when generation starts
-  useEffect(() => {
-    if (isGeneratingNotes && mainScrollViewRef.current && notesSectionY > 0) {
-      // Small delay to ensure smooth scrolling
-      setTimeout(() => {
-        mainScrollViewRef.current?.scrollTo({
-          y: notesSectionY - 50, // Offset for better visibility
-          animated: true
-        });
-      }, 300);
-    }
-  }, [isGeneratingNotes, notesSectionY]);
+  }, [session.title, session.type]);
 
   const getSessionIcon = () => {
     switch (session.type) {
-      case 'patient':
-        return Users;
-      case 'meeting':
-        return FileText;
-      case 'lecture':
-        return Brain;
-      default:
-        return FileText;
+      case 'patient': return Users;
+      case 'meeting': return FileText;
+      case 'lecture': return Brain;
+      default: return FileText;
     }
   };
 
   const getSessionTypeText = () => {
     switch (session.type) {
-      case 'patient':
-        return t('tabs.patients');
-      case 'meeting':
-        return t('tabs.meetings');
-      case 'lecture':
-        return t('tabs.lectures');
-      default:
-        return t('tabs.patients');
+      case 'patient': return t('tabs.patients');
+      case 'meeting': return t('tabs.meetings');
+      case 'lecture': return t('tabs.lectures');
+      default: return t('tabs.patients');
     }
   };
 
+  const handleExpandConfig = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsConfigCollapsed(false);
+  };
 
-  // Save notes to session storage when generation completes
-  useEffect(() => {
-    // Save when generation completes and we have notes
-    if (!isGeneratingNotes && generatedNotes && generatedNotes.length > 50) {
-      const saveNotes = async () => {
-        try {
-          await sessionStorage.updateSessionNotes(session.id, generatedNotes);
-          console.log('[TranscriptionComplete] ✅ Notes auto-saved to session storage, length:', generatedNotes.length);
-        } catch (error) {
-          console.error('[TranscriptionComplete] ❌ Failed to auto-save notes:', error);
-        }
-      };
-
-      saveNotes();
-    }
-  }, [isGeneratingNotes]); // Trigger when isGeneratingNotes changes
+  const handleCollapseConfig = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsConfigCollapsed(true);
+  };
 
   const handleRename = async () => {
     if (!newSessionName.trim()) return;
     setIsRenaming(true);
     try {
-      // Update on backend if sessionId exists
-      if (session.sessionId) {
-        try {
-          await updateEvent(session.sessionId, { title: newSessionName.trim() });
-          console.log('[TranscriptionComplete] Session title updated on backend');
-        } catch (error) {
-          console.error('[TranscriptionComplete] Failed to update session title on backend:', error);
-          // Continue with local update even if backend fails
-        }
-      }
-
-      // Update in local storage
       await sessionStorage.updateSessionTitle(session.id, newSessionName.trim());
       setShowRenameModal(false);
       customToast('success', t('common.success'), t('success.sessionRenamed'));
-    } catch (error) {
-      console.error('[TranscriptionComplete] Rename error:', error);
-      customToast('error', t('common.error'), 'Failed to rename session');
     } finally {
       setIsRenaming(false);
     }
@@ -363,25 +321,10 @@ const TranscriptionComplete = () => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      // Delete from backend if sessionId exists
-      if (session.sessionId) {
-        try {
-          await deleteEvent(session.sessionId);
-          console.log('[TranscriptionComplete] Session deleted from backend');
-        } catch (error) {
-          console.error('[TranscriptionComplete] Failed to delete session from backend:', error);
-          // Continue with local deletion even if backend fails
-        }
-      }
-
-      // Delete from local storage
       await sessionStorage.deleteSession(session.id);
       setShowDeleteModal(false);
       customToast('success', t('common.success'), t('success.sessionDeleted'));
       (navigation as any).goBack();
-    } catch (error) {
-      console.error('[TranscriptionComplete] Delete error:', error);
-      customToast('error', t('common.error'), 'Failed to delete session');
     } finally {
       setIsDeleting(false);
     }
@@ -390,25 +333,13 @@ const TranscriptionComplete = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      // Reset on backend if sessionId exists
-      if (session.sessionId) {
-        try {
-          await resetEvent(session.sessionId);
-          console.log('[TranscriptionComplete] Session reset on backend');
-        } catch (error) {
-          console.error('[TranscriptionComplete] Failed to reset session on backend:', error);
-          // Continue with local reset even if backend fails
-        }
-      }
-
-      // Reset in local storage
       await sessionStorage.resetSession(session.id);
       setShowResetModal(false);
       customToast('success', t('common.success'), t('success.sessionReset'));
-      (navigation as any).goBack();
-    } catch (error) {
-      console.error('[TranscriptionComplete] Reset error:', error);
-      customToast('error', t('common.error'), 'Failed to reset session');
+      (navigation as any).replace('session', {
+        sessionData: session,
+        sessionType: session.type,
+      });
     } finally {
       setIsResetting(false);
     }
@@ -423,9 +354,9 @@ const TranscriptionComplete = () => {
   };
 
   const handleImportFollowUpVisits = () => {
-    const selectedVisitData = availableSessions
-      .filter((visit: any) => selectedFollowUpVisits.has(visit._id))
-      .map((visit: any) => ({
+    const selectedVisitData = mockFollowUpVisits
+      .filter(visit => selectedFollowUpVisits.has(visit._id))
+      .map(visit => ({
         _id: visit._id,
         title: visit.title,
         date: visit.date,
@@ -435,731 +366,89 @@ const TranscriptionComplete = () => {
     setVisitSearchQuery('');
   };
 
-  const handleNoteTypeSelect = (type: string) => {
-    if (type !== 'custom') {
-      setCustomNote('');
-      setCustomPromptTitle('');
-      setShowCustomPromptModal(false);
-      setSelectedPromptId(null); // Clear selected custom prompt
-    }
-    setNoteType(type);
+  // --- NEW RENDER: Mode Switcher (The Segmented Control) ---
+  const renderModeSwitch = () => {
+    if (session.type !== 'patient') return null;
+    return (
+      <View style={styles.modeSwitchContainer}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.generationMode')}
+        </Text>
+        <View style={styles.compactSegmentedControl}>
+          <TouchableOpacity
+            style={[styles.segmentBtn, generationMode === 'standard' && styles.segmentBtnActive]}
+            onPress={() => handleModeChange('standard')}
+          >
+            <Text style={generationMode === 'standard' ? styles.segmentTextActive : styles.segmentTextInactive}>
+              {t('mainContent.transcriptionComplete.modes.standard')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, generationMode === 'custom' && styles.segmentBtnActive]}
+            onPress={() => handleModeChange('custom')}
+          >
+            <Text style={generationMode === 'custom' ? styles.segmentTextActive : styles.segmentTextInactive}>
+              {t('mainContent.transcriptionComplete.modes.custom')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
-  const renderNoteTypeButtons = () => {
-    if (session.type === 'lecture') {
-      return (
-        <View style={styles.noteTypeContainer}>
-          <View style={styles.buttonGrid}>
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'medical' && { borderColor: 'transparent' },
-                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
-              ]}
-              disabled={isCustomLocked && noteType !== 'custom'}
-              onPress={() => handleNoteTypeSelect('medical')}
-            >
-              {noteType === 'medical' && (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.noteTypeOverlayGradient}
-                />
-              )}
-              <View style={{ width: wp(5) }} />
-              <Brain size={24} color={noteType === 'medical' ? 'white' : colors.subText} />
-              <View style={{ width: wp(2) }} />
-              <Text
-                variant="bodyMedium"
-                style={noteType === 'medical' ? styles.selectedNoteTypeText : styles.noteTypeText}
-              >
-                {t('mainContent.transcriptionComplete.noteOptions.medicalLecture')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'scientific' && { borderColor: 'transparent' },
-                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
-              ]}
-              disabled={isCustomLocked && noteType !== 'custom'}
-              onPress={() => handleNoteTypeSelect('scientific')}
-            >
-              {noteType === 'scientific' && (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.noteTypeOverlayGradient}
-                />
-              )}
-              <View style={{ width: wp(5) }} />
-              <FileText size={24} color={noteType === 'scientific' ? 'white' : colors.subText} />
-              <View style={{ width: wp(2) }} />
-              <Text
-                variant="bodyMedium"
-                style={noteType === 'scientific' ? styles.selectedNoteTypeText : styles.noteTypeText}
-              >
-                {t('mainContent.transcriptionComplete.noteOptions.scientificResearch')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'clinicalPractice' && { borderColor: 'transparent' },
-                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
-              ]}
-              disabled={isCustomLocked && noteType !== 'custom'}
-              onPress={() => handleNoteTypeSelect('clinicalPractice')}
-            >
-              {noteType === 'clinicalPractice' && (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.noteTypeOverlayGradient}
-                />
-              )}
-              <View style={{ width: wp(5) }} />
-              <Users size={24} color={noteType === 'clinicalPractice' ? 'white' : colors.subText} />
-              <View style={{ width: wp(2) }} />
-              <Text
-                variant="bodyMedium"
-                style={noteType === 'clinicalPractice' ? styles.selectedNoteTypeText : styles.noteTypeText}
-              >
-                {t('mainContent.transcriptionComplete.noteOptions.clinicalPractice')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'custom' && { borderColor: 'transparent' },
-              ]}
-              onPress={() => {
-                setNoteType('custom');
-                setShowCustomPromptModal(true);
-              }}
-            >
-              {noteType === 'custom' ? (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <View style={{ width: wp(5) }} />
-                  <Plus size={24} color="white" />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    Custom Note
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <View style={{ width: wp(5) }} />
-                  <Plus size={24} color={colors.subText} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    Custom Note
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-          {isCustomLocked && (
-            <View style={styles.customNotePreview}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(1) }}>
-                <Text variant="titleMedium" style={styles.customNoteTitle}>
-                  {customPromptTitle || 'Custom Prompt'}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: wp(2) }}>
-                  <TouchableOpacity onPress={() => setShowCustomPromptModal(true)}>
-                    <Edit3 size={18} color={colors.subText} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleClearCustomPrompt}>
-                    <X size={18} color={colors.subText} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <Text variant="bodyMedium" style={styles.customNoteText}>
-                {customNote}
-              </Text>
-            </View>
-          )}
-
-          {/* Display saved custom prompts */}
-          {savedPrompts.length > 0 && (
-            <View style={{ marginTop: hp(2) }}>
-              <Text variant="titleSmall" style={{ color: colors.onSurface, marginBottom: hp(1), fontWeight: '600' }}>
-                Saved Custom Prompts
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: wp(2) }}
-              >
-                {savedPrompts.map((prompt) => (
-                  <View
-                    key={prompt._id}
-                    style={[
-                      styles.savedPromptCard,
-                      selectedPromptId === prompt._id && styles.selectedPromptCard
-                    ]}
-                  >
-                    <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: wp(2), flex: 1 }}
-                      onPress={() => {
-                        setSelectedPromptId(prompt._id);
-                        setCustomNote(prompt.content);
-                        setCustomPromptTitle(prompt.title);
-                        setNoteType('custom');
-                        customToast('success', 'Prompt Selected', `Using "${prompt.title}"`);
-                      }}
-                    >
-                      <FileText size={20} color={selectedPromptId === prompt._id ? 'white' : colors.subText} />
-                      <Text
-                        variant="bodyMedium"
-                        style={[
-                          styles.savedPromptTitle,
-                          selectedPromptId === prompt._id && { color: 'white' }
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {prompt.title}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {/* Delete button */}
-                    <TouchableOpacity
-                      onPress={() => handleDeletePrompt(prompt._id, prompt.title)}
-                      style={{ padding: wp(1) }}
-                    >
-                      <Trash2 size={18} color={selectedPromptId === prompt._id ? 'white' : colors.subText} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+  // Keep logic for non-patient types
+  const renderLegacyNoteButtons = () => {
+    if (session.type === 'patient') return null;
+    return (
+      <View style={styles.noteTypeContainer}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>{t('mainContent.transcriptionComplete.noteType')}</Text>
+        <View style={styles.compactSegmentedControl}>
+          <TouchableOpacity style={[styles.compactSegmentButton, styles.compactSegmentButtonSelected]}><Text style={styles.compactSegmentTextSelected}>{t('mainContent.transcriptionComplete.noteOptions.general')}</Text></TouchableOpacity>
         </View>
-      );
-    } else if (session.type === 'meeting') {
-      return (
-        <View style={styles.noteTypeContainer}>
-          <View style={styles.buttonGrid}>
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'general' && { borderColor: 'transparent' },
-                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
-              ]}
-              disabled={isCustomLocked && noteType !== 'custom'}
-              onPress={() => handleNoteTypeSelect('general')}
-            >
-              {noteType === 'general' ? (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <View style={{ width: wp(5) }} />
-                  <FileText size={24} color="white" />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.generalSummary',
-                    )}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <View style={{ width: wp(5) }} />
-                  <FileText size={24} color={colors.subText} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.generalSummary',
-                    )}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'detailed' && { borderColor: 'transparent' },
-                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
-              ]}
-              disabled={isCustomLocked && noteType !== 'custom'}
-              onPress={() => handleNoteTypeSelect('detailed')}
-            >
-              {noteType === 'detailed' ? (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <View style={{ width: wp(5) }} />
-                  <Brain size={24} color="white" />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.detailedReport',
-                    )}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <View style={{ width: wp(5) }} />
-                  <Brain size={24} color={colors.subText} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t(
-                      'mainContent.transcriptionComplete.noteOptions.detailedReport',
-                    )}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'custom' && { borderColor: 'transparent' },
-              ]}
-              onPress={() => {
-                setNoteType('custom');
-                setShowCustomPromptModal(true);
-              }}
-            >
-              {noteType === 'custom' ? (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <View style={{ width: wp(5) }} />
-                  <Plus size={24} color="white" />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    Custom Note
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <View style={{ width: wp(5) }} />
-                  <Plus size={24} color={colors.subText} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    Custom Note
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-          {isCustomLocked && (
-            <View style={styles.customNotePreview}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(1) }}>
-                <Text variant="titleMedium" style={styles.customNoteTitle}>
-                  {customPromptTitle || 'Custom Prompt'}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: wp(2) }}>
-                  <TouchableOpacity onPress={() => setShowCustomPromptModal(true)}>
-                    <Edit3 size={18} color={colors.subText} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleClearCustomPrompt}>
-                    <X size={18} color={colors.subText} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <Text variant="bodyMedium" style={styles.customNoteText}>
-                {customNote}
-              </Text>
-            </View>
-          )}
-
-          {/* Display saved custom prompts */}
-          {savedPrompts.length > 0 && (
-            <View style={{ marginTop: hp(2) }}>
-              <Text variant="titleSmall" style={{ color: colors.onSurface, marginBottom: hp(1), fontWeight: '600' }}>
-                Saved Custom Prompts
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: wp(2) }}
-              >
-                {savedPrompts.map((prompt) => (
-                  <View
-                    key={prompt._id}
-                    style={[
-                      styles.savedPromptCard,
-                      selectedPromptId === prompt._id && styles.selectedPromptCard
-                    ]}
-                  >
-                    <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: wp(2), flex: 1 }}
-                      onPress={() => {
-                        setSelectedPromptId(prompt._id);
-                        setCustomNote(prompt.content);
-                        setCustomPromptTitle(prompt.title);
-                        setNoteType('custom');
-                        customToast('success', 'Prompt Selected', `Using "${prompt.title}"`);
-                      }}
-                    >
-                      <FileText size={20} color={selectedPromptId === prompt._id ? 'white' : colors.subText} />
-                      <Text
-                        variant="bodyMedium"
-                        style={[
-                          styles.savedPromptTitle,
-                          selectedPromptId === prompt._id && { color: 'white' }
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {prompt.title}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {/* Delete button */}
-                    <TouchableOpacity
-                      onPress={() => handleDeletePrompt(prompt._id, prompt.title)}
-                      style={{ padding: wp(1) }}
-                    >
-                      <Trash2 size={18} color={selectedPromptId === prompt._id ? 'white' : colors.subText} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      );
-    } else {
-      // Patient session
-      return (
-        <View style={styles.noteTypeContainer}>
-          <View style={styles.buttonGrid}>
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'SOAP' && { borderColor: 'transparent' },
-                isCustomLocked && noteType !== 'custom' && styles.disabledNoteTypeButton,
-              ]}
-              disabled={isCustomLocked && noteType !== 'custom'}
-              onPress={() => handleNoteTypeSelect('SOAP')}
-            >
-              {noteType === 'SOAP' ? (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <View style={{ width: wp(5) }} />
-                  <FileText size={24} color="white" />
-                  <View style={{ width: wp(2) }} />
-
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    {t('mainContent.transcriptionComplete.noteOptions.soap')}
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <View style={{ width: wp(5) }} />
-                  <FileText size={24} color={colors.subText} />
-                  <View style={{ width: wp(2) }} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    {t('mainContent.transcriptionComplete.noteOptions.soap')}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <View />
-
-            <TouchableOpacity
-              style={[
-                styles.noteTypeButton,
-                noteType === 'custom' && { borderColor: 'transparent' },
-              ]}
-              onPress={() => {
-                setNoteType('custom');
-                setShowCustomPromptModal(true);
-              }}
-            >
-              {noteType === 'custom' ? (
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.selectedNoteTypeButton}
-                >
-                  <View style={{ width: wp(5) }} />
-                  <Plus size={24} color="white" />
-                  <View style={{ width: wp(2) }} />
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.selectedNoteTypeText}
-                  >
-                    Custom Note
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <>
-                  <View style={{ width: wp(5) }} />
-                  <Plus size={24} color={colors.subText} />
-                  <View style={{ width: wp(2) }} />
-                  <Text variant="bodyMedium" style={styles.noteTypeText}>
-                    Custom Note
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-          {isCustomLocked && (
-            <View style={styles.customNotePreview}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: hp(1) }}>
-                <Text variant="titleMedium" style={styles.customNoteTitle}>
-                  {customPromptTitle || 'Custom Prompt'}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: wp(2) }}>
-                  <TouchableOpacity onPress={() => setShowCustomPromptModal(true)}>
-                    <Edit3 size={18} color={colors.subText} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleClearCustomPrompt}>
-                    <X size={18} color={colors.subText} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <Text variant="bodyMedium" style={styles.customNoteText}>
-                {customNote}
-              </Text>
-            </View>
-          )}
-
-          {/* Display saved custom prompts */}
-          {savedPrompts.length > 0 && (
-            <View style={{ marginTop: hp(2) }}>
-              <Text variant="titleSmall" style={{ color: colors.onSurface, marginBottom: hp(1), fontWeight: '600' }}>
-                Saved Custom Prompts
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: wp(2) }}
-              >
-                {savedPrompts.map((prompt) => (
-                  <View
-                    key={prompt._id}
-                    style={[
-                      styles.savedPromptCard,
-                      selectedPromptId === prompt._id && styles.selectedPromptCard
-                    ]}
-                  >
-                    <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: wp(2), flex: 1 }}
-                      onPress={() => {
-                        setSelectedPromptId(prompt._id);
-                        setCustomNote(prompt.content);
-                        setCustomPromptTitle(prompt.title);
-                        setNoteType('custom');
-                        customToast('success', 'Prompt Selected', `Using "${prompt.title}"`);
-                      }}
-                    >
-                      <FileText size={20} color={selectedPromptId === prompt._id ? 'white' : colors.subText} />
-                      <Text
-                        variant="bodyMedium"
-                        style={[
-                          styles.savedPromptTitle,
-                          selectedPromptId === prompt._id && { color: 'white' }
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {prompt.title}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {/* Delete button */}
-                    <TouchableOpacity
-                      onPress={() => handleDeletePrompt(prompt._id, prompt.title)}
-                      style={{ padding: wp(1) }}
-                    >
-                      <Trash2 size={18} color={selectedPromptId === prompt._id ? 'white' : colors.subText} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      );
-    }
+      </View>
+    );
   };
 
   const renderSpecializationSection = () => {
-    if (session.type !== 'patient') return null;
-
-    const specializations = [
-      {
-        key: 'Psychiatry',
-        label: t('mainContent.transcriptionComplete.specialization.psychiatry'),
-      },
-      {
-        key: 'Child Psychiatry',
-        label: t(
-          'mainContent.transcriptionComplete.specialization.childPsychiatry',
-        ),
-      },
-      {
-        key: 'Surgery',
-        label: t('mainContent.transcriptionComplete.specialization.surgery'),
-      },
-      {
-        key: 'Smart Select',
-        label: t(
-          'mainContent.transcriptionComplete.specialization.smartSelect',
-        ),
-      },
-    ];
-
     return (
-      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
-        <View style={styles.selectionHeader}>
-          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
-            {t('mainContent.transcriptionComplete.specialization.select')}
+      <View style={styles.selectionSection}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.specialization.select')}
+        </Text>
+        <TouchableOpacity
+          style={styles.compactDropdownField}
+          onPress={() => setShowSpecializationModal(true)}
+        >
+          <Text variant="bodySmall" style={selectedSpecialization ? styles.compactDropdownValue : styles.compactDropdownPlaceholder}>
+            {selectedSpecialization ? specializationOptions.find(s => s.key === selectedSpecialization)?.label : t('mainContent.transcriptionComplete.specialization.select')}
           </Text>
-          <Plus size={18} color={colors.lightGreen} />
-        </View>
-        <View style={styles.pillRow}>
-          {specializations.map(s => {
-            const selected = selectedSpecialization === s.key;
-            if (selected) {
-              return (
-                <TouchableOpacity
-                  key={s.key}
-                  style={[styles.pill, styles.pillSelected]}
-                  disabled={isCustomLocked}
-                  onPress={() =>
-                    isCustomLocked ? undefined : setSelectedSpecialization(s.key)
-                  }
-                >
-                  <LinearGradient
-                    colors={LinearGradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.pillOverlayGradient}
-                  />
-                  <Text variant="labelMedium" style={styles.pillSelectedText}>
-                    {s.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-            return (
-              <TouchableOpacity
-                key={s.key}
-                style={styles.pill}
-                disabled={isCustomLocked}
-                onPress={() =>
-                  isCustomLocked ? undefined : setSelectedSpecialization(s.key)
-                }
-              >
-                <Text variant="labelMedium" style={styles.pillText}>
-                  {s.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+          <ChevronRight size={18} color="#A6A6A6" />
+        </TouchableOpacity>
       </View>
     );
   };
 
   const renderVisitTypeSection = () => {
-    if (session.type !== 'patient') return null;
-
-    const visitTypes = [
-      {
-        key: 'First Visit',
-        label: t('mainContent.transcriptionComplete.visitType.firstVisit'),
-      },
-      {
-        key: 'Follow-up',
-        label: t('mainContent.transcriptionComplete.visitType.followUp'),
-      },
-    ];
-
     return (
-      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
-        <View style={styles.selectionHeader}>
-          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
-            {t('mainContent.transcriptionComplete.visitType.select')}
+      <View style={styles.selectionSection}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.visitType.select')}
+        </Text>
+        <TouchableOpacity
+          style={styles.compactDropdownField}
+          onPress={() => setShowVisitTypeModal(true)}
+        >
+          <Text variant="bodySmall" style={visitType ? styles.compactDropdownValue : styles.compactDropdownPlaceholder}>
+            {visitType ? visitTypeOptions.find(v => v.key === visitType)?.label : t('mainContent.transcriptionComplete.visitType.select')}
           </Text>
-          <Plus size={18} color={colors.lightGreen} />
-        </View>
-        <View style={styles.pillRow}>
-          {visitTypes.map(v => {
-            const selected = visitType === v.key;
-            if (selected) {
-              return (
-                <TouchableOpacity
-                  key={v.key}
-                  style={[styles.pill, styles.pillSelected]}
-                  disabled={isCustomLocked}
-                  onPress={() =>
-                    isCustomLocked ? undefined : setVisitType(v.key)
-                  }
-                >
-                  <LinearGradient
-                    colors={LinearGradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.pillOverlayGradient}
-                  />
-                  <Text variant="labelMedium" style={styles.pillSelectedText}>
-                    {v.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-            return (
-              <TouchableOpacity
-                key={v.key}
-                style={styles.pill}
-                disabled={isCustomLocked}
-                onPress={() =>
-                  isCustomLocked ? undefined : setVisitType(v.key)
-                }
-              >
-                <Text variant="labelMedium" style={styles.pillText}>
-                  {v.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+          <ChevronRight size={18} color="#A6A6A6" />
+        </TouchableOpacity>
       </View>
     );
   };
 
   const renderNoteLengthSection = () => {
-    if (session.type !== 'patient') return null;
-
     const noteLengthLabels = {
       Small: t('mainContent.transcriptionComplete.noteLength.small'),
       Medium: t('mainContent.transcriptionComplete.noteLength.medium'),
@@ -1167,90 +456,122 @@ const TranscriptionComplete = () => {
     };
 
     return (
-      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
-        <View style={styles.selectionHeader}>
-          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
-            {t('mainContent.transcriptionComplete.noteLength.select')}
-          </Text>
-          <Plus size={18} color={colors.lightGreen} />
-        </View>
-        <View style={styles.pillRow}>
-          {noteLengthOptions.map(length => {
-            const selected = noteLength === length;
-            if (selected) {
-              return (
-                <TouchableOpacity
-                  key={length}
-                  style={[styles.pill, styles.pillSelected]}
-                  disabled={isCustomLocked}
-                  onPress={() =>
-                    isCustomLocked ? undefined : setNoteLength(length)
-                  }
-                >
-                  <LinearGradient
-                    colors={LinearGradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.pillOverlayGradient}
-                  />
-                  <Text variant="labelMedium" style={styles.pillSelectedText}>
-                    {noteLengthLabels[length]}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-            return (
-              <TouchableOpacity
-                key={length}
-                style={styles.pill}
-                disabled={isCustomLocked}
-                onPress={() =>
-                  isCustomLocked ? undefined : setNoteLength(length)
-                }
+      <View style={styles.selectionSection}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.noteLength.select')}
+        </Text>
+        <View style={styles.compactSegmentedControl}>
+          {noteLengthOptions.map(length => (
+            <TouchableOpacity
+              key={length}
+              style={[
+                styles.compactSegmentButton,
+                noteLength === length && styles.compactSegmentButtonSelected,
+              ]}
+              onPress={() => setNoteLength(length)}
+            >
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.compactSegmentText,
+                  noteLength === length && styles.compactSegmentTextSelected,
+                ]}
               >
-                <Text variant="labelMedium" style={styles.pillText}>
-                  {noteLengthLabels[length]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                {noteLengthLabels[length]}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
     );
   };
 
   const renderFollowUpSection = () => {
-    if (session.type !== 'patient' || visitType !== 'Follow-up') return null;
+    if (visitType !== 'Follow-up') return null;
 
     return (
-      <View style={[styles.selectionSection, isCustomLocked && styles.disabledContainer]}>
-        <View style={styles.followUpHeader}>
-          <Text variant="titleMedium" style={styles.selectionSectionTitle}>
-            {t('mainContent.transcriptionComplete.followUpVisits.select')}
-          </Text>
+      <View style={styles.selectionSection}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.followUpVisits.previousVisitContext')}
+        </Text>
+
+        <View style={styles.followUpOptionsRow}>
           <TouchableOpacity
-            style={styles.addVisitsButton}
-            disabled={isCustomLocked}
-            onPress={() =>
-              isCustomLocked ? undefined : setShowFollowUpModal(true)
-            }
+            style={styles.followUpOptionButton}
+            onPress={() => setShowFollowUpModal(true)}
           >
-            <Plus size={16} color={colors.lightGreen} />
-            <Text variant="bodyMedium" style={styles.addVisitsText}>
-              {t('mainContent.transcriptionComplete.followUpVisits.addButton')}
+            <Plus size={14} color={DESIGN_TOKENS.colors.primary} />
+            <Text variant="bodySmall" style={styles.followUpOptionText}>
+              {t('mainContent.transcriptionComplete.followUpVisits.fromHistory')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.followUpOptionButton}
+            onPress={() => {
+              setTempManualText(manualFollowUpText);
+              setShowManualTextModal(true);
+            }}
+          >
+            <Type size={14} color={DESIGN_TOKENS.colors.primary} />
+            <Text variant="bodySmall" style={styles.followUpOptionText}>
+              {t('mainContent.transcriptionComplete.followUpVisits.typeText')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.followUpOptionButton}
+            onPress={() => {
+              customToast('info', t('common.comingSoon'), t('mainContent.transcriptionComplete.followUpVisits.photoComingSoon'));
+            }}
+          >
+            <Camera size={14} color={DESIGN_TOKENS.colors.primary} />
+            <Text variant="bodySmall" style={styles.followUpOptionText}>
+              {t('mainContent.transcriptionComplete.followUpVisits.takePhoto')}
             </Text>
           </TouchableOpacity>
         </View>
 
+        {/* Manual Text Preview */}
+        {manualFollowUpText.trim() && (
+          <View style={styles.manualTextPreview}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flex: 1 }}>
+                <Text variant="bodySmall" style={styles.customNoteLabel}>
+                  {t('mainContent.transcriptionComplete.followUpVisits.manualContext')}
+                </Text>
+                <Text variant="bodySmall" style={styles.manualTextSnippet} numberOfLines={2}>
+                  {manualFollowUpText}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: wp(2) }}>
+                <TouchableOpacity
+                  style={styles.customNoteActionButton}
+                  onPress={() => {
+                    setTempManualText(manualFollowUpText);
+                    setShowManualTextModal(true);
+                  }}
+                >
+                  <Edit3 size={16} color="#46B7C6" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.customNoteActionButton}
+                  onPress={() => setManualFollowUpText('')}
+                >
+                  <X size={16} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Imported Visits from History */}
         {importedFollowUpVisits.length > 0 && (
           <View style={styles.importedVisitsContainer}>
             <Text variant="bodySmall" style={styles.importedVisitsCount}>
-              {t(
-                'mainContent.transcriptionComplete.followUpVisits.selectedVisits',
-                {
-                  count: importedFollowUpVisits.length,
-                },
-              )}
+              {t('mainContent.transcriptionComplete.followUpVisits.selectedVisits', {
+                count: importedFollowUpVisits.length,
+              })}
             </Text>
             {importedFollowUpVisits.map(visit => (
               <View key={visit._id} style={styles.importedVisitItem}>
@@ -1269,7 +590,7 @@ const TranscriptionComplete = () => {
                     );
                   }}
                 >
-                  <X size={16} color={colors.subText} />
+                  <X size={16} color="#86868b" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1279,593 +600,256 @@ const TranscriptionComplete = () => {
     );
   };
 
-  const renderTranscriptionSection = () => {
-    const displayDuration = session.duration || latestSession?.duration || '00:00';
-    const recordingDate = session.date ? new Date(session.date) : new Date();
-    const recordingTime = recordingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    // Show loading state
-    if (isLoadingTranscript) {
-      return (
-        <View style={styles.transcriptionSection}>
-          <View style={styles.transcriptionHeader}>
-            <Text variant="titleMedium" style={styles.transcriptionTitle}>
-              {t('mainContent.transcriptionComplete.transcriptionTitle')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <Text variant="bodySmall" style={styles.transcriptionDuration}>
-                {t('mainContent.transcriptionComplete.totalDuration')}: {displayDuration}
-              </Text>
-              <Text variant="bodySmall" style={styles.transcriptionDuration}>
-                • {recordingTime}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.emptyTranscriptionContent}>
-            <View style={styles.emptyTranscriptionContainer}>
-              <Text variant="bodyMedium" style={styles.emptyTranscriptionText}>
-                Loading transcript...
-              </Text>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    // Show error state
-    if (transcriptError) {
-      return (
-        <View style={styles.transcriptionSection}>
-          <View style={styles.transcriptionHeader}>
-            <Text variant="titleMedium" style={styles.transcriptionTitle}>
-              {t('mainContent.transcriptionComplete.transcriptionTitle')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <Text variant="bodySmall" style={styles.transcriptionDuration}>
-                {t('mainContent.transcriptionComplete.totalDuration')}: {displayDuration}
-              </Text>
-              <Text variant="bodySmall" style={styles.transcriptionDuration}>
-                • {recordingTime}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.emptyTranscriptionContent}>
-            <View style={styles.emptyTranscriptionContainer}>
-              <FileText size={48} color="#ef4444" />
-              <Text variant="bodyMedium" style={[styles.emptyTranscriptionText, { color: '#ef4444' }]}>
-                {transcriptError}
-              </Text>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    const hasText = transcriptText && transcriptText.trim().length > 0;
-    if (!hasText) return renderEmptyTranscriptionSection();
-
-    // Helper function to format milliseconds to MM:SS
-    const formatTimestamp = (ms: number) => {
-      const totalSeconds = Math.floor(ms / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    };
-
-    // If we have utterances with speaker labels, show conversation format
-    const hasUtterances = utterances && utterances.length > 0;
-
-    return (
-      <View style={styles.transcriptionSection}>
-        <View style={styles.transcriptionHeader}>
-          <Text variant="titleMedium" style={styles.transcriptionTitle}>
-            {t('mainContent.transcriptionComplete.transcriptionTitle')}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            <Text variant="bodySmall" style={styles.transcriptionDuration}>
-              {t('mainContent.transcriptionComplete.totalDuration')}: {displayDuration}
-            </Text>
-            <Text variant="bodySmall" style={styles.transcriptionDuration}>
-              • {recordingTime}
-            </Text>
-          </View>
-        </View>
-        <ScrollView
-          style={styles.transcriptionContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {hasUtterances ? (
-            // Show conversation format with speakers and timestamps
-            utterances.map((utterance, index) => {
-              const speaker = utterance.speaker || 'Speaker';
-              const speakerLabel = session.type === 'patient'
-                ? (speaker === 'A' ? 'Patient' : 'Doctor')
-                : `Speaker ${speaker}`;
-              const startTime = formatTimestamp(utterance.start);
-              const endTime = formatTimestamp(utterance.end);
-              const timeRange = `${startTime} - ${endTime}`;
-
-              return (
-                <View
-                  key={index}
-                  style={{
-                    backgroundColor: speaker === 'A' ? '#f0f9ff' : '#fef3f2',
-                    padding: 16,
-                    borderRadius: 12,
-                    marginBottom: 12,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text
-                      variant="titleSmall"
-                      style={{
-                        color: speaker === 'A' ? '#0369a1' : '#dc2626',
-                        fontWeight: '600'
-                      }}
-                    >
-                      • {speakerLabel}
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text
-                        variant="bodySmall"
-                        style={{ color: '#6b7280', fontSize: 12 }}
-                      >
-                        🕐 {timeRange}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text variant="bodyMedium" style={{ color: '#1f2937', lineHeight: 22 }}>
-                    {utterance.text}
-                  </Text>
-                </View>
-              );
-            })
-          ) : (
-            // Fallback to plain text if no utterances
-            <View style={styles.utteranceItem}>
-              <Text variant="bodyMedium" style={styles.utteranceText}>
-                {transcriptText}
-              </Text>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    );
+  const generateMockNote = () => {
+    return `${t('mainContent.transcriptionComplete.noteGenerated', { mode: generationMode === 'standard' ? t('mainContent.transcriptionComplete.modes.standardSOAP') : t('mainContent.transcriptionComplete.modes.custom') })}...\n\n${t('mainContent.transcriptionComplete.noteSubjective')}:\n${t('mainContent.transcriptionComplete.patientPresents')}...`;
   };
 
-  const canGenerate =
-    noteType &&
-    (noteType === 'custom' ||
-      session.type !== 'patient' ||
-      (selectedSpecialization && visitType));
-
-  const handleGenerateNotes = async () => {
-    if (!canGenerate) {
-      customToast(
-        'error',
-        t('common.error'),
-        t('errors.noteTypeRequired'),
-      );
-      return;
+  const getGeneratedSummary = () => {
+    if (session.type !== 'patient') {
+      return t('mainContent.transcriptionComplete.generatedUsing.general');
     }
-
-    // Check if we have sessionId
-    if (!session.sessionId) {
-      customToast(
-        'error',
-        t('common.error'),
-        'Session ID not found. Please create a new session.'
-      );
-      return;
+    if (generationMode === 'standard') {
+      const specializationLabel =
+        specializationOptions.find(s => s.key === selectedSpecialization)?.label ||
+        t('mainContent.transcriptionComplete.modes.standard');
+      return t('mainContent.transcriptionComplete.generatedUsing.standardMode', { specialization: specializationLabel });
     }
-
-    // Check if we have userId for socket connection
-    if (!loggedInUser?.id) {
-      console.warn('[TranscriptionComplete] No logged in user ID for socket auth');
-      customToast(
-        'error',
-        t('common.error'),
-        'User session error. Please log in again.'
-      );
-      return;
-    }
-
-    // Get socket instance from service
-    let socket = getSocket();
-
-    // Fallback: If socket is not initialized, try to connect now
-    if (!socket) {
-      console.log('[TranscriptionComplete] Socket not initialized, attempting connection now...');
-      socket = connectSocket(loggedInUser.id) || null;
-    }
-
-    // Check if socket is connected, wait a bit if not
-    if (!socket) {
-      customToast(
-        'error',
-        t('common.error'),
-        'Socket connection failed. Please try again.'
-      );
-      return;
-    }
-
-    // Wait for socket connection if not connected (max 5 seconds)
-    if (!socket.connected) {
-      console.log('[TranscriptionComplete] Socket not connected, waiting...');
-
-      let attempts = 0;
-      const maxAttempts = 10;
-
-      while (!socket.connected && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-        console.log('[TranscriptionComplete] Waiting for connection, attempt:', attempts);
-      }
-
-      if (!socket.connected) {
-        console.error('[TranscriptionComplete] Socket connection timeout');
-        customToast(
-          'error',
-          t('common.error'),
-          'Could not establish connection. Please check your internet and try again.'
-        );
-        return;
-      }
-
-      console.log('[TranscriptionComplete] Socket connected after waiting');
-    }
-
-    setIsGeneratingNotes(true);
-    setGeneratedNotes(''); // Clear previous notes
-
-    try {
-      console.log('[TranscriptionComplete] Generating notes via API + Socket...');
-      console.log('[TranscriptionComplete] Session ID:', session.sessionId);
-
-      // Prepare payload matching backend expectations from guide
-      // Set appropriate default noteType based on session type
-      const defaultNoteType = session.type === 'lecture' ? 'medical'
-        : session.type === 'meeting' ? 'general'
-          : 'SOAP';
-
-      const payload: any = {
-        noteType: noteType || defaultNoteType,
-        visitType: visitType.toLowerCase().replace(' ', '-') || 'first-visit',
-        specialization: selectedSpecialization.toLowerCase() || 'psychiatry',
-        length: noteLength.toLowerCase(),
-        llmModel: 'gpt-4.1',
-      };
-
-      // Add promptId if custom note is selected
-      if (noteType === 'custom' && selectedPromptId) {
-        payload.promptId = selectedPromptId;
-        console.log('[TranscriptionComplete] Using custom prompt ID:', selectedPromptId);
-      }
-
-      console.log('[TranscriptionComplete] Payload:', payload);
-
-      // Note: We don't remove listeners here because we want to catch the completion event
-      // Listeners will clean themselves up after firing
-
-      // Set up socket listeners for streaming (matching guide implementation)
-      socket.on('notes_generation_started', (event: any) => {
-        if (event.payload?.eventId === session.sessionId) {
-          console.log('[TranscriptionComplete] ✅ Notes generation started:', event.payload.eventId);
-        }
-      });
-
-      socket.on('notes_generation_chunk', (event: any) => {
-        if (event.payload?.eventId === session.sessionId) {
-          console.log('[TranscriptionComplete] 📝 Received chunk (accumulated)');
-          // The guide's example uses setNoteContent(event.payload.content) which replaces the content.
-          // This suggests the backend sends the full accumulated string.
-          if (event.payload?.content !== undefined) {
-            setGeneratedNotes(event.payload.content);
-            generatedNotesRef.current = event.payload.content; // Update ref for socket callbacks
-          }
-        }
-      });
-
-      socket.on('notes_generation_completed', (event: any) => {
-        console.log('[TranscriptionComplete] 🎯 Completion event received!', event);
-        console.log('[TranscriptionComplete] 🔑 Event eventId:', event.payload?.eventId);
-        console.log('[TranscriptionComplete] 🔑 Session sessionId:', session.sessionId);
-        console.log('[TranscriptionComplete] 🔑 Match:', event.payload?.eventId === session.sessionId);
-
-        if (event.payload?.eventId === session.sessionId) {
-          console.log('[TranscriptionComplete] ✅ Notes generation complete - INSIDE IF');
-          console.log('[TranscriptionComplete] 🔍 Event payload:', event.payload);
-
-          // Use ref to get the latest notes content (state might not be updated yet)
-          const contentToSave = event.payload?.content || generatedNotesRef.current;
-          console.log('[TranscriptionComplete] 💾 Content to save length:', contentToSave?.length || 0);
-          console.log('[TranscriptionComplete] 💾 Ref content length:', generatedNotesRef.current?.length || 0);
-
-          if (contentToSave && contentToSave.length > 0) {
-            console.log('[TranscriptionComplete] 💾 Saving notes from completion handler...');
-            sessionStorage.updateSessionNotes(session.id, contentToSave)
-              .then(() => {
-                console.log('[TranscriptionComplete] ✅ Notes saved from completion handler successfully!');
-              })
-              .catch((error) => {
-                console.error('[TranscriptionComplete] ❌ Failed to save notes from completion handler:', error);
-              });
-          } else {
-            console.warn('[TranscriptionComplete] ⚠️ No content to save in completion handler');
-          }
-
-          // Update session status in local storage
-          sessionStorage.updateSessionStatus(session.id, 'completed');
-
-          // Set isGeneratingNotes to false
-          setIsGeneratingNotes(false);
-
-          // Clean up listeners AFTER save logic
-          socket.off('notes_generation_started');
-          socket.off('notes_generation_chunk');
-          socket.off('notes_generation_completed');
-          socket.off('notes_generation_error');
-
-          customToast(
-            'success',
-            t('common.success'),
-            'Notes generated successfully!'
-          );
-        } else {
-          console.warn('[TranscriptionComplete] ⚠️ EventId mismatch - not processing');
-        }
-      });
-
-      socket.on('notes_generation_error', (event: any) => {
-        if (event.payload?.eventId === session.sessionId) {
-          console.error('[TranscriptionComplete] ❌ Notes generation error:', event.payload);
-          setIsGeneratingNotes(false);
-
-          // Clean up listeners
-          socket.off('notes_generation_started');
-          socket.off('notes_generation_chunk');
-          socket.off('notes_generation_completed');
-          socket.off('notes_generation_error');
-
-          customToast(
-            'error',
-            t('common.error'),
-            event.payload?.error || 'Failed to generate notes. Please try again.'
-          );
-        }
-      });
-
-      // Trigger the note generation via HTTP API (as per guide Step 3)
-      await generateNotes(session.sessionId, payload);
-      console.log('[TranscriptionComplete] 🚀 Triggered generation via API');
-
-    } catch (error: any) {
-      console.error('[TranscriptionComplete] Generate notes error:', error);
-      setIsGeneratingNotes(false);
-
-      customToast(
-        'error',
-        t('common.error'),
-        error?.response?.data?.message || error?.message || 'Failed to trigger notes generation.'
-      );
-    }
-  };
-
-  const renderEmptyTranscriptionSection = () => {
-    return (
-      <View style={styles.transcriptionSection}>
-        <View style={styles.transcriptionHeader}>
-          <Text variant="titleMedium" style={styles.transcriptionTitle}>
-            {t('mainContent.transcriptionComplete.transcriptionTitle')}
-          </Text>
-          <Text variant="bodySmall" style={styles.transcriptionDuration}>
-            {t('mainContent.transcriptionComplete.totalDuration')}: 00:00
-          </Text>
-        </View>
-
-        <View style={styles.emptyTranscriptionContent}>
-          <View style={styles.emptyTranscriptionContainer}>
-            <FileText size={48} color={colors.outline} />
-            <Text variant="bodyMedium" style={styles.emptyTranscriptionText}>
-              {t('mainContent.transcriptionComplete.emptyTranscription')}
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderGeneratedNotes = () => {
-    if (!generatedNotes) return null;
-
-
-    const handleCopyNotes = async () => {
-      try {
-        if (!generatedNotes) {
-          customToast('error', t('common.error'), 'No notes to copy');
-          return;
-        }
-
-        // Copy to clipboard
-        await Clipboard.setString(generatedNotes);
-        customToast('success', t('common.success'), 'Notes copied to clipboard!');
-      } catch (error) {
-        console.error('[TranscriptionComplete] Copy error:', error);
-        customToast('error', t('common.error'), 'Failed to copy notes');
-      }
-    };
-
-    const handleCustomize = () => {
-      setShowRegenerateModal(true);
-    };
-
-    // Helper to render formatted notes text with colored headers
-    const renderFormattedText = (text: string) => {
-      if (!text) return null;
-
-      const lines = text.split('\n');
-      return lines.map((line, index) => {
-        let cleanLine = line.trim();
-        if (!cleanLine) return <Text key={index}>{'\n'}</Text>;
-
-        // Detect headers: starts with #, bolded with **, or ends with :
-        const isMarkdownHeader = cleanLine.startsWith('#');
-        const isBoldHeader = cleanLine.startsWith('**') && cleanLine.endsWith('**');
-        const isColonHeader = cleanLine.endsWith(':') && cleanLine.length < 100 && !cleanLine.includes('http');
-
-        const isHeader = isMarkdownHeader || isBoldHeader || isColonHeader;
-
-        // Remove markdown symbols # and *
-        cleanLine = cleanLine
-          .replace(/^#+\s*/, '')      // Remove leading #
-          .replace(/\*/g, '')         // Remove all *
-          .trim();
-
-        if (isHeader) {
-          return (
-            <Text key={index} style={styles.notesHeaderLine}>
-              {cleanLine}
-              {'\n'}
-            </Text>
-          );
-        }
-
-        // For body text, also remove markdown symbols for a clean look
-        const fullyCleanLine = line
-          .replace(/#+/g, '')
-          .replace(/\*/g, '');
-
-        return (
-          <Text key={index} style={styles.notesBodyLine}>
-            {fullyCleanLine}
-            {'\n'}
-          </Text>
-        );
-      });
-    };
-
-    return (
-      <View
-        ref={notesSectionRef}
-        style={styles.generatedNotesSection}
-        onLayout={(event) => {
-          const { y } = event.nativeEvent.layout;
-          setNotesSectionY(y);
-        }}
-      >
-        {/* Top Toolbar */}
-        <View style={styles.notesToolbar}>
-          <View style={styles.notesRightActions}>
-            <TouchableOpacity onPress={handleCustomize} activeOpacity={0.8}>
-              <LinearGradient
-                colors={LinearGradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.customizeButtonGradient}
-              >
-                <Sparkles size={16} color="white" />
-                <Text style={styles.customizeButtonText}>Customize</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.notesOutlineButton} onPress={handleCopyNotes}>
-              <Copy size={16} color="#4B5563" />
-              <Text style={styles.notesOutlineButtonText}>Copy</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Notes Card */}
-        <View style={styles.notesCard}>
-          <ScrollView
-            ref={notesScrollViewRef}
-            style={styles.notesScroll}
-            showsVerticalScrollIndicator={true}
-            nestedScrollEnabled={true}
-            contentContainerStyle={styles.notesScrollContent}
-          >
-            <View style={styles.notesPadding}>
-              {renderFormattedText(generatedNotes)}
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    );
+    return t('mainContent.transcriptionComplete.generatedUsing.customMode', { template: selectedTemplateTitle || t('mainContent.transcriptionComplete.customTemplate') });
   };
 
   const renderGenerateButton = () => {
+    // LOGIC UPDATE: Validation depends on Mode
+    let canGenerate = false;
+
+    if (session.type !== 'patient') {
+      canGenerate = true;
+    } else {
+      if (generationMode === 'standard') {
+        // Standard Mode Requirements
+        canGenerate = !!selectedSpecialization && !!visitType;
+      } else {
+        // Custom Mode Requirements
+        canGenerate = !!selectedTemplateId;
+      }
+    }
+
     return (
-      <View style={styles.generateButtonContainer}>
-        <PrimaryButton
-          text={isGeneratingNotes ? 'Generating...' : t('noteGenerator.generate')}
-          onPress={handleGenerateNotes}
-          disabled={!canGenerate || isGeneratingNotes}
-          loading={isGeneratingNotes}
-          width={wp(90)}
-        />
-      </View>
+      <TouchableOpacity
+        style={[
+          styles.floatingGenerateButton,
+          (!canGenerate || isGenerating) && styles.floatingGenerateButtonDisabled,
+        ]}
+        onPress={async () => {
+          if (canGenerate) {
+            setIsGenerating(true);
+            setTimeout(() => {
+              const note = generateMockNote();
+              const specializationLabel =
+                specializationOptions.find(s => s.key === selectedSpecialization)?.label;
+              const visitTypeLabel =
+                visitTypeOptions.find(v => v.key === visitType)?.label;
+              setGeneratedNote(note);
+              setIsGenerating(false);
+              sessionStorage.updateSessionNoteMeta(session.id, {
+                generationMode,
+                specializationLabel: generationMode === 'standard' ? specializationLabel : undefined,
+                visitTypeLabel: generationMode === 'standard' ? visitTypeLabel : undefined,
+                customTemplateTitle: generationMode === 'custom' ? selectedTemplateTitle : undefined,
+              });
+              handleCollapseConfig();
+            }, 1500);
+          } else {
+            const errorMsg = generationMode === 'standard'
+              ? 'Please select Specialization and Visit Type'
+              : 'Please select a Custom Template';
+            customToast(
+              'error',
+              t('common.error'),
+              errorMsg,
+            );
+          }
+        }}
+        disabled={!canGenerate || isGenerating}
+        activeOpacity={0.85}
+      >
+        <Text variant="bodyMedium" style={styles.floatingGenerateButtonText}>
+          {isGenerating ? t('common.generating') : t('mainContent.transcriptionComplete.generateNote')}
+        </Text>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <Header
-        title={session.title}
-        subtitle={getSessionTypeText()}
-        onLeftPress={() => navigation.goBack()}
-        icon={getSessionIcon()}
-        showIcon={true}
-        backgroundColor={colors.surface}
-        textColor={colors.onSurface}
-      />
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtonsContainer}>
-        {session.type === 'patient' && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => (navigation as any).navigate('consult')}
-          >
-            <MessageSquare size={20} color={colors.onSurfaceVariant} />
+      {/* Compact Header */}
+      <View style={styles.compactHeader}>
+        <View style={styles.compactHeaderLeft}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowRenameModal(true)}
-        >
-          <Edit3 size={20} color={colors.onSurfaceVariant} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowDeleteModal(true)}
-        >
-          <Trash2 size={20} color="#ef4444" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowResetModal(true)}
-        >
-          <RotateCcw size={20} color={colors.onSurfaceVariant} />
-        </TouchableOpacity>
+
+          {(() => {
+            const IconComponent = getSessionIcon();
+            return (
+              <View style={styles.compactIconContainer}>
+                <IconComponent size={16} color="white" />
+              </View>
+            );
+          })()}
+
+          <View style={styles.compactTitleContainer}>
+            <Text variant="titleMedium" style={styles.compactTitle}>
+              {session.title}
+            </Text>
+            <Text variant="bodySmall" style={styles.compactSubtitle}>
+              {getSessionTypeText()}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.compactHeaderRight}>
+          {session.type === 'patient' && (
+            <TouchableOpacity
+              style={styles.compactActionButton}
+              onPress={() => (navigation as any).navigate('consult')}
+            >
+              <MessageSquare size={20} color="#A6A6A6" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.compactActionButton}
+            onPress={() => setShowRenameModal(true)}
+          >
+            <Edit3 size={20} color="#A6A6A6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.compactActionButton}
+            onPress={() => setShowDeleteModal(true)}
+          >
+            <Trash2 size={20} color="#A6A6A6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.compactActionButton}
+            onPress={() => setShowResetModal(true)}
+          >
+            <RotateCcw size={20} color="#A6A6A6" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Content */}
-      <ScrollView ref={mainScrollViewRef} style={styles.content} showsVerticalScrollIndicator={false}>
-        {renderNoteTypeButtons()}
-        <View style={{ height: hp(2) }} />
-        {renderSpecializationSection()}
-        <View style={{ height: hp(1) }} />
-        {renderVisitTypeSection()}
-        <View style={{ height: hp(1) }} />
-        {renderFollowUpSection()}
-        <View style={{ height: hp(1) }} />
-        {renderNoteLengthSection()}
-        <View style={{ height: hp(1) }} />
-        {renderTranscriptionSection()}
-        {renderGeneratedNotes()}
-        {renderGenerateButton()}
-      </ScrollView>
+      {isNoteReady && isConfigCollapsed ? (
+        <TouchableOpacity
+          style={styles.generatedSummaryBar}
+          onPress={handleExpandConfig}
+          activeOpacity={0.85}
+        >
+          <View style={styles.generatedSummaryTextGroup}>
+            <Text variant="bodyMedium" style={styles.generatedSummaryTitle}>
+              {getGeneratedSummary()}
+            </Text>
+            <Text variant="bodySmall" style={styles.generatedSummarySubtitle}>
+              {t('mainContent.transcriptionComplete.tapToEdit')}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={DESIGN_TOKENS.colors.textTertiary} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.settingsSection}>
+          {isNoteReady && (
+            <View style={styles.settingsHeaderRow}>
+              <Text variant="labelMedium" style={styles.settingsHeaderTitle}>
+                {t('mainContent.transcriptionComplete.configuration')}
+              </Text>
+              <TouchableOpacity
+                onPress={handleCollapseConfig}
+                style={styles.settingsHeaderAction}
+              >
+                <Text variant="bodySmall" style={styles.settingsHeaderActionText}>
+                  {t('mainContent.transcriptionComplete.hide')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* 1. SWITCHER (New) */}
+          {renderModeSwitch()}
+          {renderLegacyNoteButtons()}
+
+          {/* 2. STANDARD MODE */}
+          {session.type === 'patient' && generationMode === 'standard' && (
+            <View>
+              <View style={{ height: hp(1) }} />
+              <View style={styles.twoColumnGrid}>
+                <View style={styles.gridColumn}>{renderSpecializationSection()}</View>
+                <View style={styles.gridColumn}>{renderVisitTypeSection()}</View>
+              </View>
+              <View style={{ height: hp(1) }} />
+              {renderNoteLengthSection()}
+
+              {visitType === 'Follow-up' && <View style={{ height: hp(0.6) }} />}
+              {renderFollowUpSection()}
+            </View>
+          )}
+
+          {/* 3. CUSTOM MODE */}
+          {session.type === 'patient' && generationMode === 'custom' && (
+            <View style={{ marginTop: hp(1) }}>
+              <CustomTemplateManager
+                selectedTemplateId={selectedTemplateId}
+                onSelectTemplate={handleSelectTemplate}
+              />
+            </View>
+          )}
+        </View>
+      )}
+
+      <View style={styles.noteDocumentContainer}>
+        {isNoteReady ? (
+          <>
+            <ScrollView
+              style={styles.noteDocumentContent}
+              contentContainerStyle={styles.noteDocumentScrollContent}
+              showsVerticalScrollIndicator={true}
+            >
+              <Text variant="bodyMedium" style={styles.noteDocumentText}>
+                {generatedNote}
+              </Text>
+            </ScrollView>
+            <View style={styles.noteDocumentFooter}>
+              <TouchableOpacity
+                style={styles.noteCopyButton}
+                onPress={async () => {
+                  if (!generatedNote.trim()) return;
+                  await Clipboard.setString(generatedNote);
+                  customToast('success', 'Copied', 'Note copied to clipboard');
+                }}
+              >
+                <ClipboardIcon size={16} color={DESIGN_TOKENS.colors.primary} />
+                <Text variant="bodySmall" style={styles.noteCopyButtonText}>
+                  {t('common.copy')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <View style={styles.noteEmptyState}>
+            <Text variant="titleSmall" style={styles.noteEmptyTitle}>
+              {t('mainContent.transcriptionComplete.noNote')}
+            </Text>
+            <Text variant="bodySmall" style={styles.noteEmptySubtitle}>
+              {t('mainContent.transcriptionComplete.generateToSee')}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {!isNoteReady || !isConfigCollapsed ? (
+        <View style={styles.stickyFooter}>{renderGenerateButton()}</View>
+      ) : null}
+
+      {/* --- ALL MODALS RESTORED BELOW --- */}
 
       {/* Rename Modal */}
       <Modal
@@ -1879,30 +863,41 @@ const TranscriptionComplete = () => {
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.recording.renameSession')}
             </Text>
-
             <Input
               placeholder={t('mainContent.recording.sessionNamePlaceholder')}
               value={newSessionName}
               setValue={setNewSessionName}
               width={wp(80)}
             />
-
-            <View style={styles.modalButtons}>
+            <View style={styles.renameButtonsRow}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[styles.renameButton, styles.renameCancelButton]}
                 onPress={() => setShowRenameModal(false)}
               >
-                <Text variant="bodyMedium" style={styles.cancelButtonText}>
+                <Text variant="bodyMedium" style={styles.renameCancelText}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
-
-              <PrimaryButton
-                text={isRenaming ? t('common.saving') : t('common.save')}
+              <TouchableOpacity
+                style={[
+                  styles.renameButton,
+                  styles.renameSaveButton,
+                  isRenaming && styles.renameSaveButtonDisabled,
+                ]}
                 onPress={handleRename}
-                loading={isRenaming}
-                width={wp(35)}
-              />
+                disabled={isRenaming}
+              >
+                {isRenaming ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={DESIGN_TOKENS.colors.background}
+                  />
+                ) : (
+                  <Text variant="bodyMedium" style={styles.renameSaveText}>
+                    {t('common.save')}
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -1920,11 +915,9 @@ const TranscriptionComplete = () => {
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.recording.deleteSession')}
             </Text>
-
             <Text variant="bodyMedium" style={styles.modalDescription}>
               {t('common.confirmDelete')}
             </Text>
-
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -1934,7 +927,6 @@ const TranscriptionComplete = () => {
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.modalButton, styles.deleteButton]}
                 onPress={handleDelete}
@@ -1961,11 +953,9 @@ const TranscriptionComplete = () => {
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.recording.resetSession')}
             </Text>
-
             <Text variant="bodyMedium" style={styles.modalDescription}>
               {t('common.confirmReset')}
             </Text>
-
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -1975,7 +965,6 @@ const TranscriptionComplete = () => {
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.modalButton, styles.deleteButton]}
                 onPress={handleReset}
@@ -2002,40 +991,13 @@ const TranscriptionComplete = () => {
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.transcriptionComplete.specialization.select')}
             </Text>
-
             <View style={styles.optionsList}>
-              {[
-                {
-                  key: 'Psychiatry',
-                  label: t(
-                    'mainContent.transcriptionComplete.specialization.psychiatry',
-                  ),
-                },
-                {
-                  key: 'Child Psychiatry',
-                  label: t(
-                    'mainContent.transcriptionComplete.specialization.childPsychiatry',
-                  ),
-                },
-                {
-                  key: 'Surgery',
-                  label: t(
-                    'mainContent.transcriptionComplete.specialization.surgery',
-                  ),
-                },
-                {
-                  key: 'Smart Select',
-                  label: t(
-                    'mainContent.transcriptionComplete.specialization.smartSelect',
-                  ),
-                },
-              ].map(option => (
+              {specializationOptions.map(option => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
                     styles.optionItem,
-                    selectedSpecialization === option.key &&
-                    styles.selectedOptionItem,
+                    selectedSpecialization === option.key && styles.selectedOptionItem,
                   ]}
                   onPress={() => {
                     setSelectedSpecialization(option.key);
@@ -2046,8 +1008,7 @@ const TranscriptionComplete = () => {
                     variant="bodyMedium"
                     style={[
                       styles.optionText,
-                      selectedSpecialization === option.key &&
-                      styles.selectedOptionText,
+                      selectedSpecialization === option.key && styles.selectedOptionText,
                     ]}
                   >
                     {option.label}
@@ -2058,13 +1019,14 @@ const TranscriptionComplete = () => {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={{ alignSelf: 'center' }}>
-              <PrimaryButton
-                width={wp(77)}
-                text={t('common.cancel')}
-                onPress={() => setShowSpecializationModal(false)}
-              />
-            </View>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton, { width: '100%' }]}
+              onPress={() => setShowSpecializationModal(false)}
+            >
+              <Text variant="bodyMedium" style={styles.cancelButtonText}>
+                {t('common.cancel')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -2081,22 +1043,8 @@ const TranscriptionComplete = () => {
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.transcriptionComplete.visitType.select')}
             </Text>
-
             <View style={styles.optionsList}>
-              {[
-                {
-                  key: 'First Visit',
-                  label: t(
-                    'mainContent.transcriptionComplete.visitType.firstVisit',
-                  ),
-                },
-                {
-                  key: 'Follow-up',
-                  label: t(
-                    'mainContent.transcriptionComplete.visitType.followUp',
-                  ),
-                },
-              ].map(option => (
+              {visitTypeOptions.map(option => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
@@ -2123,14 +1071,14 @@ const TranscriptionComplete = () => {
                 </TouchableOpacity>
               ))}
             </View>
-
-            <View style={{ alignSelf: 'center' }}>
-              <PrimaryButton
-                width={wp(77)}
-                text={t('common.cancel')}
-                onPress={() => setShowVisitTypeModal(false)}
-              />
-            </View>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton, { width: '100%' }]}
+              onPress={() => setShowVisitTypeModal(false)}
+            >
+              <Text variant="bodyMedium" style={styles.cancelButtonText}>
+                {t('common.cancel')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -2143,234 +1091,189 @@ const TranscriptionComplete = () => {
         onRequestClose={() => setShowFollowUpModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text variant="titleLarge" style={styles.modalTitle}>
-              {t(
-                'mainContent.transcriptionComplete.followUpVisits.selectDialog.title',
-              )}
-            </Text>
+          <View style={styles.followUpModalCard}>
+            <View style={styles.followUpModalHeader}>
+              <Text variant="titleLarge" style={styles.followUpModalTitle}>
+                {t('mainContent.transcriptionComplete.followUpVisits.selectDialog.title')}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowFollowUpModal(false)}
+                style={styles.followUpCloseButton}
+              >
+                <X size={18} color="#A6A6A6" />
+              </TouchableOpacity>
+            </View>
 
-            {/* <Text variant="bodyMedium" style={styles.modalDescription}>
-              {t(
-                'mainContent.transcriptionComplete.followUpVisits.selectDialog.description',
-              )} */}
-            {/* </Text> */}
+            <View style={styles.followUpSearchBar}>
+              <Search size={18} color={DESIGN_TOKENS.colors.textSecondary} />
+              <TextInput
+                placeholder={t('mainContent.transcriptionComplete.followUpVisits.selectDialog.searchPlaceholder')}
+                placeholderTextColor={DESIGN_TOKENS.colors.textSecondary}
+                value={visitSearchQuery}
+                onChangeText={setVisitSearchQuery}
+                style={styles.followUpSearchInput}
+                returnKeyType="search"
+              />
+            </View>
 
-            <Text variant="bodySmall" style={styles.followUpInfoText}>
-              Only patient visits with completed transcriptions are shown. These visits will be used as context for generating follow-up notes.
-            </Text>
-
-            <Input
-              placeholder={t(
-                'mainContent.transcriptionComplete.followUpVisits.selectDialog.searchPlaceholder',
-              )}
-              value={visitSearchQuery}
-              setValue={setVisitSearchQuery}
-              width={wp(80)}
-              leftIcon={<Search size={16} color={colors.subText} />}
-            />
-
-            <ScrollView style={styles.visitsList} showsVerticalScrollIndicator={true}>
+            <View style={styles.visitsList}>
               {filteredFollowUpVisits.length === 0 ? (
                 <Text variant="bodyMedium" style={styles.noVisitsText}>
-                  {availableSessions.length === 0
-                    ? t(
-                      'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable',
-                    )
-                    : t(
-                      'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsFound',
-                    )}
+                  {mockFollowUpVisits.length === 0
+                    ? t('mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable')
+                    : t('mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsFound')}
                 </Text>
               ) : (
-                filteredFollowUpVisits.map(visit => (
-                  <TouchableOpacity
-                    key={visit._id}
-                    style={[
-                      styles.visitItem,
-                      selectedFollowUpVisits.has(visit._id) &&
-                      styles.selectedVisitItem,
-                    ]}
-                    onPress={() => handleFollowUpVisitSelect(visit._id)}
-                  >
-                    <View style={styles.visitInfo}>
-                      <Text variant="bodyMedium" style={styles.visitTitle}>
-                        {visit.title}
-                      </Text>
-                      <Text variant="bodySmall" style={styles.visitDate}>
-                        {new Date(visit.date).toLocaleDateString()}
-                      </Text>
-                    </View>
-                    {selectedFollowUpVisits.has(visit._id) && (
-                      <Check size={20} color={colors.lightGreen} />
-                    )}
-                  </TouchableOpacity>
-                ))
+                filteredFollowUpVisits.map(visit => {
+                  const isSelected = selectedFollowUpVisits.has(visit._id);
+                  return (
+                    <TouchableOpacity
+                      key={visit._id}
+                      style={[
+                        styles.visitCard,
+                        isSelected && styles.visitCardSelected,
+                      ]}
+                      onPress={() => handleFollowUpVisitSelect(visit._id)}
+                      activeOpacity={0.9}
+                    >
+                      <View style={styles.visitCardLeft}>
+                        <View style={styles.visitIconCircle}>
+                          <PhoneCall size={15} color={DESIGN_TOKENS.colors.primary} />
+                        </View>
+                        <View style={styles.visitInfo}>
+                          <Text
+                            variant="bodyMedium"
+                            style={styles.visitTitle}
+                            numberOfLines={1}
+                          >
+                            {visit.title}
+                          </Text>
+                          <Text
+                            variant="bodySmall"
+                            style={styles.visitSubtitle}
+                            numberOfLines={1}
+                          >
+                            {visit.label}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.visitCardRight}>
+                        <View style={styles.visitDateTag}>
+                          <Text style={styles.visitDateTagText}>
+                            {new Date(visit.date).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.visitCheckbox,
+                            isSelected && styles.visitCheckboxSelected,
+                          ]}
+                        >
+                          {isSelected && (
+                            <Check size={14} color={DESIGN_TOKENS.colors.background} />
+                          )}
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
               )}
-            </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowFollowUpModal(false)}
-              >
-                <Text variant="bodyMedium" style={styles.cancelButtonText}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-
-              <PrimaryButton
-                text={t(
-                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.importButton',
-                )}
-                onPress={handleImportFollowUpVisits}
-                width={wp(47)}
-              />
             </View>
+
+            <TouchableOpacity
+              style={[
+                styles.followUpImportButton,
+                selectedFollowUpVisits.size === 0 && styles.followUpImportButtonDisabled,
+              ]}
+              onPress={handleImportFollowUpVisits}
+              disabled={selectedFollowUpVisits.size === 0}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.followUpImportButtonText}>
+                {t('mainContent.transcriptionComplete.followUpVisits.selectDialog.importButton', { count: selectedFollowUpVisits.size })}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-
-      {/* Regenerate Note Modal */}
+      {/* Manual Text Input Modal - 2026 Slim Design */}
       <Modal
-        visible={showRegenerateModal}
+        visible={showManualTextModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowRegenerateModal(false)}
+        onRequestClose={() => setShowManualTextModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.regenerateModalContent}>
+          <View style={styles.slimModalContent}>
             <TouchableOpacity
-              onPress={() => setShowRegenerateModal(false)}
-              style={styles.regenerateCloseButton}
+              onPress={() => setShowManualTextModal(false)}
+              style={styles.slimModalClose}
             >
-              <X size={20} color={colors.subText} />
+              <X size={18} color="#A6A6A6" />
             </TouchableOpacity>
 
-            <Text variant="titleLarge" style={styles.regenerateModalTitle}>
-              Regenerate Note
+            <Text variant="titleMedium" style={styles.slimModalTitle}>
+              {t('mainContent.transcriptionComplete.followUpVisits.manualContextTitle')}
             </Text>
 
-            <View style={styles.regenerateInputContainer}>
-              <Input
-                placeholder="Enter your instructions for regenerating the note..."
-                value={regenerateInstructions}
-                setValue={setRegenerateInstructions}
-                width={wp(80)}
-                multiline={true}
-                height={hp(15)}
-                numberOfLines={6}
-              />
-            </View>
-
             <TouchableOpacity
-              onPress={() => {
-                if (!regenerateInstructions.trim()) {
-                  customToast('error', 'Error', 'Please enter regeneration instructions');
-                  return;
+              style={styles.slimPasteButton}
+              onPress={async () => {
+                try {
+                  const text = await Clipboard.getString();
+                  if (text) {
+                    setTempManualText(text);
+                    customToast('success', t('mainContent.transcriptionComplete.followUpVisits.pastedTitle'), t('mainContent.transcriptionComplete.followUpVisits.pastedMessage'));
+                  }
+                } catch (error) {
+                  customToast('error', t('common.error'), t('mainContent.transcriptionComplete.followUpVisits.pasteFailed'));
                 }
-                // TODO: Implement regenerate logic here
-                setShowRegenerateModal(false);
-                setRegenerateInstructions('');
-                customToast('success', 'Success', 'Regenerating note...');
               }}
-              activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={['#5DBBA6', '#44C2AD']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.regenerateButton}
-              >
-                <Sparkles size={18} color="white" />
-                <Text style={styles.regenerateButtonText}>Regenerate</Text>
-              </LinearGradient>
+              <ClipboardIcon size={14} color="#46B7C6" />
+              <Text variant="bodySmall" style={styles.slimPasteButtonText}>
+                {t('mainContent.transcriptionComplete.followUpVisits.paste')}
+              </Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
-      {/* Custom Prompt Modal */}
-      <Modal
-        visible={showCustomPromptModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowCustomPromptModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              onPress={() => setShowCustomPromptModal(false)}
-              style={{
-                position: 'absolute',
-                top: hp(2),
-                right: wp(4),
-                zIndex: 2,
-              }}
-            >
-              <X size={20} color={colors.subText} />
-            </TouchableOpacity>
-            <Text variant="titleLarge" style={styles.modalTitle}>
-              Create Custom Prompt
-            </Text>
             <Input
-              placeholder="Prompt Title"
-              value={customPromptTitle}
-              setValue={setCustomPromptTitle}
+              placeholder={t('mainContent.transcriptionComplete.followUpVisits.typePlaceholder')}
+              value={tempManualText}
+              setValue={setTempManualText}
               width={wp(80)}
-              leftIcon={<FileText size={16} color={colors.subText} />}
-            />
-            <View style={{ height: hp(1.5) }} />
-            <Input
-              placeholder="Enter your custom prompt..."
-              value={customNote}
-              setValue={setCustomNote}
-              width={wp(80)}
-              // leftIcon={<Edit3 size={16} color={colors.subText} />}
               multiline={true}
               height={hp(20)}
               numberOfLines={8}
             />
-            <View style={{ alignSelf: 'center', marginTop: hp(2) }}>
-              <PrimaryButton
-                text="Save Custom Prompt"
-                onPress={async () => {
-                  if (!customPromptTitle.trim() || !customNote.trim()) {
-                    customToast('error', 'Error', 'Please add title and prompt');
-                    return;
-                  }
 
-                  try {
-                    // Call API to create custom prompt
-                    const createdPrompt = await createNotesPrompt({
-                      title: customPromptTitle.trim(),
-                      content: customNote.trim(),
-                      noteType: session.type as 'patient' | 'meeting' | 'lecture',
-                    });
+            <View style={styles.slimModalActions}>
+              <TouchableOpacity
+                style={styles.slimCancelButton}
+                onPress={() => setShowManualTextModal(false)}
+              >
+                <Text variant="bodySmall" style={styles.slimCancelText}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
 
-                    console.log('[TranscriptionComplete] Custom prompt created:', createdPrompt);
-
-                    // Reload prompts list to show the new prompt
-                    const updatedPrompts = await getNotesPrompts(session.type as 'patient' | 'meeting' | 'lecture');
-                    setSavedPrompts(updatedPrompts);
-
-                    setShowCustomPromptModal(false);
-                    customToast('success', 'Success', 'Custom prompt saved successfully');
-
-                    // Optionally set noteType to 'custom' after saving
-                    setNoteType('custom');
-                  } catch (error: any) {
-                    console.error('[TranscriptionComplete] Failed to create custom prompt:', error);
-                    customToast(
-                      'error',
-                      'Error',
-                      error?.message || 'Failed to save custom prompt'
-                    );
+              <TouchableOpacity
+                style={styles.slimSaveButton}
+                onPress={() => {
+                  setManualFollowUpText(tempManualText);
+                  setShowManualTextModal(false);
+                  if (tempManualText.trim()) {
+                    customToast('success', t('mainContent.transcriptionComplete.followUpVisits.savedTitle'), t('mainContent.transcriptionComplete.followUpVisits.savedMessage'));
                   }
                 }}
-                width={wp(77)}
-                iconComponent={Lock}
-              />
+              >
+                <Text variant="bodySmall" style={styles.slimSaveText}>
+                  {t('common.save')}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -2385,573 +1288,1004 @@ export default TranscriptionComplete;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: DESIGN_TOKENS.colors.background,
   },
-  savedPromptCard: {
+  compactHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: wp(2),
+    justifyContent: 'space-between',
     paddingHorizontal: wp(4),
-    paddingVertical: hp(1.5),
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    backgroundColor: 'white',
-    width: wp(40),
+    paddingVertical: hp(1.2),
+    borderBottomWidth: 1,
+    borderBottomColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.background,
   },
-  selectedPromptCard: {
-    borderColor: '#318bc0ff',
-    backgroundColor: '#318bc0ff',
-  },
-  savedPromptTitle: {
-    color: colors.onSurface,
-    fontWeight: '500',
-    flex: 1,
-
-  },
-  actionButtonsContainer: {
+  compactHeaderLeft: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(1),
-    gap: 8,
-    backgroundColor: colors.surface,
-  },
-  actionButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  content: {
     flex: 1,
+    gap: 10,
+  },
+  backButton: {
+    padding: 4,
+  },
+  compactIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compactTitleContainer: {
+    flex: 1,
+  },
+  compactTitle: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.3,
+  },
+  compactSubtitle: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 12,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+    marginTop: 1,
+  },
+  compactHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  compactActionButton: {
+    padding: 6,
+  },
+  settingsSection: {
+    flexShrink: 0,
     paddingHorizontal: wp(5),
+    paddingTop: hp(1.2),
+    paddingBottom: hp(0.8),
+    overflow: 'visible',
+  },
+  settingsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: hp(0.8),
+  },
+  settingsHeaderTitle: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  settingsHeaderAction: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+  },
+  settingsHeaderActionText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.1,
+  },
+  generatedSummaryBar: {
+    marginHorizontal: wp(5),
+    marginTop: hp(1.2),
+    marginBottom: hp(0.8),
+    paddingVertical: hp(1.2),
+    paddingHorizontal: wp(4),
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  generatedSummaryTextGroup: {
+    flex: 1,
+  },
+  generatedSummaryTitle: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
+  },
+  generatedSummarySubtitle: {
+    color: DESIGN_TOKENS.colors.textTertiary,
+    fontSize: 11,
+    marginTop: 2,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+  },
+  transcriptWindow: {
+    flex: 1,
+    marginHorizontal: wp(5),
+    marginBottom: hp(1.2),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderRadius: DESIGN_TOKENS.borderRadius.xxlarge,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
+    overflow: 'hidden',
+    ...DESIGN_TOKENS.shadows.small,
+  },
+  transcriptWindowCompact: {
+    marginTop: hp(0.8),
+  },
+  transcriptWindowWithFollowUp: {
+    marginTop: hp(1.2),
+  },
+  stickyFooter: {
+    flexShrink: 0,
+    paddingHorizontal: wp(5),
+    paddingTop: hp(1.2),
+    paddingBottom: Platform.OS === 'ios' ? hp(2.5) : hp(2),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 4,
   },
   noteTypeContainer: {
-    // marginVertical: hp(2),
+    marginBottom: hp(0.5),
   },
-  sectionTitle: {
-    color: colors.onSurface,
+  sectionLabel: {
+    color: DESIGN_TOKENS.colors.text,
     fontWeight: '600',
-    marginBottom: hp(2),
+    fontSize: 11,
+    marginBottom: hp(0.7),
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
-  buttonGrid: {
-    gap: hp(0.5),
-  },
-  disabledNoteTypeButton: {
-    opacity: 0.35,
-    backgroundColor: colors.surfaceDisabled,
-  },
-  customNotePreview: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    padding: wp(4),
-    marginTop: hp(0.7),
-    width: wp(90), // Decreased width as requested
-  },
-  customNoteTitle: {
-    color: colors.onSurface,
-    fontWeight: '600',
-    marginBottom: hp(1),
-  },
-  customNoteText: {
-    color: colors.onSurface,
-  },
-  noteTypeButton: {
+  compactSegmentedControl: {
     flexDirection: 'row',
+    backgroundColor: DESIGN_TOKENS.colors.border,
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    padding: 2,
+    gap: 2,
+  },
+  compactSegmentButton: {
+    flex: 1,
+    paddingVertical: 7,
     alignItems: 'center',
-    borderRadius: 12,
-    backgroundColor: '#f2f2f2',
-    minHeight: hp(8),
+    justifyContent: 'center',
+    borderRadius: DESIGN_TOKENS.borderRadius.small,
+  },
+  compactSegmentButtonSelected: {
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  compactSegmentText: {
+    color: '#666666',
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    letterSpacing: -0.1,
+  },
+  compactSegmentTextSelected: {
+    color: DESIGN_TOKENS.colors.background,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+  },
+  noteDocumentContainer: {
+    flex: 1,
+    marginHorizontal: wp(5),
+    marginBottom: hp(1.2),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderRadius: DESIGN_TOKENS.borderRadius.xxlarge,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.outline,
+    ...DESIGN_TOKENS.shadows.small,
   },
-  selectedNoteTypeButton: {
+  noteDocumentContent: {
+    flex: 1,
+    paddingHorizontal: wp(5),
+  },
+  noteDocumentScrollContent: {
+    paddingVertical: hp(2),
+  },
+  noteDocumentText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 15,
+    lineHeight: 24,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+    letterSpacing: -0.2,
+  },
+  noteDocumentFooter: {
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(1.5),
+    paddingBottom: hp(2.2),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderTopWidth: 1,
+    borderTopColor: DESIGN_TOKENS.colors.border,
+    alignItems: 'center',
+  },
+  noteCopyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+    minHeight: 44,
+  },
+  noteCopyButtonText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
+  },
+  noteEmptyState: {
     flex: 1,
-    minHeight: hp(8),
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: wp(10),
   },
-  noteTypeOverlayGradient: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: 12,
+  noteEmptyTitle: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    marginBottom: 6,
   },
-  noteTypeText: {
-    color: colors.onSurface,
-    flex: 1,
-    marginLeft: wp(3),
+  noteEmptySubtitle: {
+    color: DESIGN_TOKENS.colors.textTertiary,
+    fontSize: 13,
+    textAlign: 'center',
+    fontFamily: DESIGN_TOKENS.fonts.regular,
   },
-  selectedNoteTypeText: {
-    color: 'white',
-    marginLeft: wp(3),
+  customNoteLabel: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 9,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 3,
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+  },
+  customNoteActionButton: {
+    padding: 6,
+    borderRadius: DESIGN_TOKENS.borderRadius.small,
+    backgroundColor: DESIGN_TOKENS.colors.background,
   },
   selectionSection: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: wp(4),
+    marginBottom: hp(0.5),
   },
-  selectionHeader: {
+  twoColumnGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: hp(1),
+    gap: 10,
+    marginBottom: hp(0.5),
   },
-  selectionSectionTitle: {
-    color: colors.onSurface,
-    fontWeight: '600',
-    marginBottom: hp(1),
-    maxWidth: wp(45),
-  },
-  selectionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: hp(1),
-  },
-  selectionButtonText: {
-    color: colors.onSurface,
+  gridColumn: {
     flex: 1,
   },
-  followUpHeader: {
+  compactDropdownField: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: hp(2),
-    // marginTop:hp(2)
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minHeight: 38,
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
   },
-  addVisitsButton: {
+  compactDropdownValue: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 13,
+    fontWeight: '500',
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    letterSpacing: -0.2,
+    flex: 1,
+  },
+  compactDropdownPlaceholder: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 13,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+    letterSpacing: -0.2,
+    flex: 1,
+  },
+  followUpOptionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: hp(0.8),
+  },
+  followUpOptionButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: hp(0.8),
+    paddingHorizontal: wp(1.5),
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    minHeight: 56,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  followUpOptionText: {
+    marginTop: 4,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.15,
+    textAlign: 'center',
+  },
+  manualTextPreview: {
+    backgroundColor: DESIGN_TOKENS.colors.backgroundTertiary,
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    padding: wp(2.5),
+    marginTop: hp(0.6),
+    marginBottom: hp(0.8),
+    borderLeftWidth: 3,
+    borderLeftColor: DESIGN_TOKENS.colors.success,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  manualTextSnippet: {
+    color: '#666666',
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 3,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+    letterSpacing: -0.1,
+  },
+  slimModalContent: {
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderRadius: DESIGN_TOKENS.borderRadius.xxlarge,
+    padding: wp(5),
+    width: wp(88),
+    maxHeight: hp(70),
+    ...DESIGN_TOKENS.shadows.large,
+  },
+  slimModalClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 2,
+    padding: 4,
+  },
+  slimModalTitle: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    fontFamily: DESIGN_TOKENS.fonts.displaySemibold,
+    letterSpacing: -0.4,
+  },
+  slimPasteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(0.5),
-    borderRadius: 8,
+    justifyContent: 'center',
+    gap: 6,
+    alignSelf: 'flex-end',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: DESIGN_TOKENS.borderRadius.small,
     borderWidth: 1,
-    borderColor: colors.lightGreen,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+    marginBottom: hp(1),
   },
-  addVisitsText: {
-    marginLeft: wp(1),
-    color: colors.lightGreen,
+  slimPasteButtonText: {
+    color: DESIGN_TOKENS.colors.primary,
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.1,
+  },
+  slimModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: hp(1.5),
+  },
+  slimCancelButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    minHeight: 38,
+    justifyContent: 'center',
+  },
+  slimCancelText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    letterSpacing: -0.2,
+  },
+  slimSaveButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    minHeight: 38,
+    justifyContent: 'center',
+  },
+  slimSaveText: {
+    color: DESIGN_TOKENS.colors.background,
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
+  },
+  generatedNoteContainer: {
+    flex: 1,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+  },
+  generatedNoteHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: DESIGN_TOKENS.colors.border,
+  },
+  generatedNoteHeaderTitle: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.3,
+  },
+  generatedNoteContent: {
+    flex: 1,
+    paddingHorizontal: wp(5),
+  },
+  generatedNoteScrollContent: {
+    paddingVertical: hp(2),
+  },
+  generatedNoteText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 15,
+    lineHeight: 24,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+    letterSpacing: -0.2,
+  },
+  generatedNoteFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(1.5),
+    paddingBottom: hp(3),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderTopWidth: 1,
+    borderTopColor: DESIGN_TOKENS.colors.border,
+    ...DESIGN_TOKENS.shadows.medium,
+  },
+  generatedNoteActionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  generatedNotePrimaryButton: {
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    borderColor: DESIGN_TOKENS.colors.primary,
+  },
+  generatedNoteActionText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 15,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
+  },
+  generatedNotePrimaryText: {
+    color: DESIGN_TOKENS.colors.background,
+    fontSize: 15,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
   },
   importedVisitsContainer: {
-    marginTop: hp(1),
+    marginTop: hp(0.6),
   },
   importedVisitsCount: {
-    color: colors.subText,
-    marginBottom: hp(1),
+    color: DESIGN_TOKENS.colors.textTertiary,
+    fontSize: 10,
+    marginBottom: hp(0.6),
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   importedVisitItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'white',
-    padding: wp(3),
-    borderRadius: 8,
-    marginBottom: hp(0.5),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    padding: wp(2.5),
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
+    marginBottom: hp(0.6),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   importedVisitInfo: {
     flex: 1,
   },
   importedVisitTitle: {
-    color: colors.onSurface,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 13,
     fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
   },
   importedVisitDate: {
-    color: colors.subText,
-    marginTop: hp(0.25),
-  },
-  transcriptionSection: {
-    marginVertical: hp(2),
-    backgroundColor: 'white',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    overflow: 'hidden',
+    color: DESIGN_TOKENS.colors.textTertiary,
+    fontSize: 11,
+    marginTop: hp(0.3),
+    fontFamily: DESIGN_TOKENS.fonts.regular,
   },
   transcriptionHeader: {
-    padding: wp(4),
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1.5),
+    paddingBottom: hp(1),
     borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
+    borderBottomColor: DESIGN_TOKENS.colors.borderLight,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+  },
+  transcriptionScrollView: {
+    flex: 1,
   },
   transcriptionTitle: {
-    color: colors.onSurface,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 13,
     fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
+    textTransform: 'uppercase',
   },
   transcriptionDuration: {
-    color: colors.subText,
-    marginTop: hp(0.5),
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 12,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
   },
-  transcriptionContent: {
-    maxHeight: hp(40),
+  transcriptionChatContent: {
+    paddingHorizontal: wp(4),
+    paddingTop: hp(1),
+    paddingBottom: hp(2),
   },
-  emptyTranscriptionContent: {
-    minHeight: hp(20),
-    justifyContent: 'center',
-    alignItems: 'center',
+  chatUtterance: {
+    marginBottom: hp(2),
   },
-  emptyTranscriptionContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: hp(1),
-  },
-  emptyTranscriptionText: {
-    color: colors.subText,
-    textAlign: 'center',
-  },
-  utteranceItem: {
-    padding: wp(3),
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  utteranceHeader: {
+  chatUtteranceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
     marginBottom: hp(0.5),
   },
-  speakerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  speakerIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.lightGreen,
-    marginRight: wp(2),
-  },
-  speakerName: {
-    color: colors.lightGreen,
+  chatSpeakerName: {
+    color: DESIGN_TOKENS.colors.primary,
+    fontSize: 13,
     fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.1,
   },
-  timestampContainer: {
-    flexDirection: 'row',
+  chatTimestamp: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 11,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+  },
+  chatUtteranceText: {
+    color: '#0D0D0D',
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+    letterSpacing: -0.2,
+  },
+  floatingGenerateButton: {
+    alignSelf: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: wp(8),
+    borderRadius: DESIGN_TOKENS.borderRadius.xlarge,
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    minHeight: 48,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: wp(2),
-    paddingVertical: hp(0.25),
-    borderRadius: 12,
+    shadowColor: DESIGN_TOKENS.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  timestamp: {
-    color: colors.subText,
-    marginLeft: wp(1),
+  floatingGenerateButtonDisabled: {
+    backgroundColor: DESIGN_TOKENS.colors.border,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  utteranceText: {
-    color: colors.onSurface,
-    lineHeight: 20,
-    paddingLeft: wp(3),
-  },
-  generateButtonContainer: {
-    alignItems: 'center',
-    marginVertical: hp(3),
+  floatingGenerateButtonText: {
+    color: DESIGN_TOKENS.colors.background,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.3,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: wp(6),
-    width: wp(90),
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderRadius: DESIGN_TOKENS.borderRadius.xxlarge,
+    padding: wp(5),
+    width: wp(88),
     maxHeight: hp(80),
+    ...DESIGN_TOKENS.shadows.large,
   },
   modalTitle: {
-    color: colors.onSurface,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 20,
     fontWeight: '600',
-    marginBottom: hp(0),
+    marginBottom: hp(1.5),
     textAlign: 'center',
+    fontFamily: DESIGN_TOKENS.fonts.displaySemibold,
+    letterSpacing: -0.5,
   },
   modalDescription: {
-    color: colors.subText,
+    color: '#666666',
+    fontSize: 14,
     textAlign: 'center',
     marginBottom: hp(2),
+    lineHeight: 20,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: hp(2),
+    marginTop: hp(1.5),
+    gap: 10,
+  },
+  renameButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: hp(1.2),
+    gap: 10,
+  },
+  renameButton: {
+    flex: 1,
+    paddingVertical: hp(1),
+    borderRadius: DESIGN_TOKENS.borderRadius.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+  },
+  renameCancelButton: {
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+  },
+  renameCancelText: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    letterSpacing: -0.2,
+  },
+  renameSaveButton: {
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+  },
+  renameSaveButtonDisabled: {
+    opacity: 0.7,
+  },
+  renameSaveText: {
+    color: DESIGN_TOKENS.colors.background,
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
   },
   modalButton: {
-    flex: 1,
-    paddingVertical: hp(1.5),
-    borderRadius: 8,
+    paddingVertical: hp(1.3),
+    paddingHorizontal: wp(4),
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
     alignItems: 'center',
-    marginHorizontal: wp(1),
+    justifyContent: 'center',
+    minHeight: 44,
   },
   cancelButton: {
     borderWidth: 1,
-    borderColor: colors.outline,
-    backgroundColor: 'white',
+    borderColor: DESIGN_TOKENS.colors.border,
+    backgroundColor: DESIGN_TOKENS.colors.background,
   },
   cancelButtonText: {
-    color: colors.onSurface,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 15,
+    fontWeight: '500',
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    letterSpacing: -0.2,
   },
   deleteButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: DESIGN_TOKENS.colors.error,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.error,
   },
   deleteButtonText: {
-    color: 'white',
+    color: DESIGN_TOKENS.colors.background,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
   },
   optionsList: {
-    marginVertical: hp(1),
+    marginVertical: hp(1.5),
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: wp(3),
-    borderRadius: 8,
+    padding: wp(4),
+    borderRadius: DESIGN_TOKENS.borderRadius.xlarge,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
     marginBottom: hp(1),
-    backgroundColor: 'white',
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
   },
   selectedOptionItem: {
-    backgroundColor: colors.lightGreen,
-    borderColor: colors.lightGreen,
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    borderColor: DESIGN_TOKENS.colors.primary,
   },
   optionText: {
-    color: colors.onSurface,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 16,
+    fontWeight: '500',
     flex: 1,
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+    letterSpacing: -0.2,
   },
   selectedOptionText: {
-    color: 'white',
-  },
-  pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 0,
-  },
-  pill: {
-    backgroundColor: 'white',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.outline,
-    marginRight: wp(2),
-    marginBottom: hp(1),
-    overflow: 'hidden',
-  },
-  pillText: {
-    color: colors.onSurface,
-  },
-  pillSelected: {
-    borderColor: 'transparent',
-  },
-  pillOverlayGradient: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: 16,
-  },
-  pillGradient: {
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: wp(2),
-    marginBottom: hp(1),
-    minHeight: 32,
-  },
-  pillSelectedText: {
-    color: 'white',
+    color: DESIGN_TOKENS.colors.background,
     fontWeight: '600',
-  },
-  disabledContainer: {
-    opacity: 0.35,
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
   },
   visitsList: {
     marginVertical: hp(1),
-    maxHeight: hp(25), // Height for approximately 3 items
-  },
-  followUpInfoText: {
-    color: '#9333EA', // Light purple
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: hp(1),
-    marginBottom: hp(1.5),
-    paddingHorizontal: wp(2),
-    opacity: 0.85,
+    maxHeight: hp(36),
   },
   noVisitsText: {
     textAlign: 'center',
-    color: colors.subText,
-    paddingVertical: hp(2),
+    color: DESIGN_TOKENS.colors.textTertiary,
+    fontSize: 15,
+    paddingVertical: hp(3),
+    fontFamily: DESIGN_TOKENS.fonts.regular,
   },
   visitItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: wp(3),
-    borderRadius: 8,
+    padding: wp(4),
+    borderRadius: DESIGN_TOKENS.borderRadius.xlarge,
     borderWidth: 1,
-    borderColor: colors.outline,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
     marginBottom: hp(1),
-    backgroundColor: 'white',
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
   },
   selectedVisitItem: {
-    borderColor: colors.lightGreen,
-    backgroundColor: '#f0f9ff',
+    borderColor: DESIGN_TOKENS.colors.primary,
+    backgroundColor: '#F0F8FF',
+    borderWidth: 2,
   },
   visitInfo: {
     flex: 1,
   },
   visitTitle: {
-    color: colors.onSurface,
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 15,
     fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
   },
   visitDate: {
-    color: colors.subText,
-    marginTop: hp(0.25),
+    color: DESIGN_TOKENS.colors.textTertiary,
+    fontSize: 13,
+    marginTop: hp(0.5),
+    fontFamily: DESIGN_TOKENS.fonts.regular,
   },
-  // Generated Notes Styles
-  generatedNotesSection: {
-    marginHorizontal: wp(5),
-    marginVertical: hp(2),
+  followUpModalCard: {
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderRadius: DESIGN_TOKENS.borderRadius.xxlarge,
+    padding: wp(5),
+    width: wp(88),
+    maxHeight: hp(80),
+    ...DESIGN_TOKENS.shadows.large,
   },
-  notesToolbar: {
+  followUpModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: hp(1.5),
+    marginBottom: hp(1.2),
   },
-  generateNoteButtonGradientSmall: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: wp(3.5),
-    paddingVertical: hp(1.2),
-    borderRadius: 8,
-  },
-  generateNoteButtonTextSmall: {
-    color: 'white',
-    fontSize: 13,
+  followUpModalTitle: {
+    color: DESIGN_TOKENS.colors.text,
+    fontSize: 18,
     fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.displaySemibold,
+    letterSpacing: -0.4,
   },
-  notesRightActions: {
-    flexDirection: 'row',
-    gap: 8,
+  followUpCloseButton: {
+    padding: 6,
   },
-  customizeButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: hp(4.1),
-    width: wp(35),
-    borderRadius: 8,
-    justifyContent: 'center',
-  },
-  customizeButtonText: {
-    color: 'white',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  notesOutlineButton: {
+  followUpSearchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: 'white',
-  },
-  notesOutlineButtonText: {
-    color: '#4B5563',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  notesCard: {
-    backgroundColor: 'white', // Solid background for efficient shadow rendering
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    width: wp(90),
-    minHeight: hp(25),
-    maxHeight: hp(70), // Increased for bigger display
-    // iOS shadow
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    paddingHorizontal: 12,
+    height: 44,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    // Android shadow
-    elevation: 2,
-    alignSelf: 'center',
+    elevation: 1,
   },
-  notesScroll: {
+  followUpSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: DESIGN_TOKENS.colors.text,
+    marginLeft: 10,
+    height: 44,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
+  visitCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: hp(1.1),
+    paddingHorizontal: wp(3.2),
+    borderRadius: DESIGN_TOKENS.borderRadius.xlarge,
+    backgroundColor: DESIGN_TOKENS.colors.background,
+    borderWidth: 1,
+    borderColor: DESIGN_TOKENS.colors.borderLight,
+    marginBottom: hp(0.7),
+    ...DESIGN_TOKENS.shadows.small,
+  },
+  visitCardSelected: {
+    borderColor: DESIGN_TOKENS.colors.primary,
+    backgroundColor: '#F5FBFC',
+  },
+  visitCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     flex: 1,
   },
-  notesScrollContent: {
-    flexGrow: 1,
-  },
-  notesPadding: {
-    padding: wp(4), // Increased padding for better spacing
-    paddingBottom: hp(1),
-  },
-  notesHeaderLine: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#4A90E2', // Vibrant blue for headers
-    lineHeight: 16, // Tighter line height
-  },
-  notesBodyLine: {
-    fontSize: 15,
-    color: '#374151',
-    lineHeight: 20, // Tighter line height for readability
-    // marginBottom: 1, // Reduced spacing between lines
-  },
-  // Regenerate Note Modal Styles
-  regenerateModalContent: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: wp(6),
-    width: wp(90),
-    maxHeight: hp(50),
-  },
-  regenerateCloseButton: {
-    position: 'absolute',
-    top: hp(2),
-    right: wp(4),
-    zIndex: 2,
-    padding: 8,
-  },
-  regenerateModalTitle: {
-    color: colors.onSurface,
-    fontWeight: '600',
-    marginBottom: hp(2.5),
-    fontSize: 20,
-  },
-  regenerateInputContainer: {
-    alignSelf: 'center',
-    width: wp(80),
-  },
-  regenerateButton: {
-    flexDirection: 'row',
+  visitIconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#EAF6F8',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    height: hp(4),
-    borderRadius: 8,
-    width: '100%',
-    marginTop: hp(2),
   },
-  regenerateButtonText: {
-    color: 'white',
-    fontSize: 16,
+  visitSubtitle: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1,
+    fontFamily: DESIGN_TOKENS.fonts.regular,
+  },
+  visitCardRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  visitDateTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+  },
+  visitDateTagText: {
+    color: DESIGN_TOKENS.colors.textSecondary,
+    fontSize: 11,
+    fontFamily: DESIGN_TOKENS.fonts.medium,
+  },
+  visitCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: DESIGN_TOKENS.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: DESIGN_TOKENS.colors.background,
+  },
+  visitCheckboxSelected: {
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    borderColor: DESIGN_TOKENS.colors.primary,
+  },
+  followUpImportButton: {
+    marginTop: hp(1),
+    paddingVertical: 12,
+    borderRadius: DESIGN_TOKENS.borderRadius.large,
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  followUpImportButtonDisabled: {
+    backgroundColor: DESIGN_TOKENS.colors.border,
+  },
+  followUpImportButtonText: {
+    color: DESIGN_TOKENS.colors.background,
+    fontSize: 15,
     fontWeight: '600',
+    fontFamily: DESIGN_TOKENS.fonts.semibold,
+    letterSpacing: -0.2,
+  },
+  modeSwitchContainer: {
+    marginBottom: hp(1),
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+  },
+  segmentBtnActive: {
+    backgroundColor: DESIGN_TOKENS.colors.primary,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    elevation: 2,
+  },
+  segmentTextActive: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  segmentTextInactive: {
+    color: '#666',
+    fontWeight: '500',
+    fontSize: 13,
   },
 });
