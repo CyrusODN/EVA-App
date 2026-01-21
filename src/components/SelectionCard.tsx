@@ -1,0 +1,179 @@
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { 
+  Brain, 
+  Baby, 
+  Scissors, 
+  Sparkles, 
+  ClipboardList, 
+  RefreshCw,
+  Check,
+  LucideIcon,
+} from 'lucide-react-native';
+import {
+  ONBOARDING_COLORS,
+  ONBOARDING_SPACING,
+  ONBOARDING_TYPOGRAPHY,
+  ONBOARDING_SHADOWS,
+  ONBOARDING_RADIUS,
+  SPRINGS,
+  DURATIONS,
+} from '../constants/onboardingTheme';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  'brain': Brain,
+  'baby': Baby,
+  'scissors': Scissors,
+  'sparkles': Sparkles,
+  'clipboard-list': ClipboardList,
+  'refresh-cw': RefreshCw,
+};
+
+interface SelectionCardProps {
+  iconName: string;
+  title: string;
+  subtitle?: string;
+  hint?: string;
+  isSelected: boolean;
+  onSelect: () => void;
+  testID?: string;
+}
+
+const SelectionCard: React.FC<SelectionCardProps> = ({
+  iconName,
+  title,
+  subtitle,
+  hint,
+  isSelected,
+  onSelect,
+  testID,
+}) => {
+  const scale = useSharedValue(1);
+  const borderColorProgress = useSharedValue(isSelected ? 1 : 0);
+  const checkmarkScale = useSharedValue(isSelected ? 1 : 0);
+  
+  const IconComponent = ICON_MAP[iconName] || Sparkles;
+
+  useEffect(() => {
+    borderColorProgress.value = withTiming(isSelected ? 1 : 0, { duration: DURATIONS.fast });
+    checkmarkScale.value = withSpring(isSelected ? 1 : 0, SPRINGS.bouncy);
+  }, [isSelected]);
+
+  const handlePress = () => {
+    // Haptic feedback
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    
+    // Scale animation sequence (Things 3 style)
+    scale.value = withSequence(
+      withSpring(0.97, SPRINGS.snappy),
+      withSpring(1.02, SPRINGS.bouncy),
+      withSpring(1.0, SPRINGS.gentle)
+    );
+    
+    onSelect();
+  };
+
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    borderColor: isSelected ? ONBOARDING_COLORS.primary : ONBOARDING_COLORS.border,
+    backgroundColor: isSelected ? ONBOARDING_COLORS.primarySubtle : ONBOARDING_COLORS.pureWhite,
+  }));
+
+  const checkmarkStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkmarkScale.value }],
+    opacity: checkmarkScale.value,
+  }));
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={handlePress}
+      testID={testID}
+    >
+      <Animated.View style={[styles.container, containerStyle]}>
+        <View style={styles.iconContainer}>
+          <IconComponent 
+            size={24} 
+            color={isSelected ? ONBOARDING_COLORS.primary : ONBOARDING_COLORS.textSecondary} 
+            strokeWidth={2}
+          />
+        </View>
+        
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          {hint && <Text style={styles.hint}>{hint}</Text>}
+        </View>
+        
+        {/* Animated checkmark */}
+        <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
+          <View style={styles.checkmark}>
+            <Check size={14} color={ONBOARDING_COLORS.pureWhite} strokeWidth={3} />
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: ONBOARDING_SPACING.md,
+    borderRadius: ONBOARDING_RADIUS.lg,
+    borderWidth: 1,
+    ...ONBOARDING_SHADOWS.sm,
+    minHeight: 80,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: ONBOARDING_RADIUS.md,
+    backgroundColor: ONBOARDING_COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: ONBOARDING_SPACING.md,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    ...ONBOARDING_TYPOGRAPHY.title,
+  },
+  subtitle: {
+    ...ONBOARDING_TYPOGRAPHY.caption,
+    marginTop: 2,
+  },
+  hint: {
+    ...ONBOARDING_TYPOGRAPHY.caption,
+    color: ONBOARDING_COLORS.primary,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    right: ONBOARDING_SPACING.md,
+    top: ONBOARDING_SPACING.md,
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: ONBOARDING_COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+export default SelectionCard;
