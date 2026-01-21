@@ -9,7 +9,8 @@ import {
   Modal,
   TextInput,
   Platform,
-  PermissionsAndroid,
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -18,50 +19,32 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import {
-  Mic,
-  Square,
-  Upload,
-  QrCode,
-  Clock,
-  FileText,
-  Users,
-  Brain,
-  Trash2,
-  Edit3,
-  RotateCcw,
-  X,
-  Play,
-  Pause,
-} from 'lucide-react-native';
+  import {
+    Mic,
+    Square,
+    Upload,
+    QrCode,
+    Clock,
+    FileText,
+    Users,
+    Brain,
+    Trash2,
+    Edit3,
+    RotateCcw,
+    X,
+    ChevronLeft,
+  } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import PrimaryButton from '../../components/primaryButton';
-import Header from '../../components/header';
 import { colors } from '../../constants/colors';
-import LinearGradient from 'react-native-linear-gradient';
-import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage, Session as SessionType, SessionType as SessionTypeEnum } from '../../utils/sessionStorage';
-import Sound, {
-  PlayBackType,
-  RecordBackType,
-} from 'react-native-nitro-sound';
-import { uploadRecording } from '../../services/authService';
-
-const getRNFS = async (): Promise<any | null> => {
-  try {
-    const mod: any = await import('react-native-fs');
-    return mod?.default || mod;
-  } catch {
-    return null;
-  }
-};
 
 type PickedAudioFile = DocumentPicker.DocumentPickerResponse;
-
+ 
 
 const Session = () => {
   const { t } = useTranslation();
@@ -78,11 +61,7 @@ const Session = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackTime, setPlaybackTime] = useState(0);
   const [_uploadedFile, setUploadedFile] = useState<PickedAudioFile | null>(null);
-  const [recordedPath, setRecordedPath] = useState<string | null>(null);
-  const [isPlaybackStarted, setIsPlaybackStarted] = useState(false);
   const initialTitle =
     (sessionData && sessionData.title) || t('mainContent.recording.newSession');
   const [sessionTitle, setSessionTitle] = useState(initialTitle);
@@ -91,7 +70,17 @@ const Session = () => {
   const [renameValue, setRenameValue] = useState(initialTitle);
   const [currentSession, setCurrentSession] = useState<SessionType | null>(null);
 
-  const loadSessionData = useCallback(async () => {
+  useEffect(() => {
+    loadSessionData();
+  }, [sessionData?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSessionData();
+    }, [])
+  );
+
+  const loadSessionData = async () => {
     if (sessionData?.id) {
       const latestSession = await sessionStorage.getSessionById(sessionData.id);
       if (latestSession) {
@@ -102,76 +91,10 @@ const Session = () => {
           const [mins, secs] = latestSession.duration.split(':').map(Number);
           setRecordingTime(mins * 60 + secs);
         }
-        if (latestSession.audioPath) {
-          setRecordedPath(latestSession.audioPath);
-          setIsPlaybackStarted(false);
-          setIsPlaying(false);
-          setPlaybackTime(0);
-        }
-      }
-    }
-  }, [sessionData?.id]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadSessionData();
-    }, [loadSessionData])
-  );
-
-  useEffect(() => {
-    loadSessionData();
-  }, [loadSessionData]);
-
-  const handlePlayPause = async () => {
-    if (!recordedPath) {
-      return;
-    }
-    if (!isPlaying) {
-      try {
-        Sound.removePlayBackListener();
-        Sound.removePlaybackEndListener();
-        Sound.addPlayBackListener((e: PlayBackType) => {
-          const pos = Number(e.currentPosition) || 0;
-          setPlaybackTime(Math.floor(pos / 1000));
-        });
-        Sound.addPlaybackEndListener(() => {
-          setIsPlaying(false);
-          setIsPlaybackStarted(false);
-          setPlaybackTime(0);
-        });
-        if (isPlaybackStarted) {
-          await Sound.resumePlayer();
-        } else {
-          await Sound.startPlayer(recordedPath);
-          setIsPlaybackStarted(true);
-        }
-        setIsPlaying(true);
-      } catch {
-        Alert.alert(
-          t('common.error'),
-          'Audio playback module is not linked. Please run pod install and rebuild.'
-        );
-      }
-    } else {
-      try {
-        await Sound.pausePlayer();
-        setIsPlaying(false);
-      } catch {
-        Alert.alert(
-          t('common.error'),
-          'Failed to pause playback. Please ensure pods are installed.'
-        );
       }
     }
   };
 
-  const handleGenerateNotes = () => {
-    sessionStorage.updateSessionStatus(session.id, 'transcribed');
-    navigation.replace('transcriptionCompleted', {
-      sessionData: session,
-      sessionType: session.type,
-    });
-  };
 
   const session = currentSession || sessionData || {
     id: '1',
@@ -184,13 +107,20 @@ const Session = () => {
     status: 'new',
   };
 
+  // Timer effect for recording
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
     return () => {
-      Sound.removeRecordBackListener();
-      Sound.removePlayBackListener();
-      Sound.removePlaybackEndListener();
+      if (interval) {
+        clearInterval(interval);
+      }
     };
-  }, []);
+  }, [isRecording]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -200,438 +130,53 @@ const Session = () => {
       .padStart(2, '0')}`;
   };
 
-  const handleStartRecording = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          {
-            title: 'Audio Recording Permission',
-            message: 'This app needs access to your microphone to record audio.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          }
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          return;
-        }
-      } catch {
-        return;
-      }
-    }
+  const handleStartRecording = () => {
+    setIsRecording(true);
     setRecordingTime(0);
-    try {
-      Sound.addRecordBackListener((e: RecordBackType) => {
-        const pos = Number(e.currentPosition) || 0;
-        setRecordingTime(Math.floor(pos / 1000));
-      });
-      await Sound.startRecorder();
-      setIsRecording(true);
-    } catch (error) {
-      Alert.alert(
-        t('common.error'),
-        'Audio module is not linked. Please run pod install and rebuild iOS.'
-      );
-      setIsRecording(false);
-    }
   };
 
-  const handleStopRecording = () => {
+  const handleStopRecording = async () => {
     setIsRecording(false);
-    Alert.alert(t('common.confirm'), t('session.stopRecordingConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.confirm'),
-        onPress: async () => {
-          try {
-            console.log('[Session] Stopping recorder...');
-            const result = await Sound.stopRecorder();
-            Sound.removeRecordBackListener();
-
-            const path = typeof result === 'string' ? result : null;
-            console.log('[Session] Recording stopped, original path:', path);
-
-            if (!path) {
-              console.error('[Session] No path returned from stopRecorder');
-              Alert.alert(
-                t('common.error'),
-                'Failed to get recording path. Please try again.'
-              );
-              return;
-            }
-
-            let persistedPath: string | null = null;
-            const RNFS = await getRNFS();
-
-            if (RNFS && path) {
-              try {
-                const dir = `${RNFS.DocumentDirectoryPath}/recordings`;
-                console.log('[Session] Creating recordings directory:', dir);
-
-                try {
-                  await RNFS.mkdir(dir);
-                  console.log('[Session] Directory created/verified');
-                } catch (mkdirError) {
-                  console.log('[Session] Directory may already exist:', mkdirError);
-                }
-
-                const ext = path.includes('.') ? `.${path.split('.').pop()}` : '.m4a';
-                const dest = `${dir}/${session.id}${ext}`;
-                const src = path.startsWith('file://') ? path.replace('file://', '') : path;
-
-                console.log('[Session] Preparing to copy audio file...');
-                console.log('[Session] Source:', src);
-                console.log('[Session] Destination:', dest);
-
-                // Verify source file exists
-                const sourceExists = await RNFS.exists(src);
-                if (!sourceExists) {
-                  console.error('[Session] Source file does not exist:', src);
-                  throw new Error('Source audio file not found');
-                }
-
-                const sourceStats = await RNFS.stat(src);
-                console.log('[Session] Source file size:', sourceStats.size, 'bytes');
-
-                if (sourceStats.size === 0) {
-                  console.error('[Session] Source file is empty');
-                  throw new Error('Recorded audio file is empty');
-                }
-
-                // Check if destination file already exists and delete it
-                const destExists = await RNFS.exists(dest);
-                if (destExists) {
-                  console.log('[Session] Destination file already exists, deleting...');
-                  await RNFS.unlink(dest);
-                }
-
-                // Copy file
-                console.log('[Session] Copying file...');
-                await RNFS.copyFile(src, dest);
-
-                // Verify copy succeeded
-                const destExistsAfterCopy = await RNFS.exists(dest);
-                if (!destExistsAfterCopy) {
-                  console.error('[Session] Copy failed - destination file not created');
-                  throw new Error('Failed to copy audio file');
-                }
-
-                const destStats = await RNFS.stat(dest);
-                console.log('[Session] File copied successfully');
-                console.log('[Session] Destination file size:', destStats.size, 'bytes');
-
-                if (destStats.size === 0) {
-                  console.error('[Session] Destination file is empty');
-                  throw new Error('Copied audio file is empty');
-                }
-
-                persistedPath = dest;
-                console.log('[Session] Audio file persisted at:', persistedPath);
-              } catch (copyError: any) {
-                console.error('[Session] File copy error:', copyError);
-                console.error('[Session] Error message:', copyError?.message);
-                // Don't set persistedPath if copy failed
-                // Will use original path as fallback
-              }
-            }
-
-            const finalPath = persistedPath || path;
-            console.log('[Session] Final audio path to use:', finalPath);
-
-            setRecordedPath(finalPath);
-            const duration = formatTime(recordingTime);
-            console.log('[Session] Recording duration:', duration);
-
-            await sessionStorage.markSessionAsRecorded(session.id, duration, finalPath || undefined);
-            await loadSessionData();
-
-            // Don't auto-transcribe - let user listen first and manually trigger transcription
-            console.log('[Session] Recording saved. User can now listen and transcribe manually.');
-          } catch (error: any) {
-            console.error('[Session] Stop recording error:', error);
-            Alert.alert(
-              t('common.error'),
-              `Failed to stop recording: ${error?.message || 'Unknown error'}`
-            );
-          }
-        },
-      },
-    ]);
+    setIsTranscribing(true);
+    const duration = formatTime(recordingTime);
+    await sessionStorage.markSessionAsRecorded(session.id, duration);
+    await loadSessionData();
+    setTimeout(async () => {
+      await sessionStorage.updateSessionStatus(session.id, 'transcribed');
+      setIsTranscribing(false);
+      navigation.replace('transcriptionCompleted', {
+        sessionData: session,
+        sessionType: session.type,
+      });
+    }, 3000);
   };
 
   const handleFileUpload = async () => {
     try {
-      console.log('[Session] Opening file picker...');
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.audio],
         allowMultiSelection: false,
       });
 
       if (result && result.length > 0) {
-        const pickedFile = result[0] as PickedAudioFile;
-        console.log('[Session] File picked:', pickedFile.name);
-        console.log('[Session] File URI:', pickedFile.uri);
-        console.log('[Session] File type:', pickedFile.type);
-        console.log('[Session] File size:', pickedFile.size);
-
-        setUploadedFile(pickedFile);
-        const uri = pickedFile.uri || null;
-
-        if (!uri) {
-          console.error('[Session] No URI in picked file');
-          Alert.alert(
-            t('session.error'),
-            'Failed to get file path. Please try again.'
-          );
-          return;
-        }
-
-        let persistedPath: string | null = null;
-        const RNFS = await getRNFS();
-
-        if (RNFS && uri) {
-          try {
-            const dir = `${RNFS.DocumentDirectoryPath}/recordings`;
-            console.log('[Session] Creating recordings directory:', dir);
-
-            try {
-              await RNFS.mkdir(dir);
-              console.log('[Session] Directory created/verified');
-            } catch (mkdirError) {
-              console.log('[Session] Directory may already exist:', mkdirError);
-            }
-
-            const ext = uri.includes('.') ? `.${uri.split('.').pop()}` : '.m4a';
-            const dest = `${dir}/${session.id}${ext}`;
-            const src = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
-
-            console.log('[Session] Preparing to copy uploaded file...');
-            console.log('[Session] Source:', src);
-            console.log('[Session] Destination:', dest);
-
-            // Verify source file exists
-            const sourceExists = await RNFS.exists(src);
-            if (!sourceExists) {
-              console.error('[Session] Source file does not exist:', src);
-              throw new Error('Selected audio file not found');
-            }
-
-            const sourceStats = await RNFS.stat(src);
-            console.log('[Session] Source file size:', sourceStats.size, 'bytes');
-
-            if (sourceStats.size === 0) {
-              console.error('[Session] Source file is empty');
-              throw new Error('Selected audio file is empty');
-            }
-
-            // Check if destination file already exists and delete it
-            const destExistsBefore = await RNFS.exists(dest);
-            if (destExistsBefore) {
-              console.log('[Session] Destination file already exists, deleting...');
-              await RNFS.unlink(dest);
-            }
-
-            // Copy file
-            console.log('[Session] Copying file...');
-            await RNFS.copyFile(src, dest);
-
-            // Verify copy succeeded
-            const destExists = await RNFS.exists(dest);
-            if (!destExists) {
-              console.error('[Session] Copy failed - destination file not created');
-              throw new Error('Failed to copy audio file');
-            }
-
-            const destStats = await RNFS.stat(dest);
-            console.log('[Session] File copied successfully');
-            console.log('[Session] Destination file size:', destStats.size, 'bytes');
-
-            if (destStats.size === 0) {
-              console.error('[Session] Destination file is empty');
-              throw new Error('Copied audio file is empty');
-            }
-
-            persistedPath = dest;
-            console.log('[Session] Audio file persisted at:', persistedPath);
-          } catch (copyError: any) {
-            console.error('[Session] File copy error:', copyError);
-            console.error('[Session] Error message:', copyError?.message);
-            Alert.alert(
-              t('session.error'),
-              `Failed to copy audio file: ${copyError?.message || 'Unknown error'}`
-            );
-            return;
-          }
-        }
-
-        const finalPath = persistedPath || uri;
-        console.log('[Session] Final audio path to use:', finalPath);
-
-        setRecordedPath(finalPath);
-        await sessionStorage.markSessionAsRecorded(session.id, '00:00', finalPath || undefined);
+        setUploadedFile(result[0] as PickedAudioFile);
+        setIsTranscribing(true);
+        await sessionStorage.markSessionAsRecorded(session.id, '0:00');
         await loadSessionData();
-
-        // Verify file exists before transcription
-        if (finalPath) {
-          const RNFS = await getRNFS();
-          if (RNFS) {
-            const normalizedPath = finalPath.startsWith('file://')
-              ? finalPath.replace('file://', '')
-              : finalPath;
-
-            try {
-              const exists = await RNFS.exists(normalizedPath);
-              if (!exists) {
-                console.error('[Session] Audio file does not exist for transcription:', normalizedPath);
-                Alert.alert(
-                  t('common.error'),
-                  'Audio file not found. Please try selecting the file again.'
-                );
-                return;
-              }
-
-              const stats = await RNFS.stat(normalizedPath);
-              console.log('[Session] Audio file verified for transcription, size:', stats.size);
-
-              if (stats.size === 0) {
-                console.error('[Session] Audio file is empty');
-                Alert.alert(
-                  t('common.error'),
-                  'Audio file is empty. Please select a different file.'
-                );
-                return;
-              }
-            } catch (error) {
-              console.error('[Session] Error verifying audio file:', error);
-            }
-          }
-
-          console.log('[Session] Starting transcription...');
-          await transcribeAudio(finalPath);
-        } else {
-          console.error('[Session] No audio path available for transcription');
-          Alert.alert(
-            t('session.error'),
-            'Failed to process audio file. Please try again.'
-          );
-        }
-      }
-    } catch (err: any) {
-      console.error('[Session] File upload error:', err);
-      // Check if user cancelled (DocumentPicker returns specific error code)
-      if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
-        console.log('[Session] User cancelled file picker');
-      } else {
-        Alert.alert(t('session.error'), t('session.failedToPickAudio'));
-      }
-    }
-  };
-
-  const transcribeAudio = async (path: string) => {
-    console.log('[Session] Starting transcription for path:', path);
-
-    // Check if we have a sessionId from the server
-    if (!session.sessionId) {
-      Alert.alert(
-        t('common.error'),
-        'Session ID not found. Please try creating a new session.'
-      );
-      return;
-    }
-
-    setIsTranscribing(true);
-    try {
-      console.log('[Session] Uploading audio to server...');
-      console.log('[Session] Session ID:', session.sessionId);
-      console.log('[Session] Audio path:', path);
-
-      // Get file name and type
-      const fileName = path.split('/').pop() || 'recording.m4a';
-      const fileType = fileName.endsWith('.m4a') ? 'audio/m4a' : 'audio/mp4';
-
-      // Upload the recording
-      const response = await uploadRecording(session.sessionId, {
-        uri: path,
-        type: fileType,
-        name: fileName,
-      });
-
-      console.log('[Session] ===== UPLOAD RESPONSE =====');
-      console.log('[Session] Response status:', response.status);
-      console.log('[Session] Response data:', JSON.stringify(response.data, null, 2));
-      console.log('[Session] ===== END RESPONSE =====');
-
-      // Check if the request was successful
-      if (response.data?.success === true) {
-        console.log('[Session] Upload successful!');
-
-        // Extract event data from response
-        const eventData = response.data.data?.event;
-
-        if (eventData?.transcription) {
-          const { text, utterances } = eventData.transcription;
-          console.log('[Session] Transcription text:', text);
-          console.log('[Session] Utterances:', utterances);
-
-          // Save transcript to local storage
-          if (text) {
-            await sessionStorage.updateSessionTranscript(session.id, text, utterances || []);
-            await loadSessionData();
-
-            // Navigate to transcription completed screen
-            const updatedSession = await sessionStorage.getSessionById(session.id);
-            console.log('[Session] Navigating to transcription screen...');
-            navigation.replace('transcriptionCompleted', {
-              sessionData: updatedSession,
-              sessionType: session.type,
-            });
-          } else {
-            console.log('[Session] No transcription text in response');
-            customToast('error', 'Warning', 'Transcription completed but no text was returned.');
-          }
-        } else {
-          console.log('[Session] No transcription data in response yet - will be processed asynchronously');
-
-          // Still navigate to transcription screen so user can wait for transcription
-          const updatedSession = await sessionStorage.getSessionById(session.id);
-          console.log('[Session] Navigating to transcription screen (processing)...');
-
-          customToast('info', 'Processing', 'Audio uploaded successfully. Transcription is being processed.');
-
+        setTimeout(async () => {
+          await sessionStorage.updateSessionStatus(session.id, 'transcribed');
+          setIsTranscribing(false);
           navigation.replace('transcriptionCompleted', {
-            sessionData: updatedSession,
+            sessionData: session,
             sessionType: session.type,
           });
-        }
-      } else {
-        // Handle unsuccessful response
-        const errorMessage = response.data?.message || 'Upload failed';
-        console.error('[Session] Upload failed:', errorMessage);
-        Alert.alert(
-          t('common.error'),
-          errorMessage
-        );
+        }, 3000);
       }
-    } catch (e: any) {
-      console.error('[Session] Transcription error:', e);
-      console.error('[Session] Error message:', e?.message);
-      console.error('[Session] Error response:', e?.response?.data);
-
-      const msg = String(e?.message || '');
-
-      Alert.alert(
-        t('common.error'),
-        `Transcription failed: ${msg}\n\nPlease check your internet connection and try again.`,
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: 'Retry', onPress: () => transcribeAudio(path) }
-        ]
-      );
-    } finally {
-      setIsTranscribing(false);
+    } catch (err: any) {
+      Alert.alert(t('session.error'), t('session.failedToPickAudio'));
     }
   };
+
 
 
   const getSessionIcon = () => {
@@ -679,12 +224,19 @@ const Session = () => {
   };
 
   const handleRestart = async () => {
-    await sessionStorage.resetSession(session.id);
-    await loadSessionData();
+    // Reset local state first
     setIsRecording(false);
     setRecordingTime(0);
     setIsTranscribing(false);
     setUploadedFile(null);
+    setShowQRCode(false);
+    
+    // Reset session in storage
+    await sessionStorage.resetSession(session.id);
+    
+    // Reload session data
+    await loadSessionData();
+    
     customToast('success', t('common.success'), 'Session restarted');
   };
 
@@ -693,100 +245,17 @@ const Session = () => {
       return (
         <View style={styles.processingSection}>
           <View style={styles.processingCard}>
-            <View style={styles.loadingSpinner}>
-              <Text variant="headlineSmall" style={styles.processingTitle}>
-                {t('session.processingAudio')}
-              </Text>
-            </View>
+            <ActivityIndicator 
+              size="large" 
+              color="#46B7C6" 
+              style={styles.loadingSpinner}
+            />
+            <Text variant="headlineSmall" style={styles.processingTitle}>
+              {t('session.processingAudio')}
+            </Text>
             <Text variant="bodyMedium" style={styles.processingDescription}>
               {t('session.processingDescription')}
             </Text>
-          </View>
-        </View>
-      );
-    }
-
-    if (session.status === 'recorded') {
-      return (
-        <View style={styles.completedSection}>
-          <View style={styles.completedCard}>
-            <Mic size={58} color="#f59e0b" />
-            <Text variant="headlineMedium" style={styles.completedTitle}>
-              {t('session.recordingComplete')}
-            </Text>
-            <Text variant="bodyMedium" style={styles.completedDescription}>
-              {t('session.recordingCompleteDescription')}
-            </Text>
-
-            <View style={styles.timerContainer}>
-              <Clock size={20} color={colors.onSecondary} />
-              <Text variant="titleMedium" style={{ color: colors.onSecondary }}>
-                {isPlaying ? formatTime(playbackTime) : session.duration}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.playPauseButton}
-              onPress={handlePlayPause}
-            >
-              <LinearGradient
-                colors={['#f59e0b', '#d97706', '#b45309']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.playPauseButtonGradient}
-              >
-                {isPlaying ? (
-                  <Pause size={28} color="white" />
-                ) : (
-                  <Play size={28} color="white" fill="white" />
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Transcribe Audio Button - only show if not transcribed yet */}
-            {!session.hasTranscription && recordedPath && (
-              <PrimaryButton
-                text={isTranscribing ? 'Transcribing...' : 'Transcribe Audio'}
-                onPress={async () => {
-                  if (recordedPath && !isTranscribing) {
-                    // Verify file before transcription
-                    const RNFS = await getRNFS();
-                    if (RNFS) {
-                      const normalizedPath = recordedPath.startsWith('file://')
-                        ? recordedPath.replace('file://', '')
-                        : recordedPath;
-
-                      try {
-                        const exists = await RNFS.exists(normalizedPath);
-                        if (!exists) {
-                          Alert.alert(
-                            t('common.error'),
-                            'Audio file not found. Please try recording again.'
-                          );
-                          return;
-                        }
-
-                        const stats = await RNFS.stat(normalizedPath);
-                        if (stats.size === 0) {
-                          Alert.alert(
-                            t('common.error'),
-                            'Audio file is empty. Please try recording again.'
-                          );
-                          return;
-                        }
-                      } catch (error) {
-                        console.error('[Session] Error verifying audio file:', error);
-                      }
-                    }
-
-                    await transcribeAudio(recordedPath);
-                  }
-                }}
-                width={wp(75)}
-                iconComponent={FileText}
-                disabled={isTranscribing}
-              />
-            )}
           </View>
         </View>
       );
@@ -796,12 +265,7 @@ const Session = () => {
       <>
         {/* Recording Section */}
         <View style={styles.recordingSection}>
-          <View
-            style={[
-              styles.recordingCard,
-              { backgroundColor: isRecording ? '#fef2f2' : '#f0f9ff' },
-            ]}
-          >
+          <View style={styles.recordingCard}>
             <View style={styles.recordingHeader}>
               <Text variant="titleLarge" style={styles.recordingTitle}>
                 {isRecording
@@ -817,35 +281,27 @@ const Session = () => {
               ]}
               onPress={isRecording ? handleStopRecording : handleStartRecording}
             >
-              <LinearGradient
-                colors={
-                  isRecording
-                    ? ['#ef4444', '#dc2626', '#b91c1c']
-                    : LinearGradientColors
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.recordButtonGradient}
-              >
+              <View style={[
+                styles.recordButtonContent,
+                { backgroundColor: isRecording ? '#ef4444' : '#46B7C6' }
+              ]}>
                 {isRecording ? (
                   <Square size={32} color="white" fill="white" />
                 ) : (
                   <Mic size={32} color="white" />
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
 
-            {
-              <View style={styles.timerContainer}>
-                <Clock size={16} color={isRecording ? '#ef4444' : '#64748b'} />
-                <Text
-                  variant="titleSmall"
-                  style={{ color: isRecording ? '#ef4444' : '#64748b' }}
-                >
-                  {formatTime(recordingTime)}
-                </Text>
-              </View>
-            }
+            <View style={styles.timerContainer}>
+              <Clock size={16} color={isRecording ? '#ef4444' : '#86868b'} />
+              <Text
+                variant="titleSmall"
+                style={[styles.timerText, { color: isRecording ? '#ef4444' : '#86868b' }]}
+              >
+                {formatTime(recordingTime)}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -856,7 +312,7 @@ const Session = () => {
             onPress={handleFileUpload}
           >
             <View style={styles.uploadContent}>
-              <Upload size={32} color="#64748b" />
+              <Upload size={32} color="#86868b" />
               <Text variant="titleMedium" style={styles.uploadTitle}>
                 {t('session.uploadAudioFile')}
               </Text>
@@ -877,7 +333,7 @@ const Session = () => {
             onPress={() => setShowQRCode(!showQRCode)}
           >
             <View style={styles.qrContent}>
-              <QrCode size={32} color="#d97706" />
+              <QrCode size={32} color="#46B7C6" />
               <Text variant="titleMedium" style={styles.qrTitle}>
                 {t('session.connectExternalDevice')}
               </Text>
@@ -905,33 +361,64 @@ const Session = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <Header
-        title={sessionTitle}
-        subtitle={getSessionTypeText()}
-        onLeftPress={() => navigation.goBack()}
-        icon={getSessionIcon()}
-        showIcon={true}
-        backgroundColor={colors.surface}
-        textColor={colors.onSurface}
-      />
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Compact Header - Pro Tool Style */}
+      <View style={styles.compactHeader}>
+        <View style={styles.compactHeaderLeft}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ChevronLeft size={20} color="#000000" />
+          </TouchableOpacity>
+          
+          {(() => {
+            const IconComponent = getSessionIcon();
+            return (
+              <View style={styles.compactIconContainer}>
+                <IconComponent size={16} color="white" />
+              </View>
+            );
+          })()}
+          
+          <View style={styles.compactTitleContainer}>
+            <Text variant="titleMedium" style={styles.compactTitle}>
+              {sessionTitle}
+            </Text>
+            <Text variant="bodySmall" style={styles.compactSubtitle}>
+              {getSessionTypeText()}
+            </Text>
+          </View>
+        </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleRenameOpen}>
-          <Edit3 size={20} color={colors.onSurfaceVariant} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={handleRestart}>
-          <RotateCcw size={20} color={colors.onSurfaceVariant} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => setShowDeleteDialog(true)}>
-          <Trash2 size={20} color="#ef4444" />
-        </TouchableOpacity>
+        {/* Action Icons - Minimal, In Header */}
+        <View style={styles.compactHeaderRight}>
+          <TouchableOpacity
+            style={styles.compactActionButton}
+            onPress={handleRenameOpen}
+          >
+            <Edit3 size={20} color="#A6A6A6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.compactActionButton}
+            onPress={handleRestart}
+          >
+            <RotateCcw size={20} color="#A6A6A6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.compactActionButton}
+            onPress={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 size={20} color="#A6A6A6" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {renderRecordingState()}
       </ScrollView>
 
@@ -993,195 +480,296 @@ export default Session;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
   },
-  actionButtonsContainer: {
+  // Compact Pro Tool Header (All in one line)
+  compactHeader: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(1),
-    gap: 8,
-    backgroundColor: colors.surface,
+    justifyContent: 'space-between',
+    paddingHorizontal: wp(4),
+    paddingVertical: hp(1.2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    backgroundColor: '#FFFFFF',
   },
-  actionButton: {
-    padding: 8,
+  compactHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  backButton: {
+    padding: 4,
+  },
+  compactIconContainer: {
+    width: 32,
+    height: 32,
     borderRadius: 8,
-    backgroundColor: colors.background,
+    backgroundColor: '#46B7C6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compactTitleContainer: {
+    flex: 1,
+  },
+  compactTitle: {
+    color: '#000000',
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    letterSpacing: -0.3,
+  },
+  compactSubtitle: {
+    color: '#A6A6A6',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    marginTop: 1,
+  },
+  compactHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  compactActionButton: {
+    padding: 6,
   },
   content: {
     flex: 1,
     paddingHorizontal: wp(5),
-    paddingTop: hp(2),
+    paddingTop: hp(4),
+  },
+  scrollContent: {
+    paddingBottom: hp(15),
+    flexGrow: 1,
   },
   recordingSection: {
-    marginBottom: hp(3),
+    marginBottom: hp(4),
   },
   recordingCard: {
-    borderRadius: 16,
-    height: hp(25),
+    backgroundColor: '#FAFAFA',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    height: hp(30),
     justifyContent: 'space-evenly',
     alignItems: 'center',
+    paddingVertical: hp(3),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   recordingHeader: {
     alignItems: 'center',
   },
   recordingTitle: {
-    color: colors.onSurface,
+    color: '#000000',
     fontWeight: '600',
+    fontSize: 20,
     textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+    letterSpacing: -0.5,
   },
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    gap: 4,
+    backgroundColor: '#FAFAFA',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
-  timer: {
-    marginLeft: 6,
-    color: '#ef4444',
-    // fontWeight: '600',
+  timerText: {
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    fontWeight: '500',
+    fontSize: 15,
+    letterSpacing: -0.2,
   },
   recordButton: {
-    borderRadius: 40,
-    elevation: 8,
+    borderRadius: 50,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   recordButtonActive: {
-    elevation: 12,
-    shadowOpacity: 0.4,
+    shadowColor: '#ef4444',
+    shadowOpacity: 0.15,
+    elevation: 6,
   },
-  recordButtonGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playPauseButton: {
-    marginTop: hp(2),
-    marginBottom: hp(2),
-  },
-  playPauseButtonGradient: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  recordButtonContent: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
   },
   uploadSection: {
-    marginBottom: hp(3),
+    marginBottom: hp(4),
   },
   uploadCard: {
+    backgroundColor: '#FAFAFA',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.onSecondary,
+    borderColor: '#E5E5EA',
     borderStyle: 'dashed',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   uploadContent: {
-    padding: wp(5),
+    padding: wp(6),
     alignItems: 'center',
   },
   uploadTitle: {
-    color: colors.onSurface,
+    color: '#000000',
     fontWeight: '600',
-    marginTop: hp(1),
+    fontSize: 17,
+    marginTop: hp(1.5),
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    letterSpacing: -0.3,
   },
   uploadDescription: {
-    color: colors.onSurfaceVariant,
-    marginTop: hp(0.5),
+    color: '#86868b',
+    marginTop: hp(0.8),
     textAlign: 'center',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   uploadFormats: {
-    color: colors.onSurfaceVariant,
+    color: '#86868b',
     marginTop: hp(0.5),
-    fontSize: 11,
+    fontSize: 12,
     fontStyle: 'italic',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   qrSection: {
-    marginBottom: hp(3),
+    marginBottom: hp(4),
   },
   qrCard: {
+    backgroundColor: '#FAFAFA',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   qrContent: {
-    padding: wp(5),
+    padding: wp(6),
     alignItems: 'center',
-    backgroundColor: '#fefce8',
   },
   qrTitle: {
-    color: colors.onSurface,
+    color: '#000000',
     fontWeight: '600',
-    marginTop: hp(1),
+    fontSize: 17,
+    marginTop: hp(1.5),
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    letterSpacing: -0.3,
   },
   qrDescription: {
-    color: colors.onSurfaceVariant,
-    marginTop: hp(0.5),
+    color: '#86868b',
+    marginTop: hp(0.8),
     textAlign: 'center',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   qrCodeContainer: {
     alignItems: 'center',
     marginTop: hp(2),
+    paddingBottom: hp(2),
   },
   qrCodeWrapper: {
-    backgroundColor: 'white',
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    padding: 24,
     borderRadius: 16,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
+    elevation: 3,
   },
   processingSection: {
-    // marginVertical: hp(5),
+    marginBottom: hp(3),
   },
   processingCard: {
+    backgroundColor: '#FAFAFA',
     borderRadius: 16,
-    padding: wp(8),
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    paddingVertical: hp(4),
+    paddingHorizontal: wp(5),
     alignItems: 'center',
-    backgroundColor: '#e3f2fd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   loadingSpinner: {
-    marginBottom: hp(2),
+    marginBottom: hp(2.5),
   },
   processingTitle: {
-    color: colors.onSurface,
-    // fontWeight: '600',
+    color: '#000000',
+    fontWeight: '600',
+    fontSize: 20,
     textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+    letterSpacing: -0.4,
+    marginBottom: hp(1),
   },
   processingDescription: {
-    color: colors.onSurfaceVariant,
+    color: '#86868b',
     textAlign: 'center',
+    fontSize: 14,
+    marginTop: hp(1),
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   completedSection: {
-    // marginVertical: hp(5),
+    marginBottom: hp(3),
   },
   completedCard: {
-    borderRadius: 16,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     padding: wp(8),
     alignItems: 'center',
-    backgroundColor: '#e8f5e8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   completedTitle: {
-    color: colors.onSurface,
-    // fontWeight: '600',
+    color: '#000000',
+    fontWeight: '600',
+    fontSize: 22,
     textAlign: 'center',
     marginTop: hp(2),
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+    letterSpacing: -0.5,
   },
   completedDescription: {
-    color: colors.onSurfaceVariant,
+    color: '#86868b',
     textAlign: 'center',
     marginTop: hp(1),
     marginBottom: hp(3),
+    fontSize: 15,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   modalOverlay: {
     position: 'absolute',
@@ -1189,90 +777,114 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: wp(5),
+    paddingHorizontal: wp(6),
   },
   modalCard: {
     width: '100%',
-    borderRadius: 16,
-    backgroundColor: colors.surface,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     padding: wp(6),
-    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
     position: 'relative',
   },
   modalClose: {
     position: 'absolute',
-    right: 10,
-    top: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.surface,
+    right: 12,
+    top: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FAFAFA',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
+    elevation: 1,
   },
   modalTitle: {
-    color: colors.onSurface,
-    marginBottom: hp(1),
+    color: '#000000',
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: hp(1.5),
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+    letterSpacing: -0.5,
   },
   modalDescription: {
-    color: colors.onSurfaceVariant,
+    color: '#86868b',
+    fontSize: 15,
     marginBottom: hp(2),
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    lineHeight: 22,
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 12,
-    marginTop: hp(1),
+    marginTop: hp(2),
   },
   modalButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderColor,
-    backgroundColor: colors.surface,
+    borderColor: '#F0F0F0',
+    backgroundColor: '#FAFAFA',
   },
   modalButtonText: {
-    color: colors.onSurface,
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    letterSpacing: -0.2,
   },
   modalDangerButton: {
     backgroundColor: '#ef4444',
     borderColor: '#ef4444',
   },
   modalDangerText: {
-    color: colors.surface,
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    letterSpacing: -0.2,
   },
   modalPrimaryButton: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#46B7C6',
+    borderColor: '#46B7C6',
   },
   modalPrimaryText: {
-    color: colors.surface,
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    letterSpacing: -0.2,
   },
   renameInputWrapper: {
     borderWidth: 1.5,
-    borderColor: colors.borderColor,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     marginTop: hp(1),
+    marginBottom: hp(1),
   },
   renameInput: {
-    color: colors.onSurface,
+    color: '#000000',
+    fontSize: 17,
     height: 40,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    letterSpacing: -0.3,
   },
 });
