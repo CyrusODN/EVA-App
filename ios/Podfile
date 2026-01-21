@@ -8,6 +8,9 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# Expo autolinking (required for use_expo_modules!)
+require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
@@ -16,6 +19,7 @@ end
 
 target 'RemedyAI' do
   config = use_native_modules!
+  use_expo_modules!
   use_frameworks! :linkage => :static
   $RNFirebaseAsStaticFramework = true
 
