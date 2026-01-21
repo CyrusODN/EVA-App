@@ -50,7 +50,6 @@ import CustomTemplateManager, {
   CustomTemplate,
 } from '../../components/customTemplateManager';
 import { colors } from '../../constants/colors';
-import { ClinicalTheme } from '../../constants/clinicalTheme';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';
@@ -66,38 +65,55 @@ if (
 Dimensions.get('window');
 
 // Design System Constants
-// Design System Constants - Mapped to ClinicalTheme
 const DESIGN_TOKENS = {
   fonts: {
-    regular: ClinicalTheme.typography.family.text,
-    medium: ClinicalTheme.typography.family.text,
-    semibold: ClinicalTheme.typography.family.text,
-    displaySemibold: ClinicalTheme.typography.family.display,
+    regular: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    medium: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    semibold: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    displaySemibold: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
   },
   colors: {
-    primary: ClinicalTheme.brand.primary,
-    text: ClinicalTheme.text.primary,
-    textSecondary: ClinicalTheme.text.secondary,
-    textTertiary: ClinicalTheme.text.tertiary,
-    border: ClinicalTheme.border.default,
-    borderLight: ClinicalTheme.border.light,
-    background: ClinicalTheme.pure,
-    backgroundSecondary: ClinicalTheme.surface,
-    backgroundTertiary: ClinicalTheme.surfaceAlt,
-    success: ClinicalTheme.semantic.success,
-    error: ClinicalTheme.semantic.error,
+    primary: '#46B7C6',
+    text: '#000000',
+    textSecondary: '#A6A6A6',
+    textTertiary: '#86868b',
+    border: '#E5E5E5',
+    borderLight: '#F0F0F0',
+    background: '#FFFFFF',
+    backgroundSecondary: '#FAFAFA',
+    backgroundTertiary: '#F8F8F8',
+    success: '#10b981',
+    error: '#ef4444',
   },
   borderRadius: {
-    small: ClinicalTheme.radius.sm,
-    medium: ClinicalTheme.radius.md,
-    large: ClinicalTheme.radius.lg,
-    xlarge: ClinicalTheme.radius.xl,
-    xxlarge: 32,
+    small: 6,
+    medium: 8,
+    large: 10,
+    xlarge: 12,
+    xxlarge: 16,
   },
   shadows: {
-    small: ClinicalTheme.shadow.card,
-    medium: ClinicalTheme.shadow.input,
-    large: ClinicalTheme.shadow.floating,
+    small: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    medium: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    large: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 20,
+      elevation: 10,
+    },
   },
 };
 
@@ -1280,9 +1296,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.2),
+    borderBottomWidth: 1,
+    borderBottomColor: DESIGN_TOKENS.colors.border,
     backgroundColor: DESIGN_TOKENS.colors.background,
-    ...DESIGN_TOKENS.shadows.small,
-    zIndex: 10,
   },
   compactHeaderLeft: {
     flexDirection: 'row',
@@ -1915,7 +1931,11 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    ...DESIGN_TOKENS.shadows.large,
+    shadowColor: DESIGN_TOKENS.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   floatingGenerateButtonDisabled: {
     backgroundColor: DESIGN_TOKENS.colors.border,

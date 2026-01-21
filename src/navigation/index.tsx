@@ -9,8 +9,8 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from 'react-native-responsive-screen';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { screens } from '../screens';
 import useLanguageStore from '../store/language';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,11 +20,14 @@ import { LinearGradientColors } from '../constants/linearGradientColors';
 import { CommonActions } from '@react-navigation/native';
 import { images } from '../constants/images';
 import { useTranslation } from 'react-i18next';
+import { Mic } from 'lucide-react-native';
 import { setAuthToken } from '../services/authService';
 import userStore from '../store/user';
+import RemedyLogoIcon from '../components/RemedyLogoIcon';
+import useOnboardingStore from '../store/onboarding';
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 const TabIcon = ({
   source,
@@ -73,9 +76,8 @@ const CustomTabBar = ({
   state,
   descriptors,
   navigation,
-}: BottomTabBarProps) => {
+}: MaterialTopTabBarProps) => {
   const { t } = useTranslation();
-  const tabBarHeight = hp(8.5);
 
   const tabLabels = {
     Home: t('navigation.tabs.home') || 'Home',
@@ -102,145 +104,121 @@ const CustomTabBar = ({
   };
 
   return (
-    <LinearGradient
-      colors={LinearGradientColors}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
+    <View
       style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderTopWidth: 0,
         shadowColor: '#000',
         shadowOffset: {
           width: 0,
           height: -4,
         },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.08,
         shadowRadius: 12,
-        elevation: 12,
-        overflow: 'hidden',
-        height: hp(12),
+        elevation: 8,
+        paddingBottom: hp(2),
       }}
     >
       <View
         style={{
           flexDirection: 'row',
-          height: tabBarHeight,
           alignItems: 'center',
           justifyContent: 'space-around',
-          paddingHorizontal: wp(4),
+          paddingHorizontal: wp(2),
+          paddingTop: hp(1.2),
           backgroundColor: 'transparent',
-          paddingTop: hp(2),
         }}
       >
         {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key as string];
-          const isFocused = state.index === index;
-          const icon = options.tabBarIcon;
+            const { options } = descriptors[route.key as string];
+            const isFocused = state.index === index;
+            const icon = options.tabBarIcon;
 
-          return (
-            <Pressable
-              key={route.key}
-              onPress={() => handleTabPress(route, isFocused)}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: hp(1),
-                position: 'relative',
-              }}
-              android_ripple={{
-                color: 'rgba(255, 255, 255, 0.2)',
-                borderless: true,
-                radius: wp(15),
-              }}
-            >
-              <View
+            return (
+              <Pressable
+                key={route.key}
+                onPress={() => handleTabPress(route, isFocused)}
                 style={{
+                  flex: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  position: 'relative',
+                  paddingVertical: hp(0.8),
+                }}
+                android_ripple={{
+                  color: 'rgba(70, 183, 198, 0.1)',
+                  borderless: true,
+                  radius: wp(12),
                 }}
               >
-                {/* Icon */}
                 <View
                   style={{
-                    marginBottom: hp(0.3),
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  {icon &&
-                    icon({
-                      focused: isFocused,
-                      color: isFocused
-                        ? '#ffffff'
-                        : 'rgba(255, 255, 255, 0.65)',
-                      size: isFocused ? hp(3.2) : hp(2.8),
-                    })}
-                </View>
-
-                {/* Label */}
-                <Text
-                  style={{
-                    fontSize: hp(1.2),
-                    fontWeight: isFocused ? '600' : '400',
-                    color: isFocused
-                      ? '#ffffff'
-                      : 'rgba(255, 255, 255, 0.65)',
-                    marginTop: hp(0.2),
-                    letterSpacing: 0.2,
-                  }}
-                  numberOfLines={1}
-                >
-                  {tabLabels[route.name as keyof typeof tabLabels] || route.name}
-                </Text>
-
-                {/* Active background highlight */}
-                {isFocused && (
-                  <Animated.View
+                  {/* Icon */}
+                  <View
                     style={{
-                      position: 'absolute',
-                      top: -hp(1.5),
-                      left: -wp(8),
-                      right: -wp(8),
-                      bottom: -hp(1),
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: 200,
-                      zIndex: -1,
+                      marginBottom: hp(0.4),
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
-                  />
-                )}
-              </View>
-            </Pressable>
-          );
-        })}
+                  >
+                    {icon &&
+                      icon({
+                        focused: isFocused,
+                        color: isFocused ? '#46B7C6' : '#64748B',
+                      })}
+                  </View>
+
+                  {/* Label */}
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: isFocused ? '600' : '500',
+                      color: isFocused ? '#46B7C6' : '#64748B',
+                      letterSpacing: -0.1,
+                      fontFamily: 'System',
+                    }}
+                    numberOfLines={1}
+                  >
+                    {tabLabels[route.name as keyof typeof tabLabels] || route.name}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
+      tabBarPosition="bottom"
       screenOptions={{
-        headerShown: false,
-        tabBarHideOnKeyboard: true,
+        swipeEnabled: true,
+        animationEnabled: true,
+        lazy: true,
+        lazyPreloadDistance: 1,
         tabBarStyle: {
           display: 'none',
         },
       }}
       tabBar={props => <CustomTabBar {...props} />}
+      initialLayout={{ width: wp(100) }}
     >
       <Tab.Screen
         name="Home"
         component={screens.Home}
         options={{
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon source={images.homeIcon} color={color} focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <Mic size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
@@ -249,7 +227,7 @@ const BottomTabNavigator = () => {
         component={screens.AITools}
         options={{
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon source={images.aiIcon} color={color} focused={focused} />
+            <RemedyLogoIcon size={24} color={color} />
           ),
         }}
       />
@@ -301,6 +279,9 @@ const Navigation = () => {
     };
   }, []);
 
+  // Get onboarding status
+  const { hasCompletedOnboarding } = useOnboardingStore();
+
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -312,7 +293,14 @@ const Navigation = () => {
         if (valid) {
           setAuthToken(token as string);
           userStore.getState().setToken(token as string);
-          if (isMounted) setInitialRoute('tabs');
+          // Check if onboarding is completed
+          if (isMounted) {
+            if (hasCompletedOnboarding) {
+              setInitialRoute('HomeTabs');
+            } else {
+              setInitialRoute('Onboarding');
+            }
+          }
         } else {
           userStore.getState().purgeAuth();
           await AsyncStorage.removeItem('auth_token');
@@ -327,7 +315,7 @@ const Navigation = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hasCompletedOnboarding]);
 
   return (
     <NavigationContainer>
@@ -336,42 +324,37 @@ const Navigation = () => {
           screenOptions={{ headerShown: false }}
           initialRouteName={initialRoute}
         >
-          <Stack.Screen name="login" component={screens.Login} />
-          <Stack.Screen name="signUp" component={screens.SignUp} />
-          <Stack.Screen
-            name="forgotPassword"
-            component={screens.ForgotPassword}
-          />
-          <Stack.Screen
-            name="otpVerification"
-            component={screens.OtpVerification}
-          />
-          <Stack.Screen name="tabs" component={BottomTabNavigator} />
-          <Stack.Screen name="session" component={screens.Session} />
-          <Stack.Screen name="discharge" component={screens.Discharge} />
-          <Stack.Screen name="consult" component={screens.Consult} />
-          <Stack.Screen name="pathFinder" component={screens.Pathfinder} />
-          <Stack.Screen name="pharmcoedia" component={screens.Pharmcoedia} />
-          <Stack.Screen name="prescreening" component={screens.Prescreening} />
-          <Stack.Screen name="report" component={screens.Report} />
-          <Stack.Screen name="research" component={screens.Research} />
-          <Stack.Screen name="researchScholar" component={screens.ResearchScholar} />
-          <Stack.Screen name="researchProtocol" component={screens.ResearchProtocol} />
-          <Stack.Screen name="researchProtocolPro" component={screens.ResearchProtocolPro} />
-          <Stack.Screen name="settings" component={screens.Settings} />
-          <Stack.Screen name="subscription" component={screens.Subscription} />
-          <Stack.Screen name="transactions" component={screens.Transactions} />
-          <Stack.Screen
-            name="transcriptionCompleted"
-            component={screens.TranscriptionComplete}
-          />
-          {/* Onboarding */}
-          <Stack.Screen name="onboarding" component={screens.Onboarding} />
-          {/* Clinical Workspace & Chat Interfaces */}
-          <Stack.Screen name="clinicalWorkspace" component={screens.ClinicalWorkspace} />
-          <Stack.Screen name="consultChat" component={screens.ConsultChat} />
-          <Stack.Screen name="pharmacopediaChat" component={screens.PharmacopediaChat} />
-          <Stack.Screen name="researchChat" component={screens.ResearchChat} />
+        <Stack.Screen name="login" component={screens.Login} />
+        <Stack.Screen name="signUp" component={screens.SignUp} />
+        <Stack.Screen
+          name="forgotPassword"
+          component={screens.ForgotPassword}
+        />
+        <Stack.Screen
+          name="otpVerification"
+          component={screens.OtpVerification}
+        />
+        <Stack.Screen name="Onboarding" component={screens.Onboarding} />
+        <Stack.Screen name="HomeTabs" component={BottomTabNavigator} />
+        {/* Legacy route name for backwards compatibility */}
+        <Stack.Screen name="tabs" component={BottomTabNavigator} />
+        <Stack.Screen name="session" component={screens.Session} />
+        <Stack.Screen name="discharge" component={screens.Discharge} />
+        <Stack.Screen name="consult" component={screens.ClinicalWorkspace} />
+        <Stack.Screen name="consultChat" component={screens.ConsultChat} />
+        <Stack.Screen name="pharmacopediaChat" component={screens.PharmacopediaChat} />
+        <Stack.Screen name="pathFinder" component={screens.Pathfinder} />
+        <Stack.Screen name="prescreening" component={screens.Prescreening} />
+        <Stack.Screen name="report" component={screens.Report} />
+        <Stack.Screen name="research" component={screens.Research} />
+        <Stack.Screen name="researchChat" component={screens.ResearchChat} />
+        <Stack.Screen name="settings" component={screens.Settings} />
+        <Stack.Screen name="subscription" component={screens.Subscription} />
+        <Stack.Screen name="transactions" component={screens.Transactions} />
+        <Stack.Screen
+          name="transcriptionCompleted"
+          component={screens.TranscriptionComplete}
+        />
         </Stack.Navigator>
       )}
     </NavigationContainer>

@@ -6,25 +6,20 @@ import AITools from './aiTools';
 import Profile from './profile';
 import Session from './home/session';
 import Discharge from './aiTools/discharge';
-import Consult from './aiTools/consult';
+import ClinicalWorkspace from './aiTools/ClinicalWorkspace';
+import ConsultChat from './aiTools/consultChat';
+import PharmacopediaChat from './aiTools/pharmacopediaChat';
 import Pathfinder from './aiTools/pathFinder';
-import Pharmcoedia from './aiTools/pharmcoedia';
 import Prescreening from './aiTools/prescreening';
 import Report from './aiTools/report';
 import Research from './aiTools/research';
-import ResearchScholar from './researchAi/researchScholar';
-import ResearchProtocol from './researchAi/researchProtocol';
-import ResearchProtocolPro from './researchAi/researchProtocolPro';
+import ResearchChat from './aiTools/researchChat';
 import Settings from './profile/settings';
 import Subscription from './profile/subscription';
 import Transactions from './profile/transactions';
 import TranscriptionComplete from './home/transcriptionCompleted';
 import OtpVerification from './auth/otpVerification';
 import Onboarding from './onboarding';
-import ClinicalWorkspace from './aiTools/ClinicalWorkspace';
-import ConsultChat from './aiTools/consultChat';
-import PharmacopediaChat from './aiTools/pharmacopediaChat';
-import ResearchChat from './aiTools/researchChat';
  
 export const screens = {
   Login,
@@ -35,23 +30,18 @@ export const screens = {
   AITools,
   Session,
   Discharge,
-  Consult,
+  ClinicalWorkspace,
+  ConsultChat,
+  PharmacopediaChat,
   Pathfinder,
-  Pharmcoedia,
   Prescreening,
   Report,
   Research,
-  ResearchScholar,
-  ResearchProtocol,
-  ResearchProtocolPro,
+  ResearchChat,
   Settings,
   Subscription,
   Transactions,
   TranscriptionComplete,
   OtpVerification,
   Onboarding,
-  ClinicalWorkspace,
-  ConsultChat,
-  PharmacopediaChat,
-  ResearchChat,
 };
