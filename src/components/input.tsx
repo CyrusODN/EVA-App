@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { SetStateAction, useState } from 'react';
+import React, { SetStateAction, useState, forwardRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,12 @@ import {
   ImageSourcePropType,
   Platform,
   Animated,
+  ReturnKeyTypeOptions,
+  NativeSyntheticEvent,
+  TextInputSubmitEditingEventData,
+  StyleProp,
+  TextStyle,
+  ViewStyle,
 } from 'react-native';
 import {
   widthPercentageToDP as wp,
@@ -19,6 +25,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 
 interface InputProps {
   placeholder?: string;
+  placeholderTextColor?: string;
   textColor?: string;
   backgroundColor?: string;
   borderColor?: string;
@@ -42,10 +49,16 @@ interface InputProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoCorrect?: boolean;
   accessibilityLabel?: string;
+  returnKeyType?: ReturnKeyTypeOptions;
+  onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
+  blurOnSubmit?: boolean;
+  style?: StyleProp<TextStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-const Input: React.FC<InputProps> = ({
+const Input = forwardRef<TextInput, InputProps>(({
   placeholder = '',
+  placeholderTextColor,
   textColor = colors.onSurface,
   backgroundColor = colors.inputBackground,
   borderColor = colors.borderColor,
@@ -69,7 +82,12 @@ const Input: React.FC<InputProps> = ({
   autoCapitalize = 'none',
   autoCorrect = false,
   accessibilityLabel,
-}) => {
+  returnKeyType,
+  onSubmitEditing,
+  blurOnSubmit,
+  style,
+  containerStyle,
+}, ref) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const borderWidthAnim = useState(new Animated.Value(1.5))[0];
@@ -91,7 +109,7 @@ const Input: React.FC<InputProps> = ({
     setIsFocused(true);
     onFocus();
     Animated.timing(borderWidthAnim, {
-      toValue: 2,
+      toValue: 1.5,
       duration: 200,
       useNativeDriver: false,
     }).start();
@@ -101,7 +119,7 @@ const Input: React.FC<InputProps> = ({
     setIsFocused(false);
     onBlur();
     Animated.timing(borderWidthAnim, {
-      toValue: 1.5,
+      toValue: 1,
       duration: 200,
       useNativeDriver: false,
     }).start();
@@ -128,6 +146,7 @@ const Input: React.FC<InputProps> = ({
           width,
           borderWidth: borderWidthAnim,
         },
+        containerStyle,
       ]}
     >
       {leftIcon && (
@@ -137,9 +156,10 @@ const Input: React.FC<InputProps> = ({
       )}
 
       <TextInput
+        ref={ref}
         inputMode={mode}
         placeholder={placeholder}
-        placeholderTextColor="rgba(74, 69, 78, 0.5)"
+        placeholderTextColor={placeholderTextColor || "rgba(74, 69, 78, 0.5)"}
         value={value}
         onChangeText={handleChangeText}
         style={[
@@ -152,6 +172,7 @@ const Input: React.FC<InputProps> = ({
             fontSize: Platform.OS === 'ios' ? 15 : 14,
             // paddingTop: multiline ? hp(1.5) : 0,
           },
+          style,
         ]}
         secureTextEntry={isPassword && !showPassword}
         multiline={multiline}
@@ -163,6 +184,9 @@ const Input: React.FC<InputProps> = ({
         autoCorrect={autoCorrect}
         accessibilityLabel={accessibilityLabel || placeholder}
         accessibilityState={{ disabled: disable }}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
+        blurOnSubmit={blurOnSubmit}
       />
 
       {(isPassword || rightIcon) && (
@@ -198,7 +222,7 @@ const Input: React.FC<InputProps> = ({
       )}
     </Animated.View>
   );
-};
+});
 
 export default Input;
 
@@ -211,10 +235,10 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
     elevation: 1,
   },
   input: {
@@ -222,12 +246,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     fontFamily:
       Platform.OS === 'ios' ? 'SFProText-Regular' : 'SFProText-Regular',
+    fontSize: 16,
     ...Platform.select({
       ios: {
-        paddingVertical: hp(1.5),
+        paddingVertical: hp(2),
       },
       android: {
-        paddingVertical: hp(1),
+        paddingVertical: hp(1.5),
       },
     }),
   },

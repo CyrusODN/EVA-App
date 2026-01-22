@@ -42,7 +42,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   textColor = 'white',
   backgroundColor = colors.primary,
   borderColor = colors.primary,
-  borderRadius = 12,
+  borderRadius = 16,
   onPress,
   loading = false,
   disabled = false,
@@ -52,13 +52,10 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   iconComponent = null,
   width = wp(90),
   loaderColor = 'white',
-  useGradient = true,
+  useGradient = false,
   accessibilityLabel,
 }) => {
   const isDisabled = disabled || loading;
-  const gradientColors = disabled
-    ? [colors.surfaceDisabled, colors.surfaceDisabled]
-    : ['#4A90B9', '#5BA6B6', '#68BFB3'];
 
   const IconComponent = iconComponent;
 
@@ -85,6 +82,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
           <Text
             variant="labelLarge"
             style={[
+              styles.buttonText,
               {
                 color: isDisabled ? colors.onSurfaceDisabled : textColor,
               },
@@ -109,17 +107,17 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   const buttonStyle: ViewStyle = {
     borderRadius: borderRadius,
     width: width,
-    height: hp(5),
+    height: hp(6.5),
     overflow: 'hidden',
     opacity: isDisabled ? 0.6 : 1,
-    shadowColor: '#000',
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
-    shadowOpacity: disabled ? 0 : 0.15,
-    shadowRadius: 4,
-    elevation: disabled ? 0 : 3,
+    shadowOpacity: disabled ? 0 : 0.25,
+    shadowRadius: 16,
+    elevation: disabled ? 0 : 8,
   };
 
   return (
@@ -132,31 +130,20 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       accessibilityState={{ disabled: isDisabled }}
       accessibilityLabel={accessibilityLabel || text}
     >
-      {useGradient ? (
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradientBackground}
-        >
-          {buttonContent}
-        </LinearGradient>
-      ) : (
-        <View
-          style={[
-            styles.solidBackground,
-            {
-              backgroundColor: isDisabled
-                ? colors.surfaceDisabled
-                : backgroundColor,
-              borderColor: isDisabled ? colors.surfaceDisabled : borderColor,
-              borderWidth: 1,
-            },
-          ]}
-        >
-          {buttonContent}
-        </View>
-      )}
+      <View
+        style={[
+          styles.solidBackground,
+          {
+            backgroundColor: isDisabled
+              ? colors.surfaceDisabled
+              : backgroundColor,
+            borderColor: isDisabled ? colors.surfaceDisabled : borderColor,
+            borderWidth: 1,
+          },
+        ]}
+      >
+        {buttonContent}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -184,9 +171,10 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: '600',
+    fontSize: 17,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProText-Semibold' : 'SFProText-Semibold',
-    letterSpacing: 0.3,
+    letterSpacing: -0.2,
   },
   leftIcon: {
     width: hp(2.5),

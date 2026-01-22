@@ -9,6 +9,7 @@ import {
   Platform,
   Animated,
   ScrollView,
+  Vibration,
 } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import {
@@ -16,9 +17,7 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import { X, Info } from 'lucide-react-native';
-//@ts-ignore
-import CheckBox from 'react-native-check-box';
+import { Shield, Info, Check } from 'lucide-react-native';
 import Input from './input';
 import PrimaryButton from './primaryButton';
 import { colors } from '../constants/colors';
@@ -153,6 +152,22 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
     }
   };
 
+  const handleCheckboxToggle = () => {
+    // Trigger haptic feedback - light tap (10ms vibration)
+    try {
+      if (Platform.OS === 'ios') {
+        // iOS: Single light tap
+        Vibration.vibrate(10);
+      } else {
+        // Android: Light haptic feedback
+        Vibration.vibrate(50);
+      }
+    } catch (error) {
+      // Haptic feedback not available, continue without it
+    }
+    setAgreedToTerms(!agreedToTerms);
+  };
+
   const getTitle = () => {
     switch (visitType) {
       case 'patient':
@@ -222,129 +237,105 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
                 ]}
               >
                 <View style={styles.modalContent}>
-                  {/* DNA Helix Background */}
-                  <View style={styles.dnaHelixBackground}>
-                    {/* <DNAHelix /> */}
+                  {/* Shield Icon */}
+                  <View style={styles.iconContainer}>
+                    <View style={styles.shieldBackground}>
+                      <Shield size={32} color="#46B7C6" strokeWidth={2} />
+                    </View>
                   </View>
 
-                  {/* Header */}
-                  <View style={styles.header}>
-                    <View style={styles.headerContent}>
-                      <View style={styles.titleContainer}>
-                        <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-                          {t('dialog.phi.title')}
-                        </Text>
-                        <Text variant="bodySmall" style={styles.phiDescription}>
-                          {t('dialog.phi.description')}
-                        </Text>
-                      </View>
-                    </View>
+                  {/* Title */}
+                  <View style={styles.titleSection}>
+                    <Text style={styles.modalTitle}>
+                      {t('dialog.phi.title')}
+                    </Text>
+                  </View>
+
+                  {/* Description */}
+                  <View style={styles.descriptionSection}>
+                    <Text style={styles.modalDescription}>
+                      {t('dialog.phi.description')}
+                    </Text>
+                  </View>
+
+                  {/* Checkbox Agreement */}
+                  <View style={styles.checkboxSection}>
                     <TouchableOpacity
-                      onPress={onClose}
-                      style={styles.closeButton}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={styles.checkboxRow}
+                      onPress={handleCheckboxToggle}
+                      activeOpacity={0.7}
                     >
-                      <X size={20} color={colors.onSurfaceVariant} />
+                      <View style={[
+                        styles.customCheckbox,
+                        agreedToTerms && styles.customCheckboxChecked
+                      ]}>
+                        {agreedToTerms && (
+                          <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                        )}
+                      </View>
+                      <Text style={styles.checkboxText}>
+                        {t('dialog.phi.agreement')}
+                      </Text>
                     </TouchableOpacity>
                   </View>
 
-                  {/* Content */}
-                  <View style={{}}>
-                    {/* PHI Agreement Section */}
-                    <View style={styles.phiSection}>
-                      <View style={styles.toggleSection}>
-                        <CheckBox
-                          style={styles.checkbox}
-                          onClick={() => {
-                            setAgreedToTerms(!agreedToTerms);
-                          }}
-                          isChecked={agreedToTerms}
-                          checkedCheckBoxColor="#000000"
-                          uncheckedCheckBoxColor="#000000"
-                        />
-                        <View style={styles.agreementTextContainer}>
-                          <Text
-                            variant="bodyMedium"
-                            style={styles.agreementText}
-                          >
-                            {t('dialog.phi.agreement')}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Footer */}
+                  {/* Input Section - Shows when checkbox is checked */}
                   {agreedToTerms && (
                     <Animated.View
                       style={[
-                        styles.footer,
+                        styles.inputAnimatedSection,
                         {
                           opacity: inputOpacity,
+                          transform: [
+                            {
+                              translateY: inputOpacity.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [-10, 0],
+                              }),
+                            },
+                          ],
                         },
                       ]}
                     >
-                      {/* Visit Name Input */}
-                      <Animated.View
-                        style={[
-                          styles.inputSection,
-                          {
-                            opacity: inputOpacity,
-                            transform: [
-                              {
-                                translateY: inputOpacity.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [-10, 0],
-                                }),
-                              },
-                            ],
-                          },
-                        ]}
-                      >
-                        <View style={styles.inputLabelContainer}>
-                          <Text variant="titleMedium" style={textStyles.titleMedium}>
-                            Visit Name
-                          </Text>
-                          <Info
-                            size={20}
-                            color={colors.onSurfaceVariant}
-                            style={styles.infoIcon}
-                          />
-                        </View>
-                        <View style={styles.inputWrapper}>
-                          <TextInput
-                            placeholder={getPlaceholder()}
-                            value={visitName}
-                            onChangeText={setVisitName}
-                            style={{
-                              width: '100%',
-                              backgroundColor: colors.surface,
-                              borderRadius: 0,
-                              borderWidth: 1,
-                              overflow: 'hidden',
-                              borderColor: 'transparent',
-                            }}
-                            placeholderTextColor="rgba(74, 69, 78, 0.5)"
-                            underlineColor="transparent"
-                            outlineColor="transparent"
-                          />
-                        </View>
-                        {visitType === 'patient' && (
-                          <Text variant="bodySmall" style={styles.tooltipText}>
-                            {t('visitNameInput.tooltip')}
-                          </Text>
-                        )}
-                      </Animated.View>
-
-                      <PrimaryButton
-                        text={t('buttons.continue')}
-                        onPress={handleCreateVisit}
-                        disabled={!visitName.trim()}
-                        width={wp(78)}
-                        useGradient={true}
-                      />
+                      <View style={styles.inputLabelContainer}>
+                        <Text style={styles.inputLabel}>
+                          {t('visitNameInput.label')}
+                        </Text>
+                      </View>
+                      <View style={styles.inputWrapper}>
+                        <TextInput
+                          placeholder={getPlaceholder()}
+                          value={visitName}
+                          onChangeText={setVisitName}
+                          style={styles.textInput}
+                          placeholderTextColor="#C7C7CC"
+                          underlineColor="transparent"
+                          outlineColor="transparent"
+                          autoFocus={true}
+                        />
+                      </View>
+                      {visitType === 'patient' && (
+                        <Text style={styles.tooltipText}>
+                          {t('visitNameInput.tooltip')}
+                        </Text>
+                      )}
                     </Animated.View>
                   )}
+
+                  {/* Primary Button */}
+                  <View style={styles.buttonSection}>
+                    <PrimaryButton
+                      text={agreedToTerms && visitName.trim() 
+                        ? t('buttons.continue') 
+                        : t('dialog.phi.continueButton')}
+                      onPress={agreedToTerms && visitName.trim() ? handleCreateVisit : undefined}
+                      disabled={!agreedToTerms || (agreedToTerms && !visitName.trim())}
+                      width={wp(78)}
+                      useGradient={false}
+                      backgroundColor="#46B7C6"
+                      borderRadius={16}
+                    />
+                  </View>
                 </View>
               </Animated.View>
             </TouchableOpacity>
@@ -366,7 +357,7 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -383,229 +374,150 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: wp(88),
-    maxWidth: 500,
-    maxHeight: hp(90),
+    maxWidth: 480,
+    maxHeight: hp(85),
     borderRadius: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: {
           width: 0,
-          height: 12,
+          height: 8,
         },
-        shadowOpacity: 0.3,
-        shadowRadius: 24,
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
       },
       android: {
-        elevation: 16,
+        elevation: 12,
       },
     }),
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    maxHeight: hp(90),
-    position: 'relative',
-    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    padding: 32,
+    alignItems: 'center',
   },
-  dnaHelixBackground: {
-    position: 'absolute',
-    right: -wp(8),
-    top: hp(8),
-    width: wp(35),
-    height: hp(50),
-    zIndex: 0,
-    opacity: 0.3,
-    pointerEvents: 'none',
+  // Shield Icon Section
+  iconContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  dnaHelixContainer: {
+  shieldBackground: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EAF8FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  // Title Section
+  titleSection: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0D0D0D',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Bold',
+    letterSpacing: -0.5,
+  },
+  
+  // Description Section
+  descriptionSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 8,
+  },
+  modalDescription: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#A6A6A6',
+    textAlign: 'center',
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
+  },
+  
+  // Checkbox Section
+  checkboxSection: {
     width: '100%',
-    height: '100%',
-    position: 'relative',
+    marginBottom: 24,
   },
-  dnaDot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.bluish || '#53A0CD',
-  },
-  dnaLine: {
-    position: 'absolute',
-    backgroundColor: colors.bluish || '#53A0CD',
-    opacity: 0.5,
-    borderRadius: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: wp(6),
-    paddingTop: wp(5),
-    paddingBottom: wp(2),
-    backgroundColor: 'transparent',
-    borderBottomWidth: 0,
-    zIndex: 2,
-    position: 'relative',
-  },
-  headerContent: {
-    flex: 1,
-    marginRight: wp(2),
-  },
-  titleContainer: {
-    marginBottom: 0,
-  },
-  title: {
-    color: colors.onSurface,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceVariant,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-
-  phiSection: {
-    width: '90%',
-    alignSelf: 'center',
-    zIndex: 2,
-    position: 'relative',
-  },
-  phiDescription: {
-    color: 'gray',
-    marginTop: hp(0.5),
-  },
-  toggleSection: {
+  checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: hp(1.5),
+    paddingVertical: 12,
   },
-  checkbox: {
-    marginRight: wp(3),
-    padding: 0,
-    flex: 0,
-    alignSelf: 'flex-start',
-    marginTop: hp(0.5),
-  },
-  toggleWrapper: {
-    marginRight: wp(3),
-  },
-  toggleTrack: {
-    borderRadius: 16,
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  toggleThumb: {
-    backgroundColor: colors.surface,
+  customCheckbox: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    marginRight: 12,
   },
-  checkIconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  customCheckboxChecked: {
+    backgroundColor: '#46B7C6',
+    borderColor: '#46B7C6',
   },
-  agreementTextContainer: {
+  checkboxText: {
     flex: 1,
-  },
-  agreementText: {
-    color: colors.onSurface,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
     fontWeight: '500',
+    color: '#0D0D0D',
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  inputSection: {
-    marginTop: hp(2),
-    marginBottom: hp(2),
-    zIndex: 2,
-    position: 'relative',
+  
+  // Input Section
+  inputAnimatedSection: {
+    width: '100%',
+    marginBottom: 24,
   },
   inputLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: hp(1),
-  },
-  inputWrapper: {
-    width: '98%',
-    marginTop: hp(0.5),
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    borderRadius: 10,
-    overflow: 'hidden',
+    marginBottom: 8,
   },
   inputLabel: {
-    color: colors.onSurface,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0D0D0D',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
-  infoIcon: {
-    marginLeft: wp(1.5),
+  inputWrapper: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#FAFAFA',
+  },
+  textInput: {
+    width: '100%',
+    backgroundColor: '#FAFAFA',
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
   tooltipText: {
-    color: colors.onSurfaceVariant,
-    marginTop: hp(0.8),
-    fontSize: 13,
+    fontSize: 12,
+    color: '#A6A6A6',
+    marginTop: 8,
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: 16,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  footer: {
-    width: '90%',
-    alignSelf: 'center',
-    zIndex: 2,
-    position: 'relative',
-    marginBottom: hp(2),
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: -2,
-        },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-    }),
+  
+  // Button Section
+  buttonSection: {
+    width: '100%',
+    alignItems: 'center',
   },
 });

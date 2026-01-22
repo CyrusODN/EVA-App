@@ -62,14 +62,9 @@ const Header: React.FC<HeaderProps> = ({
         {/* Title Container */}
         <View style={styles.headerTitleContainer}>
           {showIcon && Icon && (
-            <LinearGradient
-              colors={LinearGradientColors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
+            <View style={styles.headerIconContainer}>
               <Icon size={20} color="white" />
-            </LinearGradient>
+            </View>
           )}
           <View style={styles.headerTextContainer}>
             <Text
@@ -107,7 +102,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     width: wp(100),
     paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
+    paddingVertical: hp(2.5),
     borderBottomWidth: 1,
     borderBottomColor: colors.borderColor,
   },
@@ -132,12 +127,13 @@ const styles = StyleSheet.create({
   headerIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 8,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3),
     alignSelf: 'flex-start',
     marginTop: hp(0.75),
+    backgroundColor: colors.primary,
   },
   headerTextContainer: {
     flex: 1,
@@ -158,7 +154,9 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     marginTop: 2,
     fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+      Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    fontSize: 13,
+    letterSpacing: 0.2,
   },
   iconImage: {
     width: 24,
