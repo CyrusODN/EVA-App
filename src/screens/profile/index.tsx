@@ -9,13 +9,25 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { Text, List, Divider, IconButton } from 'react-native-paper';
+import { Text, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
+import {
+  Settings,
+  CreditCard,
+  Receipt,
+  LogOut,
+  Trash2,
+  Camera,
+  Image as ImageIcon,
+  Folder,
+  ChevronRight,
+  X,
+} from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 import userStore from '../../store/user';
@@ -53,7 +65,6 @@ const Profile = () => {
           await AsyncStorage.setItem('auth_token', String(nextToken));
         }
         const ctxUser: any = {
-          id: ctx?._id || ctx?.id || storeUser?.id,
           email: ctx?.email || '',
           name:
             ctx?.fname ||
@@ -66,7 +77,7 @@ const Profile = () => {
         userStore.getState().setAuth({ ...ctxUser, token: nextToken });
         await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
         if (mounted) setUser(ctxUser);
-      } catch (_) { }
+      } catch (_) {}
     };
     load();
     return () => {
@@ -161,7 +172,7 @@ const Profile = () => {
           await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
           setUser(ctxUser);
         }
-      } catch { }
+      } catch {}
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
@@ -231,7 +242,7 @@ const Profile = () => {
           await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
           setUser(ctxUser);
         }
-      } catch { }
+      } catch {}
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
@@ -252,7 +263,7 @@ const Profile = () => {
       if (token) setAuthToken(token);
       try {
         await api.delete('/auth/profile-image');
-      } catch { }
+      } catch {}
       const cleared = {
         ...(user || {}),
         profilePicture: '',
@@ -307,7 +318,7 @@ const Profile = () => {
           setAuthToken(null);
           //@ts-ignore
           navigation.reset({ index: 0, routes: [{ name: 'login' }] });
-        } catch { }
+        } catch {}
       })();
     } catch (error: any) {
       const message =
@@ -341,20 +352,21 @@ const Profile = () => {
       <Text variant="bodyMedium" style={styles.sectionTitle}>
         {title}
       </Text>
+      <View style={styles.sectionContent}>
       {children}
-      <Divider />
+      </View>
     </View>
   );
 
   type PressableItemProps = {
     title: string;
-    icon: string;
+    icon: any;
     onPress: () => void;
     titleStyle?: any;
   };
   const PressableItem = ({
     title,
-    icon,
+    icon: Icon,
     onPress,
     titleStyle,
   }: PressableItemProps) => (
@@ -363,28 +375,13 @@ const Profile = () => {
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={title}
+      style={styles.listItem}
     >
-      <List.Item
-        title={title}
-        titleStyle={[styles.listItemTitle, titleStyle]}
-        left={() => (
-          <List.Icon
-            icon={icon}
-            color={colors.primary}
-            style={{ marginLeft: wp(2) }}
-          />
-        )}
-        right={() => (
-          <List.Icon
-            icon="chevron-right"
-            color={colors.subText}
-            style={{ marginRight: wp(2) }}
-          />
-        )}
-        style={{
-          paddingVertical: hp(1),
-        }}
-      />
+      <View style={styles.listItemIconContainer}>
+        <Icon size={20} color="#46B7C6" strokeWidth={2} />
+      </View>
+      <Text style={[styles.listItemTitle, titleStyle]}>{title}</Text>
+      <ChevronRight size={20} color="#94A3B8" strokeWidth={2} />
     </TouchableOpacity>
   );
 
@@ -410,13 +407,9 @@ const Profile = () => {
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => setShowPickerSheet(true)}
+              activeOpacity={0.8}
             >
-              <IconButton
-                icon="camera"
-                size={20}
-                iconColor="white"
-                style={styles.editIcon}
-              />
+              <Camera size={18} color="white" strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
@@ -429,7 +422,7 @@ const Profile = () => {
         <Section title={t('menu.settings')}>
           <PressableItem
             title={t('common.settings')}
-            icon="cog"
+            icon={Settings}
             onPress={() => handleNavigate('settings')}
           />
         </Section>
@@ -438,12 +431,13 @@ const Profile = () => {
         <Section title={t('subscription.title')}>
           <PressableItem
             title={t('menu.subscription')}
-            icon="credit-card"
+            icon={CreditCard}
             onPress={() => handleNavigate('subscription')}
           />
+          <Divider style={styles.divider} />
           <PressableItem
             title={t('menu.transactions')}
-            icon="receipt"
+            icon={Receipt}
             onPress={() => handleNavigate('transactions')}
           />
         </Section>
@@ -452,13 +446,14 @@ const Profile = () => {
         <Section title={t('settings.deleteAccount.title')}>
           <PressableItem
             title={t('common.logout')}
-            icon="logout"
+            icon={LogOut}
             onPress={handleLogout}
             titleStyle={styles.logoutText}
           />
+          <Divider style={styles.divider} />
           <PressableItem
             title={t('settings.deleteAccount.title')}
-            icon="delete"
+            icon={Trash2}
             onPress={handleDeleteAccount}
             titleStyle={styles.deleteText}
           />
@@ -477,36 +472,70 @@ const Profile = () => {
               {t('Update profile picture') || 'Update Profile Photo'}
             </Text>
             <View style={styles.sheetList}>
-              <TouchableOpacity onPress={handleImagePicker} disabled={uploading} accessibilityLabel="Choose from Photos">
-                <List.Item
-                  title={t('Choose Photo') || 'Choose from Photos'}
-                  titleStyle={styles.sheetItemTitle}
-                  left={() => <List.Icon icon="image" color={colors.primary} />}
-                />
+              <TouchableOpacity 
+                onPress={handleImagePicker} 
+                disabled={uploading} 
+                accessibilityLabel="Choose from Photos"
+                style={styles.sheetItem}
+                activeOpacity={0.7}
+              >
+                <View style={styles.sheetItemIcon}>
+                  <ImageIcon size={20} color="#46B7C6" strokeWidth={2} />
+                </View>
+                <Text style={styles.sheetItemTitle}>
+                  {t('Choose Photo') || 'Choose from Photos'}
+                </Text>
               </TouchableOpacity>
-              <Divider />
-              <TouchableOpacity onPress={pickFromFiles} disabled={uploading} accessibilityLabel="Choose from Files">
-                <List.Item
-                  title={t('Select Files') || 'Select Files'}
-                  titleStyle={styles.sheetItemTitle}
-                  left={() => <List.Icon icon="folder" color={colors.primary} />}
-                />
+              
+              <Divider style={styles.sheetDivider} />
+              
+              <TouchableOpacity 
+                onPress={pickFromFiles} 
+                disabled={uploading} 
+                accessibilityLabel="Choose from Files"
+                style={styles.sheetItem}
+                activeOpacity={0.7}
+              >
+                <View style={styles.sheetItemIcon}>
+                  <Folder size={20} color="#46B7C6" strokeWidth={2} />
+                </View>
+                <Text style={styles.sheetItemTitle}>
+                  {t('Select Files') || 'Select Files'}
+                </Text>
               </TouchableOpacity>
-              <Divider />
-              <TouchableOpacity onPress={handleDeletePhoto} disabled={uploading} accessibilityLabel="Delete Photo">
-                <List.Item
-                  title={t('Delete Photo') || 'Delete Photo'}
-                  titleStyle={[styles.sheetItemTitle, styles.deleteText]}
-                  left={() => <List.Icon icon="delete" color={colors.error} />}
-                />
+              
+              <Divider style={styles.sheetDivider} />
+              
+              <TouchableOpacity 
+                onPress={handleDeletePhoto} 
+                disabled={uploading} 
+                accessibilityLabel="Delete Photo"
+                style={styles.sheetItem}
+                activeOpacity={0.7}
+              >
+                <View style={styles.sheetItemIcon}>
+                  <Trash2 size={20} color="#EF4444" strokeWidth={2} />
+                </View>
+                <Text style={[styles.sheetItemTitle, styles.deleteText]}>
+                  {t('Delete Photo') || 'Delete Photo'}
+                </Text>
               </TouchableOpacity>
-              <Divider />
-              <TouchableOpacity onPress={() => setShowPickerSheet(false)} disabled={uploading} accessibilityLabel="Cancel">
-                <List.Item
-                  title={t('common.cancel') || 'Cancel'}
-                  titleStyle={styles.sheetItemTitle}
-                  left={() => <List.Icon icon="close" color={colors.subText} />}
-                />
+              
+              <Divider style={styles.sheetDivider} />
+              
+              <TouchableOpacity 
+                onPress={() => setShowPickerSheet(false)} 
+                disabled={uploading} 
+                accessibilityLabel="Cancel"
+                style={styles.sheetItem}
+                activeOpacity={0.7}
+              >
+                <View style={styles.sheetItemIcon}>
+                  <X size={20} color="#64748B" strokeWidth={2} />
+                </View>
+                <Text style={styles.sheetItemTitle}>
+                  {t('common.cancel') || 'Cancel'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -519,12 +548,12 @@ const Profile = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: wp(5),
     paddingBottom: hp(6),
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
     flexGrow: 1,
   },
   profileHeader: {
@@ -532,17 +561,14 @@ const styles = StyleSheet.create({
     marginBottom: hp(4),
     paddingTop: hp(2),
     paddingBottom: hp(2),
-    backgroundColor: colors.surface,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     marginHorizontal: wp(2),
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   profileImageContainer: {
     position: 'relative',
@@ -552,130 +578,160 @@ const styles = StyleSheet.create({
     width: hp(14),
     height: hp(14),
     borderRadius: hp(7),
-    borderWidth: 4,
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryContainer,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   editButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: colors.primary,
-    borderRadius: hp(3.5),
-    width: hp(7),
-    height: hp(7),
+    backgroundColor: '#46B7C6',
+    borderRadius: hp(3),
+    width: hp(6),
+    height: hp(6),
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: colors.surface,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
     elevation: 4,
   },
   editIcon: {
     margin: 0,
   },
   userEmail: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     textAlign: 'center',
-    fontSize: hp(1.8),
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Medium' : 'SFProDisplay-Medium',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   section: {
     marginBottom: hp(3),
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginHorizontal: wp(2),
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
   },
   sectionTitle: {
-    fontSize: hp(1.7),
-    color: colors.subText,
+    fontSize: 11,
+    color: '#94A3B8',
     marginBottom: hp(1),
     marginTop: hp(2),
     marginHorizontal: wp(5),
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+  sectionContent: {
+    paddingBottom: hp(1),
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: wp(5),
+    paddingVertical: hp(1.5),
+    backgroundColor: '#FFFFFF',
+  },
+  listItemIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(70, 183, 198, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   listItemTitle: {
-    color: colors.onSurface,
-    fontSize: hp(1.8),
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    flex: 1,
+    color: '#1A1A1A',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+  },
+  divider: {
+    marginHorizontal: wp(5),
+    backgroundColor: '#F1F5F9',
   },
   logoutText: {
-    color: colors.onSurface,
-    fontSize: hp(1.8),
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    color: '#1A1A1A',
   },
   deleteText: {
-    color: colors.error,
-    fontSize: hp(1.8),
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    color: '#EF4444',
   },
   sheetBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     paddingHorizontal: wp(5),
     paddingTop: hp(2),
     paddingBottom: hp(3),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   sheetHandle: {
     alignSelf: 'center',
     width: wp(12),
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.borderColor,
-    marginBottom: hp(1),
+    backgroundColor: '#E8EAED',
+    marginBottom: hp(2),
   },
   sheetTitle: {
-    color: colors.onSurface,
-    marginBottom: hp(1.5),
+    color: '#1A1A1A',
+    marginBottom: hp(2),
     textAlign: 'center',
-  },
-  sheetSubtitle: {
-    color: colors.subText,
-    textAlign: 'center',
-    marginBottom: hp(1.5),
-  },
-  sheetButton: {
-    paddingVertical: hp(1.5),
-  },
-  sheetButtonText: {
-    color: colors.onSurface,
-    textAlign: 'center',
-    fontSize: hp(1.8),
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
   },
   sheetList: {
     marginTop: hp(0.5),
   },
+  sheetItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: hp(1.5),
+  },
+  sheetItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   sheetItemTitle: {
-    color: colors.onSurface,
-    fontSize: hp(1.9),
+    color: '#1A1A1A',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+  },
+  sheetDivider: {
+    backgroundColor: '#F1F5F9',
+    marginVertical: hp(0.5),
   },
 });
 

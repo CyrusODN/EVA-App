@@ -15,18 +15,15 @@ import {
 } from 'react-native-responsive-screen';
 import {
   FileText,
-  BookOpen,
-  Brain,
-  Pill,
   Stethoscope,
   GraduationCap,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  ClipboardList,
 } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import Header from '../../components/header';
-import PrimaryButton from '../../components/primaryButton';
 import { useNavigation } from '@react-navigation/native';
 import { textStyles } from '../../constants/textStyles';
 
@@ -53,6 +50,7 @@ interface AvailablePlan {
   icon: React.ComponentType<any>;
   featureKeys: string[];
   subPlans?: SubPlan[];
+  featured?: boolean;
 }
 
 // Mock data for subscribed plans
@@ -75,7 +73,7 @@ const MOCK_PLANS: Plan[] = [
   },
 ];
 
-// Available plans data
+// Available plans data with featured flag
 const AVAILABLE_PLANS_DATA: AvailablePlan[] = [
   {
     nameKey: 'aiTools.notes.title',
@@ -107,24 +105,22 @@ const AVAILABLE_PLANS_DATA: AvailablePlan[] = [
           'pricing.subplans.notes.meetings.features.2',
         ],
       },
+      {
+        nameKey: 'pricing.subplans.notes.lectures.name',
+        price: '99.99',
+        featureKeys: [
+          'pricing.subplans.notes.lectures.features.0',
+          'pricing.subplans.notes.lectures.features.1',
+          'pricing.subplans.notes.lectures.features.2',
+        ],
+      },
     ],
-  },
-  {
-    nameKey: 'aiTools.discharge.title',
-    descriptionKey: 'aiTools.discharge.description',
-    price: '199.99', // Przykładowa cena
-    periodKey: 'common.month',
-    icon: BookOpen, // Zmieniono ikonę dla Discharge na BookOpen
-    featureKeys: [
-      'aiTools.discharge.features.0',
-      'aiTools.discharge.features.1',
-      'aiTools.discharge.features.2',
-    ],
+    featured: true,
   },
   {
     nameKey: 'aiTools.research.title',
     descriptionKey: 'aiTools.research.description',
-    price: '399.99',
+    price: '299.99',
     periodKey: 'common.month',
     icon: GraduationCap,
     featureKeys: [
@@ -134,12 +130,12 @@ const AVAILABLE_PLANS_DATA: AvailablePlan[] = [
     ],
     subPlans: [
       {
-        nameKey: 'pricing.subplans.research.scholar.name',
+        nameKey: 'pricing.subplans.research.assistant.name',
         price: '149.99',
         featureKeys: [
-          'pricing.subplans.research.scholar.features.0',
-          'pricing.subplans.research.scholar.features.1',
-          'pricing.subplans.research.scholar.features.2',
+          'pricing.subplans.research.assistant.features.0',
+          'pricing.subplans.research.assistant.features.1',
+          'pricing.subplans.research.assistant.features.2',
         ],
       },
       {
@@ -151,64 +147,51 @@ const AVAILABLE_PLANS_DATA: AvailablePlan[] = [
           'pricing.subplans.research.protocol.features.2',
         ],
       },
+    ],
+    featured: true,
+  },
+  {
+    nameKey: 'clinicalTools.title',
+    descriptionKey: 'clinicalTools.subtitle',
+    price: '249.99',
+    periodKey: 'common.month',
+    icon: Stethoscope,
+    featureKeys: [
+      'clinicalTools.features.0',
+      'clinicalTools.features.1',
+      'clinicalTools.features.2',
+    ],
+    subPlans: [
       {
-        nameKey: 'pricing.subplans.research.pro.name',
-        price: '199.99',
+        nameKey: 'clinicalTools.pharmacopedia.title',
+        price: '99.99',
         featureKeys: [
-          'pricing.subplans.research.pro.features.0',
-          'pricing.subplans.research.pro.features.1',
-          'pricing.subplans.research.pro.features.2',
+          'clinicalTools.pharmacopedia.features.0',
+          'clinicalTools.pharmacopedia.features.1',
+          'clinicalTools.pharmacopedia.features.2',
+        ],
+      },
+      {
+        nameKey: 'clinicalTools.consult.title',
+        price: '149.99',
+        featureKeys: [
+          'clinicalTools.consult.features.0',
+          'clinicalTools.consult.features.1',
+          'clinicalTools.consult.features.2',
         ],
       },
     ],
   },
   {
-    nameKey: 'aiTools.pharmacopedia.title',
-    descriptionKey: 'aiTools.pharmacopedia.description',
-    price: '149.99',
-    periodKey: 'common.month',
-    icon: Pill,
-    featureKeys: [
-      'aiTools.pharmacopedia.features.0',
-      'aiTools.pharmacopedia.features.1',
-      'aiTools.pharmacopedia.features.2',
-    ],
-  },
-  {
-    nameKey: 'aiTools.consult.title',
-    descriptionKey: 'aiTools.consult.description',
-    price: '199.99', // Przykładowa cena
-    periodKey: 'common.month',
-    icon: Stethoscope,
-    featureKeys: [
-      'aiTools.consult.features.0',
-      'aiTools.consult.features.1',
-      'aiTools.consult.features.2',
-    ],
-  },
-  {
     nameKey: 'aiTools.report.title',
     descriptionKey: 'aiTools.report.description',
-    price: '149.99', // Przykładowa cena
+    price: '149.99',
     periodKey: 'common.month',
-    icon: FileText, // Użyto FileText dla Report
+    icon: ClipboardList,
     featureKeys: [
       'aiTools.report.features.0',
       'aiTools.report.features.1',
       'aiTools.report.features.2',
-    ],
-  },
-  // DODANY PLAN: Remedius Pathfinder
-  {
-    nameKey: 'aiTools.pathfinder.title',
-    descriptionKey: 'aiTools.pathfinder.description',
-    price: '179.99', // Przykładowa cena
-    periodKey: 'common.month',
-    icon: Brain, // Użyto ikony Brain dla Pathfinder
-    featureKeys: [
-      'aiTools.pathfinder.features.0',
-      'aiTools.pathfinder.features.1',
-      'aiTools.pathfinder.features.2',
     ],
   },
 ];
@@ -256,7 +239,7 @@ const Subscription = () => {
         };
       default:
         return {
-          backgroundColor: colors.primaryContainer,
+          backgroundColor: 'rgba(70, 183, 198, 0.1)',
           color: colors.darkPrimary,
         };
     }
@@ -321,10 +304,10 @@ const Subscription = () => {
       <View style={styles.availablePlanCard}>
         <View style={styles.availablePlanHeader}>
           <View style={styles.planIconContainer}>
-            <IconComponent size={24} color="white" />
+            <IconComponent size={18} color="white" />
           </View>
           <View style={styles.planTitleContainer}>
-            <Text variant="titleMedium" style={styles.availablePlanTitle}>
+            <Text variant="titleSmall" style={styles.availablePlanTitle}>
               {t(plan.nameKey)}
             </Text>
             <Text variant="bodySmall" style={styles.availablePlanDescription}>
@@ -332,7 +315,7 @@ const Subscription = () => {
             </Text>
           </View>
           <View style={styles.priceContainer}>
-            <Text variant="headlineSmall" style={styles.price}>
+            <Text variant="titleMedium" style={styles.price}>
               ${currentPrice}
             </Text>
             <Text variant="bodySmall" style={styles.period}>
@@ -344,7 +327,7 @@ const Subscription = () => {
         <View style={styles.featuresContainer}>
           {plan.featureKeys.map((featureKey, idx) => (
             <View key={idx} style={styles.featureRow}>
-              <CheckCircle2 size={16} color={colors.lightGreen} />
+              <CheckCircle2 size={14} color="#46B7C6" />
               <Text variant="bodySmall" style={styles.featureText}>
                 {t(featureKey)}
               </Text>
@@ -362,17 +345,29 @@ const Subscription = () => {
                 {t('pricing.viewTools')}
               </Text>
               {isExpanded ? (
-                <ChevronUp size={16} color={colors.darkPrimary} />
+                <ChevronUp size={14} color={colors.darkPrimary} />
               ) : (
-                <ChevronDown size={16} color={colors.darkPrimary} />
+                <ChevronDown size={14} color={colors.darkPrimary} />
               )}
             </TouchableOpacity>
           )}
-          <PrimaryButton
-            text={t('pricing.subscribe')}
+          <TouchableOpacity
+            style={[
+              styles.subscribeButton,
+              plan.featured && styles.subscribeButtonFeatured,
+            ]}
             onPress={() => handleSubscribe(plan.nameKey)}
-            width={120}
-          />
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.subscribeButtonText,
+                plan.featured && styles.subscribeButtonTextFeatured,
+              ]}
+            >
+              {t('pricing.subscribe')}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Expanded sub-plans */}
@@ -398,7 +393,7 @@ const Subscription = () => {
                   <View style={styles.subPlanFeatures}>
                     {subPlan.featureKeys.map((featureKey, fidx) => (
                       <View key={fidx} style={styles.subPlanFeatureRow}>
-                        <CheckCircle2 size={12} color={colors.lightGreen} />
+                        <CheckCircle2 size={12} color="#46B7C6" />
                         <Text
                           variant="bodySmall"
                           style={styles.subPlanFeatureText}
@@ -408,13 +403,17 @@ const Subscription = () => {
                       </View>
                     ))}
                   </View>
-                  <PrimaryButton
-                    text={t('pricing.subscribe')}
+                  <TouchableOpacity
+                    style={styles.subPlanSubscribeButton}
                     onPress={() =>
                       handleSubscribe(`${plan.nameKey}-${subPlan.nameKey}`)
                     }
-                    width={100}
-                  />
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.subPlanSubscribeButtonText}>
+                      {t('pricing.subscribe')}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               );
             })}
@@ -457,18 +456,20 @@ const Subscription = () => {
           >
             {t('pricing.billing.yearly')}
           </Text>
-          <View style={styles.saveTextContainer}>
-            <Text variant="labelSmall" style={styles.saveText}>
-              {t('pricing.billing.saveText')}
-            </Text>
-          </View>
+          {billingPeriod === 'yearly' && (
+            <View style={styles.saveTextContainer}>
+              <Text variant="labelSmall" style={styles.saveText}>
+                {t('pricing.billing.saveText')}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <Header
         title={t('subscription.title')}
         subtitle={t('subscription.subtitle')}
@@ -479,7 +480,7 @@ const Subscription = () => {
         {/* Current Subscriptions */}
         {MOCK_PLANS.length > 0 && (
           <View style={styles.section}>
-            <Text variant="headlineMedium" style={textStyles.sectionTitle}>
+            <Text variant="titleLarge" style={textStyles.sectionTitle}>
               {t('subscription.title')}
             </Text>
             {MOCK_PLANS.map(plan => (
@@ -490,7 +491,7 @@ const Subscription = () => {
 
         {/* Available Plans */}
         <View style={styles.section}>
-          <Text variant="headlineMedium" style={textStyles.sectionTitle}>
+          <Text variant="titleLarge" style={textStyles.sectionTitle}>
             {t('subscription.availablePlansTitle')}
           </Text>
 
@@ -509,26 +510,29 @@ const Subscription = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
   },
   section: {
-    padding: 16,
+    paddingHorizontal: wp(4),
+    paddingTop: hp(2),
+    paddingBottom: hp(1),
   },
   sectionTitle: {
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
-    marginBottom: 16,
+    marginBottom: 12,
+    fontSize: 20,
   },
   planCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: colors.borderColor,
   },
@@ -536,7 +540,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   planName: {
     flex: 1,
@@ -544,18 +548,20 @@ const styles = StyleSheet.create({
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
     marginRight: 8,
+    fontSize: 15,
   },
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   statusText: {
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: 11,
   },
   planDetails: {
-    gap: 8,
+    gap: 6,
   },
   planDetailRow: {
     flexDirection: 'row',
@@ -565,48 +571,59 @@ const styles = StyleSheet.create({
     color: colors.subText,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: 13,
   },
   planDetailValue: {
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: 13,
   },
   availablePlanCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.borderColor,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   availablePlanHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   planIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: colors.lightGreen,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#46B7C6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   planTitleContainer: {
     flex: 1,
-    marginRight: 12,
+    marginRight: 10,
   },
   availablePlanTitle: {
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
-    marginBottom: 4,
+    marginBottom: 2,
+    fontSize: 15,
+    letterSpacing: -0.2,
   },
   availablePlanDescription: {
     color: colors.subText,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: 12,
+    lineHeight: 16,
   },
   priceContainer: {
     alignItems: 'flex-end',
@@ -615,19 +632,21 @@ const styles = StyleSheet.create({
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
+    fontSize: 18,
   },
   period: {
     color: colors.subText,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: 11,
   },
   featuresContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
+    gap: 6,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
   featureText: {
     color: colors.darkPrimary,
@@ -635,39 +654,67 @@ const styles = StyleSheet.create({
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     marginLeft: 8,
     flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
   },
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   viewToolsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: colors.borderColor,
     borderRadius: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
   },
   viewToolsText: {
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     marginRight: 4,
+    fontSize: 13,
+  },
+  subscribeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderColor,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 90,
+  },
+  subscribeButtonFeatured: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  subscribeButtonText: {
+    color: colors.darkPrimary,
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontSize: 13,
+  },
+  subscribeButtonTextFeatured: {
+    color: '#FFFFFF',
   },
   subPlansContainer: {
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: colors.borderColor,
+    gap: 8,
   },
   subPlanCard: {
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.borderColor,
   },
@@ -676,25 +723,28 @@ const styles = StyleSheet.create({
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
     marginBottom: 4,
+    fontSize: 14,
   },
   subPlanPrice: {
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
+    fontSize: 16,
   },
   subPlanPeriod: {
     color: colors.subText,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     marginBottom: 8,
+    fontSize: 11,
   },
   subPlanFeatures: {
-    marginBottom: 12,
+    marginBottom: 10,
+    gap: 4,
   },
   subPlanFeatureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
   },
   subPlanFeatureText: {
     color: colors.darkPrimary,
@@ -703,54 +753,73 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     flex: 1,
     fontSize: 12,
+    lineHeight: 16,
+  },
+  subPlanSubscribeButton: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: colors.borderColor,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+  subPlanSubscribeButtonText: {
+    color: colors.darkPrimary,
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontSize: 12,
   },
   tabsContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   tabsWrapper: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 4,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 3,
     borderWidth: 1,
     borderColor: colors.borderColor,
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    minWidth: wp(35),
   },
   selectedTab: {
-    backgroundColor: colors.lightGreen,
+    backgroundColor: colors.primary,
   },
   tabText: {
     color: colors.darkPrimary,
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontSize: 14,
   },
   selectedTabText: {
-    color: colors.surface,
+    color: '#FFFFFF',
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   saveTextContainer: {
-    marginLeft: 8,
+    marginLeft: 6,
     backgroundColor: '#dcfce7',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   saveText: {
     color: '#166534',
     fontFamily:
       Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
-    fontSize: 10,
+    fontSize: 9,
   },
 });
 

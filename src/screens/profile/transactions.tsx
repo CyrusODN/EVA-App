@@ -153,11 +153,11 @@ const Transactions = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
   },
   scrollContainer: {
     flex: 1,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   transactionCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   transactionNumber: {
-    backgroundColor: colors.lightGreen,
+    backgroundColor: '#46B7C6',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,

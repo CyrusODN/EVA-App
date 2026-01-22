@@ -26,19 +26,19 @@ import { Camera } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Input from '../../components/input';
 import PrimaryButton from '../../components/primaryButton';
+import LanguageSelector from '../../components/languageSelector';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../../constants/colors';
 import Header from '../../components/header';
 import { useNavigation } from '@react-navigation/native';
 import Gap from '../../components/gap';
-import LinearGradient from 'react-native-linear-gradient';
-import { LinearGradientColors } from '../../constants/linearGradientColors';
 import { textStyles } from '../../constants/textStyles';
 import { changePassword, setAuthToken, forgetPassword, getAuthContext } from '../../services/authService';
 import userStore from '../../store/user';
 import { api } from '../../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
+import useOnboardingStore from '../../store/onboarding';
 
 // Mock fallback if store does not have a user yet
 const mockUser = {
@@ -51,9 +51,17 @@ const Settings = () => {
   const { t } = useTranslation();
   const storeUser = userStore.getState().loggedInUser;
   const [user, setUser] = useState(storeUser || mockUser);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [uploading, setUploading] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  
+  // Onboarding preferences
+  const {
+    defaultSpecialization,
+    defaultNoteLength,
+    defaultVisitType,
+    resetOnboarding,
+  } = useOnboardingStore();
 
   // Password change states
   const [currentPassword, setCurrentPassword] = useState('');
@@ -338,27 +346,82 @@ const Settings = () => {
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
-                style={styles.changeAvatarTextContainer}
+                style={styles.changeAvatarButton}
                 onPress={handleImagePicker}
-              >
-                <LinearGradient
-                  colors={LinearGradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.changeAvatarTextContainer}
+                activeOpacity={0.85}
                 >
-                  <View style={{ width: wp(3) }} />
                   <Camera size={16} color="white" />
-                  <Text
-                    variant="labelLarge"
-                    style={[textStyles.labelLargeWhite, { marginLeft: wp(2) }]}
-                  >
+                <Text variant="labelLarge" style={styles.changeAvatarText}>
                     {t('settings.profile.changeAvatar')}
                   </Text>
-                  <View style={{ width: wp(3) }} />
-                </LinearGradient>
               </TouchableOpacity>
             </View>
+          </Section>
+
+          {/* AI Scribe Preferences Section */}
+          <Section title={t('settings.aiScribe.title') || 'AI Scribe Preferences'}>
+            <View style={styles.aiScribeSection}>
+              <View style={styles.preferenceRow}>
+                <View style={styles.preferenceContent}>
+                  <Text style={styles.preferenceLabel}>
+                    {t('settings.aiScribe.specialization') || 'Specialization'}
+                  </Text>
+                  <Text style={styles.preferenceValue}>
+                    {defaultSpecialization 
+                      ? t(`onboarding.specialization.${defaultSpecialization.toLowerCase().replace(' ', '')}`) || defaultSpecialization
+                      : t('settings.aiScribe.notSet') || 'Not set'}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.preferenceRowDivider} />
+              
+              <View style={styles.preferenceRow}>
+                <View style={styles.preferenceContent}>
+                  <Text style={styles.preferenceLabel}>
+                    {t('settings.aiScribe.noteLength') || 'Note Length'}
+                  </Text>
+                  <Text style={styles.preferenceValue}>
+                    {t(`onboarding.noteLength.${defaultNoteLength.toLowerCase()}`) || defaultNoteLength}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.preferenceRowDivider} />
+              
+              <View style={styles.preferenceRow}>
+                <View style={styles.preferenceContent}>
+                  <Text style={styles.preferenceLabel}>
+                    {t('settings.aiScribe.visitType') || 'Default Visit Type'}
+                  </Text>
+                  <Text style={styles.preferenceValue}>
+                    {t(`onboarding.visitType.${defaultVisitType === 'First Visit' ? 'firstVisit' : 'followUp'}`) || defaultVisitType}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.preferenceRowDivider} />
+              
+              <TouchableOpacity 
+                style={styles.rerunOnboardingButton}
+                onPress={() => {
+                  resetOnboarding();
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Onboarding' }],
+                  });
+                }}
+              >
+                <Text style={styles.rerunOnboardingText}>
+                  {t('settings.aiScribe.rerunOnboarding') || 'Re-run Setup Wizard'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Section>
+
+          {/* Language Selector Section */}
+          <Section title={t('settings.language.title') || 'Language'}>
+            <LanguageSelector variant="full" showLabel={false} />
           </Section>
 
           {/* Change Password Section */}
@@ -491,40 +554,11 @@ const Settings = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#F8FAFC',
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderColor,
-  },
-  backButton: {
-    marginRight: wp(4),
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-  },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    color: colors.lightGreen,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
-  },
-  headerSubtitle: {
-    color: colors.subText,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
-    marginTop: 2,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: 16,
@@ -535,15 +569,20 @@ const styles = StyleSheet.create({
   },
   divider: {
     marginTop: 16,
-    backgroundColor: colors.borderColor,
+    backgroundColor: '#F1F5F9',
   },
   profileSection: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   profileImageContainer: {
     position: 'relative',
@@ -553,75 +592,148 @@ const styles = StyleSheet.create({
     height: 65,
     borderRadius: 32.5,
     borderWidth: 2,
-    borderColor: colors.lightGreen,
-    backgroundColor: colors.primaryContainer,
+    borderColor: '#46B7C6',
+    backgroundColor: '#F8FAFC',
   },
   editButton: {
     position: 'absolute',
     bottom: -2,
     right: -2,
-    backgroundColor: colors.lightGreen,
+    backgroundColor: '#46B7C6',
     borderRadius: 14,
     width: 28,
     height: 28,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.surface,
+    borderColor: '#FFFFFF',
   },
   editIcon: {
     margin: 0,
   },
-  passwordSection: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    alignItems: 'center',
-  },
-  supportSection: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    alignItems: 'center',
-  },
-  deleteSection: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-  },
-  warningText: {
-    color: colors.error,
-    textAlign: 'center',
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
-  },
-  dialogTitle: {
-    color: colors.darkPrimary,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
-  },
-  dialogDescription: {
-    color: colors.darkPrimary,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
-    marginBottom: 12,
-  },
-  deleteWarning: {
-    color: colors.error,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
-    marginBottom: 12,
-  },
-  changeAvatarTextContainer: {
-    backgroundColor: colors.lightGreen,
+  changeAvatarButton: {
+    backgroundColor: '#46B7C6',
     borderRadius: 10,
     height: hp(4),
+    paddingHorizontal: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 8,
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  changeAvatarText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+  passwordSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  supportSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  deleteSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  warningText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+  },
+  dialogTitle: {
+    color: '#1A1A1A',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+  },
+  dialogDescription: {
+    color: '#1A1A1A',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    marginBottom: 12,
+  },
+  deleteWarning: {
+    color: '#EF4444',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    marginBottom: 12,
+  },
+  aiScribeSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  preferenceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  preferenceContent: {
+    flex: 1,
+  },
+  preferenceLabel: {
+    fontSize: 15,
+    color: '#1A1A1A',
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+  preferenceValue: {
+    fontSize: 13,
+    color: '#64748B',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    marginTop: 2,
+  },
+  preferenceRowDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+  },
+  rerunOnboardingButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  rerunOnboardingText: {
+    fontSize: 15,
+    color: '#46B7C6',
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
 });
 
