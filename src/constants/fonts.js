@@ -4,7 +4,7 @@ export const fontConfig = {
     displaySmall: {
         fontFamily: "SFProDisplay-Regular",
         fontSize: 14,
-        // fontWeight: "400",
+        fontWeight: "400",
         letterSpacing: 0,
         lineHeight: 16,
     },
@@ -112,7 +112,7 @@ export const fontConfig = {
     },
 
     bodyLarge: {
-        fontFamily:"SFProDisplay-Semibold",
+        fontFamily: "SFProDisplay-Semibold",
         fontSize: 18,
         fontWeight: "400",
         letterSpacing: 0.15,
