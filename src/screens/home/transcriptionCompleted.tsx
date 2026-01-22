@@ -51,6 +51,7 @@ import CustomTemplateManager, {
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';
+import { generateNotes } from '../../services/authService';
 
 // Enable LayoutAnimation for Android
 if (
@@ -275,6 +276,63 @@ const TranscriptionComplete = () => {
       setNoteType('SOAP');
     }
   }, [session.title, session.type]);
+
+  // Socket connection and note streaming
+  useEffect(() => {
+    const userId = userStore.getState().user?._id;
+
+    if (!userId) {
+      console.warn('[TranscriptionComplete] No userId available for socket connection');
+      return;
+    }
+
+    // Connect socket
+    console.log('[TranscriptionComplete] Connecting socket...');
+    connectSocket(userId);
+
+    const socket = getSocket();
+    if (!socket) {
+      console.error('[TranscriptionComplete] Failed to get socket instance');
+      return;
+    }
+
+    // Listen for note generation events
+    socket.on('note-chunk', (data: { chunk: string; sessionId: string }) => {
+      console.log('[TranscriptionComplete] Received note chunk:', data.chunk);
+      if (data.sessionId === session.sessionId) {
+        setGeneratedNote((prev) => prev + data.chunk);
+      }
+    });
+
+    socket.on('note-complete', (data: { sessionId: string; fullNote: string }) => {
+      console.log('[TranscriptionComplete] Note generation complete');
+      if (data.sessionId === session.sessionId) {
+        setGeneratedNote(data.fullNote);
+        setIsGenerating(false);
+        customToast('success', t('common.success'), 'Note generated successfully');
+
+        // Save the generated note to session storage
+        sessionStorage.updateSessionNotes(session.id, data.fullNote);
+      }
+    });
+
+    socket.on('note-error', (data: { sessionId: string; error: string }) => {
+      console.error('[TranscriptionComplete] Note generation error:', data.error);
+      if (data.sessionId === session.sessionId) {
+        setIsGenerating(false);
+        customToast('error', t('common.error'), 'Failed to generate note');
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      console.log('[TranscriptionComplete] Cleaning up socket listeners');
+      socket.off('note-chunk');
+      socket.off('note-complete');
+      socket.off('note-error');
+      disconnectSocket();
+    };
+  }, [session.id, session.sessionId, t]);
 
   const getSessionIcon = () => {
     switch (session.type) {
@@ -639,23 +697,77 @@ const TranscriptionComplete = () => {
         ]}
         onPress={async () => {
           if (canGenerate) {
-            setIsGenerating(true);
-            setTimeout(() => {
-              const note = generateMockNote();
+            try {
+              setIsGenerating(true);
+              setGeneratedNote(''); // Clear previous note
+
+              // Get the current session with sessionId
+              const currentSession = await sessionStorage.getSessionById(session.id);
+
+              if (!currentSession?.sessionId) {
+                throw new Error('No sessionId available');
+              }
+
+              // Prepare payload based on generation mode
+              let payload: {
+                noteType: string;
+                visitType: string;
+                specialization: string;
+                length: string;
+                customPrompt?: string;
+              };
+
+              if (generationMode === 'standard') {
+                // Standard mode payload
+                payload = {
+                  noteType: noteType || 'SOAP',
+                  visitType: visitType,
+                  specialization: selectedSpecialization,
+                  length: noteLength,
+                };
+              } else {
+                // Custom mode payload
+                payload = {
+                  noteType: 'custom',
+                  visitType: visitType || 'First Visit',
+                  specialization: selectedSpecialization || 'General',
+                  length: noteLength,
+                  customPrompt: customNote,
+                };
+              }
+
+              console.log('[TranscriptionComplete] Generating notes with payload:', payload);
+
+              // Call the API - this will trigger socket streaming
+              await generateNotes(currentSession.sessionId, payload);
+
+              console.log('[TranscriptionComplete] Note generation initiated, waiting for socket events...');
+
+              // Save metadata
               const specializationLabel =
                 specializationOptions.find(s => s.key === selectedSpecialization)?.label;
               const visitTypeLabel =
                 visitTypeOptions.find(v => v.key === visitType)?.label;
-              setGeneratedNote(note);
-              setIsGenerating(false);
-              sessionStorage.updateSessionNoteMeta(session.id, {
+
+              await sessionStorage.updateSessionNoteMeta(session.id, {
                 generationMode,
                 specializationLabel: generationMode === 'standard' ? specializationLabel : undefined,
                 visitTypeLabel: generationMode === 'standard' ? visitTypeLabel : undefined,
                 customTemplateTitle: generationMode === 'custom' ? selectedTemplateTitle : undefined,
               });
+
               handleCollapseConfig();
-            }, 1500);
+
+              // Note: isGenerating will be set to false by socket 'note-complete' event
+            } catch (error) {
+              console.error('[TranscriptionComplete] Error generating notes:', error);
+              setIsGenerating(false);
+              customToast(
+                'error',
+                t('common.error'),
+                'Failed to generate note. Please try again.',
+              );
+            }
           } else {
             const errorMsg = generationMode === 'standard'
               ? 'Please select Specialization and Visit Type'
