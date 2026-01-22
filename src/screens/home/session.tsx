@@ -19,21 +19,21 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-  import {
-    Mic,
-    Square,
-    Upload,
-    QrCode,
-    Clock,
-    FileText,
-    Users,
-    Brain,
-    Trash2,
-    Edit3,
-    RotateCcw,
-    X,
-    ChevronLeft,
-  } from 'lucide-react-native';
+import {
+  Mic,
+  Square,
+  Upload,
+  QrCode,
+  Clock,
+  FileText,
+  Users,
+  Brain,
+  Trash2,
+  Edit3,
+  RotateCcw,
+  X,
+  ChevronLeft,
+} from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -42,9 +42,10 @@ import PrimaryButton from '../../components/primaryButton';
 import { colors } from '../../constants/colors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage, Session as SessionType, SessionType as SessionTypeEnum } from '../../utils/sessionStorage';
+import { uploadRecording } from '../../services/authService';
 
 type PickedAudioFile = DocumentPicker.DocumentPickerResponse;
- 
+
 
 const Session = () => {
   const { t } = useTranslation();
@@ -139,16 +140,69 @@ const Session = () => {
     setIsRecording(false);
     setIsTranscribing(true);
     const duration = formatTime(recordingTime);
-    await sessionStorage.markSessionAsRecorded(session.id, duration);
-    await loadSessionData();
-    setTimeout(async () => {
-      await sessionStorage.updateSessionStatus(session.id, 'transcribed');
+
+    try {
+      // Mark session as recorded locally
+      await sessionStorage.markSessionAsRecorded(session.id, duration);
+      await loadSessionData();
+
+      // TODO: Get the actual recorded audio file path from your recording library
+      // For now, we'll simulate the upload. You need to replace this with actual audio file data
+      // Example: const audioUri = await AudioRecorder.getRecordedFilePath();
+
+      // Upload the recording to backend if we have a sessionId
+      const currentSession = await sessionStorage.getSessionById(session.id);
+      if (currentSession?.sessionId) {
+        console.log('[Session] Uploading recording to backend...');
+
+        // NOTE: You need to implement actual audio recording and get the file URI
+        // This is a placeholder - replace with actual audio file data from your recording library
+        const audioFile = {
+          uri: 'file://path/to/recorded/audio.m4a', // Replace with actual recorded file URI
+          type: 'audio/m4a',
+          name: `recording_${currentSession.sessionId}.m4a`,
+        };
+
+        const uploadResponse = await uploadRecording(currentSession.sessionId, audioFile);
+        console.log('[Session] Upload response:', uploadResponse.data);
+
+        // Store transcription data if available
+        if (uploadResponse.data?.transcription) {
+          await sessionStorage.updateSessionTranscript(
+            session.id,
+            uploadResponse.data.transcription.text,
+            uploadResponse.data.transcription.utterances
+          );
+        }
+
+        customToast('success', t('common.success'), 'Recording uploaded successfully');
+      } else {
+        console.warn('[Session] No sessionId available, skipping upload');
+      }
+
+      // Navigate to transcription completed screen
+      setTimeout(async () => {
+        await sessionStorage.updateSessionStatus(session.id, 'transcribed');
+        setIsTranscribing(false);
+        navigation.replace('transcriptionCompleted', {
+          sessionData: session,
+          sessionType: session.type,
+        });
+      }, 3000);
+    } catch (error) {
+      console.error('[Session] Error uploading recording:', error);
       setIsTranscribing(false);
-      navigation.replace('transcriptionCompleted', {
-        sessionData: session,
-        sessionType: session.type,
-      });
-    }, 3000);
+      customToast('error', t('common.error'), 'Failed to upload recording');
+
+      // Still navigate to transcription screen even if upload fails
+      setTimeout(async () => {
+        await sessionStorage.updateSessionStatus(session.id, 'transcribed');
+        navigation.replace('transcriptionCompleted', {
+          sessionData: session,
+          sessionType: session.type,
+        });
+      }, 1000);
+    }
   };
 
   const handleFileUpload = async () => {
@@ -159,10 +213,48 @@ const Session = () => {
       });
 
       if (result && result.length > 0) {
-        setUploadedFile(result[0] as PickedAudioFile);
+        const pickedFile = result[0] as PickedAudioFile;
+        setUploadedFile(pickedFile);
         setIsTranscribing(true);
-        await sessionStorage.markSessionAsRecorded(session.id, '0:00');
+
+        // Mark session as recorded locally
+        await sessionStorage.markSessionAsRecorded(session.id, '0:00', pickedFile.uri);
         await loadSessionData();
+
+        // Upload the file to backend if we have a sessionId
+        const currentSession = await sessionStorage.getSessionById(session.id);
+        if (currentSession?.sessionId) {
+          console.log('[Session] Uploading selected file to backend...');
+
+          const audioFile = {
+            uri: pickedFile.uri,
+            type: pickedFile.type || 'audio/m4a',
+            name: pickedFile.name || `upload_${currentSession.sessionId}.m4a`,
+          };
+
+          try {
+            const uploadResponse = await uploadRecording(currentSession.sessionId, audioFile);
+            console.log('[Session] Upload response:', uploadResponse.data);
+
+            // Store transcription data if available
+            if (uploadResponse.data?.transcription) {
+              await sessionStorage.updateSessionTranscript(
+                session.id,
+                uploadResponse.data.transcription.text,
+                uploadResponse.data.transcription.utterances
+              );
+            }
+
+            customToast('success', t('common.success'), 'File uploaded successfully');
+          } catch (uploadError) {
+            console.error('[Session] Error uploading file:', uploadError);
+            customToast('error', t('common.error'), 'Failed to upload file');
+          }
+        } else {
+          console.warn('[Session] No sessionId available, skipping upload');
+        }
+
+        // Navigate to transcription completed screen
         setTimeout(async () => {
           await sessionStorage.updateSessionStatus(session.id, 'transcribed');
           setIsTranscribing(false);
@@ -173,7 +265,11 @@ const Session = () => {
         }, 3000);
       }
     } catch (err: any) {
-      Alert.alert(t('session.error'), t('session.failedToPickAudio'));
+      console.error('[Session] Error picking file:', err);
+      // Only show alert if it's not a user cancellation
+      if (err?.message && !err.message.includes('cancel')) {
+        Alert.alert(t('session.error'), t('session.failedToPickAudio'));
+      }
     }
   };
 
@@ -230,13 +326,13 @@ const Session = () => {
     setIsTranscribing(false);
     setUploadedFile(null);
     setShowQRCode(false);
-    
+
     // Reset session in storage
     await sessionStorage.resetSession(session.id);
-    
+
     // Reload session data
     await loadSessionData();
-    
+
     customToast('success', t('common.success'), 'Session restarted');
   };
 
@@ -245,9 +341,9 @@ const Session = () => {
       return (
         <View style={styles.processingSection}>
           <View style={styles.processingCard}>
-            <ActivityIndicator 
-              size="large" 
-              color="#46B7C6" 
+            <ActivityIndicator
+              size="large"
+              color="#46B7C6"
               style={styles.loadingSpinner}
             />
             <Text variant="headlineSmall" style={styles.processingTitle}>
@@ -363,14 +459,14 @@ const Session = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+
       {/* Compact Header - Pro Tool Style */}
       <View style={styles.compactHeader}>
         <View style={styles.compactHeaderLeft}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
-          
+
           {(() => {
             const IconComponent = getSessionIcon();
             return (
@@ -379,7 +475,7 @@ const Session = () => {
               </View>
             );
           })()}
-          
+
           <View style={styles.compactTitleContainer}>
             <Text variant="titleMedium" style={styles.compactTitle}>
               {sessionTitle}
@@ -414,8 +510,8 @@ const Session = () => {
       </View>
 
       {/* Content */}
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
