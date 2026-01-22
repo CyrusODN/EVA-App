@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
   ScrollView,
   TouchableOpacity,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  TextInput,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,8 +20,9 @@ import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import Input from '../../components/input';
 import PrimaryButton from '../../components/primaryButton';
+import LanguageSelector from '../../components/languageSelector';
 import { colors } from '../../constants/colors';
-import { Mail, Lock } from 'lucide-react-native';
+import { Mail, Lock, Check } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
@@ -36,7 +41,8 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
- 
+  const passwordRef = useRef<TextInput>(null);
+
   
 GoogleSignin.configure({
   webClientId: '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
@@ -117,6 +123,21 @@ GoogleSignin.configure({
     }
   };
 
+  const handleSkipLogin = async () => {
+    setLoading(true);
+
+    // Simulate a brief loading delay for UX
+    setTimeout(() => {
+      setLoading(false);
+      // Set a mock token for development
+      const mockToken = 'dev_token_' + Date.now();
+      setAuthToken(mockToken);
+      userStore.getState().setToken(mockToken);
+      customToast('success', 'Success', 'Development login successful');
+      navigation.navigate('tabs');
+    }, 800);
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
@@ -181,252 +202,408 @@ GoogleSignin.configure({
  
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#F4F7FF', '#FFFFFF']} style={styles.gradient}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+    <View style={styles.mainContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
         >
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={images.logo}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            bounces={false}
+          >
+            {/* Header Section */}
+            <View style={styles.headerSection}>
+               <View style={styles.logoWrapper}>
+                  <Image
+                    source={images.logo}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+               </View>
+               <View style={styles.languageSelectorWrapper}>
+                  <LanguageSelector variant="inline" showLabel={false} />
+               </View>
+            </View>
 
-          {/* Login Form */}
-          <View style={styles.formContainer}>
-            <View style={styles.card}>
-              <View style={styles.inputGroup}>
+            {/* Form Section */}
+            <View style={styles.formSection}>
+              <View style={styles.inputWrapper}>
                 <Input
                   placeholder={t('login.emailPlaceholder')}
                   value={email}
                   setValue={setEmail}
-                  leftIcon={<Mail size={20} color={colors.subText} />}
                   mode="email"
-                  backgroundColor={colors.inputBackground}
-                  borderColor={colors.borderColor}
-                  borderRadius={12}
+                  backgroundColor="#FAFAFA"
+                  borderColor="transparent"
+                  borderRadius={14}
                   width="100%"
+                  height={hp(6.2)}
                   autoCapitalize="none"
                   autoCorrect={false}
                   accessibilityLabel={t('login.emailPlaceholder')}
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               </View>
-              <View style={styles.inputGroup}>
+              
+              <View style={styles.inputWrapper}>
                 <Input
+                  ref={passwordRef}
                   placeholder={t('login.passwordPlaceholder')}
                   value={password}
                   setValue={setPassword}
-                  leftIcon={<Lock size={20} color={colors.subText} />}
                   isPassword={true}
-                  backgroundColor={colors.inputBackground}
-                  borderColor={colors.borderColor}
-                  borderRadius={12}
+                  backgroundColor="#FAFAFA"
+                  borderColor="transparent"
+                  borderRadius={14}
                   width="100%"
+                  height={hp(6.2)}
                   autoCapitalize="none"
                   autoCorrect={false}
                   accessibilityLabel={t('login.passwordPlaceholder')}
+                  returnKeyType="go"
+                  onSubmitEditing={() => handleLogin()}
                 />
               </View>
 
-              {/* Remember Me & Forgot Password */}
+              {/* Options Row */}
               <View style={styles.optionsRow}>
                 <View style={styles.checkboxContainer}>
                   <CheckBox
-                    style={{
-                      marginRight: wp(1),
-                    }}
-                    onClick={() => {
-                      setRememberMe(!rememberMe);
-                    }}
+                    style={styles.checkbox}
+                    onClick={() => setRememberMe(!rememberMe)}
                     isChecked={rememberMe}
-                    checkedCheckBoxColor={colors.primary}
-                    uncheckedCheckBoxColor={colors.primary}
+                    checkedCheckBoxColor="#46B7C6"
+                    uncheckedCheckBoxColor="#C7C7CC"
+                    checkedImage={
+                      <View style={styles.checkedBox}>
+                        <Check size={12} color="white" />
+                      </View>
+                    }
+                    unCheckedImage={<View style={styles.uncheckedBox} />}
                   />
-                  <Text variant="bodyMedium" style={styles.checkboxText}>
+                  <Text variant="bodySmall" style={styles.checkboxText}>
                     {t('login.rememberMe')}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('forgotPassword')}
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                 >
-                  <Text variant="bodyMedium" style={styles.forgotPasswordText}>
+                  <Text variant="bodySmall" style={styles.forgotPasswordText}>
                     {t('login.forgotPassword')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               {/* Sign In Button */}
-              <View style={styles.buttonGroup}>
+              <View style={styles.primaryButtonWrapper}>
                 <PrimaryButton
                   text={t('login.signIn')}
                   onPress={handleLogin}
                   loading={loading}
                   disabled={loading}
                   width="100%"
+                  borderRadius={16}
+                  backgroundColor="#46B7C6"
+                  useGradient={false}
                   accessibilityLabel={t('login.signIn')}
                 />
               </View>
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text variant="bodyMedium" style={styles.dividerText}>
-                  {t('login.or')}
-                </Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Sign In */}
-              <View style={styles.buttonGroup}>
-                <TouchableOpacity
-                  style={styles.googleButton}
-                  onPress={handleGoogleLogin}
-                >
-                  <Image source={images.googleIcon} style={styles.googleIcon} />
-                  <Text variant="titleMedium" style={textStyles.titleMedium}>
-                    {t('login.signInWithGoogle')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-
               {/* Sign Up Link */}
-              <View style={styles.signUpContainer}>
+              <View style={styles.signUpSection}>
                 <Text variant="bodyMedium" style={styles.noAccountText}>
                   {t('login.noAccount')}{' '}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('signUp')}>
+                <TouchableOpacity 
+                  onPress={() => navigation.navigate('signUp')}
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
                   <Text variant="bodyMedium" style={styles.signUpText}>
                     {t('login.signUp')}
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text variant="bodySmall" style={styles.footerText}>
-              {t('login.protectedBy')}{' '}
-              <Text variant="bodySmall" style={styles.brandText}>
-                Remedy AI
+              <View style={styles.orDivider}>
+                 <View style={styles.dividerLine} />
+                 <Text style={styles.dividerText}>{t('login.or')}</Text>
+                 <View style={styles.dividerLine} />
+              </View>
+
+              {/* Google Sign In - Apple Style */}
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogleLogin}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <Image source={images.googleIcon} style={styles.googleIcon} />
+                <Text variant="labelLarge" style={styles.googleButtonText}>
+                  {t('login.signInWithGoogle')}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Development Skip Login Button */}
+              <TouchableOpacity
+                style={styles.skipButton}
+                onPress={handleSkipLogin}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <Text variant="labelLarge" style={styles.skipButtonText}>
+                  Skip Login (Development)
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Footer - Pushed to bottom */}
+            <View style={styles.footer}>
+              <Text variant="bodySmall" style={styles.footerText}>
+                {t('login.protectedBy')}{' '}
+                <Text variant="bodySmall" style={styles.brandText}>
+                  Remedy AI
+                </Text>
               </Text>
-            </Text>
-          </View>
-        </ScrollView>
-      </LinearGradient>
-    </SafeAreaView>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#F4F7FF',
+    backgroundColor: '#FFFFFF', // Pure white for Swiss/Apple look
   },
-  gradient: {
+  safeArea: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: wp(5),
+    paddingHorizontal: wp(8),
+    paddingTop: hp(2),
+    paddingBottom: hp(2), // Bottom padding for safety
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: hp(8),
-    marginBottom: hp(4),
+  
+  // Header Section
+  headerSection: {
+    alignItems: 'center', // Center alignment for premium symmetry
+    marginTop: hp(4),
+    marginBottom: hp(5),
+  },
+  logoWrapper: {
+    marginBottom: hp(3),
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  languageSelectorWrapper: {
+    marginTop: hp(2),
   },
   logo: {
     width: wp(50),
-    height: hp(10),
+    height: wp(18), // Square logo looks more modern if icon-based, or adjust if full text
   },
-  formContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    padding: wp(6),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  titleContainer: {
+  textWrapper: {
     alignItems: 'center',
-    marginBottom: hp(4),
   },
-  title: {
-    color: colors.onSurface,
-    marginBottom: hp(1),
-  },
-  subtitle: {
-    color: colors.subText,
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700', // SemiBold/Bold
+    color: '#000000', // Deep black
+    letterSpacing: -0.8, // Tight Apple-style tracking
+    marginBottom: hp(1.5),
     textAlign: 'center',
-    lineHeight: hp(2.5),
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'System',
+    lineHeight: 40,
   },
-  inputGroup: {
-    marginBottom: hp(2),
+  welcomeSubtitle: {
+    fontSize: 13,
+    color: '#86868b', // Apple gray
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    letterSpacing: 0.2,
+  },
+
+  // Form Section
+  formSection: {
     width: '100%',
   },
+  inputWrapper: {
+    marginBottom: hp(2),
+  },
+
+  // Options
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: hp(3),
+    marginTop: hp(1),
+    marginBottom: hp(4),
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  checkbox: {
+    marginRight: wp(2),
+    transform: [{ scale: 0.9 }], // Slightly smaller checkbox
+  },
+  customCheckbox: {
+    width: 18,
+    height: 18,
+  },
+  checkedBox: {
+    width: 18,
+    height: 18,
+    backgroundColor: '#46B7C6',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uncheckedBox: {
+    width: 18,
+    height: 18,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
+    borderRadius: 4,
+  },
   checkboxText: {
-    color: colors.subText,
-    marginLeft: wp(2),
+    fontSize: 14,
+    color: '#86868b',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
   },
   forgotPasswordText: {
+    fontSize: 14,
     color: colors.primary,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
-  buttonGroup: {
+
+  // Buttons
+  primaryButtonWrapper: {
+    marginBottom: hp(3),
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16, // Premium diffused shadow
+    elevation: 8,
+  },
+
+  signUpSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: hp(2.5),
-    width: '100%',
+    marginBottom: hp(3),
   },
-  divider: {
+  noAccountText: {
+    fontSize: 15,
+    color: '#86868b',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+  },
+  signUpText: {
+    fontSize: 15,
+    color: colors.primary,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+
+  orDivider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: hp(2.5),
+    marginBottom: hp(3),
+    opacity: 0.6,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.borderColor,
+    backgroundColor: '#E5E5EA',
   },
   dividerText: {
-    color: colors.subText,
-    marginHorizontal: wp(4),
+    marginHorizontal: 16,
+    color: '#86868b',
+    fontSize: 13,
+    fontWeight: '500',
   },
+
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.borderColor,
-    borderRadius: 12,
-    paddingVertical: hp(1.8),
-    paddingHorizontal: wp(6),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    borderRadius: 16,
+    height: hp(6.5),
     width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+    marginRight: wp(2.5),
+  },
+  googleButtonText: {
+    fontSize: 17,
+    color: '#000000',
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    letterSpacing: -0.3,
+  },
+
+  // Footer
+  footer: {
+    marginTop: 'auto', // This pushes the footer to the bottom of the scroll view content
+    alignItems: 'center',
+    paddingTop: hp(4),
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#C7C7CC', // Very subtle gray
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    letterSpacing: 0.5,
+  },
+  brandText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#86868b',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+
+  skipButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F0F0',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 16,
+    height: hp(5),
+    width: '100%',
+    marginTop: hp(2),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -436,71 +613,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  googleIcon: {
-    width: hp(2.5),
-    height: hp(2.5),
-    marginRight: wp(3),
-  },
-  googleButtonText: {
-    color: colors.subText,
+  skipButtonText: {
+    fontSize: 14,
+    color: '#666666',
     fontWeight: '500',
-  },
-  signUpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: hp(2),
-  },
-  noAccountText: {
-    color: colors.subText,
-  },
-  signUpText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  successContainer: {
-    alignItems: 'center',
-    paddingVertical: hp(4),
-  },
-  successIcon: {
-    width: hp(8),
-    height: hp(8),
-    borderRadius: hp(4),
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: hp(3),
-  },
-  checkmark: {
-    color: colors.surface,
-    fontWeight: 'bold',
-  },
-  successTitle: {
-    color: colors.onSurface,
-    marginBottom: hp(1),
-  },
-  successSubtitle: {
-    color: colors.subText,
-    textAlign: 'center',
-  },
-  backToLoginContainer: {
-    alignItems: 'center',
-    marginTop: hp(2),
-  },
-  backToLoginText: {
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: hp(3),
-  },
-  footerText: {
-    color: colors.subText,
-  },
-  brandText: {
-    fontWeight: '600',
-    color: colors.onSurface,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    letterSpacing: -0.2,
   },
 });
 

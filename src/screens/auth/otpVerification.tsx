@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { 
+  StyleSheet, 
+  View, 
+  Image, 
+  TouchableOpacity, 
+  TextInput, 
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  ScrollView,
+} from 'react-native';
 import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -7,19 +17,16 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import LinearGradient from 'react-native-linear-gradient';
 import PrimaryButton from '../../components/primaryButton';
 import { colors } from '../../constants/colors';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../constants/images';
-import { textStyles } from '../../constants/textStyles';
 import {
   setAuthToken,
   ssoVerify,
   verifyLoginOtp,
   login,
   ssoRequest,
-  getAuthContext,
 } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
 import userStore from '../../store/user';
@@ -66,6 +73,11 @@ const OtpVerification = () => {
     setCanResend(false);
     setSecondsLeft(RESEND_SECONDS);
     setExpired(false);
+    // Auto-focus the first input after a short delay to allow transition
+    const timeout = setTimeout(() => {
+      d0.current?.focus();
+    }, 400);
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -88,117 +100,127 @@ const OtpVerification = () => {
 
   const handleDigitChange = (index: number, text: string) => {
     if (expired) return;
+    
+    // Handle pasting or auto-fill of multiple digits
+    if (text.length > 1) {
+      const sanitized = text.replace(/[^0-9]/g, '');
+      const digits = sanitized.split('').slice(0, 6);
+      
+      // Full Code Override: If exactly 6 digits, always start from index 0
+      const startIndex = digits.length === 6 ? 0 : index;
+      const next = [...otpDigits];
+      
+      digits.forEach((digit, i) => {
+        if (startIndex + i < 6) {
+          next[startIndex + i] = digit;
+        }
+      });
+      
+      setOtpDigits(next);
+      const finalCode = next.join('');
+
+      // Auto-Submit: If fully filled, trigger verification
+      if (finalCode.length === 6 && !next.includes('')) {
+        d5.current?.blur();
+        handleVerify(finalCode);
+        return;
+      }
+      
+      // Focus Logic for partial pastes
+      const lastIndex = Math.min(startIndex + digits.length - 1, 5);
+      if (lastIndex === 5) {
+        d5.current?.blur();
+      } else {
+        const inputRefs = [d0, d1, d2, d3, d4, d5];
+        inputRefs[lastIndex + 1].current?.focus();
+      }
+      return;
+    }
+
     const val = text.replace(/[^0-9]/g, '').slice(0, 1);
     const next = [...otpDigits];
     next[index] = val;
     setOtpDigits(next);
+
     if (val) {
       if (index === 0) d1.current?.focus();
       if (index === 1) d2.current?.focus();
       if (index === 2) d3.current?.focus();
       if (index === 3) d4.current?.focus();
       if (index === 4) d5.current?.focus();
+      if (index === 5) {
+        d5.current?.blur();
+        // Auto-submit if manual typing finished the code
+        const finalCode = next.join('');
+        if (finalCode.length === 6 && !next.includes('')) {
+          handleVerify(finalCode);
+        }
+      }
     }
   };
 
   const handleKeyPress = (index: number, e: any) => {
-    if (e?.nativeEvent?.key === 'Backspace' && !otpDigits[index]) {
-      if (index === 5) d4.current?.focus();
-      if (index === 4) d3.current?.focus();
-      if (index === 3) d2.current?.focus();
-      if (index === 2) d1.current?.focus();
+    if (e.nativeEvent.key === 'Backspace' && !otpDigits[index]) {
       if (index === 1) d0.current?.focus();
+      if (index === 2) d1.current?.focus();
+      if (index === 3) d2.current?.focus();
+      if (index === 4) d3.current?.focus();
+      if (index === 5) d4.current?.focus();
     }
   };
 
-  const handleVerify = async () => {
-    const otp = otpDigits.join('');
-    if (!otp || otp.length < 6) {
-      customToast('error', 'Error', t('login.verificationCode'));
+  const handleVerify = async (manualCode?: string) => {
+    const code = manualCode || otpDigits.join('');
+    if (code.length !== 6) {
+      if (!manualCode) {
+        customToast('error', 'Error', 'Please enter 6-digit code');
+      }
       return;
     }
     if (expired) {
-      customToast('error', 'Error', 'Code expired. Request a new code.');
+      customToast('error', 'Error', 'Code expired. Please request a new one.');
       return;
     }
     setLoading(true);
     try {
-      let resp;
-      if (params.context === 'login') {
-        const payload: any = { otp };
-        if (currentUserId) {
-          payload.userId = currentUserId;
-        } else {
-          payload.email = params.email;
+      let resp: any;
+      if (params.context === 'sso') {
+        const reqId = currentRequestId || params.requestId;
+        if (!reqId) {
+          customToast('error', 'Error', 'Missing request ID');
+          setLoading(false);
+          return;
         }
-        if (currentLoginToken) {
-          payload.loginToken = currentLoginToken;
-        }
-        resp = await verifyLoginOtp(payload);
+        resp = await ssoVerify({
+          requestId: reqId,
+          otp: code,
+        });
       } else {
-        const payload: any = { otp };
-        if (currentRequestId) {
-          payload.requestId = currentRequestId;
-        } else {
-          payload.email = params.email;
+        const token = currentLoginToken || params.loginToken;
+        const userId = currentUserId || params.userId;
+        if (!token && !userId) {
+          customToast('error', 'Error', 'Missing login token');
+          setLoading(false);
+          return;
         }
-        resp = await ssoVerify(payload);
+        resp = await verifyLoginOtp({
+          loginToken: token,
+          userId,
+          otp: code,
+        });
       }
       const raw = resp?.data;
       const payload = raw?.data || raw;
-      const token = payload?.token || payload?.accessToken;
-      if (token) {
-        setAuthToken(token);
-        userStore.getState().setToken(token);
-        const userPayload = payload?.user || payload;
-        const email = userPayload?.email;
-        const name =
-          userPayload?.name ||
-          userPayload?.fullName ||
-          (email ? String(email).split('@')[0] : undefined);
-        const profilePicture = userPayload?.profilePicture || userPayload?.avatar;
-        const normalizedUser: any = {
-          id: userPayload?._id || userPayload?.id || undefined,
-          email: email || undefined,
-          name: name || undefined,
-          profilePicture: profilePicture || undefined,
-        };
-        userStore.getState().setAuth({ ...normalizedUser, token });
-        try {
-          await AsyncStorage.setItem('auth_token', String(token));
-          await AsyncStorage.setItem('auth_user', JSON.stringify(normalizedUser));
-          await AsyncStorage.setItem(
-            'auth_session_expires_at',
-            String(Date.now() + 24 * 60 * 60 * 1000),
-          );
-        } catch (_) { }
-        try {
-          const ctxResp = await getAuthContext();
-          const ctx = ctxResp?.data?.data;
-          if (ctx) {
-            const nextToken = ctx?.token || token;
-            if (nextToken) {
-              setAuthToken(nextToken);
-              userStore.getState().setToken(nextToken);
-              await AsyncStorage.setItem('auth_token', String(nextToken));
-            }
-            const ctxUser: any = {
-              id: ctx?._id || ctx?.id || normalizedUser.id,
-              email: ctx?.email || normalizedUser.email,
-              name:
-                ctx?.fname ||
-                normalizedUser.name ||
-                (ctx?.email ? String(ctx.email).split('@')[0] : undefined),
-              profilePicture: ctx?.profileImage || normalizedUser.profilePicture,
-              role: ctx?.role,
-              settings: ctx?.settings,
-              whitelist: ctx?.whitelist,
-            };
-            userStore.getState().setAuth({ ...ctxUser, token: nextToken });
-            await AsyncStorage.setItem('auth_user', JSON.stringify(ctxUser));
-          }
-        } catch (_) { }
-        customToast('success', 'Success', 'Verification successful');
+      const accessToken =
+        payload?.token ||
+        payload?.accessToken ||
+        payload?.access_token ||
+        raw?.token ||
+        raw?.accessToken;
+      if (accessToken) {
+        setAuthToken(accessToken);
+        userStore.getState().setToken(accessToken);
+        customToast('success', 'Success', 'Verified successfully');
         navigation.reset({
           index: 0,
           routes: [{ name: params.nextRoute || 'tabs' }],
@@ -233,7 +255,7 @@ const OtpVerification = () => {
             const p = await AsyncStorage.getItem('last_login_password');
             if (p) password = p;
           }
-        } catch (_) { }
+        } catch (_) {}
         if (!email || !password) {
           customToast('error', 'Error', 'Missing email or password for resend');
           setLoading(false);
@@ -250,32 +272,45 @@ const OtpVerification = () => {
           resp?.data?.data?.loginToken ||
           resp?.data?.token;
         const newUserId =
-          resp?.data?.userId || resp?.data?.data?.userId || resp?.data?.id;
-        if (newToken) setCurrentLoginToken(String(newToken));
-        if (newUserId) setCurrentUserId(String(newUserId));
-        Alert.alert('New OTP Sent', 'Please check your email for the new verification code.');
+          resp?.data?.userId ||
+          resp?.data?.id ||
+          resp?.data?.user?.id ||
+          resp?.data?.data?.userId ||
+          resp?.data?.data?.id;
+        if (newToken || newUserId) {
+          setCurrentLoginToken(newToken ? String(newToken) : undefined);
+          setCurrentUserId(newUserId ? String(newUserId) : undefined);
+        }
+        customToast('success', 'Success', 'OTP resent successfully');
       } else {
-        const resp = await ssoRequest({ provider: 'google', email: params.email });
-        const reqId =
+        const emailForResend = params.email;
+        if (!emailForResend) {
+          customToast('error', 'Error', 'Email is required for SSO resend');
+          setLoading(false);
+          return;
+        }
+        const resp = await ssoRequest({
+          provider: 'google',
+          email: emailForResend,
+        });
+        const newReqId =
           resp?.data?.requestId ||
           resp?.data?.data?.requestId ||
-          resp?.data?.id ||
-          resp?.data?.ssoRequestId ||
-          resp?.data?.data?.ssoRequestId;
-        if (reqId) setCurrentRequestId(String(reqId));
-        Alert.alert('New OTP Sent', 'Please check your email for the new verification code.');
+          resp?.data?.id;
+        if (newReqId) {
+          setCurrentRequestId(String(newReqId));
+        }
+        customToast('success', 'Success', 'OTP resent successfully');
       }
-      setOtpDigits(['', '', '', '', '', '']);
       setSecondsLeft(RESEND_SECONDS);
-      setExpired(false);
       setCanResend(false);
-      customToast('success', 'Success', 'Verification code resent');
-      d0.current?.focus();
+      setExpired(false);
+      setOtpDigits(['', '', '', '', '', '']);
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        'Failed to resend verification code';
+        'Failed to resend OTP';
       customToast('error', 'Error', message);
     } finally {
       setLoading(false);
@@ -283,220 +318,295 @@ const OtpVerification = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#F4F7FF', '#FFFFFF']} style={styles.gradient}>
-        <View style={styles.logoContainer}>
-          <Image source={images.logo} style={styles.logo} resizeMode="contain" />
-        </View>
+    <View style={styles.mainContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            bounces={false}
+          >
+            {/* Header Section */}
+            <View style={styles.headerSection}>
+              <View style={styles.logoWrapper}>
+                <Image
+                  source={images.logo}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
 
-        <View style={styles.card}>
-          <Text variant="headlineLarge" style={textStyles.headlineLarge}>
-            {t('Two-Factor Authentication')}
-          </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
-            {t('Enter the verification code sent to your email')}
-          </Text>
+              <View style={styles.textWrapper}>
+                <Text variant="displayMedium" style={styles.welcomeTitle}>
+                  {t('login.twoFactorAuth')}
+                </Text>
+                <Text variant="bodyLarge" style={styles.welcomeSubtitle}>
+                  {t('login.enterVerificationCode')}
+                </Text>
+              </View>
+            </View>
 
-          <View style={styles.otpRow}>
-            <TextInput
-              ref={d0}
-              style={[styles.otpBox, expired && styles.otpBoxDisabled]}
-              value={otpDigits[0]}
-              onChangeText={t => handleDigitChange(0, t)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!expired}
-              onKeyPress={e => handleKeyPress(0, e)}
-            />
-            <TextInput
-              ref={d1}
-              style={[styles.otpBox, expired && styles.otpBoxDisabled]}
-              value={otpDigits[1]}
-              onChangeText={t => handleDigitChange(1, t)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!expired}
-              onKeyPress={e => handleKeyPress(1, e)}
-            />
-            <TextInput
-              ref={d2}
-              style={[styles.otpBox, expired && styles.otpBoxDisabled]}
-              value={otpDigits[2]}
-              onChangeText={t => handleDigitChange(2, t)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!expired}
-              onKeyPress={e => handleKeyPress(2, e)}
-            />
-            <TextInput
-              ref={d3}
-              style={[styles.otpBox, expired && styles.otpBoxDisabled]}
-              value={otpDigits[3]}
-              onChangeText={t => handleDigitChange(3, t)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!expired}
-              onKeyPress={e => handleKeyPress(3, e)}
-            />
-            <TextInput
-              ref={d4}
-              style={[styles.otpBox, expired && styles.otpBoxDisabled]}
-              value={otpDigits[4]}
-              onChangeText={t => handleDigitChange(4, t)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!expired}
-              onKeyPress={e => handleKeyPress(4, e)}
-            />
-            <TextInput
-              ref={d5}
-              style={[styles.otpBox, expired && styles.otpBoxDisabled]}
-              value={otpDigits[5]}
-              onChangeText={t => handleDigitChange(5, t)}
-              keyboardType="number-pad"
-              maxLength={1}
-              editable={!expired}
-              onKeyPress={e => handleKeyPress(5, e)}
-            />
-          </View>
+            {/* Form Section */}
+            <View style={styles.formSection}>
+              <View style={styles.otpRow}>
+                <TextInput
+                  ref={d0}
+                  style={[styles.otpBox, expired && styles.otpBoxDisabled]}
+                  value={otpDigits[0]}
+                  onChangeText={t => handleDigitChange(0, t)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textContentType="oneTimeCode"
+                  editable={!expired}
+                  onKeyPress={e => handleKeyPress(0, e)}
+                />
+                <TextInput
+                  ref={d1}
+                  style={[styles.otpBox, expired && styles.otpBoxDisabled]}
+                  value={otpDigits[1]}
+                  onChangeText={t => handleDigitChange(1, t)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textContentType="oneTimeCode"
+                  editable={!expired}
+                  onKeyPress={e => handleKeyPress(1, e)}
+                />
+                <TextInput
+                  ref={d2}
+                  style={[styles.otpBox, expired && styles.otpBoxDisabled]}
+                  value={otpDigits[2]}
+                  onChangeText={t => handleDigitChange(2, t)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textContentType="oneTimeCode"
+                  editable={!expired}
+                  onKeyPress={e => handleKeyPress(2, e)}
+                />
+                <TextInput
+                  ref={d3}
+                  style={[styles.otpBox, expired && styles.otpBoxDisabled]}
+                  value={otpDigits[3]}
+                  onChangeText={t => handleDigitChange(3, t)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textContentType="oneTimeCode"
+                  editable={!expired}
+                  onKeyPress={e => handleKeyPress(3, e)}
+                />
+                <TextInput
+                  ref={d4}
+                  style={[styles.otpBox, expired && styles.otpBoxDisabled]}
+                  value={otpDigits[4]}
+                  onChangeText={t => handleDigitChange(4, t)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textContentType="oneTimeCode"
+                  editable={!expired}
+                  onKeyPress={e => handleKeyPress(4, e)}
+                />
+                <TextInput
+                  ref={d5}
+                  style={[styles.otpBox, expired && styles.otpBoxDisabled]}
+                  value={otpDigits[5]}
+                  onChangeText={t => handleDigitChange(5, t)}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  textContentType="oneTimeCode"
+                  editable={!expired}
+                  onKeyPress={e => handleKeyPress(5, e)}
+                />
+              </View>
 
-          <View style={styles.buttonGroup}>
-            <PrimaryButton
-              text={t('Verify Code')}
-              onPress={handleVerify}
-              loading={loading}
-              disabled={expired}
-              useGradient={true}
-              width={wp(80)}
-              accessibilityLabel={t('Verify Code')}
-            />
-          </View>
+              {/* Verify Code Button */}
+              <View style={styles.primaryButtonWrapper}>
+                <PrimaryButton
+                  text={t('login.verifyCode')}
+                  onPress={() => handleVerify()}
+                  loading={loading}
+                  disabled={expired || loading}
+                  useGradient={false}
+                  backgroundColor="#46B7C6"
+                  width="100%"
+                  borderRadius={16}
+                  accessibilityLabel={t('login.verifyCode')}
+                />
+              </View>
 
-          <View style={styles.resendContainer}>
-            <Text variant="bodySmall" style={styles.resendText}>
-              {expired ? 'Code expired' : `Code expires in ${formatTime(secondsLeft)}`}
-            </Text>
-            <TouchableOpacity disabled={!canResend} onPress={handleResend}>
-              <Text
-                variant="bodySmall"
-                style={[
-                  styles.resendLink,
-                  { opacity: canResend ? 1 : 0.5 },
-                ]}
-              >
-                {t('Resend verification Code')}
+              <View style={styles.resendContainer}>
+                <Text variant="bodySmall" style={styles.resendText}>
+                  {expired ? 'Code expired' : `${t('login.resendCodeIn')} ${formatTime(secondsLeft)}`}
+                </Text>
+                <TouchableOpacity 
+                  disabled={!canResend} 
+                  onPress={handleResend}
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
+                  <Text
+                    variant="bodySmall"
+                    style={[
+                      styles.resendLink,
+                      { opacity: canResend ? 1 : 0.5 },
+                    ]}
+                  >
+                    {t('login.resendVerificationCode')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Footer - Pushed to bottom */}
+            <View style={styles.footer}>
+              <Text variant="bodySmall" style={styles.footerText}>
+                {t('login.protectedBy')}{' '}
+                <Text variant="bodySmall" style={styles.brandText}>
+                  Remedy AI
+                </Text>
               </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Text variant="bodySmall" style={styles.footerText}>
-            {t('login.protectedBy')}{' '}
-            <Text variant="bodySmall" style={styles.brandText}>
-              Remedy AI
-            </Text>
-          </Text>
-        </View>
-      </LinearGradient>
-    </SafeAreaView>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: '#F4F7FF',
+    backgroundColor: '#FFFFFF',
   },
-  gradient: {
+  safeArea: {
     flex: 1,
-    alignItems: 'center',
   },
-  logoContainer: {
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: wp(8),
+    paddingTop: hp(2),
+    paddingBottom: hp(2),
+  },
+
+  // Header Section
+  headerSection: {
     alignItems: 'center',
-    marginTop: hp(8),
-    marginBottom: hp(4),
+    marginTop: hp(4),
+    marginBottom: hp(5),
+  },
+  logoWrapper: {
+    marginBottom: hp(3),
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
   },
   logo: {
-    width: wp(40),
-    height: hp(8),
+    width: wp(50),
+    height: wp(18),
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    padding: wp(8),
+  textWrapper: {
     alignItems: 'center',
-    width: wp(90),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
   },
-  subtitle: {
-    color: colors.subText,
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: -0.8,
+    marginBottom: hp(1.5),
     textAlign: 'center',
-    marginTop: hp(1),
-    marginBottom: hp(2),
-    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'System',
+    lineHeight: 40,
   },
+  welcomeSubtitle: {
+    fontSize: 13,
+    color: '#86868b',
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    letterSpacing: 0.2,
+  },
+
+  // Form Section
+  formSection: {
+    width: '100%',
+  },
+
+  // OTP Inputs
   otpRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: wp(75),
-    marginBottom: hp(2),
+    marginBottom: hp(4),
   },
   otpBox: {
-    width: wp(10),
-    height: hp(6),
+    width: wp(12),
+    height: hp(6.5),
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.borderColor,
-    backgroundColor: colors.inputBackground,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FAFAFA',
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '600',
     color: colors.onSurface,
-    ...StyleSheet.flatten({
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-    }),
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
   },
   otpBoxDisabled: {
     backgroundColor: colors.surfaceDisabled,
     borderColor: colors.outlineVariant,
     color: colors.onSurfaceDisabled,
   },
-  buttonGroup: {
-    alignItems: 'center',
-    marginBottom: hp(1.5),
+
+  // Buttons
+  primaryButtonWrapper: {
+    marginBottom: hp(3),
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
+
   resendContainer: {
     alignItems: 'center',
     marginTop: hp(1),
   },
   resendText: {
-    color: colors.subText,
+    fontSize: 13,
+    color: '#86868b',
+    marginBottom: hp(1),
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   resendLink: {
+    fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
-    marginTop: hp(1),
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
+
+  // Footer
   footer: {
+    marginTop: 'auto',
     alignItems: 'center',
-    paddingVertical: hp(3),
+    paddingTop: hp(4),
   },
   footerText: {
-    color: colors.subText,
+    fontSize: 12,
+    color: '#C7C7CC',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    letterSpacing: 0.5,
   },
   brandText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: colors.onSurface,
+    color: '#86868b',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
 });
 
