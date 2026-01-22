@@ -97,6 +97,18 @@ export const sessionStorage = {
     }
   },
 
+  async deleteSessions(ids: string[]): Promise<void> {
+    try {
+      const sessions = await this.getAllSessions();
+      const idsSet = new Set(ids);
+      const filteredSessions = sessions.filter(s => !idsSet.has(s.id));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filteredSessions));
+    } catch (error) {
+      console.error('Error deleting sessions from storage:', error);
+      throw error;
+    }
+  },
+
   async getSessionsByType(type: SessionType): Promise<Session[]> {
     try {
       const sessions = await this.getAllSessions();

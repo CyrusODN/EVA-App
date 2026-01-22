@@ -40,7 +40,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { Image, Alert } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import PrimaryButton from '../../components/primaryButton';
 import VisitDialogModal from '../../components/visitDialogueModal';
 import { colors } from '../../constants/colors';
@@ -97,9 +97,9 @@ const Home = () => {
         if (svcToken) {
           try {
             await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
-          } catch (_) {}
+          } catch (_) { }
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
 
     loadEvents();
@@ -141,9 +141,9 @@ const Home = () => {
         if (svcToken) {
           try {
             await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
-          } catch (_) {}
+          } catch (_) { }
         }
-      } catch (_) {}
+      } catch (_) { }
     })();
   }, []);
 
@@ -247,10 +247,10 @@ const Home = () => {
   const handleCreateVisit = async (visitName: string) => {
     await sessionStorage.createSession(visitName, visitDialogType);
     setShowVisitDialog(false);
-    
+
     // Refresh events list to show the new session
     await loadEvents();
-    
+
     // Show toast notification
     customToast('success', t('common.success'), `${visitName} created`);
   };
@@ -288,7 +288,7 @@ const Home = () => {
     const count = selectedItems.size;
     Alert.alert(
       i18n.language === 'pl' ? 'Potwierdź usunięcie' : 'Confirm Delete',
-      i18n.language === 'pl' 
+      i18n.language === 'pl'
         ? `Czy na pewno chcesz usunąć ${count} ${count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'}?`
         : `Are you sure you want to delete ${count} item${count === 1 ? '' : 's'}?`,
       [
@@ -300,29 +300,38 @@ const Home = () => {
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
+            // Capture selected IDs before clearing
+            const idsToDelete = Array.from(selectedItems);
+
             try {
-              await Promise.all(
-                Array.from(selectedItems).map(id => 
-                  sessionStorage.deleteSession(id)
-                )
-              );
+              // Clear selection mode immediately for better UX
+              setSelectionMode(false);
+              setSelectedItems(new Set());
+
+              // Delete all selected sessions in one operation (avoids race conditions)
+              await sessionStorage.deleteSessions(idsToDelete);
+
+              // Reload events to update UI
               await loadEvents();
+
+              // Show success message
               customToast(
-                'success', 
-                t('common.success'), 
+                'success',
+                t('common.success'),
                 i18n.language === 'pl'
                   ? `Usunięto ${count} ${count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'}`
                   : `${count} item${count === 1 ? '' : 's'} deleted`
               );
-              toggleSelectionMode();
             } catch (error) {
               customToast(
-                'error', 
-                t('common.error'), 
-                i18n.language === 'pl' 
+                'error',
+                t('common.error'),
+                i18n.language === 'pl'
                   ? 'Nie udało się usunąć elementów'
                   : 'Failed to delete items'
               );
+              // Re-enable selection mode on error
+              setSelectionMode(true);
             }
           },
         },
@@ -442,7 +451,7 @@ const Home = () => {
   const renderEventItem = ({ item }: { item: EventItem }) => {
     const eventDescriptor = getEventDescriptor(item);
     const isSelected = selectedItems.has(item.id);
-    
+
     return (
       <Swipeable
         renderRightActions={() => selectionMode ? null : renderRightActions(item.id)}
@@ -472,68 +481,68 @@ const Home = () => {
           delayLongPress={400}
           activeOpacity={0.7}
         >
-        <View style={styles.eventRow}>
-          {/* Checkbox in selection mode */}
-          {selectionMode && (
-            <View style={styles.checkboxContainer}>
-              <View style={[
-                styles.checkbox,
-                isSelected && styles.checkboxSelected
-              ]}>
-                {isSelected && (
-                  <CheckCircle size={20} color="#46B7C6" fill="#46B7C6" />
+          <View style={styles.eventRow}>
+            {/* Checkbox in selection mode */}
+            {selectionMode && (
+              <View style={styles.checkboxContainer}>
+                <View style={[
+                  styles.checkbox,
+                  isSelected && styles.checkboxSelected
+                ]}>
+                  {isSelected && (
+                    <CheckCircle size={20} color="#46B7C6" fill="#46B7C6" />
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Left: Title + Date/Duration */}
+            <View style={styles.eventLeftContent}>
+              <Text variant="titleMedium" style={styles.eventTitle}>
+                {item.title}
+              </Text>
+              <View style={styles.eventMetaRow}>
+                <Text variant="bodySmall" style={styles.eventDate}>
+                  {formatEventDate(item.date)}
+                </Text>
+                {item.duration && (
+                  <>
+                    <Text style={styles.metaSeparator}> · </Text>
+                    <Text variant="bodySmall" style={styles.durationText}>
+                      {item.duration}
+                    </Text>
+                  </>
                 )}
               </View>
             </View>
-          )}
 
-          {/* Left: Title + Date/Duration */}
-          <View style={styles.eventLeftContent}>
-            <Text variant="titleMedium" style={styles.eventTitle}>
-              {item.title}
-            </Text>
-            <View style={styles.eventMetaRow}>
-              <Text variant="bodySmall" style={styles.eventDate}>
-                {formatEventDate(item.date)}
-              </Text>
-              {item.duration && (
-                <>
-                  <Text style={styles.metaSeparator}> · </Text>
-                  <Text variant="bodySmall" style={styles.durationText}>
-                    {item.duration}
-                  </Text>
-                </>
-              )}
-            </View>
-          </View>
-
-          {/* Right: Status indicator */}
-          {!selectionMode && (
-            <View style={styles.eventRightContent}>
-              <View style={[
-                styles.statusBadge,
-                item.status === 'completed' && styles.statusBadgeCompleted,
-                item.status === 'transcribed' && styles.statusBadgeTranscribed,
-                item.status === 'recorded' && styles.statusBadgeRecorded,
-                item.status === 'new' && styles.statusBadgeNew,
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  item.status === 'completed' && styles.statusTextCompleted,
-                  item.status === 'transcribed' && styles.statusTextTranscribed,
-                  item.status === 'recorded' && styles.statusTextRecorded,
-                  item.status === 'new' && styles.statusTextNew,
+            {/* Right: Status indicator */}
+            {!selectionMode && (
+              <View style={styles.eventRightContent}>
+                <View style={[
+                  styles.statusBadge,
+                  item.status === 'completed' && styles.statusBadgeCompleted,
+                  item.status === 'transcribed' && styles.statusBadgeTranscribed,
+                  item.status === 'recorded' && styles.statusBadgeRecorded,
+                  item.status === 'new' && styles.statusBadgeNew,
                 ]}>
-                {eventDescriptor ||
-                  (item.status === 'completed' && t('status.completed')) ||
-                  (item.status === 'transcribed' && t('status.transcribed')) ||
-                  (item.status === 'recorded' && t('status.recorded')) ||
-                  (item.status === 'new' && t('status.new'))}
-                </Text>
+                  <Text style={[
+                    styles.statusText,
+                    item.status === 'completed' && styles.statusTextCompleted,
+                    item.status === 'transcribed' && styles.statusTextTranscribed,
+                    item.status === 'recorded' && styles.statusTextRecorded,
+                    item.status === 'new' && styles.statusTextNew,
+                  ]}>
+                    {eventDescriptor ||
+                      (item.status === 'completed' && t('status.completed')) ||
+                      (item.status === 'transcribed' && t('status.transcribed')) ||
+                      (item.status === 'recorded' && t('status.recorded')) ||
+                      (item.status === 'new' && t('status.new'))}
+                  </Text>
+                </View>
               </View>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
         </TouchableOpacity>
       </Swipeable>
     );
@@ -652,7 +661,7 @@ const Home = () => {
               {formatMonthYear(currentMonth)}
             </Text>
           </View>
-          
+
           <View style={styles.monthNavButtons}>
             <TouchableOpacity
               onPress={() => navigateMonth('prev')}
@@ -698,8 +707,8 @@ const Home = () => {
               return eventType === 'patient'
                 ? 'rgba(70, 183, 198, 0.08)'
                 : eventType === 'meeting'
-                ? 'rgba(124, 58, 237, 0.08)'
-                : 'rgba(251, 146, 60, 0.08)';
+                  ? 'rgba(124, 58, 237, 0.08)'
+                  : 'rgba(251, 146, 60, 0.08)';
             };
 
             return (
@@ -739,10 +748,10 @@ const Home = () => {
         {selectedDate && (
           <View style={styles.selectedDateEvents}>
             <Text style={styles.selectedDateTitle}>
-              {selectedDate.toLocaleDateString(i18n.language || 'en-US', { 
-                weekday: 'long', 
-                month: 'long', 
-                day: 'numeric' 
+              {selectedDate.toLocaleDateString(i18n.language || 'en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric'
               })}
             </Text>
             <View style={styles.selectedDateEventsList}>
@@ -766,8 +775,8 @@ const Home = () => {
                           event.type === 'patient'
                             ? '#46B7C6'
                             : event.type === 'meeting'
-                            ? '#7C3AED'
-                            : '#FB923C',
+                              ? '#7C3AED'
+                              : '#FB923C',
                       },
                     ]} />
                     <Text style={styles.calendarEventTitle}>{event.title}</Text>
@@ -781,8 +790,8 @@ const Home = () => {
                 const selDate = selectedDate.toISOString().split('T')[0];
                 return eventDate === selDate;
               }).length === 0 && (
-                <Text style={styles.noEventsText}>{t('calendar.noEventsOnDay')}</Text>
-              )}
+                  <Text style={styles.noEventsText}>{t('calendar.noEventsOnDay')}</Text>
+                )}
             </View>
           </View>
         )}
@@ -791,166 +800,168 @@ const Home = () => {
   };
 
   return (
-    <View style={styles.mainContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      <SafeAreaView style={styles.container}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <Image
-            source={images.logo}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.mainContainer}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <SafeAreaView style={styles.container}>
+          {/* Header Section */}
+          <View style={styles.header}>
+            <Image
+              source={images.logo}
+              style={styles.logo}
+              resizeMode="contain"
+            />
 
-          <View style={styles.headerActions}>
-            {!showCalendar && (
+            <View style={styles.headerActions}>
+              {!showCalendar && (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={toggleSelectionMode}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Edit2
+                    size={22}
+                    color={selectionMode ? '#EF4444' : colors.primary}
+                    strokeWidth={1.5}
+                  />
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 style={styles.headerButton}
-                onPress={toggleSelectionMode}
+                onPress={() => {
+                  setShowCalendar(!showCalendar);
+                  if (selectionMode) {
+                    toggleSelectionMode();
+                  }
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Edit2 
-                  size={22} 
-                  color={selectionMode ? '#EF4444' : colors.primary} 
-                  strokeWidth={1.5} 
-                />
+                {showCalendar ? (
+                  <X size={22} color={colors.primary} strokeWidth={2} />
+                ) : (
+                  <Calendar size={22} color={colors.primary} strokeWidth={1.5} />
+                )}
               </TouchableOpacity>
-            )}
-            
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => {
-                setShowCalendar(!showCalendar);
-                if (selectionMode) {
-                  toggleSelectionMode();
-                }
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              {showCalendar ? (
-                <X size={22} color={colors.primary} strokeWidth={2} />
-              ) : (
-                <Calendar size={22} color={colors.primary} strokeWidth={1.5} />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.headerDivider} />
-
-        {/* Sticky Tabs Section (outside ScrollView) */}
-        {!showCalendar && (
-          <View style={styles.stickyTabsWrapper}>
-            <View style={styles.tabsContainer}>
-              <View style={styles.tabsRow}>
-                {(['patients', 'meetings', 'lectures'] as TabName[]).map(tab => (
-                  <TouchableOpacity
-                    key={tab}
-                    style={[
-                      styles.tabButton,
-                      activeTab === tab && styles.activeTabButton,
-                    ]}
-                    onPress={() => setActiveTab(tab)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.tabContent}>
-                      {getTabIcon(tab, activeTab === tab)}
-                      <Text
-                        variant="bodyMedium"
-                        style={[
-                          styles.tabText,
-                          activeTab === tab && styles.activeTabText,
-                        ]}
-                      >
-                        {t(`tabs.${tab}`)}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
           </View>
-        )}
+          <View style={styles.headerDivider} />
 
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            contentOffset={{ x: 0, y: hp(7.5) }} // Hide search bar by default (Search Height + Margins)
+          {/* Sticky Tabs Section (outside ScrollView) */}
+          {!showCalendar && (
+            <View style={styles.stickyTabsWrapper}>
+              <View style={styles.tabsContainer}>
+                <View style={styles.tabsRow}>
+                  {(['patients', 'meetings', 'lectures'] as TabName[]).map(tab => (
+                    <TouchableOpacity
+                      key={tab}
+                      style={[
+                        styles.tabButton,
+                        activeTab === tab && styles.activeTabButton,
+                      ]}
+                      onPress={() => setActiveTab(tab)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.tabContent}>
+                        {getTabIcon(tab, activeTab === tab)}
+                        <Text
+                          variant="bodyMedium"
+                          style={[
+                            styles.tabText,
+                            activeTab === tab && styles.activeTabText,
+                          ]}
+                        >
+                          {t(`tabs.${tab}`)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          )}
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardAvoidingView}
           >
-        {/* Search Section */}
-        <View style={styles.searchSection}>
-          <Search size={18} color="#8E8E93" />
-          <TextInput
-            placeholder={t('common.search')}
-            style={styles.searchInput}
-            placeholderTextColor="#8E8E93"
-            onChangeText={setSearchText}
-            value={searchText}
-            returnKeyType="search"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-
-        {/* Selection Bar - appears in selection mode */}
-        {renderSelectionBar()}
-
-        {/* Calendar or Content Section */}
-        {showCalendar ? (
-          renderCalendarView()
-        ) : (
-          <View style={styles.contentSection}>
-            {filteredEvents.length > 0 ? (
-              <FlatList
-                data={filteredEvents}
-                renderItem={renderEventItem}
-                keyExtractor={item => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.eventsList}
-              />
-            ) : (
-              <EmptyState
-                icon={FileText}
-                iconSize={48}
-                iconColor={colors.surfaceDisabled}
-                message={t('messages.noRecords')}
-              />
-            )}
-          </View>
-        )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-
-        {/* Fixed Floating Action Button - Outside ScrollView */}
-        {!showCalendar && (
-          <View style={styles.fabContainer}>
-            <TouchableOpacity
-              style={styles.fab}
-              onPress={handleNewButtonPress}
-              activeOpacity={0.85}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.scrollContainer}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentOffset={{ x: 0, y: hp(7.5) }} // Hide search bar by default (Search Height + Margins)
             >
-              <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
-            </TouchableOpacity>
-          </View>
-        )}
+              {/* Search Section */}
+              <View style={styles.searchSection}>
+                <Search size={18} color="#8E8E93" />
+                <TextInput
+                  placeholder={t('common.search')}
+                  style={styles.searchInput}
+                  placeholderTextColor="#8E8E93"
+                  onChangeText={setSearchText}
+                  value={searchText}
+                  returnKeyType="search"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
 
-        {/* Visit Dialog Modal */}
-        <VisitDialogModal
-          visible={showVisitDialog}
-          onClose={() => setShowVisitDialog(false)}
-          visitType={visitDialogType}
-          onCreateVisit={handleCreateVisit}
-        />
-      </SafeAreaView>
-    </View>
+              {/* Selection Bar - appears in selection mode */}
+              {renderSelectionBar()}
+
+              {/* Calendar or Content Section */}
+              {showCalendar ? (
+                renderCalendarView()
+              ) : (
+                <View style={styles.contentSection}>
+                  {filteredEvents.length > 0 ? (
+                    <FlatList
+                      data={filteredEvents}
+                      renderItem={renderEventItem}
+                      keyExtractor={item => item.id}
+                      scrollEnabled={false}
+                      showsVerticalScrollIndicator={false}
+                      contentContainerStyle={styles.eventsList}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={FileText}
+                      iconSize={48}
+                      iconColor={colors.surfaceDisabled}
+                      message={t('messages.noRecords')}
+                    />
+                  )}
+                </View>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
+
+          {/* Fixed Floating Action Button - Outside ScrollView */}
+          {!showCalendar && (
+            <View style={styles.fabContainer}>
+              <TouchableOpacity
+                style={styles.fab}
+                onPress={handleNewButtonPress}
+                activeOpacity={0.85}
+              >
+                <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Visit Dialog Modal */}
+          <VisitDialogModal
+            visible={showVisitDialog}
+            onClose={() => setShowVisitDialog(false)}
+            visitType={visitDialogType}
+            onCreateVisit={handleCreateVisit}
+          />
+        </SafeAreaView>
+      </View>
+    </GestureHandlerRootView>
   );
 };
 
@@ -1161,7 +1172,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
   },
-  
+
   // Selected Date Events Section
   selectedDateEvents: {
     marginTop: hp(2),
@@ -1335,7 +1346,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
-  
+
   // New Status Badge Styles - Linear Style (Subtle)
   statusBadge: {
     paddingHorizontal: 10,
@@ -1374,7 +1385,7 @@ const styles = StyleSheet.create({
   statusTextNew: {
     color: '#64748B',
   },
-  
+
   // Old styles kept for compatibility
   statusBadgeCompact: {
     flexDirection: 'row',
@@ -1391,7 +1402,7 @@ const styles = StyleSheet.create({
     color: '#86868b',
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
-  
+
   // Floating Action Button - Circular (Things 3 Premium)
   fabContainer: {
     position: 'absolute',
@@ -1425,7 +1436,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'System',
     lineHeight: 32,
   },
-  
+
   // Swipe Actions - Premium Style
   swipeActionsContainer: {
     flexDirection: 'row',
@@ -1460,7 +1471,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
-  
+
   // Selection Mode Styles
   selectionBar: {
     flexDirection: 'row',
