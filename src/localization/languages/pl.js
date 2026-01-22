@@ -467,6 +467,7 @@ export const pl = {
             "observations": "Obserwacje medyczne",
             "observationsPlaceholder": "Wprowadź obserwacje medyczne lub notatki dotyczące pacjenta...",
             "dropDocuments": "Upuść dodatkowe dokumenty tutaj",
+            "uploadDocuments": "Prześlij dokumenty",
             "supportedFormat": "Obsługiwany format: PDF",
             "pageOf": "Strona {{pageNumber}} z {{numPages}}",
             "uploadedDocuments": "Przesłane dokumenty",
