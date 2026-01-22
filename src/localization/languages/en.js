@@ -775,6 +775,13 @@ export const en = {
 			"meeting": "Meeting",
 			"lecture": "Lecture",
 			"visit": "Visit",
+			"generationMode": "Generation Mode",
+			"modes": {
+				"standard": "Standard",
+				"custom": "Custom",
+				"standardSOAP": "Standard SOAP",
+				"custom": "Custom Mode"
+			},
 			"noteOptions": {
 				"soap": "SOAP Note",
 				"clinical": "Clinical Breakdown",
@@ -783,7 +790,8 @@ export const en = {
 				"scientificResearch": "Scientific Research",
 				"clinicalPractice": "Clinical Practice",
 				"generalSummary": "General Summary",
-				"detailedReport": "Detailed Report"
+				"detailedReport": "Detailed Report",
+				"general": "General Summary"
 			},
 			"specialization": {
 				"select": "Select specialization",
@@ -803,6 +811,9 @@ export const en = {
 				"medium": "Medium",
 				"large": "Large"
 			},
+			"configuration": "Configuration",
+			"hide": "Hide",
+			"tapToEdit": "Tap to Edit",
 			"transcriptionTitle": "Real-time transcription",
 			"addTranscription": "Add Transcription",
 			"speaker": "Speaker",
@@ -810,6 +821,18 @@ export const en = {
 			"speakerDefaultContent": "Raz, dwa, trzy, cztery, pięć, sześć.",
 			"totalDuration": "Total Duration",
 			"emptyTranscription": "No transcription available yet",
+			"noNote": "No Note Generated",
+			"generateToSee": "Generate a note to see it here",
+			"generateNote": "Generate Note",
+			"noteGenerated": "Note Generated ({{mode}})",
+			"noteSubjective": "Subjective",
+			"patientPresents": "Patient presents with",
+			"generatedUsing": {
+				"general": "Generated using General settings",
+				"standardMode": "Generated using Standard Mode ({{specialization}})",
+				"customMode": "Generated using Custom Mode ({{template}})"
+			},
+			"customTemplate": "Custom Template",
 			"customPromptDialog": {
 				"editTitle": "Edit Custom Prompt",
 				"createTitle": "Create Custom Prompt",
@@ -823,6 +846,20 @@ export const en = {
 				"addButton": "Add Visits",
 				"selectedVisits": "{{count}} visit(s) selected",
 				"clearAll": "Clear All",
+				"previousVisitContext": "Previous Visit Context",
+				"fromHistory": "From History",
+				"typeText": "Type Text",
+				"takePhoto": "Take Photo",
+				"photoComingSoon": "Photo context coming soon",
+				"manualContext": "Manual Context",
+				"manualContextTitle": "Enter Context Manually",
+				"paste": "Paste",
+				"pastedTitle": "Pasted",
+				"pastedMessage": "Text pasted from clipboard",
+				"pasteFailed": "Failed to paste from clipboard",
+				"typePlaceholder": "Type here...",
+				"savedTitle": "Saved",
+				"savedMessage": "Context saved",
 				"selectDialog": {
 					"title": "Select Previous Patient Visits",
 					"description": "Only patient visits with completed transcriptions are shown. These visits will be used as context for generating follow-up notes.",
@@ -2051,5 +2088,57 @@ export const en = {
 	"home": {
 		"meetingNamePlaceholder": "Enter meeting name...",
 		"lectureNamePlaceholder": "Enter lecture name..."
+	},
+	"onboarding": {
+		"skip": "Skip",
+		"back": "Back",
+		"next": "Next",
+		"welcome": {
+			"title": "Welcome to Remedy",
+			"subtitle": "AI-powered clinical documentation assistant designed for healthcare professionals.",
+			"cta": "Get Started"
+		},
+		"specialization": {
+			"title": "Select your specialization",
+			"subtitle": "This helps us tailor the AI models to your specific needs.",
+			"psychiatry": "Psychiatry",
+			"childPsychiatry": "Child Psychiatry",
+			"surgery": "Surgery",
+			"smartSelect": "Smart Select",
+			"smartSelectHint": "Automatically detects specialty"
+		},
+		"visitType": {
+			"title": "What type of visit is this?",
+			"subtitle": "Choose the context for your documentation.",
+			"firstVisit": "First Visit",
+			"followUp": "Follow-up",
+			"hint": "This helps us structure the clinical note appropriately."
+		},
+		"noteLength": {
+			"title": "Preferred Note Length",
+			"subtitle": "How detailed should your documentation be?",
+			"concise": "Concise",
+			"conciseDesc": "Key points and essential information only.",
+			"standard": "Standard",
+			"standardDesc": "Balanced detail suitable for most visits.",
+			"detailed": "Detailed",
+			"detailedDesc": "Comprehensive documentation including all observations.",
+			"previewTitle": "Preview"
+		},
+		"magicIntro": {
+			"title": "Magic Templates",
+			"subtitle": "Use customized templates for faster documentation.",
+			"description": "Create your own templates to standardize your notes.",
+			"step1": "Record",
+			"step2": "Process",
+			"step3": "Complete",
+			"createFirst": "Create First Template",
+			"skipForNow": "Skip for now"
+		},
+		"complete": {
+			"title": "You're all set!",
+			"subtitle": "Your profile has been set up successfully.",
+			"cta": "Start Using Remedy"
+		}
 	},
 }

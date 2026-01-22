@@ -18,6 +18,12 @@ export interface Session {
   utterances?: any[] | null;
   audioPath?: string | null;
   generatedNotes?: string | null; // Generated notes from AI
+  noteGenerationMeta?: {
+    generationMode: string;
+    specializationLabel?: string;
+    visitTypeLabel?: string;
+    customTemplateTitle?: string;
+  };
 }
 
 const STORAGE_KEY = 'remedy_ai_sessions';
@@ -275,6 +281,14 @@ export const sessionStorage = {
     const session = await this.getSessionById(id);
     if (session) {
       session.generatedNotes = generatedNotes;
+      await this.saveSession(session);
+    }
+  },
+
+  async updateSessionNoteMeta(id: string, meta: any): Promise<void> {
+    const session = await this.getSessionById(id);
+    if (session) {
+      session.noteGenerationMeta = meta;
       await this.saveSession(session);
     }
   },

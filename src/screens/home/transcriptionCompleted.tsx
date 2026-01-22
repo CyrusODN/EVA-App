@@ -44,12 +44,10 @@ import {
   PhoneCall,
 } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
 import CustomTemplateManager, {
   CustomTemplate,
 } from '../../components/customTemplateManager';
-import { colors } from '../../constants/colors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';

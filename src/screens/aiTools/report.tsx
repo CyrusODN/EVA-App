@@ -7,6 +7,7 @@ import {
   TextInput,
   FlatList,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -32,11 +33,9 @@ import {
   FileCheck,
   FileSpreadsheet,
 } from 'lucide-react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { textStyles } from '../../constants/textStyles';
-import { LinearGradientColors } from '../../constants/linearGradientColors';
 import Gap from '../../components/gap';
 import Header from '../../components/header';
 
@@ -319,7 +318,7 @@ const Report = () => {
         <View style={styles.certificateTypeIcon}>
           <Icon
             size={20}
-            color={isSelected ? colors.lightGreen : colors.onSurfaceVariant}
+            color={isSelected ? '#46B7C6' : '#64748B'}
           />
         </View>
         <View style={styles.certificateTypeContent}>
@@ -439,21 +438,21 @@ const Report = () => {
         </View>
       </View>
       {selectedVisits.has(item.id) && (
-        <Check size={20} color={colors.lightGreen} />
+        <Check size={20} color="#46B7C6" />
       )}
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
         <Header
           title={t('remediusReport.title')}
           subtitle={t('remediusReport.subtitle')}
           onLeftPress={handleBack}
-          icon={FileText}
-          showIcon={true}
-          backgroundColor={colors.surface}
+          showIcon={false}
+          backgroundColor="#FFFFFF"
+          showBorder={true}
         />
 
         <View style={styles.content}>
@@ -487,20 +486,12 @@ const Report = () => {
                 <TouchableOpacity
                   style={styles.importButton}
                   onPress={openVisitSelectDialog}
-                >
-                  <LinearGradient
-                    colors={LinearGradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.importButtonGradient}
+                  activeOpacity={0.85}
                   >
-                    <View style={{ width: wp(2) }} />
                     <Plus size={16} color="white" />
                     <Text variant="titleMedium" style={styles.importButtonText}>
                       {t('remediusReport.patientData.importButton')}
                     </Text>
-                    <View style={{ width: wp(2) }} />
-                  </LinearGradient>
                 </TouchableOpacity>
               </View>
 
@@ -537,16 +528,13 @@ const Report = () => {
               {/* Document Upload */}
               <View style={styles.documentUploadContainer}>
                 <TouchableOpacity
-                  style={styles.uploadArea}
+                  style={styles.uploadButton}
                   onPress={handleAddDocument}
+                  activeOpacity={0.85}
                 >
-                  <Upload size={24} color={colors.onSurfaceVariant} />
-                  <Text variant="bodyMedium" style={styles.uploadText}>
-                    {t('remediusReport.patientData.dropDocuments')}
-                  </Text>
-                  <Text variant="bodySmall" style={styles.uploadSubtext}>
-                    {t('remediusReport.patientData.supportedFormat')} •{' '}
-                    {t('remediusReport.patientData.maxDocuments', { count: 5 })}
+                  <Upload size={20} color="white" />
+                  <Text variant="labelLarge" style={styles.uploadButtonText}>
+                    {t('remediusReport.patientData.uploadDocuments')}
                   </Text>
                 </TouchableOpacity>
 
@@ -575,7 +563,14 @@ const Report = () => {
               {/* Generate and Preview Buttons */}
               <View style={styles.generateButtonsContainer}>
                 <TouchableOpacity
-                  style={styles.previewButton}
+                  style={[
+                    styles.previewButton,
+                    (!selectedCertificateType ||
+                      (importedVisitData.length === 0 &&
+                        !observations.trim() &&
+                        pdfFiles.length === 0)) &&
+                      styles.buttonDisabled,
+                  ]}
                   onPress={() => {
                     if (selectedCertificate) {
                       setShowPreview(true);
@@ -591,73 +586,41 @@ const Report = () => {
                       !observations.trim() &&
                       pdfFiles.length === 0)
                   }
-                >
-                  <LinearGradient
-                    colors={
-                      !selectedCertificateType ||
-                      (importedVisitData.length === 0 &&
-                        !observations.trim() &&
-                        pdfFiles.length === 0)
-                        ? ['#94A3B8', '#94A3B8']
-                        : LinearGradientColors
-                    }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.previewButtonGradient}
+                  activeOpacity={0.85}
                   >
-                    <Eye size={16} color="white" />
                     <Text variant="labelLarge" style={styles.previewButtonText}>
-                      Preview
+                      {t('remediusReport.preview.title')}
                     </Text>
-                  </LinearGradient>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.generateButton}
-                  onPress={handleGenerate}
-                  disabled={
-                    isGenerating ||
+                  style={[
+                    styles.generateButton,
+                    (isGenerating ||
                     !selectedCertificateType ||
                     (importedVisitData.length === 0 &&
                       !observations.trim() &&
-                      pdfFiles.length === 0)
-                  }
-                >
-                  <LinearGradient
-                    colors={
+                        pdfFiles.length === 0)) &&
+                      styles.buttonDisabled,
+                  ]}
+                  onPress={handleGenerate}
+                  disabled={
                       isGenerating ||
                       !selectedCertificateType ||
                       (importedVisitData.length === 0 &&
                         !observations.trim() &&
                         pdfFiles.length === 0)
-                        ? ['#94A3B8', '#94A3B8']
-                        : LinearGradientColors
                     }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.generateButtonGradient}
+                  activeOpacity={0.85}
                   >
-                    {isGenerating ? (
-                      <>
-                        <Text
-                          variant="labelLarge"
-                          style={styles.generateButtonText}
-                        >
-                          {t('remediusReport.generate.generating')}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Brain size={16} color="white" />
-                        <Text
-                          variant="labelLarge"
-                          style={styles.generateButtonText}
-                        >
-                          {t('remediusReport.generate.button')}
-                        </Text>
-                      </>
-                    )}
-                  </LinearGradient>
+                    <Text
+                      variant="labelLarge"
+                      style={styles.generateButtonText}
+                    >
+                      {isGenerating
+                        ? t('remediusReport.generate.generating')
+                        : t('remediusReport.generate.button')}
+                    </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -793,12 +756,7 @@ const Report = () => {
                 <TouchableOpacity
                   style={styles.importVisitsButton}
                   onPress={handleImportVisits}
-                >
-                  <LinearGradient
-                    colors={LinearGradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.importVisitsButtonGradient}
+                  activeOpacity={0.85}
                   >
                     <Text
                       variant="labelMedium"
@@ -806,7 +764,6 @@ const Report = () => {
                     >
                       {t('remediusReport.visitSelectDialog.importButton')}
                     </Text>
-                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
@@ -851,46 +808,7 @@ const Report = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: wp(5),
-    paddingVertical: hp(2),
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#D1D5DB',
-  },
-  backButton: {
-    borderRadius: 8,
-    marginRight: wp(2),
-  },
-  headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  headerIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: colors.lightGreen,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: wp(3),
-    alignSelf: 'flex-start',
-    marginTop: hp(0.75),
-  },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    color: colors.lightGreen,
-  },
-  headerSubtitle: {
-    color: colors.onSurfaceVariant,
-    marginTop: 2,
+    backgroundColor: '#F8FAFC',
   },
   content: {
     flex: 1,
@@ -898,6 +816,7 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
     padding: wp(4),
+    backgroundColor: '#F8FAFC',
   },
   section: {
     marginBottom: hp(3),
@@ -909,23 +828,33 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   sectionTitle: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 16,
+    letterSpacing: -0.4,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   importButton: {
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  importButtonGradient: {
+    backgroundColor: '#46B7C6',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
     gap: 6,
-    height: hp(4),
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   importButtonText: {
     color: 'white',
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   // Certificate Type Styles
   certificateTypeSection: {
@@ -940,14 +869,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+    borderWidth: 0,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   selectedCertificateTypeCard: {
-    borderColor: colors.lightGreen,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: 'rgba(70, 183, 198, 0.08)',
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
   certificateTypeIcon: {
     marginRight: 12,
@@ -956,15 +893,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   certificateTypeName: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   selectedCertificateTypeName: {
-    color: colors.lightGreen,
+    color: '#46B7C6',
   },
   certificateTypeDescription: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
     marginTop: 2,
+    fontSize: 12,
+    letterSpacing: 0,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   // Imported Visits Styles
   importedVisitsContainer: {
@@ -973,10 +916,14 @@ const styles = StyleSheet.create({
   importedVisitCard: {
     padding: 12,
     marginBottom: 8,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   importedVisitHeader: {
     flexDirection: 'row',
@@ -984,12 +931,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   importedVisitName: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   importedVisitDate: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
     marginTop: 2,
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   importedVisitTags: {
     flexDirection: 'row',
@@ -999,11 +951,14 @@ const styles = StyleSheet.create({
   visitTag: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#DBEAFE',
-    borderRadius: 12,
+    backgroundColor: 'rgba(70, 183, 198, 0.1)',
+    borderRadius: 6,
   },
   visitTagText: {
-    color: colors.onSurface,
+    color: '#46B7C6',
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
   },
   removeVisitButton: {
     padding: 4,
@@ -1013,66 +968,80 @@ const styles = StyleSheet.create({
     marginBottom: hp(2),
   },
   observationsLabel: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     marginBottom: 8,
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   observationsInput: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderColor: '#E8EAED',
+    borderRadius: 10,
     padding: 12,
     height: 100,
     textAlignVertical: 'top',
-    fontSize: 14,
-    color: colors.onSurface,
-    backgroundColor: colors.surface,
+    fontSize: 15,
+    color: '#1A1A1A',
+    backgroundColor: '#F9FAFB',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    letterSpacing: -0.2,
   },
   // Document Upload Styles
   documentUploadContainer: {
     marginBottom: hp(2),
   },
-  uploadArea: {
+  uploadButton: {
+    backgroundColor: '#46B7C6',
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 24,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  uploadText: {
-    color: colors.onSurface,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  uploadSubtext: {
-    color: colors.onSurfaceVariant,
-    marginTop: 4,
-    textAlign: 'center',
+  uploadButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   uploadedDocumentsContainer: {
     marginTop: 16,
   },
   uploadedDocumentsTitle: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
     marginBottom: 8,
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   documentItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     marginBottom: 8,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   documentIcon: {
     width: 32,
     height: 32,
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: '#FEE2E2',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1082,12 +1051,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   documentName: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 14,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   documentSize: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
     marginTop: 2,
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   documentActions: {
     flexDirection: 'row',
@@ -1095,8 +1069,8 @@ const styles = StyleSheet.create({
   },
   documentActionButton: {
     padding: 6,
-    borderRadius: 4,
-    backgroundColor: colors.background,
+    borderRadius: 6,
+    backgroundColor: '#F8FAFC',
   },
   // Generate Button Styles
   generateButtonsContainer: {
@@ -1106,45 +1080,51 @@ const styles = StyleSheet.create({
   },
   previewButton: {
     flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    height: 48,
-  },
-  previewButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#46B7C6',
+    borderRadius: 12,
+    height: 48,
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
   },
   previewButtonText: {
     color: 'white',
     fontWeight: '600',
-  },
-  previewButtonDisabled: {
-    opacity: 0.6,
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   generateButton: {
     flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    height: 48,
-  },
-  generateButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    width: '100%',
-    height: '100%',
-  },
-  generateButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: '#46B7C6',
+    borderRadius: 12,
+    height: 48,
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
   },
   generateButtonText: {
     color: 'white',
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+  buttonDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0.1,
   },
   // Preview Panel Styles
   previewOverlay: {
@@ -1153,7 +1133,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -1161,9 +1141,14 @@ const styles = StyleSheet.create({
   previewPanel: {
     width: wp(95),
     maxHeight: hp(85),
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
   },
   previewHeader: {
     flexDirection: 'row',
@@ -1171,19 +1156,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: wp(4),
     borderBottomWidth: 1,
-    borderBottomColor: '#D1D5DB',
+    borderBottomColor: '#F1F5F9',
   },
   previewHeaderContent: {
     flex: 1,
     marginRight: wp(2),
   },
   previewTitle: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 18,
+    letterSpacing: -0.4,
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
   },
   previewSubtitle: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
     marginTop: 4,
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   previewActions: {
     flexDirection: 'row',
@@ -1192,7 +1182,7 @@ const styles = StyleSheet.create({
   previewActionButton: {
     padding: 10,
     borderRadius: 8,
-    backgroundColor: colors.background,
+    backgroundColor: '#F8FAFC',
   },
   previewContent: {
     flex: 1,
@@ -1203,35 +1193,45 @@ const styles = StyleSheet.create({
   previewDateContainer: {
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#D1D5DB',
+    borderBottomColor: '#F1F5F9',
     marginBottom: 16,
   },
   previewDateLabel: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   previewDateValue: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
     marginTop: 2,
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   certificateContentContainer: {
     marginBottom: 16,
   },
   certificateContentTitle: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
     marginBottom: 8,
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   certificateContentBox: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 0,
+    borderRadius: 10,
     padding: 16,
   },
   certificateContentText: {
-    color: colors.onSurface,
-    lineHeight: 20,
+    color: '#1A1A1A',
+    lineHeight: 22,
+    fontSize: 14,
+    letterSpacing: -0.1,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   // Dialog Styles
   dialogOverlay: {
@@ -1240,7 +1240,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -1248,9 +1248,14 @@ const styles = StyleSheet.create({
   dialogContainer: {
     width: wp(90),
     maxHeight: hp(80),
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
   },
   dialogHeader: {
     flexDirection: 'row',
@@ -1258,11 +1263,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: wp(4),
     borderBottomWidth: 1,
-    borderBottomColor: '#D1D5DB',
+    borderBottomColor: '#F1F5F9',
   },
   dialogTitle: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 18,
+    letterSpacing: -0.4,
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -1270,18 +1278,20 @@ const styles = StyleSheet.create({
     margin: wp(4),
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#E8EAED',
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: colors.onSurface,
+    fontSize: 15,
+    color: '#1A1A1A',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   visitSelectList: {
     maxHeight: hp(50),
@@ -1293,21 +1303,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+    borderWidth: 0,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   selectedVisitSelectItem: {
-    borderColor: colors.lightGreen,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: 'rgba(70, 183, 198, 0.08)',
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
   },
   visitSelectContent: {
     flex: 1,
   },
   visitSelectName: {
-    color: colors.onSurface,
+    color: '#1A1A1A',
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   visitSelectMeta: {
     flexDirection: 'row',
@@ -1316,7 +1335,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   visitSelectDate: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   visitSelectTags: {
     flexDirection: 'row',
@@ -1329,53 +1350,66 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: wp(4),
     borderTopWidth: 1,
-    borderTopColor: '#D1D5DB',
+    borderTopColor: '#F1F5F9',
   },
   cancelButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 6,
+    borderColor: '#E8EAED',
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
   },
   cancelButtonText: {
-    color: colors.onSurface,
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
   },
   importVisitsButton: {
-    borderRadius: 6,
-    overflow: 'hidden',
-    height: hp(4),
-    minWidth: 100,
-  },
-  importVisitsButtonGradient: {
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#46B7C6',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 100,
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   importVisitsButtonText: {
     color: 'white',
     fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
   },
   // Document Preview Styles
   documentPreviewContent: {
     padding: wp(4),
   },
   documentPreviewFileName: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
     marginBottom: 12,
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
   documentPreviewContainer: {
     height: hp(50),
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 0,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   documentPreviewText: {
-    color: colors.onSurfaceVariant,
+    color: '#64748B',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
   },
 });
 
