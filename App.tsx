@@ -19,12 +19,7 @@ const queryClient = new QueryClient();
 const theme = {
   ...DefaultTheme,
   colors: colors,
-  fonts: configureFonts({
-    config: fontConfig,
-    regular: {
-      fontFamily: 'SFProDisplay-Regular',
-    },
-  }),
+  fonts: configureFonts({ config: fontConfig as any }),
 };
 
 const App = () => {
