@@ -100,6 +100,12 @@ export const pl = {
         "details": "Szczegóły",
         "delete": "Usuń",
         "deleting": "Usuwanie...",
+        "selected": "zaznaczono",
+        "selectAll": "Zaznacz wszystko",
+        "deselectAll": "Odznacz wszystko",
+        "edit": "Edytuj",
+        "done": "Gotowe",
+        "history": "Historia",
         "history": "Historia",
         "share": "Udostępnij",
         "copyAll": "Kopiuj wszystko",
@@ -476,7 +482,7 @@ export const pl = {
             "error": "Nie udało się wygenerować zaświadczenia"
         },
         "preview": {
-            "title": "Podgląd zaświadczenia",
+            "title": "Podgląd",
             "export": "Eksportuj",
             "patientId": "ID pacjenta",
             "observations": "Obserwacje medyczne",
@@ -1209,32 +1215,52 @@ export const pl = {
                 }
             },
             "research": {
-                "scholar": {
-                    "name": "Scholar",
+                "assistant": {
+                    "name": "Research Assistant",
                     "features": {
-                        "0": "Przegląd literatury",
-                        "1": "Analiza artykułów",
-                        "2": "Zarządzanie cytowaniami"
+                        "0": "Analiza publikacji medycznych",
+                        "1": "Odpowiedzi oparte na dowodach",
+                        "2": "Baza źródeł peer-reviewed"
                     }
                 },
                 "protocol": {
-                    "name": "Protocol",
+                    "name": "Protocol Assistant",
                     "features": {
-                        "0": "Analiza protokołu",
-                        "1": "Projekt badania",
-                        "2": "Dokumentacja"
-                    }
-                },
-                "pro": {
-                    "name": "Protocol Pro",
-                    "features": {
-                        "0": "Zaawansowane narzędzia protokołu",
-                        "1": "Szablony wizyt",
-                        "2": "Zarządzanie badaniem"
+                        "0": "Analiza protokołów badań klinicznych",
+                        "1": "Ekstrakcja kryteriów włączenia",
+                        "2": "Analiza metodologii"
                     }
                 }
             }
         }
+    },
+    "clinicalTools": {
+        "title": "Narzędzia Kliniczne",
+        "subtitle": "Wsparcie decyzji klinicznych oparte na AI",
+        "features": {
+            "0": "Chatbot medyczny CDSS",
+            "1": "Analiza interakcji lekowych",
+            "2": "Wsparcie w czasie rzeczywistym"
+        },
+        "pharmacopedia": {
+            "title": "Remedius Pharmacopedia",
+            "description": "Asystent informacji o lekach. Pytaj o leki, interakcje, dawkowanie i przeciwwskazania.",
+            "features": {
+                "0": "Sprawdzanie interakcji leków",
+                "1": "Informacje o dawkowaniu",
+                "2": "Baza danych farmaceutycznych"
+            }
+        },
+        "consult": {
+            "title": "Remedius Consult",
+            "description": "Uzyskaj wsparcie kliniczne oparte na AI. Importuj notatki z wizyt i omawiaj złożone przypadki z dowodami naukowymi.",
+            "features": {
+                "0": "Ocena kliniczna oparta na AI",
+                "1": "Zalecenia diagnostyczne",
+                "2": "Cytowania z wytycznych"
+            }
+        },
+        "footer": "Bezpieczne, zgodne z HIPAA wsparcie decyzji klinicznych"
     },
     "discharge": {
         "observations": {
@@ -2230,19 +2256,6 @@ export const pl = {
     "actions": {
         "find": "Znajdź"
     },
-    "clinicalTools": {
-        "title": "Narzędzia Kliniczne",
-        "subtitle": "Wsparcie decyzji klinicznych oparte na AI",
-        "consult": {
-            "title": "Remedius Consult",
-            "description": "Uzyskaj wsparcie kliniczne oparte na AI. Importuj notatki z wizyt i omawiaj złożone przypadki z dowodami naukowymi."
-        },
-        "pharmacopedia": {
-            "title": "Remedius Pharmacopedia",
-            "description": "Asystent informacji o lekach. Pytaj o leki, interakcje, dawkowanie i przeciwwskazania."
-        },
-        "footer": "Bezpieczne, zgodne z HIPAA wsparcie decyzji klinicznych"
-    },
     "consultChat": {
         "title": "Remedius Consult",
         "greeting": "Wsparcie Decyzji Klinicznych",
@@ -2399,7 +2412,8 @@ export const pl = {
             "titleLabel": "Nazwa Szablonu (edytowalna)",
             "promptEditLabel": "Instrukcje Systemowe (Zaawansowane)",
             "promptEditPlaceholder": "Edytuj instrukcje AI tutaj...",
-            "regenerateButton": "Regeneruj z Edycjami"
+            "regenerateButton": "Regeneruj z Edycjami",
+            "regenerateWithEdits": "Regeneruj z Edycjami"
         },
         "refine": {
             "title": "Co chciałbyś zmienić?",
