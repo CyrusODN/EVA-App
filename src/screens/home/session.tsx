@@ -43,6 +43,7 @@ import { colors } from '../../constants/colors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage, Session as SessionType, SessionType as SessionTypeEnum } from '../../utils/sessionStorage';
 import { uploadRecording } from '../../services/authService';
+import audioService from '../../services/audioService';
 
 type PickedAudioFile = DocumentPicker.DocumentPickerResponse;
 
@@ -131,36 +132,41 @@ const Session = () => {
       .padStart(2, '0')}`;
   };
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    setRecordingTime(0);
+  const handleStartRecording = async () => {
+    try {
+      await audioService.startRecorder();
+      setIsRecording(true);
+      setRecordingTime(0);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      Alert.alert(t('common.error'), t('session.failedToStartRecording'));
+    }
   };
 
   const handleStopRecording = async () => {
-    setIsRecording(false);
-    setIsTranscribing(true);
-    const duration = formatTime(recordingTime);
-
     try {
+      const audioUri = await audioService.stopRecorder();
+      console.log('[Session] Recording stopped, path:', audioUri);
+
+      setIsRecording(false);
+      setIsTranscribing(true);
+      const duration = formatTime(recordingTime);
+
       // Mark session as recorded locally
-      await sessionStorage.markSessionAsRecorded(session.id, duration);
+      await sessionStorage.markSessionAsRecorded(session.id, duration, audioUri);
       await loadSessionData();
 
-      // TODO: Get the actual recorded audio file path from your recording library
-      // For now, we'll simulate the upload. You need to replace this with actual audio file data
-      // Example: const audioUri = await AudioRecorder.getRecordedFilePath();
+
 
       // Upload the recording to backend if we have a sessionId
       const currentSession = await sessionStorage.getSessionById(session.id);
       if (currentSession?.sessionId) {
         console.log('[Session] Uploading recording to backend...');
 
-        // NOTE: You need to implement actual audio recording and get the file URI
-        // This is a placeholder - replace with actual audio file data from your recording library
         const audioFile = {
-          uri: 'file://path/to/recorded/audio.m4a', // Replace with actual recorded file URI
-          type: 'audio/m4a',
-          name: `recording_${currentSession.sessionId}.m4a`,
+          uri: audioUri,
+          type: Platform.OS === 'ios' ? 'audio/m4a' : 'audio/mp4',
+          name: `recording_${currentSession.sessionId}.${Platform.OS === 'ios' ? 'm4a' : 'mp4'}`,
         };
 
         const uploadResponse = await uploadRecording(currentSession.sessionId, audioFile);
