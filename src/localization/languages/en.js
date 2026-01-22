@@ -417,6 +417,7 @@ export const en = {
 			"observations": "Medical Observations",
 			"observationsPlaceholder": "Enter medical observations or notes about the patient...",
 			"dropDocuments": "Drop additional documents here",
+			"uploadDocuments": "Upload Documents",
 			"supportedFormat": "Supported format: PDF",
 			"pageOf": "Page {{pageNumber}} of {{numPages}}",
 			"uploadedDocuments": "Uploaded Documents",
