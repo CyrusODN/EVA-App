@@ -42,12 +42,12 @@ export const en = {
 	},
 	"navigation": {
 		"tabs": {
-			"home": "Home",
+			"home": "Remedius Notes",
 			"aiTools": "AI Tools",
 			"profile": "Profile"
 		}
 	},
-	"common": {
+		"common": {
 		"logout": "Log out",
 		"goToApplication": "Go to application",
 		"search": "Search...",
@@ -77,6 +77,7 @@ export const en = {
 		"cancel": "Cancel",
 		"save": "Save",
 		"saving": "Saving...",
+		"or": "or",
 		"confirm": "Confirm",
 		"add": "Add",
 		"close": "Close",
@@ -99,11 +100,6 @@ export const en = {
 		"details": "Details",
 		"delete": "Delete",
 		"deleting": "Deleting...",
-		"selected": "selected",
-		"selectAll": "Select All",
-		"deselectAll": "Deselect All",
-		"edit": "Edit",
-		"done": "Done",
 		"history": "History",
 		"share": "Share",
 		"copyAll": "Copy All",
@@ -119,6 +115,33 @@ export const en = {
 		"reset": "Reset",
 		"success": "Success",
 		"error": "Error",
+		"comingSoon": "Coming Soon",
+		"back": "Back"
+	},
+	"templates": {
+		"title": "Templates",
+		"customNoteTemplate": "CUSTOM NOTE TEMPLATE",
+		"searchPlaceholder": "Search templates...",
+		"empty": "No templates found.",
+		"createNew": "Create New",
+		"selectTemplate": "Select a template...",
+		"tapToEdit": "Tap to edit or add",
+		"howToCreate": "New Template",
+		"chooseMethod": "How would you like to create your template?",
+		"manualMethod": "Write Manually",
+		"manualDescription": "Create your template from scratch with full control",
+		"aiMethod": "AI Assistant",
+		"aiDescription": "Describe what you want and AI creates it for you",
+		"titlePlaceholder": "Template Title",
+		"contentPlaceholder": "Write your instructions here...\n\nExample: Focus on current symptoms, medication adherence, and mood stability.",
+		"edit": "Edit Template",
+		"delete": "Delete Template",
+		"deleteTitle": "Delete Template",
+		"deleteMessage": "Are you sure?",
+		"errors": {
+			"incompleteTitle": "Incomplete Template",
+			"incompleteMessage": "Please provide both a title and instructions."
+		}
 	},
 	"lectureNotes": {
 		"title": "Lecture Notes",
@@ -422,7 +445,6 @@ export const en = {
 			"observations": "Medical Observations",
 			"observationsPlaceholder": "Enter medical observations or notes about the patient...",
 			"dropDocuments": "Drop additional documents here",
-			"uploadDocuments": "Upload Documents",
 			"supportedFormat": "Supported format: PDF",
 			"pageOf": "Page {{pageNumber}} of {{numPages}}",
 			"uploadedDocuments": "Uploaded Documents",
@@ -781,12 +803,12 @@ export const en = {
 			"meeting": "Meeting",
 			"lecture": "Lecture",
 			"visit": "Visit",
-			"generationMode": "Generation Mode",
+			"generationMode": "GENERATION MODE",
+			"noteType": "Note Type",
 			"modes": {
 				"standard": "Standard",
 				"custom": "Custom",
-				"standardSOAP": "Standard SOAP",
-				"custom": "Custom Mode"
+				"standardSOAP": "Standard SOAP"
 			},
 			"noteOptions": {
 				"soap": "SOAP Note",
@@ -797,7 +819,7 @@ export const en = {
 				"clinicalPractice": "Clinical Practice",
 				"generalSummary": "General Summary",
 				"detailedReport": "Detailed Report",
-				"general": "General Summary"
+				"general": "General"
 			},
 			"specialization": {
 				"select": "Select specialization",
@@ -817,28 +839,21 @@ export const en = {
 				"medium": "Medium",
 				"large": "Large"
 			},
-			"configuration": "Configuration",
-			"hide": "Hide",
-			"tapToEdit": "Tap to Edit",
 			"transcriptionTitle": "Real-time transcription",
 			"addTranscription": "Add Transcription",
 			"speaker": "Speaker",
 			"speakerA": "Speaker A:",
 			"speakerDefaultContent": "Raz, dwa, trzy, cztery, pięć, sześć.",
 			"totalDuration": "Total Duration",
-			"emptyTranscription": "No transcription available yet",
-			"noNote": "No Note Generated",
-			"generateToSee": "Generate a note to see it here",
-			"generateNote": "Generate Note",
-			"noteGenerated": "Note Generated ({{mode}})",
-			"noteSubjective": "Subjective",
-			"patientPresents": "Patient presents with",
-			"generatedUsing": {
-				"general": "Generated using General settings",
-				"standardMode": "Generated using Standard Mode ({{specialization}})",
-				"customMode": "Generated using Custom Mode ({{template}})"
-			},
+			"noteGenerated": "Note Generated in {{mode}} Mode",
+			"noteSubjective": "SUBJECTIVE",
+			"patientPresents": "Patient presents",
 			"customTemplate": "Custom Template",
+			"generatedUsing": {
+				"general": "Generated using: General",
+				"standardMode": "Generated using: {{specialization}} (Standard)",
+				"customMode": "Generated using: {{template}} (Custom)"
+			},
 			"customPromptDialog": {
 				"editTitle": "Edit Custom Prompt",
 				"createTitle": "Create Custom Prompt",
@@ -856,25 +871,31 @@ export const en = {
 				"fromHistory": "From History",
 				"typeText": "Type Text",
 				"takePhoto": "Take Photo",
-				"photoComingSoon": "Photo context coming soon",
-				"manualContext": "Manual Context",
-				"manualContextTitle": "Enter Context Manually",
+				"photoComingSoon": "Photo capture will be available soon",
+				"manualContext": "MANUAL CONTEXT",
+				"manualContextTitle": "Previous Visit",
+				"typePlaceholder": "Type or paste notes...",
 				"paste": "Paste",
 				"pastedTitle": "Pasted",
-				"pastedMessage": "Text pasted from clipboard",
-				"pasteFailed": "Failed to paste from clipboard",
-				"typePlaceholder": "Type here...",
+				"pastedMessage": "Text pasted",
+				"pasteFailed": "Failed to paste",
 				"savedTitle": "Saved",
 				"savedMessage": "Context saved",
 				"selectDialog": {
-					"title": "Select Previous Patient Visits",
+					"title": "Previous Visits",
 					"description": "Only patient visits with completed transcriptions are shown. These visits will be used as context for generating follow-up notes.",
 					"searchPlaceholder": "Search visits...",
 					"noVisitsAvailable": "No transcribed patient visits available for selection",
 					"noVisitsFound": "No visits found matching your search",
-					"importButton": "Import Selected Visits"
+					"importButton": "Import ({{count}})"
 				}
-			}
+			},
+			"configuration": "Configuration",
+			"hide": "Hide",
+			"tapToEdit": "Tap to edit",
+			"noNote": "No note yet",
+			"generateToSee": "Generate a note to see it here.",
+			"generateNote": "Generate Note"
 		},
 		"patientQualificationAnalysis": "Patient Qualification Analysis",
 		"model": "Model",
@@ -908,7 +929,17 @@ export const en = {
 	"calendar": {
 		"patientVisits": "Patient Visits",
 		"meetings": "Meetings",
-		"lectures": "Lectures"
+		"lectures": "Lectures",
+		"noEventsOnDay": "No events on this day",
+		"weekDays": {
+			"sun": "S",
+			"mon": "M",
+			"tue": "T",
+			"wed": "W",
+			"thu": "T",
+			"fri": "F",
+			"sat": "S"
+		}
 	},
 	"menu": {
 		"settings": "Settings",
@@ -920,7 +951,8 @@ export const en = {
 		"phi": {
 			"title": "Protected Health Information",
 			"description": "Please ensure you follow your organization's guidelines for handling protected health information.",
-			"agreement": "I understand and agree to handle all patient information in accordance with privacy regulations."
+			"agreement": "I understand and agree to handle all patient information in accordance with privacy regulations.",
+			"continueButton": "Continue"
 		}
 	},
 	"aiTools": {
@@ -1040,6 +1072,19 @@ export const en = {
 			"alertDeleted": "Account deleted",
 			"dialogTitle": "Delete Account",
 			"dialogDescription": "This action cannot be undone. This will permanently delete your account and remove your data from our servers."
+		},
+		"language": {
+			"title": "Language",
+			"label": "Language",
+			"select": "Select Language"
+		},
+		"aiScribe": {
+			"title": "AI Scribe Preferences",
+			"specialization": "Specialization",
+			"noteLength": "Note Length",
+			"visitType": "Default Visit Type",
+			"notSet": "Not set",
+			"rerunOnboarding": "Re-run Setup Wizard"
 		}
 	},
 	"subscription": {
@@ -1267,7 +1312,59 @@ export const en = {
 			"title": "Create New Project"
 		}
 	},
-	"dischargeAssistant": {
+		"dischargeAssistant": {
+		"inputBar": {
+			"placeholder": "Add clinical notes..."
+		},
+		"actions": {
+			"scanDocuments": "Scan Documents",
+			"gallery": "Photo Gallery",
+			"files": "Choose Files",
+			"cancel": "Cancel"
+		},
+		"status": {
+			"analyzingPixelData": "Analyzing pixel data...",
+			"analyzingDocument": "Analyzing document content..."
+		},
+		"savedSummaries": {
+			"title": "Saved Discharge Summaries",
+			"empty": "No saved summaries yet.",
+			"save": "Save",
+			"savedSuccess": "Summary saved.",
+			"rename": "Rename",
+			"delete": "Delete",
+			"nameTitle": "Name this summary",
+			"namePlaceholder": "Summary name",
+			"saveConfirm": "Save",
+			"nameRequiredTitle": "Name required",
+			"nameRequiredMessage": "Please provide a name.",
+			"renameTitle": "Rename summary",
+			"renameConfirm": "Rename",
+			"deleteTitle": "Delete summary",
+			"deleteMessage": "Are you sure you want to delete this summary?",
+			"deleteConfirm": "Delete"
+		},
+		"prompts": {
+			"label": "Custom Prompt",
+			"none": "None selected",
+			"manage": "Manage",
+			"title": "Custom Prompts",
+			"empty": "No prompts yet.",
+			"selected": "Selected",
+			"edit": "Edit",
+			"delete": "Delete",
+			"newTitle": "New Prompt",
+			"editTitle": "Edit Prompt",
+			"titlePlaceholder": "Prompt title",
+			"contentPlaceholder": "Prompt details...",
+			"save": "Save Prompt",
+			"update": "Update Prompt",
+			"deleteTitle": "Delete Prompt",
+			"deleteMessage": "Are you sure you want to delete this prompt?",
+			"deleteConfirm": "Delete",
+			"incompleteTitle": "Incomplete",
+			"incompleteMessage": "Please provide both title and content."
+		},
 		"headerTitle": "Remedius Discharge",
 		"headerSubtitle": "Create comprehensive discharge summaries",
 		"exitButtonText": "Exit",
@@ -1440,7 +1537,9 @@ export const en = {
 		"verifying": "Verifying...",
 		"resendCodeIn": "Resend code in",
 		"resendVerificationCode": "Resend verification code",
-		"verificationCode": "Verification Code"
+		"verificationCode": "Verification Code",
+		"twoFactorAuth": "Two-Factor Authentication",
+		"enterVerificationCode": "Enter the verification code sent to your email"
 	},
 	"resetPassword": {
 		"title": "Reset Your Password",
@@ -2047,30 +2146,6 @@ export const en = {
 			"conductAnalysis": "Conduct Analysis"
 		}
 	},
-	"login": {
-		"email": "Email",
-		"emailPlaceholder": "Enter your email",
-		"password": "Password",
-		"passwordPlaceholder": "Enter your password",
-		"confirmPassword": "Confirm Password",
-		"confirmPasswordPlaceholder": "Confirm your password",
-		"rememberMe": "Remember me",
-		"forgotPassword": "Forgot password?",
-		"signIn": "Sign In",
-		"signUp": "Sign Up",
-		"or": "or",
-		"signInWithGoogle": "Sign in with Google",
-		"signUpWithGoogle": "Sign up with Google",
-		"noAccount": "Don't have an account?",
-		"alreadyHaveAccount": "Already have an account?",
-		"backToLogin": "Back to Login",
-		"protectedBy": "Protected by",
-		"resetPassword": "Reset Password",
-		"sendResetLink": "Send Reset Link",
-		"resetInstructions": "Enter your email address and we'll send you a link to reset your password.",
-		"resetLinkSent": "Reset Link Sent!",
-		"checkEmail": "Check your email for reset instructions."
-	},
 	"session": {
 		"stopRecordingConfirm": "Stop recording and process audio?",
 		"error": "Error",
@@ -2088,63 +2163,244 @@ export const en = {
 		"connectExternalDevice": "Connect External Device",
 		"scanToConnect": "Scan to connect another device with microphone",
 		"recordingComplete": "Recording Complete",
-		"recordingCompleteDescription": "Your recording is ready. You can play it back or generate notes.",
+		"recordingCompleteDescription": "Your recording is ready. You can generate notes.",
 		"generateNotes": "Generate Notes"
+	},
+	"researchChat": {
+		"title": {
+			"general": "Research Assistant",
+			"protocol": "Protocol Assistant"
+		},
+		"greeting": {
+			"general": "Medical Literature Analysis",
+			"protocol": "Clinical Trial Protocol Assistant"
+		},
+		"subtitle": {
+			"general": "Upload peer-reviewed journals, textbooks, or clinical protocols. The AI will extract evidence-based insights.",
+			"protocol": "Upload clinical trial protocols for structured analysis. The AI will extract study design, endpoints, and eligibility criteria."
+		},
+		"placeholder": {
+			"general": "Ask about the literature...",
+			"protocol": "Ask about the protocol..."
+		},
+		"suggestions": {
+			"general": {
+				"executiveSummary": "Executive Summary",
+				"clinicalImplications": "Clinical Implications",
+				"methodologyAnalysis": "Methodology Analysis",
+				"evidenceGrading": "Evidence Grading"
+			},
+			"protocol": {
+				"synopsis": "Protocol Synopsis",
+				"eligibility": "Eligibility Criteria",
+				"schedule": "Schedule of Activities",
+				"safetyEndpoints": "Safety Endpoints"
+			}
+		},
+		"contextFiles": "Context Files",
+		"filesLoaded": "{{count}} file loaded",
+		"filesLoaded_plural": "{{count}} files loaded",
+		"noFilesUploaded": "No files uploaded yet. Attach PDFs or documents to analyze.",
+		"attached": "Attached",
+		"attachTitle": "Attach File",
+		"attachOptions": {
+			"cancel": "Cancel",
+			"uploadPdf": "Upload PDF",
+			"scan": "Scan Document",
+			"gallery": "Photo Library"
+		}
 	},
 	"home": {
 		"meetingNamePlaceholder": "Enter meeting name...",
 		"lectureNamePlaceholder": "Enter lecture name..."
 	},
+	"status": {
+		"completed": "Completed",
+		"transcribed": "Transcribed",
+		"recorded": "Recorded",
+		"new": "New"
+	},
+	"actions": {
+		"find": "Find"
+	},
+	"clinicalTools": {
+		"title": "Clinical Tools",
+		"subtitle": "AI-powered clinical decision support",
+		"consult": {
+			"title": "Remedius Consult",
+			"description": "Get AI-powered clinical guidance. Import visit notes and discuss complex cases with evidence-based support."
+		},
+		"pharmacopedia": {
+			"title": "Remedius Pharmacopedia",
+			"description": "Drug information assistant. Ask about medications, interactions, dosing, and contraindications."
+		},
+		"footer": "Secure, HIPAA-compliant clinical decision support at your fingertips"
+	},
+	"consultChat": {
+		"title": "Remedius Consult",
+		"greeting": "Clinical Decision Support",
+		"subtitle": "Get evidence-based guidance for complex cases",
+		"placeholder": "Describe the clinical scenario...",
+		"contextFiles": "Context Files",
+		"filesLoaded": "{{count}} file loaded",
+		"filesLoaded_plural": "{{count}} files loaded",
+		"importVisit": "Import from Visit",
+		"importVisitPrompt": "Import a visit note to get started",
+		"history": "Chat History",
+		"attachOptions": {
+			"cancel": "Cancel",
+			"importVisit": "Import Visit Note",
+			"uploadPdf": "Upload PDF",
+			"scan": "Scan Document",
+			"gallery": "Photo Library"
+		},
+		"visitSelection": {
+			"title": "Select Visit Note",
+			"searchPlaceholder": "Search visits...",
+			"noVisits": "No visits available",
+			"import": "Import Selected"
+		}
+	},
+	"pharmacopediaChat": {
+		"title": "Remedius Pharmacopedia",
+		"greeting": "Drug Information Assistant",
+		"subtitle": "Ask about medications and interactions",
+		"placeholder": "Ask about a medication...",
+		"contextFiles": "Reference Materials",
+		"filesLoaded": "{{count}} reference loaded",
+		"filesLoaded_plural": "{{count}} references loaded",
+		"history": "Chat History",
+		"exampleCombinations": "Example Drug Interactions:",
+		"combinations": {
+			"combo1": "Bupropion + Paroxetine",
+			"combo2": "Warfarin + NSAIDs",
+			"combo3": "Metformin + Contrast Media",
+			"combo4": "Statins + Fibrates"
+		},
+		"attachOptions": {
+			"cancel": "Cancel",
+			"uploadPdf": "Upload PDF",
+			"scan": "Scan Document",
+			"gallery": "Photo Library"
+		}
+	},
 	"onboarding": {
 		"skip": "Skip",
 		"back": "Back",
-		"next": "Next",
+		"next": "Continue",
+		"getStarted": "Get Started",
 		"welcome": {
-			"title": "Welcome to Remedy",
-			"subtitle": "AI-powered clinical documentation assistant designed for healthcare professionals.",
-			"cta": "Get Started"
+			"title": "Welcome to Remedy AI",
+			"subtitle": "Let's personalize your experience in 30 seconds",
+			"cta": "Begin Setup"
 		},
 		"specialization": {
-			"title": "Select your specialization",
-			"subtitle": "This helps us tailor the AI models to your specific needs.",
+			"title": "What's your specialty?",
+			"subtitle": "This helps us tailor note vocabulary",
 			"psychiatry": "Psychiatry",
-			"childPsychiatry": "Child Psychiatry",
+			"childPsychiatry": "Child & Adolescent",
+			"childpsychiatry": "Child & Adolescent",
 			"surgery": "Surgery",
 			"smartSelect": "Smart Select",
-			"smartSelectHint": "Automatically detects specialty"
-		},
-		"visitType": {
-			"title": "What type of visit is this?",
-			"subtitle": "Choose the context for your documentation.",
-			"firstVisit": "First Visit",
-			"followUp": "Follow-up",
-			"hint": "This helps us structure the clinical note appropriately."
+			"smartselect": "Smart Select",
+			"smartSelectHint": "AI adapts automatically"
 		},
 		"noteLength": {
-			"title": "Preferred Note Length",
-			"subtitle": "How detailed should your documentation be?",
+			"title": "How detailed should notes be?",
+			"subtitle": "See a live preview as you choose",
 			"concise": "Concise",
-			"conciseDesc": "Key points and essential information only.",
+			"conciseDesc": "Key points only",
 			"standard": "Standard",
-			"standardDesc": "Balanced detail suitable for most visits.",
+			"standardDesc": "Balanced SOAP format",
 			"detailed": "Detailed",
-			"detailedDesc": "Comprehensive documentation including all observations.",
-			"previewTitle": "Preview"
+			"detailedDesc": "Comprehensive narrative",
+			"previewTitle": "Preview",
+			"small": "Concise",
+			"medium": "Standard",
+			"large": "Detailed"
+		},
+		"visitType": {
+			"title": "What's your most common visit?",
+			"subtitle": "You can always change this per patient",
+			"firstVisit": "First Visit",
+			"followUp": "Follow-up",
+			"hint": "You can change this for each visit"
 		},
 		"magicIntro": {
 			"title": "Magic Templates",
-			"subtitle": "Use customized templates for faster documentation.",
-			"description": "Create your own templates to standardize your notes.",
-			"step1": "Record",
-			"step2": "Process",
-			"step3": "Complete",
-			"createFirst": "Create First Template",
-			"skipForNow": "Skip for now"
+			"subtitle": "Create custom templates with your voice (Optional)",
+			"description": "Already have great defaults, but want more? Describe your ideal note format in your own words, and AI creates a professional template instantly.",
+			"step1": "Speak naturally",
+			"step2": "AI processing...",
+			"step3": "Template ready!",
+			"createFirst": "Try Magic Template Creator",
+			"skipForNow": "Skip - I'll use defaults"
+		},
+		"tutorial": {
+			"step1Title": "Create New Visits",
+			"step1Desc": "Tap here to start a new patient session",
+			"step2Title": "Record or Upload",
+			"step2Desc": "Record live or upload existing audio",
+			"step3Title": "Generate Notes",
+			"step3Desc": "One tap to create clinical documentation",
+			"step4Title": "AI Tools",
+			"step4Desc": "Access additional AI-powered features",
+			"gotIt": "Got it",
+			"skipTutorial": "Skip Tutorial",
+			"stepOf": "Step {{current}} of {{total}}"
 		},
 		"complete": {
-			"title": "You're all set!",
-			"subtitle": "Your profile has been set up successfully.",
-			"cta": "Start Using Remedy"
+			"title": "You're All Set!",
+			"subtitle": "Your preferences have been saved",
+			"cta": "Start Using Remedy AI"
 		}
 	},
+	"magicCreator": {
+		"title": "Magic Template Creator",
+		"voicePrompt": "Describe your ideal note format",
+		"voiceHint": "Tap to speak",
+		"recording": "Recording...",
+		"textPlaceholder": "Or type your description...",
+		"createButton": "Create Template",
+		"input": {
+			"title": "Describe Your Perfect Template",
+			"subtitle": "Use your voice or type what you want",
+			"voiceHint": "Tap to record your description",
+			"placeholder": "E.g., 'Focus on medications and current symptoms, skip family history'...",
+			"createButton": "Create Template"
+		},
+		"processing": {
+			"title": "Creating your template...",
+			"analyzing": "Analyzing your preferences",
+			"generating": "Generating sample note",
+			"regenerating": "Regenerating with your edits...",
+			"refining": "Adjusting template...",
+			"error": "Oops! Something went wrong"
+		},
+		"preview": {
+			"understood": "I understood your request:",
+			"previewTitle": "Preview",
+			"simulationWarning": "SIMULATION",
+			"refineButton": "Refine",
+			"startOverButton": "Start Over",
+			"saveButton": "Save Template",
+			"templateSaved": "Template saved successfully",
+			"noteTab": "Note Preview",
+			"promptTab": "Advanced",
+			"swipeHint": "Swipe to switch",
+			"summaryLabel": "AI Understanding:",
+			"titleLabel": "Template Name (editable)",
+			"promptEditLabel": "System Instructions (Advanced)",
+			"promptEditPlaceholder": "Edit the AI instructions here...",
+			"regenerateButton": "Regenerate with Edits"
+		},
+		"refine": {
+			"title": "What would you like to change?",
+			"subtitle": "Tell me what doesn't fit and what you'd like to adjust",
+			"viewTechnicalPrompt": "View technical instructions (Advanced)",
+			"currentInstructions": "Zobacz instrukcje techniczne (Dla zaawansowanych)",
+			"placeholder": "E.g., 'Add more details about medications' or 'Make it shorter'...",
+			"applyButton": "Apply Changes"
+		}
+	}
 }

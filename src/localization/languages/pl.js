@@ -42,12 +42,12 @@ export const pl = {
     },
     "navigation": {
         "tabs": {
-            "home": "Strona główna",
+            "home": "Remedius Notes",
             "aiTools": "Narzędzia AI",
             "profile": "Profil"
         }
     },
-    "common": {
+        "common": {
         "logout": "Wyloguj się",
         "goToApplication": "Przejdź do aplikacji",
         "search": "Szukaj...",
@@ -77,6 +77,7 @@ export const pl = {
         "cancel": "Anuluj",
         "save": "Zapisz",
         "saving": "Zapisywanie...",
+        "or": "lub",
         "confirm": "Potwierdź",
         "add": "Dodaj",
         "close": "Zamknij",
@@ -99,11 +100,6 @@ export const pl = {
         "details": "Szczegóły",
         "delete": "Usuń",
         "deleting": "Usuwanie...",
-        "selected": "zaznaczono",
-        "selectAll": "Zaznacz wszystko",
-        "deselectAll": "Odznacz wszystko",
-        "edit": "Edytuj",
-        "done": "Gotowe",
         "history": "Historia",
         "share": "Udostępnij",
         "copyAll": "Kopiuj wszystko",
@@ -119,6 +115,33 @@ export const pl = {
         "reset": "Resetuj",
         "success": "Sukces",
         "error": "Błąd",
+        "comingSoon": "Wkrótce",
+        "back": "Wstecz"
+    },
+    "templates": {
+        "title": "Szablony",
+        "customNoteTemplate": "NIESTANDARDOWY SZABLON NOTATKI",
+        "searchPlaceholder": "Szukaj szablonów...",
+        "empty": "Nie znaleziono szablonów.",
+        "createNew": "Utwórz nowy",
+        "selectTemplate": "Wybierz szablon...",
+        "tapToEdit": "Dotknij, aby edytować lub dodać",
+        "howToCreate": "Nowy Szablon",
+        "chooseMethod": "Jak chcesz stworzyć szablon?",
+        "manualMethod": "Napisz Ręcznie",
+        "manualDescription": "Stwórz szablon od podstaw z pełną kontrolą",
+        "aiMethod": "Asystent AI",
+        "aiDescription": "Opisz co chcesz, a AI stworzy to za Ciebie",
+        "titlePlaceholder": "Tytuł szablonu",
+        "contentPlaceholder": "Wpisz tutaj swoje instrukcje...\n\nPrzykład: Skup się na obecnych objawach, przestrzeganiu leczenia i stabilności nastroju.",
+        "edit": "Edytuj szablon",
+        "delete": "Usuń szablon",
+        "deleteTitle": "Usuń szablon",
+        "deleteMessage": "Czy na pewno?",
+        "errors": {
+            "incompleteTitle": "Niekompletny szablon",
+            "incompleteMessage": "Podaj zarówno tytuł, jak i instrukcje."
+        }
     },
     "lectureNotes": {
         "title": "Notatki z wykładu",
@@ -438,7 +461,6 @@ export const pl = {
             "observations": "Obserwacje medyczne",
             "observationsPlaceholder": "Wprowadź obserwacje medyczne lub notatki dotyczące pacjenta...",
             "dropDocuments": "Upuść dodatkowe dokumenty tutaj",
-            "uploadDocuments": "Prześlij dokumenty",
             "supportedFormat": "Obsługiwany format: PDF",
             "pageOf": "Strona {{pageNumber}} z {{numPages}}",
             "uploadedDocuments": "Przesłane dokumenty",
@@ -794,6 +816,13 @@ export const pl = {
             "meeting": "Spotkanie",
             "lecture": "Wykład",
             "visit": "Wizyta",
+            "generationMode": "TRYB GENEROWANIA",
+            "noteType": "Typ notatki",
+            "modes": {
+                "standard": "Standardowy",
+                "custom": "Niestandardowy",
+                "standardSOAP": "Standardowy SOAP"
+            },
             "noteOptions": {
                 "soap": "Notatka SOAP",
                 "clinical": "Podział kliniczny",
@@ -802,12 +831,13 @@ export const pl = {
                 "scientificResearch": "Badanie naukowe",
                 "clinicalPractice": "Praktyka kliniczna",
                 "generalSummary": "Ogólne podsumowanie",
-                "detailedReport": "Szczegółowy raport"
+                "detailedReport": "Szczegółowy raport",
+                "general": "Ogólny"
             },
             "specialization": {
                 "select": "Wybierz specjalizację",
                 "psychiatry": "Psychiatria",
-                "childPsychiatry": "Psychiatria Dzieci i Młodzieży",
+                "childPsychiatry": "Psychiatria DiM",
                 "surgery": "Chirurgia",
                 "smartSelect": "Inteligentny wybór"
             },
@@ -828,7 +858,15 @@ export const pl = {
             "speakerA": "Mówca A:",
             "speakerDefaultContent": "Raz, dwa, trzy, cztery, pięć, sześć.",
             "totalDuration": "Całkowity czas",
-            "emptyTranscription": "Brak dostępnej transkrypcji",
+            "noteGenerated": "Notatka wygenerowana w trybie {{mode}}",
+            "noteSubjective": "PODMIOTOWE",
+            "patientPresents": "Pacjent zgłasza",
+            "customTemplate": "Szablon niestandardowy",
+            "generatedUsing": {
+                "general": "Wygenerowano przy użyciu: Ogólny",
+                "standardMode": "Wygenerowano przy użyciu: {{specialization}} (Standardowy)",
+                "customMode": "Wygenerowano przy użyciu: {{template}} (Niestandardowy)"
+            },
             "customPromptDialog": {
                 "editTitle": "Edytuj własny prompt",
                 "createTitle": "Utwórz własny prompt",
@@ -842,15 +880,35 @@ export const pl = {
                 "addButton": "Dodaj wizyty",
                 "selectedVisits": "Wybrano {{count}} wizyt(ę/y)",
                 "clearAll": "Wyczyść wszystkie",
+                "previousVisitContext": "Kontekst poprzedniej wizyty",
+                "fromHistory": "Z historii",
+                "typeText": "Wpisz tekst",
+                "takePhoto": "Zrób zdjęcie",
+                "photoComingSoon": "Możliwość robienia zdjęć będzie dostępna wkrótce",
+                "manualContext": "KONTEKST RĘCZNY",
+                "manualContextTitle": "Poprzednia wizyta",
+                "typePlaceholder": "Wpisz lub wklej notatki...",
+                "paste": "Wklej",
+                "pastedTitle": "Wklejono",
+                "pastedMessage": "Tekst wklejony",
+                "pasteFailed": "Nie udało się wkleić",
+                "savedTitle": "Zapisano",
+                "savedMessage": "Kontekst zapisany",
                 "selectDialog": {
-                    "title": "Wybierz poprzednie wizyty pacjenta",
+                    "title": "Poprzednie wizyty",
                     "description": "Wyświetlane są tylko wizyty pacjentów z ukończonymi transkrypcjami. Te wizyty będą używane jako kontekst do generowania notatek kontrolnych.",
                     "searchPlaceholder": "Szukaj wizyt...",
                     "noVisitsAvailable": "Brak dostępnych wizyt pacjentów z transkrypcją do wyboru",
                     "noVisitsFound": "Nie znaleziono wizyt pasujących do wyszukiwania",
-                    "importButton": "Importuj wybrane wizyty"
+                    "importButton": "Importuj ({{count}})"
                 }
-            }
+            },
+            "configuration": "Konfiguracja",
+            "hide": "Ukryj",
+            "tapToEdit": "Dotknij, aby edytować",
+            "noNote": "Brak notatki",
+            "generateToSee": "Wygeneruj notatkę, aby ją tutaj zobaczyć.",
+            "generateNote": "Wygeneruj notatkę"
         },
         "patientQualificationAnalysis": "Analiza Kwalifikacji Pacjenta",
         "model": "Model",
@@ -884,7 +942,17 @@ export const pl = {
     "calendar": {
         "patientVisits": "Wizyty pacjentów",
         "meetings": "Spotkania",
-        "lectures": "Wykłady"
+        "lectures": "Wykłady",
+        "noEventsOnDay": "Brak wydarzeń tego dnia",
+        "weekDays": {
+            "sun": "N",
+            "mon": "P",
+            "tue": "W",
+            "wed": "Ś",
+            "thu": "C",
+            "fri": "P",
+            "sat": "S"
+        }
     },
     "menu": {
         "settings": "Ustawienia",
@@ -896,7 +964,8 @@ export const pl = {
         "phi": {
             "title": "Chronione informacje zdrowotne",
             "description": "Upewnij się, że postępujesz zgodnie z wytycznymi swojej organizacji dotyczącymi obsługi chronionych informacji zdrowotnych.",
-            "agreement": "Rozumiem i zobowiązuję się do przestrzegania przepisów dotyczących prywatności pacjentów."
+            "agreement": "Rozumiem i zobowiązuję się do przestrzegania przepisów dotyczących prywatności pacjentów.",
+            "continueButton": "Kontynuuj"
         }
     },
     "errors": {
@@ -1049,6 +1118,19 @@ export const pl = {
             "alertDeleted": "Konto usunięte",
             "dialogTitle": "Usuń konto",
             "dialogDescription": "Ta akcja jest nieodwracalna. Spowoduje trwałe usunięcie Twojego konta i danych z naszych serwerów."
+        },
+        "language": {
+            "title": "Język",
+            "label": "Język",
+            "select": "Wybierz język"
+        },
+        "aiScribe": {
+            "title": "Preferencje AI Scribe",
+            "specialization": "Specjalizacja",
+            "noteLength": "Długość notatek",
+            "visitType": "Domyślny typ wizyty",
+            "notSet": "Nie ustawiono",
+            "rerunOnboarding": "Przejdź ponownie konfigurację"
         }
     },
     "subscription": {
@@ -1278,6 +1360,58 @@ export const pl = {
         }
     },
     "dischargeAssistant": {
+        "inputBar": {
+            "placeholder": "Dodaj notatkę kliniczną..."
+        },
+        "actions": {
+            "scanDocuments": "Skanuj Dokumenty",
+            "gallery": "Galeria Zdjęć",
+            "files": "Wybierz Pliki",
+            "cancel": "Anuluj"
+        },
+        "status": {
+            "analyzingPixelData": "Analiza danych obrazu...",
+            "analyzingDocument": "Analiza treści dokumentu..."
+        },
+        "savedSummaries": {
+            "title": "Zapisane Epikryzy",
+            "empty": "Brak zapisanych epikryz.",
+            "save": "Zapisz",
+            "savedSuccess": "Epikryza została zapisana.",
+            "rename": "Zmień nazwę",
+            "delete": "Usuń",
+            "nameTitle": "Nadaj nazwę epikryzie",
+            "namePlaceholder": "Nazwa epikryzy",
+            "saveConfirm": "Zapisz",
+            "nameRequiredTitle": "Wymagana nazwa",
+            "nameRequiredMessage": "Podaj nazwę.",
+            "renameTitle": "Zmień nazwę epikryzy",
+            "renameConfirm": "Zmień",
+            "deleteTitle": "Usuń epikryzę",
+            "deleteMessage": "Czy na pewno chcesz usunąć tę epikryzę?",
+            "deleteConfirm": "Usuń"
+        },
+        "prompts": {
+            "label": "Custom Prompt",
+            "none": "Brak wybranego",
+            "manage": "Zarządzaj",
+            "title": "Custom Prompty",
+            "empty": "Brak promptów.",
+            "selected": "Wybrany",
+            "edit": "Edytuj",
+            "delete": "Usuń",
+            "newTitle": "Nowy Prompt",
+            "editTitle": "Edytuj Prompt",
+            "titlePlaceholder": "Tytuł promptu",
+            "contentPlaceholder": "Treść promptu...",
+            "save": "Zapisz Prompt",
+            "update": "Aktualizuj Prompt",
+            "deleteTitle": "Usuń Prompt",
+            "deleteMessage": "Czy na pewno chcesz usunąć ten prompt?",
+            "deleteConfirm": "Usuń",
+            "incompleteTitle": "Brak danych",
+            "incompleteMessage": "Uzupełnij tytuł i treść."
+        },
         "headerTitle": "Remedius Discharge",
         "headerSubtitle": "Twórz kompleksowe podsumowania wypisów",
         "exitButtonText": "Wyjdź",
@@ -2019,30 +2153,6 @@ export const pl = {
             "conductAnalysis": "Przeprowadź Analizę"
         }
     },
-    "login": {
-        "email": "Email",
-        "emailPlaceholder": "Wpisz swój email",
-        "password": "Hasło",
-        "passwordPlaceholder": "Wpisz swoje hasło",
-        "confirmPassword": "Potwierdź hasło",
-        "confirmPasswordPlaceholder": "Potwierdź swoje hasło",
-        "rememberMe": "Zapamiętaj mnie",
-        "forgotPassword": "Nie pamiętasz hasła?",
-        "signIn": "Zaloguj się",
-        "signUp": "Zarejestruj się",
-        "or": "lub",
-        "signInWithGoogle": "Zaloguj się przez Google",
-        "signUpWithGoogle": "Zarejestruj się przez Google",
-        "noAccount": "Nie masz konta?",
-        "alreadyHaveAccount": "Masz już konto?",
-        "backToLogin": "Powrót do logowania",
-        "protectedBy": "Chronione przez",
-        "resetPassword": "Resetuj hasło",
-        "sendResetLink": "Wyślij link resetujący",
-        "resetInstructions": "Podaj swój adres email, a wyślemy Ci link do zresetowania hasła.",
-        "resetLinkSent": "Link resetujący wysłany!",
-        "checkEmail": "Sprawdź swoją skrzynkę email."
-    },
     "session": {
         "stopRecordingConfirm": "Zatrzymać nagrywanie i przetworzyć audio?",
         "error": "Błąd",
@@ -2060,11 +2170,244 @@ export const pl = {
         "connectExternalDevice": "Podłącz Zewnętrzne Urządzenie",
         "scanToConnect": "Zeskanuj, aby podłączyć inne urządzenie z mikrofonem",
         "recordingComplete": "Nagrywanie Zakończone",
-        "recordingCompleteDescription": "Twoje nagranie jest gotowe. Możesz je odtworzyć lub wygenerować notatki.",
+        "recordingCompleteDescription": "Twoje nagranie jest gotowe. Możesz wygenerować notatki.",
         "generateNotes": "Generuj Notatki"
+    },
+    "researchChat": {
+        "title": {
+            "general": "Asystent Badań",
+            "protocol": "Asystent Protokołu"
+        },
+        "greeting": {
+            "general": "Analiza Literatury Medycznej",
+            "protocol": "Asystent Protokołu Badawczego"
+        },
+        "subtitle": {
+            "general": "Prześlij recenzowane czasopisma, podręczniki lub protokoły kliniczne. AI wyodrębni wnioski oparte na dowodach.",
+            "protocol": "Prześlij protokoły badań klinicznych do analizy strukturalnej. AI wyodrębni projekt badania, punkty końcowe i kryteria kwalifikacji."
+        },
+        "placeholder": {
+            "general": "Zapytaj o literaturę...",
+            "protocol": "Zapytaj o protokół..."
+        },
+        "suggestions": {
+            "general": {
+                "executiveSummary": "Streszczenie Wykonawcze",
+                "clinicalImplications": "Implikacje Kliniczne",
+                "methodologyAnalysis": "Analiza Metodologii",
+                "evidenceGrading": "Ocena Dowodów"
+            },
+            "protocol": {
+                "synopsis": "Streszczenie Protokołu",
+                "eligibility": "Kryteria Kwalifikacji",
+                "schedule": "Harmonogram Wizyt",
+                "safetyEndpoints": "Punkty Końcowe Bezpieczeństwa"
+            }
+        },
+        "contextFiles": "Pliki Kontekstowe",
+        "filesLoaded": "{{count}} plik wczytany",
+        "filesLoaded_plural": "{{count}} pliki wczytane",
+        "noFilesUploaded": "Nie przesłano jeszcze plików. Załącz PDF-y lub dokumenty do analizy.",
+        "attached": "Załączono",
+        "attachTitle": "Załącz Plik",
+        "attachOptions": {
+            "cancel": "Anuluj",
+            "uploadPdf": "Prześlij PDF",
+            "scan": "Zeskanuj Dokument",
+            "gallery": "Galeria Zdjęć"
+        }
     },
     "home": {
         "meetingNamePlaceholder": "Wprowadź nazwę spotkania...",
         "lectureNamePlaceholder": "Wprowadź nazwę wykładu..."
+    },
+    "status": {
+        "completed": "Ukończono",
+        "transcribed": "Transkrybowano",
+        "recorded": "Nagrano",
+        "new": "Nowy"
+    },
+    "actions": {
+        "find": "Znajdź"
+    },
+    "clinicalTools": {
+        "title": "Narzędzia Kliniczne",
+        "subtitle": "Wsparcie decyzji klinicznych oparte na AI",
+        "consult": {
+            "title": "Remedius Consult",
+            "description": "Uzyskaj wsparcie kliniczne oparte na AI. Importuj notatki z wizyt i omawiaj złożone przypadki z dowodami naukowymi."
+        },
+        "pharmacopedia": {
+            "title": "Remedius Pharmacopedia",
+            "description": "Asystent informacji o lekach. Pytaj o leki, interakcje, dawkowanie i przeciwwskazania."
+        },
+        "footer": "Bezpieczne, zgodne z HIPAA wsparcie decyzji klinicznych"
+    },
+    "consultChat": {
+        "title": "Remedius Consult",
+        "greeting": "Wsparcie Decyzji Klinicznych",
+        "subtitle": "Uzyskaj wskazówki oparte na dowodach dla złożonych przypadków",
+        "placeholder": "Opisz scenariusz kliniczny...",
+        "contextFiles": "Pliki Kontekstowe",
+        "filesLoaded": "{{count}} plik wczytany",
+        "filesLoaded_plural": "{{count}} pliki wczytane",
+        "importVisit": "Importuj z Wizyty",
+        "importVisitPrompt": "Zaimportuj notatkę z wizyty, aby rozpocząć",
+        "history": "Historia Czatu",
+        "attachOptions": {
+            "cancel": "Anuluj",
+            "importVisit": "Importuj Notatkę z Wizyty",
+            "uploadPdf": "Prześlij PDF",
+            "scan": "Zeskanuj Dokument",
+            "gallery": "Galeria Zdjęć"
+        },
+        "visitSelection": {
+            "title": "Wybierz Notatkę z Wizyty",
+            "searchPlaceholder": "Szukaj wizyt...",
+            "noVisits": "Brak dostępnych wizyt",
+            "import": "Importuj Zaznaczone"
+        }
+    },
+    "pharmacopediaChat": {
+        "title": "Remedius Pharmacopedia",
+        "greeting": "Asystent Informacji o Lekach",
+        "subtitle": "Pytaj o leki i ich interakcje",
+        "placeholder": "Zapytaj o lek...",
+        "contextFiles": "Materiały Referencyjne",
+        "filesLoaded": "{{count}} referencja wczytana",
+        "filesLoaded_plural": "{{count}} referencje wczytane",
+        "history": "Historia Czatu",
+        "exampleCombinations": "Przykładowe Interakcje Leków:",
+        "combinations": {
+            "combo1": "Bupropion + Paroksetyna",
+            "combo2": "Warfaryna + NLPZ",
+            "combo3": "Metformina + Środki kontrastowe",
+            "combo4": "Statyny + Fibraty"
+        },
+        "attachOptions": {
+            "cancel": "Anuluj",
+            "uploadPdf": "Prześlij PDF",
+            "scan": "Zeskanuj Dokument",
+            "gallery": "Galeria Zdjęć"
+        }
+    },
+    "onboarding": {
+        "skip": "Pomiń",
+        "back": "Wstecz",
+        "next": "Dalej",
+        "getStarted": "Rozpocznij",
+        "welcome": {
+            "title": "Witaj w Remedy AI",
+            "subtitle": "Skonfigurujmy aplikację pod Twoje potrzeby w 30 sekund",
+            "cta": "Rozpocznij Setup"
+        },
+        "specialization": {
+            "title": "Jaka jest Twoja specjalizacja?",
+            "subtitle": "Pomoże to dostosować słownictwo notatek",
+            "psychiatry": "Psychiatria",
+            "childPsychiatry": "Psychiatria DiM",
+            "childpsychiatry": "Psychiatria DiM",
+            "surgery": "Chirurgia",
+            "smartSelect": "Smart Select",
+            "smartselect": "Smart Select",
+            "smartSelectHint": "AI dostosuje się automatycznie"
+        },
+        "noteLength": {
+            "title": "Jak szczegółowe notatki preferujesz?",
+            "subtitle": "Zobacz podgląd na żywo",
+            "concise": "Zwięzłe",
+            "conciseDesc": "Tylko kluczowe punkty",
+            "standard": "Standardowe",
+            "standardDesc": "Zbalansowany format SOAP",
+            "detailed": "Szczegółowe",
+            "detailedDesc": "Pełna dokumentacja narracyjna",
+            "previewTitle": "Podgląd",
+            "small": "Zwięzłe",
+            "medium": "Standardowe",
+            "large": "Szczegółowe"
+        },
+        "visitType": {
+            "title": "Jaki typ wizyt przeprowadzasz najczęściej?",
+            "subtitle": "Możesz to zmienić dla każdego pacjenta",
+            "firstVisit": "Pierwsza wizyta",
+            "followUp": "Wizyta kontrolna",
+            "hint": "Możesz to zmienić dla każdej wizyty"
+        },
+        "magicIntro": {
+            "title": "Magic Templates",
+            "subtitle": "Twórz własne szablony głosem (Opcjonalne)",
+            "description": "Masz już świetne domyślne ustawienia, ale chcesz więcej? Opisz swój idealny format notatki własnymi słowami, a AI natychmiast stworzy profesjonalny szablon.",
+            "step1": "Mów naturalnie",
+            "step2": "AI przetwarza...",
+            "step3": "Szablon gotowy!",
+            "createFirst": "Wypróbuj Magic Template Creator",
+            "skipForNow": "Pomiń - użyję domyślnych"
+        },
+        "tutorial": {
+            "step1Title": "Tworzenie wizyt",
+            "step1Desc": "Dotknij tutaj, aby rozpocząć nową sesję",
+            "step2Title": "Nagrywanie lub upload",
+            "step2Desc": "Nagrywaj na żywo lub wgraj plik audio",
+            "step3Title": "Generowanie notatek",
+            "step3Desc": "Jedno dotknięcie tworzy dokumentację",
+            "step4Title": "Narzędzia AI",
+            "step4Desc": "Dostęp do dodatkowych funkcji AI",
+            "gotIt": "Rozumiem",
+            "skipTutorial": "Pomiń tutorial",
+            "stepOf": "Krok {{current}} z {{total}}"
+        },
+        "complete": {
+            "title": "Wszystko gotowe!",
+            "subtitle": "Twoje preferencje zostały zapisane",
+            "cta": "Zacznij używać Remedy AI"
+        }
+    },
+    "magicCreator": {
+        "title": "Magic Template Creator",
+        "voicePrompt": "Opisz swój idealny format notatki",
+        "voiceHint": "Dotknij, aby mówić",
+        "recording": "Nagrywanie...",
+        "textPlaceholder": "Lub wpisz opis...",
+        "createButton": "Utwórz Szablon",
+        "input": {
+            "title": "Opisz Swój Idealny Szablon",
+            "subtitle": "Użyj głosu lub wpisz co chcesz",
+            "voiceHint": "Dotknij, aby nagrać opis",
+            "placeholder": "Np. 'Skup się na lekach i obecnych objawach, pomiń historię rodzinną'...",
+            "createButton": "Utwórz Szablon"
+        },
+        "processing": {
+            "title": "Tworzę Twój szablon...",
+            "analyzing": "Analizuję preferencje",
+            "generating": "Generuję przykładową notatkę",
+            "regenerating": "Regeneruję z Twoimi edycjami...",
+            "refining": "Dostosuję szablon...",
+            "error": "Ups! Coś poszło nie tak"
+        },
+        "preview": {
+            "understood": "Zrozumiałem Twoje instrukcje:",
+            "previewTitle": "Podgląd",
+            "simulationWarning": "SYMULACJA",
+            "refineButton": "Doprecyzuj",
+            "startOverButton": "Od nowa",
+            "saveButton": "Zapisz Szablon",
+            "templateSaved": "Szablon zapisany pomyślnie",
+            "noteTab": "Podgląd Notatki",
+            "promptTab": "Zaawansowane",
+            "swipeHint": "Przesuń, aby przełączyć",
+            "summaryLabel": "Zrozumienie AI:",
+            "titleLabel": "Nazwa Szablonu (edytowalna)",
+            "promptEditLabel": "Instrukcje Systemowe (Zaawansowane)",
+            "promptEditPlaceholder": "Edytuj instrukcje AI tutaj...",
+            "regenerateButton": "Regeneruj z Edycjami"
+        },
+        "refine": {
+            "title": "Co chciałbyś zmienić?",
+            "subtitle": "Powiedz mi, co Ci nie pasuje i co chciałbyś dostosować",
+            "viewTechnicalPrompt": "Zobacz instrukcje techniczne (Dla zaawansowanych)",
+            "currentInstructions": "Zobacz instrukcje techniczne (Dla zaawansowanych)",
+            "placeholder": "Np. 'Dodaj więcej szczegółów o lekach' lub 'Zrób krócej'...",
+            "applyButton": "Zastosuj Zmiany"
+        }
     }
 }
