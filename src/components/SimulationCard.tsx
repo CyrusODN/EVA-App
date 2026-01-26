@@ -25,11 +25,12 @@ const SimulationCard: React.FC<SimulationCardProps> = ({
   return (
     <Animated.View
       entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-      style={styles.container}
-    >
+      style={styles.container}>
       {/* Header with badge */}
       <View style={styles.header}>
-        <Text style={styles.title}>{t('magicCreator.preview.previewTitle')}</Text>
+        <Text style={styles.title}>
+          {t('magicCreator.preview.previewTitle')}
+        </Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
             {t('magicCreator.preview.simulationWarning')}
@@ -48,8 +49,7 @@ const SimulationCard: React.FC<SimulationCardProps> = ({
         style={styles.noteScrollView}
         contentContainerStyle={styles.noteContent}
         showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-      >
+        nestedScrollEnabled>
         <Text style={styles.noteText}>{sampleNote}</Text>
       </ScrollView>
     </Animated.View>

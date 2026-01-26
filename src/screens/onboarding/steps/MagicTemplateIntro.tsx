@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   FadeIn,
@@ -41,116 +47,120 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
       {/* Header with Back */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>←  {t('onboarding.back')}</Text>
+          <Text style={styles.backText}>← {t('onboarding.back')}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Content */}
       <View style={styles.content}>
         {/* Magic sparkles icon */}
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.delay(100).duration(DURATIONS.slow)}
-          style={styles.iconContainer}
-        >
+          style={styles.iconContainer}>
           <View style={styles.iconCircle}>
             <Sparkles size={40} color={ONBOARDING_COLORS.primary} />
           </View>
         </Animated.View>
 
         {/* Title */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(200).duration(DURATIONS.normal)}
-          style={styles.title}
-        >
+          style={styles.title}>
           {t('onboarding.magicIntro.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(250).duration(DURATIONS.normal)}
-          style={styles.subtitle}
-        >
+          style={styles.subtitle}>
           {t('onboarding.magicIntro.subtitle')}
         </Animated.Text>
 
         {/* Description */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(300).duration(DURATIONS.normal)}
-          style={styles.description}
-        >
+          style={styles.description}>
           {t('onboarding.magicIntro.description')}
         </Animated.Text>
 
         {/* Description card */}
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(350).duration(DURATIONS.normal)}
-          style={styles.descriptionCard}
-        >
+          style={styles.descriptionCard}>
           <View style={styles.flowStep}>
             <View style={styles.flowStepIcon}>
               <Mic size={20} color={ONBOARDING_COLORS.primary} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={styles.flowStepLabel}>{t('onboarding.magicIntro.step1')}</Text>
+              <Text style={styles.flowStepLabel}>
+                {t('onboarding.magicIntro.step1')}
+              </Text>
             </View>
           </View>
-          
+
           {/* Flow indicator */}
           <View style={styles.flowArrow}>
             <Text style={styles.flowArrowText}>↓</Text>
           </View>
-          
+
           <View style={styles.flowStep}>
             <View style={styles.flowStepIcon}>
               <Sparkles size={20} color={ONBOARDING_COLORS.primary} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={styles.flowStepLabelSmall}>{t('onboarding.magicIntro.step2')}</Text>
+              <Text style={styles.flowStepLabelSmall}>
+                {t('onboarding.magicIntro.step2')}
+              </Text>
             </View>
           </View>
-          
+
           <View style={styles.flowArrow}>
             <Text style={styles.flowArrowText}>↓</Text>
           </View>
-          
+
           <View style={styles.flowStep}>
             <View style={styles.flowStepIconSuccess}>
               <CheckCircle2 size={20} color={ONBOARDING_COLORS.pureWhite} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={styles.flowStepLabelSuccess}>{t('onboarding.magicIntro.step3')}</Text>
+              <Text style={styles.flowStepLabelSuccess}>
+                {t('onboarding.magicIntro.step3')}
+              </Text>
             </View>
           </View>
         </Animated.View>
 
         {/* Progress dots */}
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.delay(400).duration(DURATIONS.normal)}
-          style={styles.dotsContainer}
-        >
-          <OnboardingProgressDots totalSteps={totalSteps} currentStep={currentStep} />
+          style={styles.dotsContainer}>
+          <OnboardingProgressDots
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+          />
         </Animated.View>
       </View>
 
       {/* Buttons */}
-      <Animated.View 
+      <Animated.View
         entering={FadeInUp.delay(500).duration(DURATIONS.normal)}
-        style={styles.buttonContainer}
-      >
+        style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.ctaButton}
           onPress={onCreateTemplate}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.ctaText}>{t('onboarding.magicIntro.createFirst')}</Text>
+          activeOpacity={0.9}>
+          <Text style={styles.ctaText}>
+            {t('onboarding.magicIntro.createFirst')}
+          </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.skipTemplateButton}
           onPress={onSkip}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipTemplateText}>{t('onboarding.magicIntro.skipForNow')}</Text>
+          activeOpacity={0.8}>
+          <Text style={styles.skipTemplateText}>
+            {t('onboarding.magicIntro.skipForNow')}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

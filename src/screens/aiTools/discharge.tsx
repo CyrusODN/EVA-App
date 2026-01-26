@@ -16,7 +16,10 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import {
   widthPercentageToDP as wp,
@@ -116,7 +119,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -128,11 +131,9 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
-        <RNImage 
-          source={{ uri: CHATBOT_AVATAR }} 
-          style={styles.avatarImage}
-        />
+      <Animated.View
+        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+        <RNImage source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
   );
@@ -152,7 +153,8 @@ const Discharge = () => {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
   const [showSavedSummaries, setShowSavedSummaries] = useState(false);
-  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(INITIAL_PROMPTS);
+  const [customPrompts, setCustomPrompts] =
+    useState<CustomPrompt[]>(INITIAL_PROMPTS);
   const [showPromptManager, setShowPromptManager] = useState(false);
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [promptTitleInput, setPromptTitleInput] = useState('');
@@ -160,7 +162,9 @@ const Discharge = () => {
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveNameInput, setSaveNameInput] = useState('');
-  const [renamingSummaryId, setRenamingSummaryId] = useState<string | null>(null);
+  const [renamingSummaryId, setRenamingSummaryId] = useState<string | null>(
+    null,
+  );
 
   // Primary Brand Color
   const PRIMARY_COLOR = '#46B7C6';
@@ -180,32 +184,47 @@ const Discharge = () => {
     if (showSynthesis) {
       setShowSynthesis(false);
     } else {
-    navigation.goBack();
+      navigation.goBack();
     }
   };
 
-  const addObservation = (type: ObservationType, content: string, uri?: string, fileName?: string) => {
+  const addObservation = (
+    type: ObservationType,
+    content: string,
+    uri?: string,
+    fileName?: string,
+  ) => {
     const newObs: Observation = {
-        id: Date.now().toString(),
+      id: Date.now().toString(),
       type,
       content,
       uri,
       fileName,
-        timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
       status: type === 'text' ? 'done' : 'processing',
     };
 
-    setObservations(prev => [...prev, newObs]);
+    setObservations((prev) => [...prev, newObs]);
     triggerHaptic('notification');
 
     // Simulate OCR/Processing for non-text
     if (type !== 'text') {
       setTimeout(() => {
-        setObservations(prev => prev.map(obs =>
-          obs.id === newObs.id
-            ? { ...obs, status: 'done', content: obs.content || (type === 'image' ? 'Extracted clinical data...' : 'Analyzed document content...') }
-            : obs
-        ));
+        setObservations((prev) =>
+          prev.map((obs) =>
+            obs.id === newObs.id
+              ? {
+                  ...obs,
+                  status: 'done',
+                  content:
+                    obs.content ||
+                    (type === 'image'
+                      ? 'Extracted clinical data...'
+                      : 'Analyzed document content...'),
+                }
+              : obs,
+          ),
+        );
       }, 2500);
     }
 
@@ -215,7 +234,8 @@ const Discharge = () => {
     }, 100);
   };
 
-  const selectedPrompt = customPrompts.find(p => p.id === selectedPromptId) || null;
+  const selectedPrompt =
+    customPrompts.find((p) => p.id === selectedPromptId) || null;
 
   const handleSendText = () => {
     if (!inputText.trim()) return;
@@ -233,12 +253,22 @@ const Discharge = () => {
       });
 
       if (result.assets && result.assets[0]) {
-        addObservation('image', '', result.assets[0].uri, result.assets[0].fileName);
+        addObservation(
+          'image',
+          '',
+          result.assets[0].uri,
+          result.assets[0].fileName,
+        );
       }
     } catch (error) {
       console.log('Camera error', error);
       Alert.alert('Camera unavailable', 'Using mock image for demo.');
-      addObservation('image', '', 'https://via.placeholder.com/300', 'monitor_scan.jpg');
+      addObservation(
+        'image',
+        '',
+        'https://via.placeholder.com/300',
+        'monitor_scan.jpg',
+      );
     }
   };
 
@@ -250,7 +280,12 @@ const Discharge = () => {
       });
 
       if (result.assets && result.assets[0]) {
-        addObservation('image', '', result.assets[0].uri, result.assets[0].fileName);
+        addObservation(
+          'image',
+          '',
+          result.assets[0].uri,
+          result.assets[0].fileName,
+        );
       }
     } catch (error) {
       console.log('Gallery error', error);
@@ -264,7 +299,12 @@ const Discharge = () => {
       });
 
       if (result && result[0]) {
-        addObservation('file', '', result[0].uri, result[0].name || 'document.pdf');
+        addObservation(
+          'file',
+          '',
+          result[0].uri,
+          result[0].name || 'document.pdf',
+        );
       }
     } catch (error) {
       console.log('File picker error', error);
@@ -285,7 +325,7 @@ const Discharge = () => {
           cancelButtonIndex: 0,
           tintColor: PRIMARY_COLOR,
         },
-        buttonIndex => {
+        (buttonIndex) => {
           if (buttonIndex === 1) handleScan();
           else if (buttonIndex === 2) handleGallery();
           else if (buttonIndex === 3) handleFile();
@@ -296,19 +336,28 @@ const Discharge = () => {
         t('dischargeAssistant.headerTitle'),
         t('dischargeAssistant.inputBar.placeholder'),
         [
-            { text: t('dischargeAssistant.actions.scanDocuments'), onPress: handleScan },
-            { text: t('dischargeAssistant.actions.gallery'), onPress: handleGallery },
-            { text: t('dischargeAssistant.actions.files'), onPress: handleFile },
-            { text: t('dischargeAssistant.actions.cancel'), style: 'cancel' },
+          {
+            text: t('dischargeAssistant.actions.scanDocuments'),
+            onPress: handleScan,
+          },
+          {
+            text: t('dischargeAssistant.actions.gallery'),
+            onPress: handleGallery,
+          },
+          { text: t('dischargeAssistant.actions.files'), onPress: handleFile },
+          { text: t('dischargeAssistant.actions.cancel'), style: 'cancel' },
         ],
-        { cancelable: true }
+        { cancelable: true },
       );
     }
   };
 
   const handleGenerateSummary = () => {
     if (observations.length === 0) {
-      Alert.alert('No Data', 'Please add observations or scan documents first.');
+      Alert.alert(
+        'No Data',
+        'Please add observations or scan documents first.',
+      );
       return;
     }
 
@@ -378,9 +427,9 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
     }
 
     if (renamingSummaryId) {
-      setSavedSummaries(prev =>
-        prev.map(item =>
-          item.id === renamingSummaryId ? { ...item, title: name } : item
+      setSavedSummaries((prev) =>
+        prev.map((item) =>
+          item.id === renamingSummaryId ? { ...item, title: name } : item,
         ),
       );
     } else {
@@ -390,7 +439,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         createdAt: new Date().toISOString(),
         content: generatedSummary,
       };
-      setSavedSummaries(prev => [newSummary, ...prev]);
+      setSavedSummaries((prev) => [newSummary, ...prev]);
       triggerHaptic('notification');
       Alert.alert(t('dischargeAssistant.savedSummaries.savedSuccess'));
     }
@@ -408,17 +457,24 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
 
   const handleSavePrompt = () => {
     if (!promptTitleInput.trim() || !promptContentInput.trim()) {
-      Alert.alert(t('dischargeAssistant.prompts.incompleteTitle'), t('dischargeAssistant.prompts.incompleteMessage'));
+      Alert.alert(
+        t('dischargeAssistant.prompts.incompleteTitle'),
+        t('dischargeAssistant.prompts.incompleteMessage'),
+      );
       return;
     }
 
     if (editingPromptId) {
-      setCustomPrompts(prev =>
-        prev.map(p =>
+      setCustomPrompts((prev) =>
+        prev.map((p) =>
           p.id === editingPromptId
-            ? { ...p, title: promptTitleInput.trim(), content: promptContentInput.trim() }
-            : p
-        )
+            ? {
+                ...p,
+                title: promptTitleInput.trim(),
+                content: promptContentInput.trim(),
+              }
+            : p,
+        ),
       );
     } else {
       const newPrompt: CustomPrompt = {
@@ -427,7 +483,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         content: promptContentInput.trim(),
         createdAt: new Date().toISOString(),
       };
-      setCustomPrompts(prev => [newPrompt, ...prev]);
+      setCustomPrompts((prev) => [newPrompt, ...prev]);
     }
 
     setPromptTitleInput('');
@@ -445,7 +501,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
           text: t('dischargeAssistant.prompts.deleteConfirm'),
           style: 'destructive',
           onPress: () => {
-            setCustomPrompts(prev => prev.filter(p => p.id !== id));
+            setCustomPrompts((prev) => prev.filter((p) => p.id !== id));
             if (selectedPromptId === id) setSelectedPromptId(null);
           },
         },
@@ -457,63 +513,82 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
     const isImage = item.type === 'image';
     const isFile = item.type === 'file';
 
-  return (
+    return (
       <View key={item.id} style={styles.streamItemContainer}>
         {/* Left Icon */}
         <View style={styles.streamIconContainer}>
-            {item.type === 'text' && <AlignJustify size={20} color={colors.onSurfaceVariant} />}
-            {item.type === 'image' && <Monitor size={20} color={PRIMARY_COLOR} />}
-            {item.type === 'file' && <File size={20} color={colors.primary} />}
+          {item.type === 'text' && (
+            <AlignJustify size={20} color={colors.onSurfaceVariant} />
+          )}
+          {item.type === 'image' && <Monitor size={20} color={PRIMARY_COLOR} />}
+          {item.type === 'file' && <File size={20} color={colors.primary} />}
         </View>
 
         {/* Content */}
         <View style={styles.streamContentContainer}>
-            {item.type === 'text' && (
-                 <Text style={styles.streamText} numberOfLines={3} ellipsizeMode="tail">
-                    {item.content}
-                 </Text>
-            )}
+          {item.type === 'text' && (
+            <Text
+              style={styles.streamText}
+              numberOfLines={3}
+              ellipsizeMode="tail">
+              {item.content}
+            </Text>
+          )}
 
-            {isImage && (
-                <View>
-                    <View style={styles.thumbnailWrapper}>
-                        {item.uri ? (
-                            <RNImage source={{ uri: item.uri }} style={styles.thumbnailImage} resizeMode="cover" />
-                        ) : (
-                            <View style={[styles.thumbnailImage, { backgroundColor: '#F0F0F0' }]} />
-                        )}
-                        {item.status === 'processing' && (
-                            <View style={styles.processingOverlay}>
-                                <ActivityIndicator color="white" size="small" />
-                            </View>
-                        )}
-                    </View>
-                    <Text style={styles.statusText}>
-                        {item.status === 'processing'
-                            ? t('dischargeAssistant.status.analyzingPixelData')
-                            : 'Monitor Screen • Captured'}
-                    </Text>
-                </View>
-            )}
+          {isImage && (
+            <View>
+              <View style={styles.thumbnailWrapper}>
+                {item.uri ? (
+                  <RNImage
+                    source={{ uri: item.uri }}
+                    style={styles.thumbnailImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.thumbnailImage,
+                      { backgroundColor: '#F0F0F0' },
+                    ]}
+                  />
+                )}
+                {item.status === 'processing' && (
+                  <View style={styles.processingOverlay}>
+                    <ActivityIndicator color="white" size="small" />
+                  </View>
+                )}
+              </View>
+              <Text style={styles.statusText}>
+                {item.status === 'processing'
+                  ? t('dischargeAssistant.status.analyzingPixelData')
+                  : 'Monitor Screen • Captured'}
+              </Text>
+            </View>
+          )}
 
-            {isFile && (
-                <View>
-                     <View style={styles.fileCard}>
-                        <File size={16} color={colors.onSurfaceVariant} />
-                        <Text style={styles.fileName} numberOfLines={1}>{item.fileName}</Text>
-                     </View>
-                     <Text style={styles.statusText}>
-                        {item.status === 'processing'
-                            ? t('dischargeAssistant.status.analyzingDocument')
-                            : 'Document • Processed'}
-                    </Text>
-                </View>
-            )}
+          {isFile && (
+            <View>
+              <View style={styles.fileCard}>
+                <File size={16} color={colors.onSurfaceVariant} />
+                <Text style={styles.fileName} numberOfLines={1}>
+                  {item.fileName}
+                </Text>
+              </View>
+              <Text style={styles.statusText}>
+                {item.status === 'processing'
+                  ? t('dischargeAssistant.status.analyzingDocument')
+                  : 'Document • Processed'}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Time */}
         <Text style={styles.streamTime}>
-            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {new Date(item.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </Text>
       </View>
     );
@@ -524,24 +599,25 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.headerWrapper}>
-        <Header
-          title={t('dischargeAssistant.headerTitle')}
+          <Header
+            title={t('dischargeAssistant.headerTitle')}
             subtitle={t('dischargeAssistant.headerSubtitle')}
-          onLeftPress={handleBackPress}
-          icon={FileText}
+            onLeftPress={handleBackPress}
+            icon={FileText}
             showIcon={false} // Minimalist
             backgroundColor="#FFFFFF"
             showBorder={true}
             textColor={PRIMARY_COLOR}
           />
-                <TouchableOpacity
+          <TouchableOpacity
             style={styles.savedSummariesButton}
-            onPress={() => setShowSavedSummaries(true)}
-          >
+            onPress={() => setShowSavedSummaries(true)}>
             <Bookmark size={20} color={PRIMARY_COLOR} />
             {savedSummaries.length > 0 && (
               <View style={styles.savedBadge}>
-                <Text style={styles.savedBadgeText}>{savedSummaries.length}</Text>
+                <Text style={styles.savedBadgeText}>
+                  {savedSummaries.length}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -552,15 +628,15 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
           ref={scrollViewRef}
           style={styles.streamContainer}
           contentContainerStyle={styles.streamContent}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {observations.length === 0 ? (
             <View style={styles.emptyState}>
               <PulsingAILogo />
               <Text style={styles.emptyTitle}>Clinical Stream</Text>
               <Text style={styles.emptySubtitle}>
-                Add observations, scan monitor screens, or upload documents to start.
-                    </Text>
+                Add observations, scan monitor screens, or upload documents to
+                start.
+              </Text>
             </View>
           ) : (
             observations.map(renderTimelineItem)
@@ -571,80 +647,90 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         {/* Generate Button (Floating) */}
         {observations.length > 0 && !isSynthesizing && (
           <View style={styles.floatingButtonContainer}>
-                <TouchableOpacity
-              style={[styles.generateButton, { backgroundColor: PRIMARY_COLOR }]}
+            <TouchableOpacity
+              style={[
+                styles.generateButton,
+                { backgroundColor: PRIMARY_COLOR },
+              ]}
               onPress={handleGenerateSummary}
-              activeOpacity={0.9}
-            >
-                <Sparkles size={18} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.generateText}>Generate Summary</Text>
-                </TouchableOpacity>
-              </View>
+              activeOpacity={0.9}>
+              <Sparkles size={18} color="white" style={{ marginRight: 8 }} />
+              <Text style={styles.generateText}>Generate Summary</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Loading Overlay for Synthesis */}
         {isSynthesizing && (
-           <View style={styles.synthesizingContainer}>
-              <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-              <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>Synthesizing clinical data...</Text>
-            </View>
+          <View style={styles.synthesizingContainer}>
+            <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+            <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>
+              Synthesizing clinical data...
+            </Text>
+          </View>
         )}
 
         {/* Smart Input Bar (iMessage Style) */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        >
-          <View style={[styles.inputWrapper, { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 20 }]}>
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+          <View
+            style={[
+              styles.inputWrapper,
+              { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 20 },
+            ]}>
             <View style={styles.promptBar}>
               <View style={styles.promptInfo}>
                 <Text style={styles.promptLabel}>
                   {t('dischargeAssistant.prompts.label')}
                 </Text>
                 <Text style={styles.promptValue} numberOfLines={1}>
-                  {selectedPrompt ? selectedPrompt.title : t('dischargeAssistant.prompts.none')}
+                  {selectedPrompt
+                    ? selectedPrompt.title
+                    : t('dischargeAssistant.prompts.none')}
                 </Text>
-            </View>
+              </View>
               <TouchableOpacity
                 style={styles.promptButton}
-                onPress={() => setShowPromptManager(true)}
-              >
+                onPress={() => setShowPromptManager(true)}>
                 <Text style={styles.promptButtonText}>
                   {t('dischargeAssistant.prompts.manage')}
                 </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.inputBarContainer}>
-                {/* Plus Button */}
-                <TouchableOpacity
-                    style={styles.plusButton}
-                    onPress={handlePlusPress}
-                    activeOpacity={0.7}
-                >
-                    <Plus size={22} color={colors.onSurfaceVariant} strokeWidth={2} />
-                </TouchableOpacity>
+              {/* Plus Button */}
+              <TouchableOpacity
+                style={styles.plusButton}
+                onPress={handlePlusPress}
+                activeOpacity={0.7}>
+                <Plus
+                  size={22}
+                  color={colors.onSurfaceVariant}
+                  strokeWidth={2}
+                />
+              </TouchableOpacity>
 
-                {/* Text Input */}
+              {/* Text Input */}
               <TextInput
-                    style={styles.messageInput}
-                    placeholder={t('dischargeAssistant.inputBar.placeholder')}
-                    placeholderTextColor={colors.onSurfaceVariant}
-                    value={inputText}
-                    onChangeText={setInputText}
+                style={styles.messageInput}
+                placeholder={t('dischargeAssistant.inputBar.placeholder')}
+                placeholderTextColor={colors.onSurfaceVariant}
+                value={inputText}
+                onChangeText={setInputText}
                 multiline
-                    maxLength={1000}
+                maxLength={1000}
               />
 
-                {/* Send Button - only visible when there's text */}
-                {inputText.trim().length > 0 && (
-            <TouchableOpacity
-                        style={styles.sendButton}
-                        onPress={handleSendText}
-                        activeOpacity={0.7}
-                    >
-                        <ArrowUp size={18} color="white" strokeWidth={2.5} />
-            </TouchableOpacity>
-                )}
+              {/* Send Button - only visible when there's text */}
+              {inputText.trim().length > 0 && (
+                <TouchableOpacity
+                  style={styles.sendButton}
+                  onPress={handleSendText}
+                  activeOpacity={0.7}>
+                  <ArrowUp size={18} color="white" strokeWidth={2.5} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -655,45 +741,55 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         visible={showSynthesis}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowSynthesis(false)}
-      >
+        onRequestClose={() => setShowSynthesis(false)}>
         <SafeAreaView style={styles.resultContainer}>
           <View style={styles.resultHeader}>
             <View style={{ width: 24 }} />
             <Text style={styles.resultTitle}>Discharge Summary</Text>
-              <TouchableOpacity
+            <TouchableOpacity
               style={styles.saveButton}
-                onPress={() => {
+              onPress={() => {
                 Alert.alert('Saved', 'Summary saved to patient record.');
                 setShowSynthesis(false);
-              }}
-            >
-              <Text style={[styles.saveButtonText, { color: PRIMARY_COLOR }]}>Done</Text>
-              </TouchableOpacity>
-            </View>
+              }}>
+              <Text style={[styles.saveButtonText, { color: PRIMARY_COLOR }]}>
+                Done
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <ScrollView style={styles.resultContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.resultContent}
+            showsVerticalScrollIndicator={false}>
             <View style={styles.documentCard}>
               <Text style={styles.documentText}>{generatedSummary}</Text>
-                    </View>
-            <View style={{height: hp(5)}} />
+            </View>
+            <View style={{ height: hp(5) }} />
           </ScrollView>
 
           {/* Action Bar */}
           <View style={styles.resultActions}>
-            <TouchableOpacity style={styles.resultActionBtn} onPress={handleSaveSummary}>
-               <Save size={20} color={colors.onSurface} />
-               <Text style={styles.resultActionLabel}>{t('dischargeAssistant.savedSummaries.save')}</Text>
+            <TouchableOpacity
+              style={styles.resultActionBtn}
+              onPress={handleSaveSummary}>
+              <Save size={20} color={colors.onSurface} />
+              <Text style={styles.resultActionLabel}>
+                {t('dischargeAssistant.savedSummaries.save')}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.resultActionBtn} onPress={() => Alert.alert('Copied')}>
-               <Copy size={20} color={colors.onSurface} />
-               <Text style={styles.resultActionLabel}>Copy</Text>
+            <TouchableOpacity
+              style={styles.resultActionBtn}
+              onPress={() => Alert.alert('Copied')}>
+              <Copy size={20} color={colors.onSurface} />
+              <Text style={styles.resultActionLabel}>Copy</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.resultActionBtn} onPress={() => Alert.alert('Export PDF')}>
-               <Share size={20} color={colors.onSurface} />
-               <Text style={styles.resultActionLabel}>Export</Text>
-                      </TouchableOpacity>
-                    </View>
+            <TouchableOpacity
+              style={styles.resultActionBtn}
+              onPress={() => Alert.alert('Export PDF')}>
+              <Share size={20} color={colors.onSurface} />
+              <Text style={styles.resultActionLabel}>Export</Text>
+            </TouchableOpacity>
+          </View>
           {showSaveDialog && (
             <View style={styles.dialogOverlay}>
               <View style={styles.dialogCard}>
@@ -701,10 +797,12 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                   {renamingSummaryId
                     ? t('dischargeAssistant.savedSummaries.renameTitle')
                     : t('dischargeAssistant.savedSummaries.nameTitle')}
-                    </Text>
+                </Text>
                 <TextInput
                   style={styles.dialogInput}
-                  placeholder={t('dischargeAssistant.savedSummaries.namePlaceholder')}
+                  placeholder={t(
+                    'dischargeAssistant.savedSummaries.namePlaceholder',
+                  )}
                   placeholderTextColor={colors.onSurfaceVariant}
                   value={saveNameInput}
                   onChangeText={setSaveNameInput}
@@ -722,9 +820,9 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                         : t('dischargeAssistant.savedSummaries.saveConfirm')}
                     </Text>
                   </TouchableOpacity>
-                  </View>
+                </View>
+              </View>
             </View>
-          </View>
           )}
         </SafeAreaView>
       </Modal>
@@ -734,77 +832,82 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         visible={showSavedSummaries}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowSavedSummaries(false)}
-      >
+        onRequestClose={() => setShowSavedSummaries(false)}>
         <SafeAreaView style={styles.savedModalContainer}>
           <View style={styles.savedModalHeader}>
             <Text style={styles.savedModalTitle}>
               {t('dischargeAssistant.savedSummaries.title')}
-                      </Text>
+            </Text>
             <TouchableOpacity onPress={() => setShowSavedSummaries(false)}>
               <X size={22} color={colors.onSurface} />
             </TouchableOpacity>
-                    </View>
+          </View>
           <ScrollView contentContainerStyle={styles.savedList}>
             {savedSummaries.length === 0 ? (
               <Text style={styles.savedEmptyText}>
                 {t('dischargeAssistant.savedSummaries.empty')}
               </Text>
             ) : (
-              savedSummaries.map(item => (
+              savedSummaries.map((item) => (
                 <View key={item.id} style={styles.savedCard}>
                   <View style={styles.savedCardHeader}>
-                  <TouchableOpacity
+                    <TouchableOpacity
                       style={styles.savedCardContent}
-                      onPress={() => handleSelectSavedSummary(item)}
-                    >
+                      onPress={() => handleSelectSavedSummary(item)}>
                       <Text style={styles.savedTitle}>{item.title}</Text>
                       <Text style={styles.savedMeta}>
                         {new Date(item.createdAt).toLocaleDateString()}
                       </Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
                     <View style={styles.savedActions}>
-                  <TouchableOpacity
+                      <TouchableOpacity
                         onPress={() => {
                           setRenamingSummaryId(item.id);
                           setSaveNameInput(item.title);
                           setShowSaveDialog(true);
-                        }}
-                      >
+                        }}>
                         <Text style={styles.savedRename}>
                           {t('dischargeAssistant.savedSummaries.rename')}
-                      </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
                         onPress={() => {
                           Alert.alert(
                             t('dischargeAssistant.savedSummaries.deleteTitle'),
-                            t('dischargeAssistant.savedSummaries.deleteMessage'),
+                            t(
+                              'dischargeAssistant.savedSummaries.deleteMessage',
+                            ),
                             [
-                              { text: t('dischargeAssistant.actions.cancel'), style: 'cancel' },
                               {
-                                text: t('dischargeAssistant.savedSummaries.deleteConfirm'),
+                                text: t('dischargeAssistant.actions.cancel'),
+                                style: 'cancel',
+                              },
+                              {
+                                text: t(
+                                  'dischargeAssistant.savedSummaries.deleteConfirm',
+                                ),
                                 style: 'destructive',
                                 onPress: () => {
-                                  setSavedSummaries(prev =>
-                                    prev.filter(summary => summary.id !== item.id),
+                                  setSavedSummaries((prev) =>
+                                    prev.filter(
+                                      (summary) => summary.id !== item.id,
+                                    ),
                                   );
                                 },
                               },
                             ],
                           );
-                        }}
-                      >
+                        }}>
                         <Text style={[styles.savedRename, styles.savedDelete]}>
                           {t('dischargeAssistant.savedSummaries.delete')}
-                      </Text>
-                  </TouchableOpacity>
-                </View>
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   <Text style={styles.savedPreview} numberOfLines={2}>
                     {item.content.replace(/\n/g, ' ')}
                   </Text>
-              </View>
+                </View>
               ))
             )}
           </ScrollView>
@@ -818,7 +921,9 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                 </Text>
                 <TextInput
                   style={styles.dialogInput}
-                  placeholder={t('dischargeAssistant.savedSummaries.namePlaceholder')}
+                  placeholder={t(
+                    'dischargeAssistant.savedSummaries.namePlaceholder',
+                  )}
                   placeholderTextColor={colors.onSurfaceVariant}
                   value={saveNameInput}
                   onChangeText={setSaveNameInput}
@@ -827,7 +932,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                   <TouchableOpacity onPress={() => setShowSaveDialog(false)}>
                     <Text style={styles.dialogCancel}>
                       {t('dischargeAssistant.actions.cancel')}
-                </Text>
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleConfirmSaveName}>
                     <Text style={styles.dialogConfirm}>
@@ -836,8 +941,8 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                         : t('dischargeAssistant.savedSummaries.saveConfirm')}
                     </Text>
                   </TouchableOpacity>
+                </View>
               </View>
-          </View>
             </View>
           )}
         </SafeAreaView>
@@ -848,8 +953,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         visible={showPromptManager}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowPromptManager(false)}
-      >
+        onRequestClose={() => setShowPromptManager(false)}>
         <SafeAreaView style={styles.promptModalContainer}>
           <View style={styles.promptModalHeader}>
             <TouchableOpacity onPress={() => setShowPromptManager(false)}>
@@ -857,9 +961,9 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
             </TouchableOpacity>
             <Text style={styles.promptModalTitle}>
               {t('dischargeAssistant.prompts.title')}
-                    </Text>
+            </Text>
             <View style={{ width: 22 }} />
-                    </View>
+          </View>
 
           <ScrollView contentContainerStyle={styles.promptList}>
             {customPrompts.length === 0 ? (
@@ -867,55 +971,67 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                 {t('dischargeAssistant.prompts.empty')}
               </Text>
             ) : (
-              customPrompts.map(prompt => {
+              customPrompts.map((prompt) => {
                 const isActive = selectedPromptId === prompt.id;
                 return (
                   <TouchableOpacity
                     key={prompt.id}
-                    style={[styles.promptCard, isActive && styles.promptCardActive]}
+                    style={[
+                      styles.promptCard,
+                      isActive && styles.promptCardActive,
+                    ]}
                     activeOpacity={0.9}
                     onPress={() => {
                       setSelectedPromptId(prompt.id);
                       setShowPromptManager(false);
-                    }}
-                  >
+                    }}>
                     <View style={styles.promptCardHeader}>
-                      <Text style={[styles.promptCardTitle, isActive && styles.promptCardTitleActive]}>
+                      <Text
+                        style={[
+                          styles.promptCardTitle,
+                          isActive && styles.promptCardTitleActive,
+                        ]}>
                         {prompt.title}
-                    </Text>
+                      </Text>
                       {isActive && (
                         <Text style={styles.promptSelectedTag}>
                           {t('dischargeAssistant.prompts.selected')}
-                  </Text>
+                        </Text>
                       )}
-              </View>
+                    </View>
                     <Text style={styles.promptCardContent} numberOfLines={2}>
                       {prompt.content}
-                </Text>
+                    </Text>
                     <View style={styles.promptActions}>
-                      <TouchableOpacity onPress={() => handleEditPrompt(prompt)}>
+                      <TouchableOpacity
+                        onPress={() => handleEditPrompt(prompt)}>
                         <Text style={styles.promptActionText}>
                           {t('dischargeAssistant.prompts.edit')}
-                </Text>
+                        </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeletePrompt(prompt.id)}>
-                        <Text style={[styles.promptActionText, styles.promptDeleteText]}>
+                      <TouchableOpacity
+                        onPress={() => handleDeletePrompt(prompt.id)}>
+                        <Text
+                          style={[
+                            styles.promptActionText,
+                            styles.promptDeleteText,
+                          ]}>
                           {t('dischargeAssistant.prompts.delete')}
                         </Text>
-            </TouchableOpacity>
-          </View>
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 );
               })
             )}
-        </ScrollView>
+          </ScrollView>
 
           <View style={styles.promptEditor}>
             <Text style={styles.promptEditorTitle}>
               {editingPromptId
                 ? t('dischargeAssistant.prompts.editTitle')
                 : t('dischargeAssistant.prompts.newTitle')}
-                    </Text>
+            </Text>
             <TextInput
               style={styles.promptInput}
               placeholder={t('dischargeAssistant.prompts.titlePlaceholder')}
@@ -931,14 +1047,16 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
               onChangeText={setPromptContentInput}
               multiline
             />
-            <TouchableOpacity style={styles.promptSaveButton} onPress={handleSavePrompt}>
+            <TouchableOpacity
+              style={styles.promptSaveButton}
+              onPress={handleSavePrompt}>
               <Text style={styles.promptSaveButtonText}>
                 {editingPromptId
                   ? t('dischargeAssistant.prompts.update')
                   : t('dischargeAssistant.prompts.save')}
-                    </Text>
+              </Text>
             </TouchableOpacity>
-      </View>
+          </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1064,19 +1182,19 @@ const styles = StyleSheet.create({
   fileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-      backgroundColor: '#F9FAFB',
-      padding: 10,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#F0F0F0',
-      marginBottom: 4,
+    backgroundColor: '#F9FAFB',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    marginBottom: 4,
     alignSelf: 'flex-start',
-      gap: 8,
+    gap: 8,
   },
   fileName: {
-      fontSize: 13,
-      color: '#333',
-      maxWidth: wp(50),
+    fontSize: 13,
+    color: '#333',
+    maxWidth: wp(50),
   },
 
   // Input Bar (iMessage Style)

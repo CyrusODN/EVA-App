@@ -1,66 +1,74 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, {
-    useAnimatedStyle,
-    withSpring,
-    interpolateColor,
+  useAnimatedStyle,
+  withSpring,
+  interpolateColor,
 } from 'react-native-reanimated';
-import { ONBOARDING_COLORS, SPRINGS, ONBOARDING_SPACING } from '../constants/onboardingTheme';
+import {
+  ONBOARDING_COLORS,
+  SPRINGS,
+  ONBOARDING_SPACING,
+} from '../constants/onboardingTheme';
 
 interface OnboardingProgressDotsProps {
-    totalSteps: number;
-    currentStep: number;
+  totalSteps: number;
+  currentStep: number;
 }
 
 const OnboardingProgressDots: React.FC<OnboardingProgressDotsProps> = ({
-    totalSteps,
-    currentStep,
+  totalSteps,
+  currentStep,
 }) => {
-    return (
-        <View style={styles.container}>
-            {Array.from({ length: totalSteps }, (_, index) => (
-                <Dot key={index} isActive={index === currentStep} isPast={index < currentStep} />
-            ))}
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      {Array.from({ length: totalSteps }, (_, index) => (
+        <Dot
+          key={index}
+          isActive={index === currentStep}
+          isPast={index < currentStep}
+        />
+      ))}
+    </View>
+  );
 };
 
 interface DotProps {
-    isActive: boolean;
-    isPast: boolean;
+  isActive: boolean;
+  isPast: boolean;
 }
 
 const Dot: React.FC<DotProps> = ({ isActive, isPast }) => {
-    const animatedStyle = useAnimatedStyle(() => {
-        const scale = withSpring(isActive ? 1 : 0.75, SPRINGS.snappy);
-        const backgroundColor = isActive
-            ? ONBOARDING_COLORS.primary
-            : isPast
-                ? ONBOARDING_COLORS.primary
-                : ONBOARDING_COLORS.border;
+  const animatedStyle = useAnimatedStyle(() => {
+    const scale = withSpring(isActive ? 1 : 0.75, SPRINGS.snappy);
+    const backgroundColor = isActive
+      ? ONBOARDING_COLORS.primary
+      : isPast
+      ? ONBOARDING_COLORS.primary
+      : ONBOARDING_COLORS.border;
 
-        return {
-            transform: [{ scale }],
-            backgroundColor,
-            opacity: isPast ? 0.5 : 1,
-        };
-    }, [isActive, isPast]);
+    return {
+      transform: [{ scale }],
+      backgroundColor,
+      opacity: isPast ? 0.5 : 1,
+    };
+  }, [isActive, isPast]);
 
-    return <Animated.View style={[styles.dot, animatedStyle]} />;
+  return <Animated.View style={[styles.dot, animatedStyle]} />;
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: ONBOARDING_SPACING.xs,
-    },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ONBOARDING_SPACING.xs,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
 });
 
 export default OnboardingProgressDots;

@@ -113,7 +113,9 @@ const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'medium') => {
 // ============================================================================
 // MOCK RESPONSE
 // ============================================================================
-const getMockDrugResponse = (query: string): { content: string; citations: Citation[] } => {
+const getMockDrugResponse = (
+  query: string,
+): { content: string; citations: Citation[] } => {
   return {
     content: `Based on current pharmaceutical guidelines, here's the information:
 
@@ -161,9 +163,24 @@ Acts primarily through [mechanism], resulting in [therapeutic effect].
 - Avoid grapefruit juice (CYP3A4 interaction)
 - Patient counseling on expected timeline for efficacy`,
     citations: [
-      { id: '1', title: 'Drug Prescribing Information', source: 'FDA Package Insert', page: 'Latest Revision' },
-      { id: '2', title: 'Drug Interactions Reference', source: 'Lexicomp', page: '2024 Update' },
-      { id: '3', title: 'Clinical Pharmacology', source: 'Micromedex', page: 'Monograph' },
+      {
+        id: '1',
+        title: 'Drug Prescribing Information',
+        source: 'FDA Package Insert',
+        page: 'Latest Revision',
+      },
+      {
+        id: '2',
+        title: 'Drug Interactions Reference',
+        source: 'Lexicomp',
+        page: '2024 Update',
+      },
+      {
+        id: '3',
+        title: 'Clinical Pharmacology',
+        source: 'Micromedex',
+        page: 'Monograph',
+      },
     ],
   };
 };
@@ -190,7 +207,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -199,7 +216,8 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+      <Animated.View
+        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
         <Image source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
@@ -211,7 +229,10 @@ const DrugCombinationChip: React.FC<{
   text: string;
   onPress: () => void;
 }> = ({ text, onPress }) => (
-  <TouchableOpacity style={styles.drugCombinationChip} onPress={onPress} activeOpacity={0.7}>
+  <TouchableOpacity
+    style={styles.drugCombinationChip}
+    onPress={onPress}
+    activeOpacity={0.7}>
     <Pill size={14} color={THEME.brand} strokeWidth={2} />
     <Text style={styles.drugCombinationText}>{text}</Text>
   </TouchableOpacity>
@@ -264,23 +285,38 @@ const MessageBubble: React.FC<{
     triggerHaptic('light');
     Alert.alert('Copied', 'Message copied to clipboard');
   };
-  
+
   const isUser = message.role === 'user';
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(isUser ? 20 : -20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
   if (message.isLoading) {
     return (
-      <Animated.View style={[styles.messageBubbleWrapper, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
+      <Animated.View
+        style={[
+          styles.messageBubbleWrapper,
+          { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
+        ]}>
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
         <View style={styles.bubbleContent}>
           <ThinkingIndicator />
@@ -295,23 +331,35 @@ const MessageBubble: React.FC<{
         styles.messageBubbleWrapper,
         isUser && styles.userBubbleWrapper,
         { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-      ]}
-    >
+      ]}>
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
       )}
-      
-      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+
+      <View
+        style={[
+          styles.messageBubble,
+          isUser ? styles.userBubble : styles.assistantBubble,
+        ]}>
         {!isUser && (
-          <TouchableOpacity style={styles.copyButton} onPress={handleCopy} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.copyButton}
+            onPress={handleCopy}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}>
             <Copy size={14} color={THEME.brand} strokeWidth={2} />
           </TouchableOpacity>
         )}
 
         {isUser ? (
-          <Text style={[styles.messageText, styles.userMessageText]}>{message.content}</Text>
+          <Text style={[styles.messageText, styles.userMessageText]}>
+            {message.content}
+          </Text>
         ) : (
           <Markdown style={markdownStyles}>{message.content}</Markdown>
         )}
@@ -324,13 +372,14 @@ const MessageBubble: React.FC<{
                 key={citation.id}
                 style={styles.citationChip}
                 onPress={() => onCitationPress?.(citation)}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.citationNumber}>
                   <Text style={styles.citationNumberText}>{index + 1}</Text>
                 </View>
                 <View style={styles.citationContent}>
-                  <Text style={styles.citationTitle} numberOfLines={1}>{citation.title}</Text>
+                  <Text style={styles.citationTitle} numberOfLines={1}>
+                    {citation.title}
+                  </Text>
                   <Text style={styles.citationSource} numberOfLines={1}>
                     {citation.source} {citation.page && `• ${citation.page}`}
                   </Text>
@@ -355,9 +404,17 @@ const ThinkingIndicator: React.FC = () => {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
-        ])
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0.3,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]),
       );
 
     animateDot(dot1, 0).start();
@@ -376,12 +433,18 @@ const ThinkingIndicator: React.FC = () => {
   );
 };
 
-const FileChip: React.FC<{ file: AttachedFile; onRemove: () => void }> = ({ file, onRemove }) => {
+const FileChip: React.FC<{ file: AttachedFile; onRemove: () => void }> = ({
+  file,
+  onRemove,
+}) => {
   const getIcon = () => {
     switch (file.type) {
-      case 'pdf': return FileText;
-      case 'image': return ImageIcon;
-      default: return File;
+      case 'pdf':
+        return FileText;
+      case 'image':
+        return ImageIcon;
+      default:
+        return File;
     }
   };
   const Icon = getIcon();
@@ -389,8 +452,12 @@ const FileChip: React.FC<{ file: AttachedFile; onRemove: () => void }> = ({ file
   return (
     <View style={styles.fileChip}>
       <Icon size={14} color={THEME.brand} />
-      <Text style={styles.fileChipName} numberOfLines={1}>{file.name}</Text>
-      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <Text style={styles.fileChipName} numberOfLines={1}>
+        {file.name}
+      </Text>
+      <TouchableOpacity
+        onPress={onRemove}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <X size={14} color={THEME.secondary} />
       </TouchableOpacity>
     </View>
@@ -408,19 +475,40 @@ const AttachmentModal: React.FC<{
   const { t } = useTranslation();
 
   const options = [
-    { icon: FileText, label: t('pharmacopediaChat.attachOptions.uploadPdf'), onPress: onUploadPdf, color: '#8B5CF6' },
-    { icon: Camera, label: t('pharmacopediaChat.attachOptions.scan'), onPress: onScan, color: '#10B981' },
-    { icon: FolderOpen, label: t('pharmacopediaChat.attachOptions.gallery'), onPress: onGallery, color: '#F59E0B' },
+    {
+      icon: FileText,
+      label: t('pharmacopediaChat.attachOptions.uploadPdf'),
+      onPress: onUploadPdf,
+      color: '#8B5CF6',
+    },
+    {
+      icon: Camera,
+      label: t('pharmacopediaChat.attachOptions.scan'),
+      onPress: onScan,
+      color: '#10B981',
+    },
+    {
+      icon: FolderOpen,
+      label: t('pharmacopediaChat.attachOptions.gallery'),
+      onPress: onGallery,
+      color: '#F59E0B',
+    },
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.attachmentModalContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={styles.attachmentModalContent}
+          onPress={(e) => e.stopPropagation()}>
           <View style={styles.attachmentModalHeader}>
             <View style={styles.attachmentModalHandle} />
           </View>
-          
+
           <View style={styles.attachmentOptionsContainer}>
             {options.map((option, index) => {
               const Icon = option.icon;
@@ -432,19 +520,28 @@ const AttachmentModal: React.FC<{
                     option.onPress();
                     onClose();
                   }}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.attachmentOptionIcon, { backgroundColor: `${option.color}15` }]}>
+                  activeOpacity={0.7}>
+                  <View
+                    style={[
+                      styles.attachmentOptionIcon,
+                      { backgroundColor: `${option.color}15` },
+                    ]}>
                     <Icon size={24} color={option.color} strokeWidth={2} />
                   </View>
-                  <Text style={styles.attachmentOptionLabel}>{option.label}</Text>
+                  <Text style={styles.attachmentOptionLabel}>
+                    {option.label}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          <TouchableOpacity style={styles.attachmentCancelButton} onPress={onClose}>
-            <Text style={styles.attachmentCancelText}>{t('pharmacopediaChat.attachOptions.cancel')}</Text>
+          <TouchableOpacity
+            style={styles.attachmentCancelButton}
+            onPress={onClose}>
+            <Text style={styles.attachmentCancelText}>
+              {t('pharmacopediaChat.attachOptions.cancel')}
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -458,14 +555,24 @@ const ContextFilesModal: React.FC<{
   onClose: () => void;
 }> = ({ visible, files, onClose }) => {
   const { t } = useTranslation();
-  
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={styles.modalContent}
+          onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('pharmacopediaChat.contextFiles')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.modalTitle}>
+              {t('pharmacopediaChat.contextFiles')}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={THEME.navy} />
             </TouchableOpacity>
           </View>
@@ -473,7 +580,12 @@ const ContextFilesModal: React.FC<{
           <ScrollView style={styles.modalFilesList}>
             {files.length > 0 ? (
               files.map((file) => {
-                const Icon = file.type === 'pdf' ? FileText : file.type === 'image' ? ImageIcon : File;
+                const Icon =
+                  file.type === 'pdf'
+                    ? FileText
+                    : file.type === 'image'
+                    ? ImageIcon
+                    : File;
                 return (
                   <View key={file.id} style={styles.modalFileItem}>
                     <Icon size={18} color={THEME.brand} />
@@ -484,7 +596,9 @@ const ContextFilesModal: React.FC<{
             ) : (
               <View style={styles.modalEmptyState}>
                 <FolderOpen size={32} color={THEME.tertiary} />
-                <Text style={styles.modalEmptyText}>No reference materials uploaded</Text>
+                <Text style={styles.modalEmptyText}>
+                  No reference materials uploaded
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -503,8 +617,18 @@ const InputBar: React.FC<{
   onRemoveFile: (id: string) => void;
   placeholder: string;
   isLoading: boolean;
-}> = ({ value, onChangeText, onSend, onAttach, attachedFiles, onRemoveFile, placeholder, isLoading }) => {
-  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
+}> = ({
+  value,
+  onChangeText,
+  onSend,
+  onAttach,
+  attachedFiles,
+  onRemoveFile,
+  placeholder,
+  isLoading,
+}) => {
+  const canSend =
+    (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
 
   const handleSend = () => {
     if (canSend) {
@@ -519,14 +643,21 @@ const InputBar: React.FC<{
         <View style={styles.attachedFilesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {attachedFiles.map((file) => (
-              <FileChip key={file.id} file={file} onRemove={() => onRemoveFile(file.id)} />
+              <FileChip
+                key={file.id}
+                file={file}
+                onRemove={() => onRemoveFile(file.id)}
+              />
             ))}
           </ScrollView>
         </View>
       )}
 
       <View style={styles.inputBarContainer}>
-        <TouchableOpacity style={styles.attachButton} onPress={onAttach} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.attachButton}
+          onPress={onAttach}
+          activeOpacity={0.7}>
           <Plus size={22} color={THEME.secondary} strokeWidth={2} />
         </TouchableOpacity>
 
@@ -546,8 +677,7 @@ const InputBar: React.FC<{
             style={[styles.sendButton, styles.sendButtonActive]}
             onPress={handleSend}
             disabled={!canSend}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <ArrowUp size={18} color={THEME.pure} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
@@ -589,26 +719,35 @@ const PharmacopediaChat: React.FC = () => {
     setShowContextModal(true);
   };
 
-  const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role,
-      content,
-      citations,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
-    return newMessage.id;
-  }, []);
+  const addMessage = useCallback(
+    (role: MessageRole, content: string, citations?: Citation[]) => {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role,
+        content,
+        citations,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
+      return newMessage.id;
+    },
+    [],
+  );
 
   const handleSend = async () => {
     const query = inputText.trim();
     if (!query && attachedFiles.length === 0) return;
 
-    const userContent = attachedFiles.length > 0
-      ? `${query}\n\n[Attached: ${attachedFiles.map(f => f.name).join(', ')}]`
-      : query;
+    const userContent =
+      attachedFiles.length > 0
+        ? `${query}\n\n[Attached: ${attachedFiles
+            .map((f) => f.name)
+            .join(', ')}]`
+        : query;
     addMessage('user', userContent);
 
     if (attachedFiles.length > 0) {
@@ -623,7 +762,13 @@ const PharmacopediaChat: React.FC = () => {
     const loadingId = Date.now().toString() + '-loading';
     setMessages((prev) => [
       ...prev,
-      { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
+      {
+        id: loadingId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isLoading: true,
+      },
     ]);
 
     setTimeout(() => {
@@ -646,7 +791,9 @@ const PharmacopediaChat: React.FC = () => {
 
   const handleFilePick = async () => {
     try {
-      const result = await pick({ type: [types.pdf, types.docx, types.plainText] });
+      const result = await pick({
+        type: [types.pdf, types.docx, types.plainText],
+      });
       if (result && result[0]) {
         const newFile: AttachedFile = {
           id: Date.now().toString(),
@@ -682,7 +829,10 @@ const PharmacopediaChat: React.FC = () => {
 
   const handleGallery = async () => {
     try {
-      const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
       if (result.assets && result.assets[0]) {
         const newFile: AttachedFile = {
           id: Date.now().toString(),
@@ -712,24 +862,29 @@ const PharmacopediaChat: React.FC = () => {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
+        keyboardVerticalOffset={0}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
             <ChevronLeft size={24} color={THEME.navy} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{t('pharmacopediaChat.title')}</Text>
+            <Text style={styles.headerTitle}>
+              {t('pharmacopediaChat.title')}
+            </Text>
             {contextFiles.length > 0 && (
               <Text style={styles.headerSubtitle}>
-                {t('pharmacopediaChat.filesLoaded', { count: contextFiles.length })}
+                {t('pharmacopediaChat.filesLoaded', {
+                  count: contextFiles.length,
+                })}
               </Text>
             )}
           </View>
 
-          <TouchableOpacity onPress={handleViewFiles} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={handleViewFiles}
+            style={styles.headerButton}>
             <History size={22} color={THEME.navy} />
           </TouchableOpacity>
         </View>
@@ -739,12 +894,18 @@ const PharmacopediaChat: React.FC = () => {
           {isEmptyState ? (
             <View style={styles.emptyState}>
               <PulsingAILogo />
-              <Text style={styles.emptyStateGreeting}>{t('pharmacopediaChat.greeting')}</Text>
-              <Text style={styles.emptyStateSubtext}>{t('pharmacopediaChat.subtitle')}</Text>
-              
+              <Text style={styles.emptyStateGreeting}>
+                {t('pharmacopediaChat.greeting')}
+              </Text>
+              <Text style={styles.emptyStateSubtext}>
+                {t('pharmacopediaChat.subtitle')}
+              </Text>
+
               {/* Drug Combinations */}
               <View style={styles.drugCombinationsContainer}>
-                <Text style={styles.drugCombinationsTitle}>{t('pharmacopediaChat.exampleCombinations')}</Text>
+                <Text style={styles.drugCombinationsTitle}>
+                  {t('pharmacopediaChat.exampleCombinations')}
+                </Text>
                 <View style={styles.drugCombinationsGrid}>
                   {drugCombinations.map((combo, index) => (
                     <DrugCombinationChip
@@ -762,8 +923,7 @@ const PharmacopediaChat: React.FC = () => {
               style={styles.chatStream}
               contentContainerStyle={styles.chatStreamContent}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}

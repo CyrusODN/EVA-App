@@ -46,15 +46,12 @@ const OnboardingScreen: React.FC = () => {
   const [showMagicCreator, setShowMagicCreator] = useState(false);
 
   // Local state for selections (committed to store on completion)
-  const [selectedSpecialization, setSelectedSpecialization] = useState<Specialization | null>(
-    defaultSpecialization
-  );
-  const [selectedNoteLength, setSelectedNoteLength] = useState<NoteLength>(
-    defaultNoteLength
-  );
-  const [selectedVisitType, setSelectedVisitType] = useState<VisitType>(
-    defaultVisitType
-  );
+  const [selectedSpecialization, setSelectedSpecialization] =
+    useState<Specialization | null>(defaultSpecialization);
+  const [selectedNoteLength, setSelectedNoteLength] =
+    useState<NoteLength>(defaultNoteLength);
+  const [selectedVisitType, setSelectedVisitType] =
+    useState<VisitType>(defaultVisitType);
 
   const getStepIndex = (step: OnboardingStep): number => {
     const steps: OnboardingStep[] = [
@@ -74,7 +71,7 @@ const OnboardingScreen: React.FC = () => {
       CommonActions.reset({
         index: 0,
         routes: [{ name: 'HomeTabs' as never }],
-      })
+      }),
     );
   }, [navigation]);
 
@@ -82,14 +79,14 @@ const OnboardingScreen: React.FC = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     // Save current selections before skipping
     if (selectedSpecialization) {
       setDefaultSpecialization(selectedSpecialization);
     }
     setDefaultNoteLength(selectedNoteLength);
     setDefaultVisitType(selectedVisitType);
-    
+
     skipOnboarding();
     navigateToHome();
   }, [
@@ -107,14 +104,14 @@ const OnboardingScreen: React.FC = () => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    
+
     // Commit all selections to store
     if (selectedSpecialization) {
       setDefaultSpecialization(selectedSpecialization);
     }
     setDefaultNoteLength(selectedNoteLength);
     setDefaultVisitType(selectedVisitType);
-    
+
     completeOnboarding();
     navigateToHome();
   }, [
@@ -135,17 +132,20 @@ const OnboardingScreen: React.FC = () => {
     setCurrentStep(step);
   };
 
-  const handleSaveTemplate = useCallback((template: {
-    name: string;
-    instructions: string;
-    refinedPrompt: string;
-  }) => {
-    // In production, this would save to the templates store
-    console.log('Template saved:', template);
-    setShowMagicCreator(false);
-    // Continue to completion
-    setCurrentStep('completion');
-  }, []);
+  const handleSaveTemplate = useCallback(
+    (template: {
+      name: string;
+      instructions: string;
+      refinedPrompt: string;
+    }) => {
+      // In production, this would save to the templates store
+      console.log('Template saved:', template);
+      setShowMagicCreator(false);
+      // Continue to completion
+      setCurrentStep('completion');
+    },
+    [],
+  );
 
   const renderStep = () => {
     switch (currentStep) {
@@ -219,9 +219,12 @@ const OnboardingScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={ONBOARDING_COLORS.background} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={ONBOARDING_COLORS.background}
+      />
       {renderStep()}
-      
+
       <MagicTemplateCreator
         visible={showMagicCreator}
         onClose={() => {

@@ -69,9 +69,7 @@ const SignUp = () => {
       setLoading(true);
       const resp = await ssoRequest({ provider: 'google', email });
       const reqId =
-        resp?.data?.requestId ||
-        resp?.data?.data?.requestId ||
-        resp?.data?.id;
+        resp?.data?.requestId || resp?.data?.data?.requestId || resp?.data?.id;
       if (reqId) {
         navigation.navigate('otpVerification', {
           context: 'sso',
@@ -80,7 +78,11 @@ const SignUp = () => {
           nextRoute: 'tabs',
         });
       } else {
-        customToast('error', t('common.error'), 'Failed to initiate Google sign up');
+        customToast(
+          'error',
+          t('common.error'),
+          'Failed to initiate Google sign up',
+        );
       }
     } catch (error: any) {
       const message =
@@ -98,16 +100,14 @@ const SignUp = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            bounces={false}
-          >
+            bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
@@ -117,7 +117,6 @@ const SignUp = () => {
                   resizeMode="contain"
                 />
               </View>
-
             </View>
 
             {/* Form Section */}
@@ -205,8 +204,7 @@ const SignUp = () => {
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('login')}
-                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
                   <Text variant="bodyMedium" style={styles.signUpText}>
                     {t('login.signIn')}
                   </Text>
@@ -224,8 +222,7 @@ const SignUp = () => {
                 style={styles.googleButton}
                 onPress={handleGoogleSignUp}
                 disabled={loading}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <Image source={images.googleIcon} style={styles.googleIcon} />
                 <Text variant="labelLarge" style={styles.googleButtonText}>
                   {t('login.signUpWithGoogle')}

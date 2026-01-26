@@ -15,14 +15,14 @@ export interface SimulationResult {
 
 // Simulates the AI refinement process with a delay
 export const refineTemplateInstructions = async (
-  rawInput: string
+  rawInput: string,
 ): Promise<RefinementResult> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
   // Mock refinement logic
   const lowercaseInput = rawInput.toLowerCase();
-  
+
   let refinedPrompt = '';
   let humanSummary = '';
 
@@ -30,8 +30,12 @@ export const refineTemplateInstructions = async (
   if (lowercaseInput.includes('krótk') || lowercaseInput.includes('zwięz')) {
     refinedPrompt += 'Generate concise, bullet-point notes. ';
     humanSummary += 'Zwięzłe notatki w formie punktowej. ';
-  } else if (lowercaseInput.includes('szczegół') || lowercaseInput.includes('pełn')) {
-    refinedPrompt += 'Generate detailed narrative notes with full documentation. ';
+  } else if (
+    lowercaseInput.includes('szczegół') ||
+    lowercaseInput.includes('pełn')
+  ) {
+    refinedPrompt +=
+      'Generate detailed narrative notes with full documentation. ';
     humanSummary += 'Szczegółowa dokumentacja narracyjna. ';
   } else {
     refinedPrompt += 'Generate standard SOAP-format notes. ';
@@ -43,7 +47,10 @@ export const refineTemplateInstructions = async (
     humanSummary += 'Nacisk na farmakoterapię. ';
   }
 
-  if (lowercaseInput.includes('bez historii rodzinnej') || lowercaseInput.includes('pomiń')) {
+  if (
+    lowercaseInput.includes('bez historii rodzinnej') ||
+    lowercaseInput.includes('pomiń')
+  ) {
     refinedPrompt += 'Omit family history section. ';
     humanSummary += 'Pominięcie historii rodzinnej. ';
   }
@@ -60,7 +67,8 @@ export const refineTemplateInstructions = async (
 
   // Fallback if no specific instructions detected
   if (!refinedPrompt) {
-    refinedPrompt = 'Generate balanced clinical notes based on the consultation. ';
+    refinedPrompt =
+      'Generate balanced clinical notes based on the consultation. ';
     humanSummary = 'Zbalansowane notatki kliniczne. ';
   }
 
@@ -80,13 +88,13 @@ export const generateSimulatedNote = async (
     diagnosis: string;
     meds: string[];
     history: string;
-  }
+  },
 ): Promise<SimulationResult> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const { name, age, diagnosis, meds, history } = patientData;
-  
+
   // Determine note style based on refined prompt
   const isConcise = refinedPrompt.toLowerCase().includes('concise');
   const focusMeds = refinedPrompt.toLowerCase().includes('pharmacotherapy');
@@ -104,7 +112,11 @@ ${meds.length > 0 ? `• Leki: ${meds.join(', ')}` : '• Brak stałych leków'}
 ROZPOZNANIE: ${diagnosis}${includeICD ? '' : ''}
 
 FARMAKOTERAPIA:
-${meds.length > 0 ? meds.map((m) => `• ${m} - kontynuacja`).join('\n') : '• Brak farmakoterapii'}
+${
+  meds.length > 0
+    ? meds.map((m) => `• ${m} - kontynuacja`).join('\n')
+    : '• Brak farmakoterapii'
+}
 
 OCENA: Stan stabilny, tolerancja leków dobra.
 PLAN: Kontynuacja leczenia, kontrola za 4 tyg.`;

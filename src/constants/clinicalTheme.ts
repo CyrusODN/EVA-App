@@ -1,6 +1,6 @@
 /**
  * Clinical Theme - Unified Design System
- * 
+ *
  * Based on "Invisible Luxury" aesthetic from Research/Discharge screens.
  * Eliminates borders, uses surfaces and subtle shadows for depth.
  */
@@ -15,7 +15,7 @@ export const ClinicalTheme = {
   pure: '#FFFFFF',
   surface: '#F9FAFB',
   surfaceAlt: '#F3F4F6',
-  
+
   // ===== TEXT HIERARCHY =====
   text: {
     primary: '#111827',
@@ -23,7 +23,7 @@ export const ClinicalTheme = {
     tertiary: '#9CA3AF',
     disabled: '#D1D5DB',
   },
-  
+
   // ===== BRAND COLORS =====
   brand: {
     primary: '#46B7C6',
@@ -31,7 +31,7 @@ export const ClinicalTheme = {
     medium: 'rgba(70, 183, 198, 0.15)',
     dark: '#3A9AA8',
   },
-  
+
   // ===== SEMANTIC COLORS =====
   semantic: {
     success: '#10B981',
@@ -43,14 +43,14 @@ export const ClinicalTheme = {
     info: '#3B82F6',
     infoLight: '#DBEAFE',
   },
-  
+
   // ===== BORDERS (Minimal Use) =====
   border: {
     light: '#F3F4F6',
     default: '#E5E7EB',
     dark: '#D1D5DB',
   },
-  
+
   // ===== SHADOWS (Invisible Luxury) =====
   shadow: {
     // Subtle card elevation (ultra minimal)
@@ -78,7 +78,7 @@ export const ClinicalTheme = {
       elevation: 3,
     },
   },
-  
+
   // ===== INPUT BAR (iMessage Style) =====
   inputBar: {
     background: '#F3F4F6',
@@ -96,7 +96,7 @@ export const ClinicalTheme = {
       placeholder: 'rgba(74, 69, 78, 0.5)',
     },
   },
-  
+
   // ===== BADGES =====
   badge: {
     primary: '#3B82F6',
@@ -104,7 +104,7 @@ export const ClinicalTheme = {
     warning: '#F59E0B',
     error: '#EF4444',
   },
-  
+
   // ===== TYPOGRAPHY =====
   typography: {
     fontFamily: {
@@ -118,7 +118,9 @@ export const ClinicalTheme = {
       },
     },
     get family() {
-      return Platform.OS === 'ios' ? this.fontFamily.ios : this.fontFamily.android;
+      return Platform.OS === 'ios'
+        ? this.fontFamily.ios
+        : this.fontFamily.android;
     },
     sizes: {
       xs: 11,
@@ -135,7 +137,7 @@ export const ClinicalTheme = {
       bold: '700' as const,
     },
   },
-  
+
   // ===== SPACING =====
   spacing: {
     xs: 4,
@@ -145,7 +147,7 @@ export const ClinicalTheme = {
     xl: 24,
     xxl: 32,
   },
-  
+
   // ===== RADIUS =====
   radius: {
     sm: 8,
@@ -154,7 +156,7 @@ export const ClinicalTheme = {
     xl: 20,
     full: 999,
   },
-  
+
   // ===== LAYOUT =====
   layout: {
     // Header dimensions

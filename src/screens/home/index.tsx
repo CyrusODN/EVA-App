@@ -40,7 +40,10 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { Image, Alert } from 'react-native';
-import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  Swipeable,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import PrimaryButton from '../../components/primaryButton';
 import VisitDialogModal from '../../components/visitDialogueModal';
 import { colors } from '../../constants/colors';
@@ -78,7 +81,9 @@ const Home = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [showVisitDialog, setShowVisitDialog] = useState<boolean>(false);
-  const [visitDialogType, setVisitDialogType] = useState<'patient' | 'meeting' | 'lecture'>('patient');
+  const [visitDialogType, setVisitDialogType] = useState<
+    'patient' | 'meeting' | 'lecture'
+  >('patient');
   const [events, setEvents] = useState<Session[]>([]);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -91,15 +96,16 @@ const Home = () => {
         const raw = resp?.data;
         const payload = raw?.data || raw;
         const svcToken =
-          payload?.token ||
-          payload?.chatbotToken ||
-          payload?.serviceToken;
+          payload?.token || payload?.chatbotToken || payload?.serviceToken;
         if (svcToken) {
           try {
-            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
-          } catch (_) { }
+            await AsyncStorage.setItem(
+              'chatbot_service_token',
+              String(svcToken),
+            );
+          } catch (_) {}
         }
-      } catch (_) { }
+      } catch (_) {}
     })();
 
     loadEvents();
@@ -113,7 +119,7 @@ const Home = () => {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({ y: hp(7.5), animated: false });
       }, 100);
-    }, [])
+    }, []),
   );
 
   const loadEvents = async () => {
@@ -135,15 +141,16 @@ const Home = () => {
         const raw = resp?.data;
         const payload = raw?.data || raw;
         const svcToken =
-          payload?.token ||
-          payload?.chatbotToken ||
-          payload?.serviceToken;
+          payload?.token || payload?.chatbotToken || payload?.serviceToken;
         if (svcToken) {
           try {
-            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
-          } catch (_) { }
+            await AsyncStorage.setItem(
+              'chatbot_service_token',
+              String(svcToken),
+            );
+          } catch (_) {}
         }
-      } catch (_) { }
+      } catch (_) {}
     })();
   }, []);
 
@@ -233,7 +240,9 @@ const Home = () => {
         return `${event.specializationLabel} • ${event.visitTypeLabel}`;
       }
       if (event.specializationLabel || event.visitTypeLabel) {
-        return [event.specializationLabel, event.visitTypeLabel].filter(Boolean).join(' • ');
+        return [event.specializationLabel, event.visitTypeLabel]
+          .filter(Boolean)
+          .join(' • ');
       }
     }
     return null;
@@ -275,12 +284,15 @@ const Home = () => {
   };
 
   const selectAll = () => {
-    if (selectedItems.size === filteredEvents.length && filteredEvents.length > 0) {
+    if (
+      selectedItems.size === filteredEvents.length &&
+      filteredEvents.length > 0
+    ) {
       // Deselect all
       setSelectedItems(new Set());
     } else {
       // Select all
-      setSelectedItems(new Set(filteredEvents.map(e => e.id)));
+      setSelectedItems(new Set(filteredEvents.map((e) => e.id)));
     }
   };
 
@@ -289,8 +301,12 @@ const Home = () => {
     Alert.alert(
       i18n.language === 'pl' ? 'Potwierdź usunięcie' : 'Confirm Delete',
       i18n.language === 'pl'
-        ? `Czy na pewno chcesz usunąć ${count} ${count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'}?`
-        : `Are you sure you want to delete ${count} item${count === 1 ? '' : 's'}?`,
+        ? `Czy na pewno chcesz usunąć ${count} ${
+            count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'
+          }?`
+        : `Are you sure you want to delete ${count} item${
+            count === 1 ? '' : 's'
+          }?`,
       [
         {
           text: t('common.cancel'),
@@ -319,8 +335,14 @@ const Home = () => {
                 'success',
                 t('common.success'),
                 i18n.language === 'pl'
-                  ? `Usunięto ${count} ${count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'}`
-                  : `${count} item${count === 1 ? '' : 's'} deleted`
+                  ? `Usunięto ${count} ${
+                      count === 1
+                        ? 'element'
+                        : count < 5
+                        ? 'elementy'
+                        : 'elementów'
+                    }`
+                  : `${count} item${count === 1 ? '' : 's'} deleted`,
               );
             } catch (error) {
               customToast(
@@ -328,14 +350,14 @@ const Home = () => {
                 t('common.error'),
                 i18n.language === 'pl'
                   ? 'Nie udało się usunąć elementów'
-                  : 'Failed to delete items'
+                  : 'Failed to delete items',
               );
               // Re-enable selection mode on error
               setSelectionMode(true);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -379,8 +401,7 @@ const Home = () => {
       <TouchableOpacity
         style={styles.swipeActionDelete}
         onPress={() => handleDeleteEvent(eventId)}
-        activeOpacity={0.8}
-      >
+        activeOpacity={0.8}>
         <Trash2 size={20} color="#FFFFFF" strokeWidth={2} />
         <Text style={styles.swipeActionText}>{t('common.delete')}</Text>
       </TouchableOpacity>
@@ -392,8 +413,7 @@ const Home = () => {
       <TouchableOpacity
         style={styles.swipeActionSearch}
         onPress={() => handleSearchSimilar(eventTitle)}
-        activeOpacity={0.8}
-      >
+        activeOpacity={0.8}>
         <Copy size={20} color="#FFFFFF" strokeWidth={2} />
         <Text style={styles.swipeActionText}>{t('actions.find')}</Text>
       </TouchableOpacity>
@@ -403,7 +423,8 @@ const Home = () => {
   const renderSelectionBar = () => {
     if (!selectionMode) return null;
 
-    const allSelected = selectedItems.size === filteredEvents.length && filteredEvents.length > 0;
+    const allSelected =
+      selectedItems.size === filteredEvents.length && filteredEvents.length > 0;
     const hasSelection = selectedItems.size > 0;
 
     return (
@@ -431,14 +452,15 @@ const Home = () => {
               {filteredEvents.length > 1 && (
                 <TouchableOpacity onPress={selectAll}>
                   <Text style={styles.selectionBarActionTextSecondary}>
-                    {allSelected ? t('common.deselectAll') : t('common.selectAll')}
+                    {allSelected
+                      ? t('common.deselectAll')
+                      : t('common.selectAll')}
                   </Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
                 onPress={handleBulkDelete}
-                style={styles.deleteButton}
-              >
+                style={styles.deleteButton}>
                 <Trash2 size={16} color="#FFFFFF" strokeWidth={2} />
               </TouchableOpacity>
             </>
@@ -454,8 +476,12 @@ const Home = () => {
 
     return (
       <Swipeable
-        renderRightActions={() => selectionMode ? null : renderRightActions(item.id)}
-        renderLeftActions={() => selectionMode ? null : renderLeftActions(item.title)}
+        renderRightActions={() =>
+          selectionMode ? null : renderRightActions(item.id)
+        }
+        renderLeftActions={() =>
+          selectionMode ? null : renderLeftActions(item.title)
+        }
         overshootRight={false}
         overshootLeft={false}
         friction={4}
@@ -463,13 +489,9 @@ const Home = () => {
         rightThreshold={80}
         enabled={!selectionMode}
         enableTrackpadTwoFingerGesture={false}
-        hitSlop={{ top: 0, bottom: 0, left: -50, right: -50 }}
-      >
+        hitSlop={{ top: 0, bottom: 0, left: -50, right: -50 }}>
         <TouchableOpacity
-          style={[
-            styles.eventItem,
-            isSelected && styles.eventItemSelected
-          ]}
+          style={[styles.eventItem, isSelected && styles.eventItemSelected]}
           onPress={() => {
             if (selectionMode) {
               toggleItemSelection(item.id);
@@ -479,16 +501,16 @@ const Home = () => {
           }}
           onLongPress={() => handleLongPress(item.id)}
           delayLongPress={400}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <View style={styles.eventRow}>
             {/* Checkbox in selection mode */}
             {selectionMode && (
               <View style={styles.checkboxContainer}>
-                <View style={[
-                  styles.checkbox,
-                  isSelected && styles.checkboxSelected
-                ]}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    isSelected && styles.checkboxSelected,
+                  ]}>
                   {isSelected && (
                     <CheckCircle size={20} color="#46B7C6" fill="#46B7C6" />
                   )}
@@ -519,23 +541,28 @@ const Home = () => {
             {/* Right: Status indicator */}
             {!selectionMode && (
               <View style={styles.eventRightContent}>
-                <View style={[
-                  styles.statusBadge,
-                  item.status === 'completed' && styles.statusBadgeCompleted,
-                  item.status === 'transcribed' && styles.statusBadgeTranscribed,
-                  item.status === 'recorded' && styles.statusBadgeRecorded,
-                  item.status === 'new' && styles.statusBadgeNew,
-                ]}>
-                  <Text style={[
-                    styles.statusText,
-                    item.status === 'completed' && styles.statusTextCompleted,
-                    item.status === 'transcribed' && styles.statusTextTranscribed,
-                    item.status === 'recorded' && styles.statusTextRecorded,
-                    item.status === 'new' && styles.statusTextNew,
+                <View
+                  style={[
+                    styles.statusBadge,
+                    item.status === 'completed' && styles.statusBadgeCompleted,
+                    item.status === 'transcribed' &&
+                      styles.statusBadgeTranscribed,
+                    item.status === 'recorded' && styles.statusBadgeRecorded,
+                    item.status === 'new' && styles.statusBadgeNew,
                   ]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      item.status === 'completed' && styles.statusTextCompleted,
+                      item.status === 'transcribed' &&
+                        styles.statusTextTranscribed,
+                      item.status === 'recorded' && styles.statusTextRecorded,
+                      item.status === 'new' && styles.statusTextNew,
+                    ]}>
                     {eventDescriptor ||
                       (item.status === 'completed' && t('status.completed')) ||
-                      (item.status === 'transcribed' && t('status.transcribed')) ||
+                      (item.status === 'transcribed' &&
+                        t('status.transcribed')) ||
                       (item.status === 'recorded' && t('status.recorded')) ||
                       (item.status === 'new' && t('status.new'))}
                   </Text>
@@ -640,7 +667,7 @@ const Home = () => {
       t('calendar.weekDays.wed'),
       t('calendar.weekDays.thu'),
       t('calendar.weekDays.fri'),
-      t('calendar.weekDays.sat')
+      t('calendar.weekDays.sat'),
     ];
     const today = new Date();
     const isToday = (date: Date | null) => {
@@ -666,16 +693,14 @@ const Home = () => {
             <TouchableOpacity
               onPress={() => navigateMonth('prev')}
               style={styles.monthNavButton}
-              activeOpacity={0.6}
-            >
+              activeOpacity={0.6}>
               <ChevronLeft size={20} color="#64748B" strokeWidth={2} />
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => navigateMonth('next')}
               style={styles.monthNavButton}
-              activeOpacity={0.6}
-            >
+              activeOpacity={0.6}>
               <ChevronRight size={20} color="#64748B" strokeWidth={2} />
             </TouchableOpacity>
           </View>
@@ -685,9 +710,7 @@ const Home = () => {
         <View style={styles.weekDaysContainer}>
           {weekDays.map((day, index) => (
             <View key={index} style={styles.weekDay}>
-              <Text style={styles.weekDayText}>
-                {day}
-              </Text>
+              <Text style={styles.weekDayText}>{day}</Text>
             </View>
           ))}
         </View>
@@ -707,8 +730,8 @@ const Home = () => {
               return eventType === 'patient'
                 ? 'rgba(70, 183, 198, 0.08)'
                 : eventType === 'meeting'
-                  ? 'rgba(124, 58, 237, 0.08)'
-                  : 'rgba(251, 146, 60, 0.08)';
+                ? 'rgba(124, 58, 237, 0.08)'
+                : 'rgba(251, 146, 60, 0.08)';
             };
 
             return (
@@ -716,23 +739,24 @@ const Home = () => {
                 key={index}
                 style={[
                   styles.calendarDay,
-                  hasEvent && !isSelected && { backgroundColor: getEventBackground() },
+                  hasEvent &&
+                    !isSelected && { backgroundColor: getEventBackground() },
                   isSelected && styles.calendarDaySelected,
                   isTodayDate && !isSelected && styles.calendarDayToday,
                 ]}
                 onPress={() => date && setSelectedDate(date)}
                 disabled={!date}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 {date && (
                   <View style={styles.calendarDayContent}>
                     <Text
                       style={[
                         styles.calendarDayText,
                         isSelected && styles.calendarDayTextSelected,
-                        isTodayDate && !isSelected && styles.calendarDayTextToday,
-                      ]}
-                    >
+                        isTodayDate &&
+                          !isSelected &&
+                          styles.calendarDayTextToday,
+                      ]}>
                       {date.getDate()}
                     </Text>
                   </View>
@@ -751,47 +775,56 @@ const Home = () => {
               {selectedDate.toLocaleDateString(i18n.language || 'en-US', {
                 weekday: 'long',
                 month: 'long',
-                day: 'numeric'
+                day: 'numeric',
               })}
             </Text>
             <View style={styles.selectedDateEventsList}>
               {events
-                .filter(event => {
-                  const eventDate = new Date(event.date).toISOString().split('T')[0];
+                .filter((event) => {
+                  const eventDate = new Date(event.date)
+                    .toISOString()
+                    .split('T')[0];
                   const selDate = selectedDate.toISOString().split('T')[0];
                   return eventDate === selDate;
                 })
-                .map(event => (
+                .map((event) => (
                   <TouchableOpacity
                     key={event.id}
                     style={styles.calendarEventItem}
                     onPress={() => handleEventPress(event)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[
-                      styles.calendarEventDot,
-                      {
-                        backgroundColor:
-                          event.type === 'patient'
-                            ? '#46B7C6'
-                            : event.type === 'meeting'
+                    activeOpacity={0.7}>
+                    <View
+                      style={[
+                        styles.calendarEventDot,
+                        {
+                          backgroundColor:
+                            event.type === 'patient'
+                              ? '#46B7C6'
+                              : event.type === 'meeting'
                               ? '#7C3AED'
                               : '#FB923C',
-                      },
-                    ]} />
+                        },
+                      ]}
+                    />
                     <Text style={styles.calendarEventTitle}>{event.title}</Text>
                     {event.duration && (
-                      <Text style={styles.calendarEventTime}>{event.duration}</Text>
+                      <Text style={styles.calendarEventTime}>
+                        {event.duration}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 ))}
-              {events.filter(event => {
-                const eventDate = new Date(event.date).toISOString().split('T')[0];
+              {events.filter((event) => {
+                const eventDate = new Date(event.date)
+                  .toISOString()
+                  .split('T')[0];
                 const selDate = selectedDate.toISOString().split('T')[0];
                 return eventDate === selDate;
               }).length === 0 && (
-                  <Text style={styles.noEventsText}>{t('calendar.noEventsOnDay')}</Text>
-                )}
+                <Text style={styles.noEventsText}>
+                  {t('calendar.noEventsOnDay')}
+                </Text>
+              )}
             </View>
           </View>
         )}
@@ -817,8 +850,7 @@ const Home = () => {
                 <TouchableOpacity
                   style={styles.headerButton}
                   onPress={toggleSelectionMode}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Edit2
                     size={22}
                     color={selectionMode ? '#EF4444' : colors.primary}
@@ -835,12 +867,15 @@ const Home = () => {
                     toggleSelectionMode();
                   }
                 }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 {showCalendar ? (
                   <X size={22} color={colors.primary} strokeWidth={2} />
                 ) : (
-                  <Calendar size={22} color={colors.primary} strokeWidth={1.5} />
+                  <Calendar
+                    size={22}
+                    color={colors.primary}
+                    strokeWidth={1.5}
+                  />
                 )}
               </TouchableOpacity>
             </View>
@@ -852,39 +887,38 @@ const Home = () => {
             <View style={styles.stickyTabsWrapper}>
               <View style={styles.tabsContainer}>
                 <View style={styles.tabsRow}>
-                  {(['patients', 'meetings', 'lectures'] as TabName[]).map(tab => (
-                    <TouchableOpacity
-                      key={tab}
-                      style={[
-                        styles.tabButton,
-                        activeTab === tab && styles.activeTabButton,
-                      ]}
-                      onPress={() => setActiveTab(tab)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.tabContent}>
-                        {getTabIcon(tab, activeTab === tab)}
-                        <Text
-                          variant="bodyMedium"
-                          style={[
-                            styles.tabText,
-                            activeTab === tab && styles.activeTabText,
-                          ]}
-                        >
-                          {t(`tabs.${tab}`)}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                  {(['patients', 'meetings', 'lectures'] as TabName[]).map(
+                    (tab) => (
+                      <TouchableOpacity
+                        key={tab}
+                        style={[
+                          styles.tabButton,
+                          activeTab === tab && styles.activeTabButton,
+                        ]}
+                        onPress={() => setActiveTab(tab)}
+                        activeOpacity={0.7}>
+                        <View style={styles.tabContent}>
+                          {getTabIcon(tab, activeTab === tab)}
+                          <Text
+                            variant="bodyMedium"
+                            style={[
+                              styles.tabText,
+                              activeTab === tab && styles.activeTabText,
+                            ]}>
+                            {t(`tabs.${tab}`)}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ),
+                  )}
                 </View>
               </View>
             </View>
           )}
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.keyboardAvoidingView}
-          >
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}>
             <ScrollView
               ref={scrollViewRef}
               style={styles.scrollContainer}
@@ -921,7 +955,7 @@ const Home = () => {
                     <FlatList
                       data={filteredEvents}
                       renderItem={renderEventItem}
-                      keyExtractor={item => item.id}
+                      keyExtractor={(item) => item.id}
                       scrollEnabled={false}
                       showsVerticalScrollIndicator={false}
                       contentContainerStyle={styles.eventsList}
@@ -945,8 +979,7 @@ const Home = () => {
               <TouchableOpacity
                 style={styles.fab}
                 onPress={handleNewButtonPress}
-                activeOpacity={0.85}
-              >
+                activeOpacity={0.85}>
                 <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>

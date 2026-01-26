@@ -64,7 +64,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {(iconSource || IconComponent) && !loading && (
         <>
           {iconSource ? (
-            <Image source={iconSource} style={styles.leftIcon} resizeMode="contain" />
+            <Image
+              source={iconSource}
+              style={styles.leftIcon}
+              resizeMode="contain"
+            />
           ) : IconComponent ? (
             <IconComponent
               size={hp(2)}
@@ -76,7 +80,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       )}
 
       {loading ? (
-        <ActivityIndicator color={loaderColor} size="small" testID="button-loading" />
+        <ActivityIndicator
+          color={loaderColor}
+          size="small"
+          testID="button-loading"
+        />
       ) : (
         text && (
           <Text
@@ -86,8 +94,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
               {
                 color: isDisabled ? colors.onSurfaceDisabled : textColor,
               },
-            ]}
-          >
+            ]}>
             {text}
           </Text>
         )
@@ -96,7 +103,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {iconRight && iconSourceRight && !loading ? (
         <>
           <View style={styles.iconSpacing} />
-          <Image source={iconSourceRight} style={styles.rightIcon} resizeMode="contain" />
+          <Image
+            source={iconSourceRight}
+            style={styles.rightIcon}
+            resizeMode="contain"
+          />
         </>
       ) : (iconSource || IconComponent) && !loading ? (
         <View style={styles.iconPlaceholder} />
@@ -128,8 +139,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
-      accessibilityLabel={accessibilityLabel || text}
-    >
+      accessibilityLabel={accessibilityLabel || text}>
       <View
         style={[
           styles.solidBackground,
@@ -140,8 +150,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
             borderColor: isDisabled ? colors.surfaceDisabled : borderColor,
             borderWidth: 1,
           },
-        ]}
-      >
+        ]}>
         {buttonContent}
       </View>
     </TouchableOpacity>

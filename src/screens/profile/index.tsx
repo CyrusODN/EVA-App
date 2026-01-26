@@ -51,7 +51,8 @@ const Profile = () => {
     let mounted = true;
     const load = async () => {
       const token =
-        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (!token) return;
       setAuthToken(token);
       try {
@@ -67,8 +68,7 @@ const Profile = () => {
         const ctxUser: any = {
           email: ctx?.email || '',
           name:
-            ctx?.fname ||
-            (ctx?.email ? String(ctx.email).split('@')[0] : ''),
+            ctx?.fname || (ctx?.email ? String(ctx.email).split('@')[0] : ''),
           profilePicture: ctx?.profileImage || '',
           role: ctx?.role,
           settings: ctx?.settings,
@@ -126,10 +126,15 @@ const Profile = () => {
       });
       if (res.didCancel) return;
       if (res.errorMessage || res.errorCode) {
-        customToast('error', 'Error', res.errorMessage || 'Failed to open gallery');
+        customToast(
+          'error',
+          'Error',
+          res.errorMessage || 'Failed to open gallery',
+        );
         return;
       }
-      const asset = res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
+      const asset =
+        res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
       if (!asset || !asset.uri) {
         customToast('error', 'Error', 'No image selected');
         return;
@@ -142,7 +147,8 @@ const Profile = () => {
       setUser((prev: any) => ({ ...prev, profilePicture: asset.uri }));
       setUploading(true);
       const token =
-        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       const form = new FormData();
       form.append('profileImage', {
@@ -176,7 +182,9 @@ const Profile = () => {
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || 'Failed to upload image';
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to upload image';
       customToast('error', 'Error', message);
     } finally {
       setUploading(false);
@@ -212,7 +220,8 @@ const Profile = () => {
     setUploading(true);
     try {
       const token =
-        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       const form = new FormData();
       form.append('profileImage', {
@@ -246,7 +255,9 @@ const Profile = () => {
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || 'Failed to upload image';
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to upload image';
       customToast('error', 'Error', message);
     } finally {
       setUploading(false);
@@ -259,7 +270,8 @@ const Profile = () => {
     setUploading(true);
     try {
       const token =
-        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       try {
         await api.delete('/auth/profile-image');
@@ -277,7 +289,9 @@ const Profile = () => {
       customToast('success', 'Success', 'Profile image removed');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || 'Failed to remove image';
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to remove image';
       customToast('error', 'Error', message);
     } finally {
       setUploading(false);
@@ -305,7 +319,8 @@ const Profile = () => {
   const performDeleteAccount = async () => {
     try {
       const token =
-        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       await api.post('/auth/delete-account', {});
       customToast('success', 'Success', 'Account deleted');
@@ -352,9 +367,7 @@ const Profile = () => {
       <Text variant="bodyMedium" style={styles.sectionTitle}>
         {title}
       </Text>
-      <View style={styles.sectionContent}>
-      {children}
-      </View>
+      <View style={styles.sectionContent}>{children}</View>
     </View>
   );
 
@@ -375,8 +388,7 @@ const Profile = () => {
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={styles.listItem}
-    >
+      style={styles.listItem}>
       <View style={styles.listItemIconContainer}>
         <Icon size={20} color="#46B7C6" strokeWidth={2} />
       </View>
@@ -389,8 +401,7 @@ const Profile = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
@@ -407,8 +418,7 @@ const Profile = () => {
             <TouchableOpacity
               style={styles.editButton}
               onPress={() => setShowPickerSheet(true)}
-              activeOpacity={0.8}
-            >
+              activeOpacity={0.8}>
               <Camera size={18} color="white" strokeWidth={2} />
             </TouchableOpacity>
           </View>
@@ -472,13 +482,12 @@ const Profile = () => {
               {t('Update profile picture') || 'Update Profile Photo'}
             </Text>
             <View style={styles.sheetList}>
-              <TouchableOpacity 
-                onPress={handleImagePicker} 
-                disabled={uploading} 
+              <TouchableOpacity
+                onPress={handleImagePicker}
+                disabled={uploading}
                 accessibilityLabel="Choose from Photos"
                 style={styles.sheetItem}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.sheetItemIcon}>
                   <ImageIcon size={20} color="#46B7C6" strokeWidth={2} />
                 </View>
@@ -486,16 +495,15 @@ const Profile = () => {
                   {t('Choose Photo') || 'Choose from Photos'}
                 </Text>
               </TouchableOpacity>
-              
+
               <Divider style={styles.sheetDivider} />
-              
-              <TouchableOpacity 
-                onPress={pickFromFiles} 
-                disabled={uploading} 
+
+              <TouchableOpacity
+                onPress={pickFromFiles}
+                disabled={uploading}
                 accessibilityLabel="Choose from Files"
                 style={styles.sheetItem}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.sheetItemIcon}>
                   <Folder size={20} color="#46B7C6" strokeWidth={2} />
                 </View>
@@ -503,16 +511,15 @@ const Profile = () => {
                   {t('Select Files') || 'Select Files'}
                 </Text>
               </TouchableOpacity>
-              
+
               <Divider style={styles.sheetDivider} />
-              
-              <TouchableOpacity 
-                onPress={handleDeletePhoto} 
-                disabled={uploading} 
+
+              <TouchableOpacity
+                onPress={handleDeletePhoto}
+                disabled={uploading}
                 accessibilityLabel="Delete Photo"
                 style={styles.sheetItem}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.sheetItemIcon}>
                   <Trash2 size={20} color="#EF4444" strokeWidth={2} />
                 </View>
@@ -520,16 +527,15 @@ const Profile = () => {
                   {t('Delete Photo') || 'Delete Photo'}
                 </Text>
               </TouchableOpacity>
-              
+
               <Divider style={styles.sheetDivider} />
-              
-              <TouchableOpacity 
-                onPress={() => setShowPickerSheet(false)} 
-                disabled={uploading} 
+
+              <TouchableOpacity
+                onPress={() => setShowPickerSheet(false)}
+                disabled={uploading}
                 accessibilityLabel="Cancel"
                 style={styles.sheetItem}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.sheetItemIcon}>
                   <X size={20} color="#64748B" strokeWidth={2} />
                 </View>

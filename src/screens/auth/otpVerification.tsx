@@ -49,7 +49,14 @@ const OtpVerification = () => {
   const route = useRoute<any>();
   const params: OtpParams = route?.params || {};
   const RESEND_SECONDS = 300;
-  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState<string[]>([
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+  ]);
   const [loading, setLoading] = useState(false);
   const [canResend, setCanResend] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
@@ -57,9 +64,9 @@ const OtpVerification = () => {
   const [currentRequestId, setCurrentRequestId] = useState<string | undefined>(
     params.requestId,
   );
-  const [currentLoginToken, setCurrentLoginToken] = useState<string | undefined>(
-    params.loginToken,
-  );
+  const [currentLoginToken, setCurrentLoginToken] = useState<
+    string | undefined
+  >(params.loginToken);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(
     params.userId,
   );
@@ -84,7 +91,7 @@ const OtpVerification = () => {
   useEffect(() => {
     if (expired) return;
     if (secondsLeft > 0) {
-      const timer = setTimeout(() => setSecondsLeft(prev => prev - 1), 1000);
+      const timer = setTimeout(() => setSecondsLeft((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
     }
     setExpired(true);
@@ -231,9 +238,17 @@ const OtpVerification = () => {
           const ctx = authCtx?.data?.data;
           if (ctx) {
             const userObj: any = {
-              id: ctx._id || ctx.id || ctx.userId || payload?.userId || payload?.id,
+              id:
+                ctx._id ||
+                ctx.id ||
+                ctx.userId ||
+                payload?.userId ||
+                payload?.id,
               email: ctx.email || '',
-              name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
+              name:
+                ctx.fname ||
+                ctx.name ||
+                (ctx.email ? String(ctx.email).split('@')[0] : ''),
               profilePicture: ctx.profileImage || '',
               role: ctx.role,
               settings: ctx.settings,
@@ -244,7 +259,10 @@ const OtpVerification = () => {
             await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
           }
         } catch (ctxError) {
-          console.warn('[OtpVerification] Failed to fetch auth context:', ctxError);
+          console.warn(
+            '[OtpVerification] Failed to fetch auth context:',
+            ctxError,
+          );
         }
 
         customToast('success', 'Success', 'Verified successfully');
@@ -253,7 +271,11 @@ const OtpVerification = () => {
           routes: [{ name: params.nextRoute || 'tabs' }],
         });
       } else {
-        customToast('error', 'Error', raw?.message || 'Invalid verification response');
+        customToast(
+          'error',
+          'Error',
+          raw?.message || 'Invalid verification response',
+        );
       }
     } catch (error: any) {
       const message =
@@ -282,7 +304,7 @@ const OtpVerification = () => {
             const p = await AsyncStorage.getItem('last_login_password');
             if (p) password = p;
           }
-        } catch (_) { }
+        } catch (_) {}
         if (!email || !password) {
           customToast('error', 'Error', 'Missing email or password for resend');
           setLoading(false);
@@ -349,16 +371,14 @@ const OtpVerification = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            bounces={false}
-          >
+            bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
@@ -386,67 +406,67 @@ const OtpVerification = () => {
                   ref={d0}
                   style={[styles.otpBox, expired && styles.otpBoxDisabled]}
                   value={otpDigits[0]}
-                  onChangeText={t => handleDigitChange(0, t)}
+                  onChangeText={(t) => handleDigitChange(0, t)}
                   keyboardType="number-pad"
                   maxLength={6}
                   textContentType="oneTimeCode"
                   editable={!expired}
-                  onKeyPress={e => handleKeyPress(0, e)}
+                  onKeyPress={(e) => handleKeyPress(0, e)}
                 />
                 <TextInput
                   ref={d1}
                   style={[styles.otpBox, expired && styles.otpBoxDisabled]}
                   value={otpDigits[1]}
-                  onChangeText={t => handleDigitChange(1, t)}
+                  onChangeText={(t) => handleDigitChange(1, t)}
                   keyboardType="number-pad"
                   maxLength={6}
                   textContentType="oneTimeCode"
                   editable={!expired}
-                  onKeyPress={e => handleKeyPress(1, e)}
+                  onKeyPress={(e) => handleKeyPress(1, e)}
                 />
                 <TextInput
                   ref={d2}
                   style={[styles.otpBox, expired && styles.otpBoxDisabled]}
                   value={otpDigits[2]}
-                  onChangeText={t => handleDigitChange(2, t)}
+                  onChangeText={(t) => handleDigitChange(2, t)}
                   keyboardType="number-pad"
                   maxLength={6}
                   textContentType="oneTimeCode"
                   editable={!expired}
-                  onKeyPress={e => handleKeyPress(2, e)}
+                  onKeyPress={(e) => handleKeyPress(2, e)}
                 />
                 <TextInput
                   ref={d3}
                   style={[styles.otpBox, expired && styles.otpBoxDisabled]}
                   value={otpDigits[3]}
-                  onChangeText={t => handleDigitChange(3, t)}
+                  onChangeText={(t) => handleDigitChange(3, t)}
                   keyboardType="number-pad"
                   maxLength={6}
                   textContentType="oneTimeCode"
                   editable={!expired}
-                  onKeyPress={e => handleKeyPress(3, e)}
+                  onKeyPress={(e) => handleKeyPress(3, e)}
                 />
                 <TextInput
                   ref={d4}
                   style={[styles.otpBox, expired && styles.otpBoxDisabled]}
                   value={otpDigits[4]}
-                  onChangeText={t => handleDigitChange(4, t)}
+                  onChangeText={(t) => handleDigitChange(4, t)}
                   keyboardType="number-pad"
                   maxLength={6}
                   textContentType="oneTimeCode"
                   editable={!expired}
-                  onKeyPress={e => handleKeyPress(4, e)}
+                  onKeyPress={(e) => handleKeyPress(4, e)}
                 />
                 <TextInput
                   ref={d5}
                   style={[styles.otpBox, expired && styles.otpBoxDisabled]}
                   value={otpDigits[5]}
-                  onChangeText={t => handleDigitChange(5, t)}
+                  onChangeText={(t) => handleDigitChange(5, t)}
                   keyboardType="number-pad"
                   maxLength={6}
                   textContentType="oneTimeCode"
                   editable={!expired}
-                  onKeyPress={e => handleKeyPress(5, e)}
+                  onKeyPress={(e) => handleKeyPress(5, e)}
                 />
               </View>
 
@@ -467,20 +487,20 @@ const OtpVerification = () => {
 
               <View style={styles.resendContainer}>
                 <Text variant="bodySmall" style={styles.resendText}>
-                  {expired ? 'Code expired' : `${t('login.resendCodeIn')} ${formatTime(secondsLeft)}`}
+                  {expired
+                    ? 'Code expired'
+                    : `${t('login.resendCodeIn')} ${formatTime(secondsLeft)}`}
                 </Text>
                 <TouchableOpacity
                   disabled={!canResend}
                   onPress={handleResend}
-                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
                   <Text
                     variant="bodySmall"
                     style={[
                       styles.resendLink,
                       { opacity: canResend ? 1 : 0.5 },
-                    ]}
-                  >
+                    ]}>
                     {t('login.resendVerificationCode')}
                   </Text>
                 </TouchableOpacity>

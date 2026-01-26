@@ -62,15 +62,13 @@ const ForgotPassword = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            bounces={false}
-          >
+            bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
@@ -131,7 +129,9 @@ const ForgotPassword = () => {
                 // Success State
                 <View style={styles.successContainer}>
                   <View style={styles.successIcon}>
-                    <Text variant="displaySmall" style={styles.checkmark}>✓</Text>
+                    <Text variant="displaySmall" style={styles.checkmark}>
+                      ✓
+                    </Text>
                   </View>
                   <Text variant="headlineMedium" style={styles.successTitle}>
                     {t('login.resetLinkSent')}
@@ -146,8 +146,7 @@ const ForgotPassword = () => {
               <View style={styles.signUpSection}>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('login' as never)}
-                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
                   <Text variant="bodyMedium" style={styles.signUpText}>
                     ← {t('login.backToLogin')}
                   </Text>

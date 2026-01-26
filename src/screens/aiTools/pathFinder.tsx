@@ -139,18 +139,26 @@ const Pathfinder = () => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [prompt, setPrompt] = useState<string>('');
-  const [selectedContentType, setSelectedContentType] = useState<ContentTypeId>('literature_review');
-  const [selectedCitationStyle, setSelectedCitationStyle] = useState<CitationStyle>('APA');
-  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
+  const [selectedContentType, setSelectedContentType] =
+    useState<ContentTypeId>('literature_review');
+  const [selectedCitationStyle, setSelectedCitationStyle] =
+    useState<CitationStyle>('APA');
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(
+    new Set(),
+  );
   const [keywords, setKeywords] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
+  const [generatedContent, setGeneratedContent] =
+    useState<GeneratedContent | null>(null);
+  const [showAdvancedOptions, setShowAdvancedOptions] =
+    useState<boolean>(false);
 
   // Dialog states
-  const [showNewProjectDialog, setShowNewProjectDialog] = useState<boolean>(false);
+  const [showNewProjectDialog, setShowNewProjectDialog] =
+    useState<boolean>(false);
   const [newProjectName, setNewProjectName] = useState<string>('');
-  const [newProjectDescription, setNewProjectDescription] = useState<string>('');
+  const [newProjectDescription, setNewProjectDescription] =
+    useState<string>('');
 
   // Form states for new project creation
   const [researchTopic, setResearchTopic] = useState<string>('');
@@ -185,7 +193,7 @@ const Pathfinder = () => {
       documents: uploadedFiles,
     };
 
-    setProjects(prev => [...prev, newProject]);
+    setProjects((prev) => [...prev, newProject]);
     setSelectedProject(newProject);
     setResearchTopic('');
     setNewProjectDescription('');
@@ -213,7 +221,7 @@ const Pathfinder = () => {
           uri: file.uri,
           type: file.type,
         }));
-        setUploadedFiles(prev => [...prev, ...newFiles]);
+        setUploadedFiles((prev) => [...prev, ...newFiles]);
       }
     } catch (err: any) {
       console.error('Error picking document:', err);
@@ -234,17 +242,17 @@ const Pathfinder = () => {
       status: 'pending',
     };
 
-    setDocuments(prev => [...prev, mockDoc]);
+    setDocuments((prev) => [...prev, mockDoc]);
 
     setTimeout(() => {
-      setDocuments(prev =>
-        prev.map(d =>
+      setDocuments((prev) =>
+        prev.map((d) =>
           d.id === mockDoc.id ? { ...d, status: 'processing' } : d,
         ),
       );
       setTimeout(() => {
-        setDocuments(prev =>
-          prev.map(d =>
+        setDocuments((prev) =>
+          prev.map((d) =>
             d.id === mockDoc.id ? { ...d, status: 'indexed' } : d,
           ),
         );
@@ -310,14 +318,12 @@ const Pathfinder = () => {
           setUploadedFiles([]);
           setShowNewProjectDialog(true);
         }}
-        activeOpacity={0.8}
-      >
+        activeOpacity={0.8}>
         <LinearGradient
           colors={LinearGradientColors}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={styles.newProjectButtonGradient}
-        >
+          style={styles.newProjectButtonGradient}>
           <Plus size={hp(2.5)} color="white" strokeWidth={3} />
         </LinearGradient>
       </TouchableOpacity>
@@ -325,8 +331,7 @@ const Pathfinder = () => {
         <ScrollView
           style={styles.contentScroll}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.emptyStateContainer}
-        >
+          contentContainerStyle={styles.emptyStateContainer}>
           {/* Empty State - Create First Project */}
           <View style={styles.emptyStateContent}>
             {/* Large Gradient Magnifying Glass Icon */}
@@ -335,8 +340,7 @@ const Pathfinder = () => {
                 colors={LinearGradientColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.magnifyingGlassGradient}
-              >
+                style={styles.magnifyingGlassGradient}>
                 <Search size={hp(4)} color="white" strokeWidth={2.5} />
               </LinearGradient>
             </View>
@@ -377,14 +381,12 @@ const Pathfinder = () => {
                 <TouchableOpacity
                   style={styles.uploadArea}
                   onPress={handleFileUpload}
-                  activeOpacity={0.7}
-                >
+                  activeOpacity={0.7}>
                   <LinearGradient
                     colors={LinearGradientColors}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.uploadIconContainer}
-                  >
+                    style={styles.uploadIconContainer}>
                     <Upload size={hp(4)} color="white" strokeWidth={2} />
                   </LinearGradient>
                   <Text variant="bodyMedium" style={styles.uploadText}>
@@ -401,18 +403,16 @@ const Pathfinder = () => {
                           <Text
                             variant="bodySmall"
                             style={styles.uploadedFileName}
-                            numberOfLines={1}
-                          >
+                            numberOfLines={1}>
                             {file.name}
                           </Text>
                           <TouchableOpacity
                             onPress={() =>
-                              setUploadedFiles(prev =>
-                                prev.filter(f => f.id !== file.id),
+                              setUploadedFiles((prev) =>
+                                prev.filter((f) => f.id !== file.id),
                               )
                             }
-                            style={styles.removeFileButton}
-                          >
+                            style={styles.removeFileButton}>
                             <X size={16} color={colors.onSurfaceVariant} />
                           </TouchableOpacity>
                         </View>
@@ -448,15 +448,13 @@ const Pathfinder = () => {
 
           <ScrollView
             style={styles.contentScroll}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             <View style={styles.projectsGrid}>
-              {filteredProjects.map(project => (
+              {filteredProjects.map((project) => (
                 <TouchableOpacity
                   key={project.id}
                   style={styles.projectCardMobile}
-                  onPress={() => handleSelectProject(project)}
-                >
+                  onPress={() => handleSelectProject(project)}>
                   <View style={styles.projectCardHeader}>
                     <Folder size={24} color={colors.lightGreen} />
                     <TouchableOpacity style={styles.projectOptionsButton}>
@@ -469,8 +467,7 @@ const Pathfinder = () => {
                   {project.description && (
                     <Text
                       variant="bodySmall"
-                      style={styles.projectCardDescription}
-                    >
+                      style={styles.projectCardDescription}>
                       {project.description}
                     </Text>
                   )}
@@ -487,8 +484,7 @@ const Pathfinder = () => {
           <View style={styles.floatingButtonContainer}>
             <TouchableOpacity
               style={styles.floatingActionButton}
-              onPress={() => setShowNewProjectDialog(true)}
-            >
+              onPress={() => setShowNewProjectDialog(true)}>
               <Plus size={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -502,8 +498,7 @@ const Pathfinder = () => {
     <View style={styles.viewContainer}>
       <ScrollView
         style={styles.contentScroll}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Project Info */}
         <View style={styles.projectInfoCard}>
           <View style={styles.projectInfoHeader}>
@@ -514,8 +509,7 @@ const Pathfinder = () => {
               {selectedProject?.description && (
                 <Text
                   variant="bodyMedium"
-                  style={styles.projectInfoDescription}
-                >
+                  style={styles.projectInfoDescription}>
                   {selectedProject.description}
                 </Text>
               )}
@@ -561,8 +555,7 @@ const Pathfinder = () => {
           <View style={styles.quickActionsGrid}>
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={handleAddDocument}
-            >
+              onPress={handleAddDocument}>
               <Upload size={24} color={colors.lightGreen} />
               <Text variant="bodyMedium" style={styles.quickActionText}>
                 Add Document
@@ -570,8 +563,7 @@ const Pathfinder = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickActionButton}
-              onPress={() => setCurrentView('assistant')}
-            >
+              onPress={() => setCurrentView('assistant')}>
               <Brain size={24} color={colors.lightGreen} />
               <Text variant="bodyMedium" style={styles.quickActionText}>
                 AI Assistant
@@ -580,8 +572,7 @@ const Pathfinder = () => {
             {generatedContent && (
               <TouchableOpacity
                 style={styles.quickActionButton}
-                onPress={() => setCurrentView('generated')}
-              >
+                onPress={() => setCurrentView('generated')}>
                 <FileText size={24} color={colors.lightGreen} />
                 <Text variant="bodyMedium" style={styles.quickActionText}>
                   View Generated
@@ -605,8 +596,7 @@ const Pathfinder = () => {
           {documents.length === 0 ? (
             <TouchableOpacity
               style={styles.emptyDocumentsCard}
-              onPress={handleAddDocument}
-            >
+              onPress={handleAddDocument}>
               <Upload size={32} color={colors.onSurfaceVariant} />
               <Text variant="bodyMedium" style={styles.emptyDocumentsText}>
                 {t('remediusPathfinder.dropzone.prompt')}
@@ -617,7 +607,7 @@ const Pathfinder = () => {
             </TouchableOpacity>
           ) : (
             <View style={styles.documentsGrid}>
-              {documents.map(doc => (
+              {documents.map((doc) => (
                 <TouchableOpacity
                   key={doc.id}
                   style={[
@@ -626,14 +616,13 @@ const Pathfinder = () => {
                       styles.selectedDocumentCardMobile,
                   ]}
                   onPress={() => {
-                    setSelectedDocuments(prev => {
+                    setSelectedDocuments((prev) => {
                       const next = new Set(prev);
                       if (next.has(doc.id)) next.delete(doc.id);
                       else next.add(doc.id);
                       return next;
                     });
-                  }}
-                >
+                  }}>
                   <View style={styles.documentCardHeader}>
                     <FileText
                       size={20}
@@ -647,12 +636,10 @@ const Pathfinder = () => {
                       style={[
                         styles.documentStatusBadge,
                         styles[statusStyleMap[doc.status]],
-                      ]}
-                    >
+                      ]}>
                       <Text
                         variant="labelSmall"
-                        style={styles.documentStatusText}
-                      >
+                        style={styles.documentStatusText}>
                         {translateDocStatus(doc.status)}
                       </Text>
                     </View>
@@ -660,8 +647,7 @@ const Pathfinder = () => {
                   <Text
                     variant="bodyMedium"
                     style={styles.documentCardTitle}
-                    numberOfLines={2}
-                  >
+                    numberOfLines={2}>
                     {doc.name}
                   </Text>
                   <View style={styles.documentCardFooter}>
@@ -686,8 +672,7 @@ const Pathfinder = () => {
     <View style={styles.viewContainer}>
       <ScrollView
         style={styles.contentScroll}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         <View style={styles.assistantCard}>
           <Text variant="headlineSmall" style={styles.assistantTitle}>
             AI Research Assistant
@@ -703,16 +688,15 @@ const Pathfinder = () => {
                 Selected Documents ({selectedDocuments.size})
               </Text>
               <View style={styles.selectedDocumentsList}>
-                {Array.from(selectedDocuments).map(docId => {
-                  const doc = documents.find(d => d.id === docId);
+                {Array.from(selectedDocuments).map((docId) => {
+                  const doc = documents.find((d) => d.id === docId);
                   return doc ? (
                     <View key={docId} style={styles.selectedDocumentItem}>
                       <FileText size={16} color={colors.lightGreen} />
                       <Text
                         variant="bodySmall"
                         style={styles.selectedDocumentName}
-                        numberOfLines={1}
-                      >
+                        numberOfLines={1}>
                         {doc.name}
                       </Text>
                     </View>
@@ -728,7 +712,7 @@ const Pathfinder = () => {
               {t('remediusPathfinder.labels.contentType')}
             </Text>
             <View style={styles.contentTypeGrid}>
-              {CONTENT_TYPES.map(type => (
+              {CONTENT_TYPES.map((type) => (
                 <TouchableOpacity
                   key={type.id}
                   style={[
@@ -736,16 +720,14 @@ const Pathfinder = () => {
                     selectedContentType === type.id &&
                       styles.selectedContentTypeButtonMobile,
                   ]}
-                  onPress={() => setSelectedContentType(type.id)}
-                >
+                  onPress={() => setSelectedContentType(type.id)}>
                   <Text
                     variant="bodySmall"
                     style={[
                       styles.contentTypeTextMobile,
                       selectedContentType === type.id &&
                         styles.selectedContentTypeTextMobile,
-                    ]}
-                  >
+                    ]}>
                     {t(`remediusPathfinder.contentTypes.${type.id}`)}
                   </Text>
                 </TouchableOpacity>
@@ -756,8 +738,7 @@ const Pathfinder = () => {
           {/* Advanced Options Toggle */}
           <TouchableOpacity
             style={styles.advancedToggle}
-            onPress={() => setShowAdvancedOptions(!showAdvancedOptions)}
-          >
+            onPress={() => setShowAdvancedOptions(!showAdvancedOptions)}>
             <Text variant="bodyMedium" style={styles.advancedToggleText}>
               Advanced Options
             </Text>
@@ -777,7 +758,7 @@ const Pathfinder = () => {
                 </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.citationStyleRow}>
-                    {CITATION_STYLES.map(style => (
+                    {CITATION_STYLES.map((style) => (
                       <TouchableOpacity
                         key={style}
                         style={[
@@ -785,16 +766,14 @@ const Pathfinder = () => {
                           selectedCitationStyle === style &&
                             styles.selectedCitationStyleButtonMobile,
                         ]}
-                        onPress={() => setSelectedCitationStyle(style)}
-                      >
+                        onPress={() => setSelectedCitationStyle(style)}>
                         <Text
                           variant="bodySmall"
                           style={[
                             styles.citationStyleTextMobile,
                             selectedCitationStyle === style &&
                               styles.selectedCitationStyleTextMobile,
-                          ]}
-                        >
+                          ]}>
                           {style}
                         </Text>
                       </TouchableOpacity>
@@ -857,14 +836,12 @@ const Pathfinder = () => {
       {generatedContent ? (
         <ScrollView
           style={styles.contentScroll}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View style={styles.generatedContentCard}>
             <View style={styles.generatedContentHeader}>
               <Text
                 variant="headlineSmall"
-                style={styles.generatedContentTitle}
-              >
+                style={styles.generatedContentTitle}>
                 Generated Content
               </Text>
               <View style={styles.generatedContentActions}>
@@ -902,16 +879,15 @@ const Pathfinder = () => {
               <Text variant="titleMedium" style={styles.sourcesTitle}>
                 Sources Used ({generatedContent.sources.length})
               </Text>
-              {generatedContent.sources.map(sourceId => {
-                const doc = documents.find(d => d.id === sourceId);
+              {generatedContent.sources.map((sourceId) => {
+                const doc = documents.find((d) => d.id === sourceId);
                 return doc ? (
                   <View key={sourceId} style={styles.sourceItem}>
                     <FileText size={16} color={colors.lightGreen} />
                     <Text
                       variant="bodySmall"
                       style={styles.sourceName}
-                      numberOfLines={1}
-                    >
+                      numberOfLines={1}>
                       {doc.name}
                     </Text>
                     <TouchableOpacity style={styles.sourceViewButton}>
@@ -996,8 +972,7 @@ const Pathfinder = () => {
               colors={['#53A0CD', '#44C2AD']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
+              style={styles.headerIconContainer}>
               <FileText size={20} color="white" />
             </LinearGradient>
             <View style={styles.headerTextContainer}>
@@ -1028,8 +1003,7 @@ const Pathfinder = () => {
                   {t('remediusPathfinder.newProjectDialog.title')}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setShowNewProjectDialog(false)}
-                >
+                  onPress={() => setShowNewProjectDialog(false)}>
                   <X size={24} color={colors.onSurface} />
                 </TouchableOpacity>
               </View>

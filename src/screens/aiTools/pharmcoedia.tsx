@@ -139,10 +139,10 @@ const MOCK_VISITS: Visit[] = [
 const Pharmcoedia = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  
+
   // Main navigation state
   const [activeTab, setActiveTab] = useState<ActiveTab>('assistant');
-  
+
   // Chat state
   const [chatTabs, setChatTabs] = useState<ChatTab[]>([
     {
@@ -153,20 +153,24 @@ const Pharmcoedia = () => {
     },
   ]);
   const [activeTabId, setActiveTabId] = useState<string>(chatTabs[0].id);
-  
+
   // Dialog states
-  const [showPatientProfileDialog, setShowPatientProfileDialog] = useState<boolean>(false);
-  const [showVisitSelectDialog, setShowVisitSelectDialog] = useState<boolean>(false);
+  const [showPatientProfileDialog, setShowPatientProfileDialog] =
+    useState<boolean>(false);
+  const [showVisitSelectDialog, setShowVisitSelectDialog] =
+    useState<boolean>(false);
   const [showChatTabsModal, setShowChatTabsModal] = useState<boolean>(false);
-  const [profileDialogTab, setProfileDialogTab] = useState<'import' | 'manual'>('import');
-  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set(),);
+  const [profileDialogTab, setProfileDialogTab] = useState<'import' | 'manual'>(
+    'import',
+  );
+  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [manualProfileText, setManualProfileText] = useState<string>('');
-  
+
   // Drug interaction state
   const [selectedDrugs, setSelectedDrugs] = useState<string[]>([]);
   const [drugInput, setDrugInput] = useState<string>('');
-  const [drugInteractions, setDrugInteractions] = useState<Interaction[]>([],);
+  const [drugInteractions, setDrugInteractions] = useState<Interaction[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -175,12 +179,13 @@ const Pharmcoedia = () => {
         const raw = resp?.data;
         const payload = raw?.data || raw;
         const svcToken =
-          payload?.token ||
-          payload?.chatbotToken ||
-          payload?.serviceToken;
+          payload?.token || payload?.chatbotToken || payload?.serviceToken;
         if (svcToken) {
           try {
-            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
+            await AsyncStorage.setItem(
+              'chatbot_service_token',
+              String(svcToken),
+            );
           } catch (_) {}
         }
       } catch (_) {}
@@ -192,34 +197,35 @@ const Pharmcoedia = () => {
   };
 
   const handleSendMessage = (tabId: string) => {
-    const tab = chatTabs.find(t => t.id === tabId);
+    const tab = chatTabs.find((t) => t.id === tabId);
     if (!tab || !tab.currentMessage.trim()) return;
-    
+
     const userMessage: ChatMessage = {
       id: nanoid(),
       role: 'user',
       content: tab.currentMessage,
       timestamp: new Date(),
     };
-    
-    const updatedTabs = chatTabs.map(t =>
+
+    const updatedTabs = chatTabs.map((t) =>
       t.id === tabId
         ? { ...t, messages: [...t.messages, userMessage], currentMessage: '' }
-        : t
+        : t,
     );
     setChatTabs(updatedTabs);
-    
+
     setTimeout(() => {
       const assistantResponse: ChatMessage = {
         id: nanoid(),
         role: 'assistant',
-        content: 'Based on the patient profile and current medications, I recommend...',
+        content:
+          'Based on the patient profile and current medications, I recommend...',
         timestamp: new Date(),
       };
-      const updatedTabsWithResponse = updatedTabs.map(t =>
-        t.id === tabId 
-          ? { ...t, messages: [...t.messages, assistantResponse] } 
-          : t
+      const updatedTabsWithResponse = updatedTabs.map((t) =>
+        t.id === tabId
+          ? { ...t, messages: [...t.messages, assistantResponse] }
+          : t,
       );
       setChatTabs(updatedTabsWithResponse);
     }, 1000);
@@ -239,13 +245,13 @@ const Pharmcoedia = () => {
 
   const handleCloseTab = (tabId: string) => {
     if (chatTabs.length === 1) return;
-    const updatedTabs = chatTabs.filter(t => t.id !== tabId);
+    const updatedTabs = chatTabs.filter((t) => t.id !== tabId);
     setChatTabs(updatedTabs);
     if (activeTabId === tabId) setActiveTabId(updatedTabs[0].id);
   };
 
   const handleVisitSelect = (visitId: string) => {
-    setSelectedVisits(prev => {
+    setSelectedVisits((prev) => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
       return next;
@@ -264,7 +270,7 @@ const Pharmcoedia = () => {
       riskFactors: [],
       diagnosis: [],
     };
-    
+
     selectedVisitData.forEach((visit: Visit) => {
       if (visit.note?.content) {
         const lines = visit.note.content.split('\n');
@@ -280,10 +286,12 @@ const Pharmcoedia = () => {
         });
       }
     });
-    
-    setChatTabs(prev => prev.map(tab => 
-      tab.id === activeTabId ? { ...tab, patientProfile: newProfile } : tab
-    ));
+
+    setChatTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === activeTabId ? { ...tab, patientProfile: newProfile } : tab,
+      ),
+    );
     setShowVisitSelectDialog(false);
     setShowPatientProfileDialog(false);
   };
@@ -298,7 +306,7 @@ const Pharmcoedia = () => {
       riskFactors: [],
       diagnosis: [],
     };
-    
+
     lines.forEach((line: string) => {
       if (line.trim())
         newProfile.symptoms.push({
@@ -306,47 +314,61 @@ const Pharmcoedia = () => {
           severity: 'moderate',
         });
     });
-    
-    setChatTabs(prev => prev.map(tab => 
-      tab.id === activeTabId ? { ...tab, patientProfile: newProfile } : tab
-    ));
+
+    setChatTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === activeTabId ? { ...tab, patientProfile: newProfile } : tab,
+      ),
+    );
     setShowPatientProfileDialog(false);
   };
 
   const handleAddDrug = () => {
     if (drugInput.trim() && !selectedDrugs.includes(drugInput.trim())) {
       const newDrug = drugInput.trim();
-      setSelectedDrugs(prev => [...prev, newDrug]);
+      setSelectedDrugs((prev) => [...prev, newDrug]);
       setDrugInput('');
-      
+
       // Mock interaction generation
       if (selectedDrugs.length >= 1) {
-        const severities: Interaction['severity'][] = ['high', 'moderate', 'low'];
+        const severities: Interaction['severity'][] = [
+          'high',
+          'moderate',
+          'low',
+        ];
         const newInteraction: Interaction = {
           id: nanoid(),
           severity: severities[Math.floor(Math.random() * severities.length)],
-          description: `Potential interaction between ${selectedDrugs[selectedDrugs.length - 1]} and ${newDrug}.`,
+          description: `Potential interaction between ${
+            selectedDrugs[selectedDrugs.length - 1]
+          } and ${newDrug}.`,
           mechanism: 'CYP450 enzyme inhibition/induction pathway competition.',
-          recommendation: 'Monitor patient closely, consider dosage adjustment or alternative therapy.',
+          recommendation:
+            'Monitor patient closely, consider dosage adjustment or alternative therapy.',
           drugs: [selectedDrugs[selectedDrugs.length - 1], newDrug],
         };
-        setDrugInteractions(prev => [...prev, newInteraction]);
+        setDrugInteractions((prev) => [...prev, newInteraction]);
       }
     }
   };
 
-  const activeChat = chatTabs.find(tab => tab.id === activeTabId);
+  const activeChat = chatTabs.find((tab) => tab.id === activeTabId);
 
   // Render functions for components
   const renderMessage = ({ item }: { item: ChatMessage }) => (
-    <View style={[
-      styles.messageContainer,
-      item.role === 'user' ? styles.userMessage : styles.assistantMessage
-    ]}>
-      <Text variant="bodyMedium" style={[
-        styles.messageText,
-        item.role === 'user' ? styles.userMessageText : styles.assistantMessageText
+    <View
+      style={[
+        styles.messageContainer,
+        item.role === 'user' ? styles.userMessage : styles.assistantMessage,
       ]}>
+      <Text
+        variant="bodyMedium"
+        style={[
+          styles.messageText,
+          item.role === 'user'
+            ? styles.userMessageText
+            : styles.assistantMessageText,
+        ]}>
         {item.content}
       </Text>
       <Text variant="bodySmall" style={styles.messageTime}>
@@ -359,11 +381,14 @@ const Pharmcoedia = () => {
     <View style={styles.drugCard}>
       <View style={styles.drugHeader}>
         <Pill size={18} color={colors.primary} />
-        <Text variant="titleMedium" style={styles.drugName}>{item}</Text>
+        <Text variant="titleMedium" style={styles.drugName}>
+          {item}
+        </Text>
         <TouchableOpacity
-          onPress={() => setSelectedDrugs(prev => prev.filter(d => d !== item))}
-          style={styles.removeDrugButton}
-        >
+          onPress={() =>
+            setSelectedDrugs((prev) => prev.filter((d) => d !== item))
+          }
+          style={styles.removeDrugButton}>
           <Trash2 size={16} color={colors.error} />
         </TouchableOpacity>
       </View>
@@ -373,53 +398,75 @@ const Pharmcoedia = () => {
   const renderInteraction = ({ item }: { item: Interaction }) => {
     const getSeverityColor = (severity: Interaction['severity']) => {
       switch (severity) {
-        case 'high': return '#EF4444';
-        case 'moderate': return '#F59E0B';
-        case 'low': return '#10B981';
-        default: return colors.onSurfaceVariant;
+        case 'high':
+          return '#EF4444';
+        case 'moderate':
+          return '#F59E0B';
+        case 'low':
+          return '#10B981';
+        default:
+          return colors.onSurfaceVariant;
       }
     };
 
     const getSeverityIcon = (severity: Interaction['severity']) => {
       switch (severity) {
-        case 'high': return <AlertTriangle size={16} color="white" />;
-        case 'moderate': return <AlertTriangle size={16} color="white" />;
-        case 'low': return <Shield size={16} color="white" />;
-        default: return <AlertTriangle size={16} color="white" />;
+        case 'high':
+          return <AlertTriangle size={16} color="white" />;
+        case 'moderate':
+          return <AlertTriangle size={16} color="white" />;
+        case 'low':
+          return <Shield size={16} color="white" />;
+        default:
+          return <AlertTriangle size={16} color="white" />;
       }
     };
 
     return (
       <View style={styles.interactionCard}>
         <View style={styles.interactionHeader}>
-          <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(item.severity) }]}>
+          <View
+            style={[
+              styles.severityBadge,
+              { backgroundColor: getSeverityColor(item.severity) },
+            ]}>
             {getSeverityIcon(item.severity)}
             <Text variant="labelMedium" style={styles.severityText}>
               {item.severity.toUpperCase()}
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.drugPair}>
           {item.drugs.map((drug, index) => (
             <View key={index} style={styles.drugTag}>
-              <Text variant="labelSmall" style={styles.drugTagText}>{drug}</Text>
+              <Text variant="labelSmall" style={styles.drugTagText}>
+                {drug}
+              </Text>
             </View>
           ))}
         </View>
-        
+
         <Text variant="bodyMedium" style={styles.interactionDescription}>
           {item.description}
         </Text>
-        
+
         <View style={styles.interactionDetails}>
-          <Text variant="labelMedium" style={styles.detailLabel}>Mechanism:</Text>
-          <Text variant="bodySmall" style={styles.detailText}>{item.mechanism}</Text>
+          <Text variant="labelMedium" style={styles.detailLabel}>
+            Mechanism:
+          </Text>
+          <Text variant="bodySmall" style={styles.detailText}>
+            {item.mechanism}
+          </Text>
         </View>
-        
+
         <View style={styles.interactionDetails}>
-          <Text variant="labelMedium" style={styles.detailLabel}>Recommendation:</Text>
-          <Text variant="bodySmall" style={styles.detailText}>{item.recommendation}</Text>
+          <Text variant="labelMedium" style={styles.detailLabel}>
+            Recommendation:
+          </Text>
+          <Text variant="bodySmall" style={styles.detailText}>
+            {item.recommendation}
+          </Text>
         </View>
       </View>
     );
@@ -429,16 +476,17 @@ const Pharmcoedia = () => {
     <TouchableOpacity
       style={[
         styles.visitItem,
-        selectedVisits.has(item.id) && styles.selectedVisitItem
+        selectedVisits.has(item.id) && styles.selectedVisitItem,
       ]}
-      onPress={() => handleVisitSelect(item.id)}
-    >
+      onPress={() => handleVisitSelect(item.id)}>
       <View style={styles.visitItemHeader}>
         <View style={styles.patientAvatar}>
           <User size={16} color="white" />
         </View>
         <View style={styles.visitInfo}>
-          <Text variant="titleMedium" style={styles.visitName}>{item.name}</Text>
+          <Text variant="titleMedium" style={styles.visitName}>
+            {item.name}
+          </Text>
           <View style={styles.visitMeta}>
             <Calendar size={12} color={colors.onSurfaceVariant} />
             <Text variant="bodySmall" style={styles.visitDate}>
@@ -452,10 +500,14 @@ const Pharmcoedia = () => {
       </View>
       <View style={styles.visitTags}>
         <View style={styles.visitTag}>
-          <Text variant="labelSmall" style={styles.visitTagText}>{item.type}</Text>
+          <Text variant="labelSmall" style={styles.visitTagText}>
+            {item.type}
+          </Text>
         </View>
         <View style={styles.visitTag}>
-          <Text variant="labelSmall" style={styles.visitTagText}>{item.specialization}</Text>
+          <Text variant="labelSmall" style={styles.visitTagText}>
+            {item.specialization}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -477,14 +529,12 @@ const Pharmcoedia = () => {
         <View style={styles.chatHeaderActions}>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => setShowPatientProfileDialog(true)}
-          >
+            onPress={() => setShowPatientProfileDialog(true)}>
             <UserCircle2 size={20} color={colors.lightGreen} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => setShowChatTabsModal(true)}
-          >
+            onPress={() => setShowChatTabsModal(true)}>
             <Settings size={20} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
@@ -499,18 +549,22 @@ const Pharmcoedia = () => {
               Active Patient Profile
             </Text>
           </View>
-          
+
           {activeChat.patientProfile.symptoms.length > 0 && (
             <View style={styles.profileSection}>
-              <Text variant="labelMedium" style={styles.profileLabel}>Symptoms</Text>
+              <Text variant="labelMedium" style={styles.profileLabel}>
+                Symptoms
+              </Text>
               <View style={styles.profileTags}>
-                {activeChat.patientProfile.symptoms.slice(0, 3).map((symptom, index) => (
-                  <View key={index} style={styles.symptomTag}>
-                    <Text variant="labelSmall" style={styles.symptomTagText}>
-                      {symptom.name}
-                    </Text>
-                  </View>
-                ))}
+                {activeChat.patientProfile.symptoms
+                  .slice(0, 3)
+                  .map((symptom, index) => (
+                    <View key={index} style={styles.symptomTag}>
+                      <Text variant="labelSmall" style={styles.symptomTagText}>
+                        {symptom.name}
+                      </Text>
+                    </View>
+                  ))}
                 {activeChat.patientProfile.symptoms.length > 3 && (
                   <View style={styles.moreTag}>
                     <Text variant="labelSmall" style={styles.moreTagText}>
@@ -542,18 +596,24 @@ const Pharmcoedia = () => {
             placeholder="Ask about medications, interactions, or patient care..."
             value={activeChat?.currentMessage || ''}
             onChangeText={(text) => {
-              setChatTabs(prev => prev.map(tab => 
-                tab.id === activeTabId ? { ...tab, currentMessage: text } : tab
-              ));
+              setChatTabs((prev) =>
+                prev.map((tab) =>
+                  tab.id === activeTabId
+                    ? { ...tab, currentMessage: text }
+                    : tab,
+                ),
+              );
             }}
             multiline
             placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
           <TouchableOpacity
-            style={[styles.sendButton, !activeChat?.currentMessage?.trim() && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              !activeChat?.currentMessage?.trim() && styles.sendButtonDisabled,
+            ]}
             onPress={() => handleSendMessage(activeTabId)}
-            disabled={!activeChat?.currentMessage?.trim()}
-          >
+            disabled={!activeChat?.currentMessage?.trim()}>
             <Send size={18} color="white" />
           </TouchableOpacity>
         </View>
@@ -571,7 +631,7 @@ const Pharmcoedia = () => {
         <Text variant="bodySmall" style={styles.sectionSubtitle}>
           Add medications to check for interactions
         </Text>
-        
+
         <View style={styles.drugInputContainer}>
           <TextInput
             style={styles.drugInput}
@@ -581,16 +641,20 @@ const Pharmcoedia = () => {
             placeholderTextColor="rgba(74, 69, 78, 0.5)"
           />
           <TouchableOpacity
-            style={[styles.addDrugButton, !drugInput.trim() && styles.addDrugButtonDisabled]}
+            style={[
+              styles.addDrugButton,
+              !drugInput.trim() && styles.addDrugButtonDisabled,
+            ]}
             onPress={handleAddDrug}
-            disabled={!drugInput.trim()}
-          >
+            disabled={!drugInput.trim()}>
             <Plus size={18} color="white" />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView style={styles.interactionContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.interactionContent}
+        showsVerticalScrollIndicator={false}>
         {/* Selected Drugs */}
         <View style={styles.selectedDrugsSection}>
           <Text variant="titleMedium" style={textStyles.sectionTitle}>
@@ -647,246 +711,306 @@ const Pharmcoedia = () => {
           backgroundColor={colors.surface}
         />
 
-      {/* Tab Content */}
-      {activeTab === 'assistant' ? renderAssistantTab() : renderInteractionTab()}
+        {/* Tab Content */}
+        {activeTab === 'assistant'
+          ? renderAssistantTab()
+          : renderInteractionTab()}
 
-      {/* Bottom Tab Navigation */}
-      <View style={styles.bottomTabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'assistant' && styles.activeTab]}
-          onPress={() => setActiveTab('assistant')}
-        >
-          <MessageSquare size={20} color={activeTab === 'assistant' ? colors.lightGreen : colors.onSurfaceVariant} />
-          <Text variant="labelSmall" style={[
-            styles.tabText,
-            activeTab === 'assistant' && styles.activeTabText
-          ]}>
-            Assistant
-          </Text>
-          {(activeChat?.messages?.length || 0) > 0 && (
-            <View style={styles.messageBadge}>
-              <Text variant="labelSmall" style={styles.messageBadgeText}>
-                {activeChat?.messages?.length || 0}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'interactions' && styles.activeTab]}
-          onPress={() => setActiveTab('interactions')}
-        >
-          <Pill size={20} color={activeTab === 'interactions' ? colors.lightGreen : colors.onSurfaceVariant} />
-          <Text variant="labelSmall" style={[
-            styles.tabText,
-            activeTab === 'interactions' && styles.activeTabText
-          ]}>
-            Interactions
-          </Text>
-          {drugInteractions.length > 0 && (
-            <View style={[styles.messageBadge, drugInteractions.some(i => i.severity === 'high') && styles.highSeverityBadge]}>
-              <Text variant="labelSmall" style={styles.messageBadgeText}>
-                {drugInteractions.length}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+        {/* Bottom Tab Navigation */}
+        <View style={styles.bottomTabs}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'assistant' && styles.activeTab]}
+            onPress={() => setActiveTab('assistant')}>
+            <MessageSquare
+              size={20}
+              color={
+                activeTab === 'assistant'
+                  ? colors.lightGreen
+                  : colors.onSurfaceVariant
+              }
+            />
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.tabText,
+                activeTab === 'assistant' && styles.activeTabText,
+              ]}>
+              Assistant
+            </Text>
+            {(activeChat?.messages?.length || 0) > 0 && (
+              <View style={styles.messageBadge}>
+                <Text variant="labelSmall" style={styles.messageBadgeText}>
+                  {activeChat?.messages?.length || 0}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-      {/* Chat Tabs Modal */}
-      <Modal
-        visible={showChatTabsModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowChatTabsModal(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text variant="titleLarge" style={styles.modalTitle}>Chat Management</Text>
-            <TouchableOpacity onPress={() => setShowChatTabsModal(false)}>
-              <X size={24} color={colors.onSurface} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.modalContent}>
-            {chatTabs.map((tab) => (
-              <View key={tab.id} style={[styles.chatTabItem, tab.id === activeTabId && styles.activeChatTabItem]}>
-                <View style={styles.chatTabInfo}>
-                  <Text variant="titleMedium" style={styles.chatTabTitle}>{tab.title}</Text>
-                  <Text variant="bodySmall" style={styles.chatTabMeta}>
-                    {tab.messages.length} messages
-                  </Text>
-                </View>
-                <View style={styles.chatTabActions}>
-                  <TouchableOpacity
-                    style={styles.tabActionButton}
-                    onPress={() => {
-                      setActiveTabId(tab.id);
-                      setShowChatTabsModal(false);
-                    }}
-                  >
-                    <MessageSquare size={16} color={colors.lightGreen} />
-                  </TouchableOpacity>
-                  {chatTabs.length > 1 && (
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeTab === 'interactions' && styles.activeTab,
+            ]}
+            onPress={() => setActiveTab('interactions')}>
+            <Pill
+              size={20}
+              color={
+                activeTab === 'interactions'
+                  ? colors.lightGreen
+                  : colors.onSurfaceVariant
+              }
+            />
+            <Text
+              variant="labelSmall"
+              style={[
+                styles.tabText,
+                activeTab === 'interactions' && styles.activeTabText,
+              ]}>
+              Interactions
+            </Text>
+            {drugInteractions.length > 0 && (
+              <View
+                style={[
+                  styles.messageBadge,
+                  drugInteractions.some((i) => i.severity === 'high') &&
+                    styles.highSeverityBadge,
+                ]}>
+                <Text variant="labelSmall" style={styles.messageBadgeText}>
+                  {drugInteractions.length}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Chat Tabs Modal */}
+        <Modal
+          visible={showChatTabsModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowChatTabsModal(false)}>
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text variant="titleLarge" style={styles.modalTitle}>
+                Chat Management
+              </Text>
+              <TouchableOpacity onPress={() => setShowChatTabsModal(false)}>
+                <X size={24} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {chatTabs.map((tab) => (
+                <View
+                  key={tab.id}
+                  style={[
+                    styles.chatTabItem,
+                    tab.id === activeTabId && styles.activeChatTabItem,
+                  ]}>
+                  <View style={styles.chatTabInfo}>
+                    <Text variant="titleMedium" style={styles.chatTabTitle}>
+                      {tab.title}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.chatTabMeta}>
+                      {tab.messages.length} messages
+                    </Text>
+                  </View>
+                  <View style={styles.chatTabActions}>
                     <TouchableOpacity
                       style={styles.tabActionButton}
-                      onPress={() => handleCloseTab(tab.id)}
-                    >
-                      <X size={16} color={colors.error} />
+                      onPress={() => {
+                        setActiveTabId(tab.id);
+                        setShowChatTabsModal(false);
+                      }}>
+                      <MessageSquare size={16} color={colors.lightGreen} />
                     </TouchableOpacity>
-                  )}
+                    {chatTabs.length > 1 && (
+                      <TouchableOpacity
+                        style={styles.tabActionButton}
+                        onPress={() => handleCloseTab(tab.id)}>
+                        <X size={16} color={colors.error} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-              </View>
-            ))}
-            
-            <TouchableOpacity style={styles.newChatButton} onPress={handleNewChatTab}>
-              <Plus size={20} color="white" />
-              <Text variant="labelMedium" style={styles.newChatButtonText}>
-                New Chat
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+              ))}
 
-      {/* Patient Profile Dialog */}
-      <Modal
-        visible={showPatientProfileDialog}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowPatientProfileDialog(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text variant="titleLarge" style={styles.modalTitle}>Patient Profile</Text>
-            <TouchableOpacity onPress={() => setShowPatientProfileDialog(false)}>
-              <X size={24} color={colors.onSurface} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.dialogTabs}>
-            <TouchableOpacity
-              style={[styles.dialogTab, profileDialogTab === 'import' && styles.activeDialogTab]}
-              onPress={() => setProfileDialogTab('import')}
-            >
-              <Text variant="labelMedium" style={[
-                styles.dialogTabText,
-                profileDialogTab === 'import' && styles.activeDialogTabText
-              ]}>
-                Import from Visits
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.dialogTab, profileDialogTab === 'manual' && styles.activeDialogTab]}
-              onPress={() => setProfileDialogTab('manual')}
-            >
-              <Text variant="labelMedium" style={[
-                styles.dialogTabText,
-                profileDialogTab === 'manual' && styles.activeDialogTabText
-              ]}>
-                Manual Entry
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.modalContent}>
-            {profileDialogTab === 'import' ? (
               <TouchableOpacity
-                style={styles.selectVisitsButton}
-                onPress={() => setShowVisitSelectDialog(true)}
-              >
-                <FileText size={20} color="white" />
-                <Text variant="labelMedium" style={styles.selectVisitsButtonText}>
-                  Select Patient Visits
+                style={styles.newChatButton}
+                onPress={handleNewChatTab}>
+                <Plus size={20} color="white" />
+                <Text variant="labelMedium" style={styles.newChatButtonText}>
+                  New Chat
                 </Text>
               </TouchableOpacity>
-            ) : (
-              <View style={styles.manualProfileContainer}>
-                <Text variant="bodyMedium" style={styles.inputLabel}>
-                  Enter patient information (symptoms, conditions, medications):
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Patient Profile Dialog */}
+        <Modal
+          visible={showPatientProfileDialog}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowPatientProfileDialog(false)}>
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text variant="titleLarge" style={styles.modalTitle}>
+                Patient Profile
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowPatientProfileDialog(false)}>
+                <X size={24} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.dialogTabs}>
+              <TouchableOpacity
+                style={[
+                  styles.dialogTab,
+                  profileDialogTab === 'import' && styles.activeDialogTab,
+                ]}
+                onPress={() => setProfileDialogTab('import')}>
+                <Text
+                  variant="labelMedium"
+                  style={[
+                    styles.dialogTabText,
+                    profileDialogTab === 'import' && styles.activeDialogTabText,
+                  ]}>
+                  Import from Visits
                 </Text>
-                <TextInput
-                  style={styles.manualProfileInput}
-                  placeholder="e.g., Hypertension, Diabetes Type 2, Anxiety..."
-                  value={manualProfileText}
-                  onChangeText={setManualProfileText}
-                  multiline
-                  placeholderTextColor="rgba(74, 69, 78, 0.5)"
-                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.dialogTab,
+                  profileDialogTab === 'manual' && styles.activeDialogTab,
+                ]}
+                onPress={() => setProfileDialogTab('manual')}>
+                <Text
+                  variant="labelMedium"
+                  style={[
+                    styles.dialogTabText,
+                    profileDialogTab === 'manual' && styles.activeDialogTabText,
+                  ]}>
+                  Manual Entry
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalContent}>
+              {profileDialogTab === 'import' ? (
                 <TouchableOpacity
-                  style={[styles.saveProfileButton, !manualProfileText.trim() && styles.saveProfileButtonDisabled]}
-                  onPress={handleSaveManualProfile}
-                  disabled={!manualProfileText.trim()}
-                >
-                  <Text variant="labelMedium" style={styles.saveProfileButtonText}>
-                    Save Profile
+                  style={styles.selectVisitsButton}
+                  onPress={() => setShowVisitSelectDialog(true)}>
+                  <FileText size={20} color="white" />
+                  <Text
+                    variant="labelMedium"
+                    style={styles.selectVisitsButtonText}>
+                    Select Patient Visits
                   </Text>
                 </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </SafeAreaView>
-      </Modal>
+              ) : (
+                <View style={styles.manualProfileContainer}>
+                  <Text variant="bodyMedium" style={styles.inputLabel}>
+                    Enter patient information (symptoms, conditions,
+                    medications):
+                  </Text>
+                  <TextInput
+                    style={styles.manualProfileInput}
+                    placeholder="e.g., Hypertension, Diabetes Type 2, Anxiety..."
+                    value={manualProfileText}
+                    onChangeText={setManualProfileText}
+                    multiline
+                    placeholderTextColor="rgba(74, 69, 78, 0.5)"
+                  />
+                  <TouchableOpacity
+                    style={[
+                      styles.saveProfileButton,
+                      !manualProfileText.trim() &&
+                        styles.saveProfileButtonDisabled,
+                    ]}
+                    onPress={handleSaveManualProfile}
+                    disabled={!manualProfileText.trim()}>
+                    <Text
+                      variant="labelMedium"
+                      style={styles.saveProfileButtonText}>
+                      Save Profile
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </SafeAreaView>
+        </Modal>
 
-      {/* Visit Select Dialog */}
-      <Modal
-        visible={showVisitSelectDialog}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowVisitSelectDialog(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text variant="titleLarge" style={styles.modalTitle}>Select Patient Visits</Text>
-            <TouchableOpacity onPress={() => setShowVisitSelectDialog(false)}>
-              <X size={24} color={colors.onSurface} />
-            </TouchableOpacity>
-          </View>
+        {/* Visit Select Dialog */}
+        <Modal
+          visible={showVisitSelectDialog}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowVisitSelectDialog(false)}>
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text variant="titleLarge" style={styles.modalTitle}>
+                Select Patient Visits
+              </Text>
+              <TouchableOpacity onPress={() => setShowVisitSelectDialog(false)}>
+                <X size={24} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.searchContainer}>
-            <Search size={18} color={colors.onSurfaceVariant} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search visits..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="rgba(74, 69, 78, 0.5)"
+            <View style={styles.searchContainer}>
+              <Search size={18} color={colors.onSurfaceVariant} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search visits..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="rgba(74, 69, 78, 0.5)"
+              />
+            </View>
+
+            <FlatList
+              data={MOCK_VISITS.filter(
+                (visit) =>
+                  visit.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase()) ||
+                  visit.type
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase()) ||
+                  visit.specialization
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase()),
+              )}
+              renderItem={renderVisitItem}
+              keyExtractor={(item) => item.id}
+              style={styles.visitsList}
+              contentContainerStyle={styles.visitsListContent}
             />
-          </View>
 
-          <FlatList
-            data={MOCK_VISITS.filter(visit =>
-              visit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              visit.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              visit.specialization.toLowerCase().includes(searchQuery.toLowerCase())
-            )}
-            renderItem={renderVisitItem}
-            keyExtractor={(item) => item.id}
-            style={styles.visitsList}
-            contentContainerStyle={styles.visitsListContent}
-          />
-
-          <View style={styles.dialogActions}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowVisitSelectDialog(false)}
-            >
-              <Text variant="labelMedium" style={styles.cancelButtonText}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.importButton, selectedVisits.size === 0 && styles.importButtonDisabled]}
-              onPress={handleImportVisits}
-              disabled={selectedVisits.size === 0}
-            >
-              <Text variant="labelMedium" style={styles.importButtonText}>
-                Import ({selectedVisits.size})
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </Modal>
+            <View style={styles.dialogActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowVisitSelectDialog(false)}>
+                <Text variant="labelMedium" style={styles.cancelButtonText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.importButton,
+                  selectedVisits.size === 0 && styles.importButtonDisabled,
+                ]}
+                onPress={handleImportVisits}
+                disabled={selectedVisits.size === 0}>
+                <Text variant="labelMedium" style={styles.importButtonText}>
+                  Import ({selectedVisits.size})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </Modal>
       </View>
     </SafeAreaView>
   );

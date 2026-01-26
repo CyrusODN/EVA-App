@@ -1,10 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import SelectionCard from '../../../components/SelectionCard';
 import OnboardingProgressDots from '../../../components/OnboardingProgressDots';
 import {
@@ -60,31 +63,28 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>←  {t('onboarding.back')}</Text>
+          <Text style={styles.backText}>← {t('onboarding.back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
           <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Title */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-          style={styles.title}
-        >
+          style={styles.title}>
           {t('onboarding.visitType.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(150).duration(DURATIONS.normal)}
-          style={styles.subtitle}
-        >
+          style={styles.subtitle}>
           {t('onboarding.visitType.subtitle')}
         </Animated.Text>
 
@@ -93,9 +93,10 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
           {VISIT_TYPES.map((type, index) => (
             <Animated.View
               key={type.id}
-              entering={FadeInDown.delay(200 + index * 50).duration(DURATIONS.normal)}
-              style={styles.cardWrapper}
-            >
+              entering={FadeInDown.delay(200 + index * 50).duration(
+                DURATIONS.normal,
+              )}
+              style={styles.cardWrapper}>
               <SelectionCard
                 iconName={type.iconName}
                 title={t(type.titleKey)}
@@ -108,35 +109,32 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
         </View>
 
         {/* Hint */}
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.delay(350).duration(DURATIONS.normal)}
-          style={styles.hintContainer}
-        >
+          style={styles.hintContainer}>
           <Text style={styles.hintIcon}>💡</Text>
-          <Text style={styles.hintText}>
-            {t('onboarding.visitType.hint')}
-          </Text>
+          <Text style={styles.hintText}>{t('onboarding.visitType.hint')}</Text>
         </Animated.View>
 
         {/* Progress dots */}
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.delay(400).duration(DURATIONS.normal)}
-          style={styles.dotsContainer}
-        >
-          <OnboardingProgressDots totalSteps={totalSteps} currentStep={currentStep} />
+          style={styles.dotsContainer}>
+          <OnboardingProgressDots
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+          />
         </Animated.View>
       </ScrollView>
 
       {/* Continue Button */}
-      <Animated.View 
+      <Animated.View
         entering={FadeInDown.delay(500).duration(DURATIONS.normal)}
-        style={styles.buttonContainer}
-      >
+        style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.ctaButton}
           onPress={onContinue}
-          activeOpacity={0.9}
-        >
+          activeOpacity={0.9}>
           <Text style={styles.ctaText}>{t('onboarding.next')}</Text>
         </TouchableOpacity>
       </Animated.View>

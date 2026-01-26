@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -80,7 +86,7 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>←  {t('onboarding.back')}</Text>
+          <Text style={styles.backText}>← {t('onboarding.back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
           <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
@@ -88,24 +94,21 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
       </View>
 
       {/* Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Title */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-          style={styles.title}
-        >
+          style={styles.title}>
           {t('onboarding.specialization.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(150).duration(DURATIONS.normal)}
-          style={styles.subtitle}
-        >
+          style={styles.subtitle}>
           {t('onboarding.specialization.subtitle')}
         </Animated.Text>
 
@@ -114,9 +117,10 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
           {SPECIALIZATIONS.map((spec, index) => (
             <Animated.View
               key={spec.id}
-              entering={FadeInDown.delay(200 + index * 50).duration(DURATIONS.normal)}
-              style={styles.cardWrapper}
-            >
+              entering={FadeInDown.delay(200 + index * 50).duration(
+                DURATIONS.normal,
+              )}
+              style={styles.cardWrapper}>
               <SelectionCard
                 iconName={spec.iconName}
                 title={t(spec.titleKey)}
@@ -130,32 +134,27 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
         </View>
 
         {/* Progress dots */}
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.delay(400).duration(DURATIONS.normal)}
-          style={styles.dotsContainer}
-        >
-          <OnboardingProgressDots totalSteps={totalSteps} currentStep={currentStep} />
+          style={styles.dotsContainer}>
+          <OnboardingProgressDots
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+          />
         </Animated.View>
       </ScrollView>
 
       {/* Continue Button */}
-      <Animated.View 
+      <Animated.View
         entering={FadeInDown.delay(500).duration(DURATIONS.normal)}
-        style={styles.buttonContainer}
-      >
+        style={styles.buttonContainer}>
         <TouchableOpacity
-          style={[
-            styles.ctaButton,
-            !canContinue && styles.ctaButtonDisabled,
-          ]}
+          style={[styles.ctaButton, !canContinue && styles.ctaButtonDisabled]}
           onPress={onContinue}
           disabled={!canContinue}
-          activeOpacity={0.9}
-        >
-          <Text style={[
-            styles.ctaText,
-            !canContinue && styles.ctaTextDisabled,
-          ]}>
+          activeOpacity={0.9}>
+          <Text
+            style={[styles.ctaText, !canContinue && styles.ctaTextDisabled]}>
             {t('onboarding.next')}
           </Text>
         </TouchableOpacity>

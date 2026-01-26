@@ -42,7 +42,7 @@ export const sessionStorage = {
   async saveSession(session: Session): Promise<void> {
     try {
       const sessions = await this.getAllSessions();
-      const existingIndex = sessions.findIndex(s => s.id === session.id);
+      const existingIndex = sessions.findIndex((s) => s.id === session.id);
 
       if (existingIndex >= 0) {
         sessions[existingIndex] = session;
@@ -60,7 +60,7 @@ export const sessionStorage = {
   async getSessionById(id: string): Promise<Session | null> {
     try {
       const sessions = await this.getAllSessions();
-      return sessions.find(s => s.id === id) || null;
+      return sessions.find((s) => s.id === id) || null;
     } catch (error) {
       console.error('Error getting session by id:', error);
       return null;
@@ -70,15 +70,21 @@ export const sessionStorage = {
   async deleteSession(id: string): Promise<void> {
     try {
       const sessions = await this.getAllSessions();
-      const sessionToDelete = sessions.find(s => s.id === id);
+      const sessionToDelete = sessions.find((s) => s.id === id);
 
       // Delete from backend API if sessionId exists
       if (sessionToDelete?.sessionId) {
         try {
           await deleteEvent(sessionToDelete.sessionId);
-          console.log('[SessionStorage] Session deleted from backend:', sessionToDelete.sessionId);
+          console.log(
+            '[SessionStorage] Session deleted from backend:',
+            sessionToDelete.sessionId,
+          );
         } catch (apiError) {
-          console.error('[SessionStorage] Failed to delete session from backend:', apiError);
+          console.error(
+            '[SessionStorage] Failed to delete session from backend:',
+            apiError,
+          );
           // Continue with local deletion even if API call fails
         }
       }
@@ -90,16 +96,22 @@ export const sessionStorage = {
           const fileExists = await RNFS.exists(sessionToDelete.audioPath);
           if (fileExists) {
             await RNFS.unlink(sessionToDelete.audioPath);
-            console.log('[SessionStorage] Deleted audio file:', sessionToDelete.audioPath);
+            console.log(
+              '[SessionStorage] Deleted audio file:',
+              sessionToDelete.audioPath,
+            );
           }
         } catch (fileError) {
-          console.error('[SessionStorage] Failed to delete audio file:', fileError);
+          console.error(
+            '[SessionStorage] Failed to delete audio file:',
+            fileError,
+          );
           // Continue with session deletion even if file deletion fails
         }
       }
 
       // Remove session from AsyncStorage
-      const filteredSessions = sessions.filter(s => s.id !== id);
+      const filteredSessions = sessions.filter((s) => s.id !== id);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filteredSessions));
       console.log('[SessionStorage] Session deleted from storage:', id);
     } catch (error) {
@@ -112,7 +124,7 @@ export const sessionStorage = {
     try {
       const sessions = await this.getAllSessions();
       const idsSet = new Set(ids);
-      const filteredSessions = sessions.filter(s => !idsSet.has(s.id));
+      const filteredSessions = sessions.filter((s) => !idsSet.has(s.id));
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filteredSessions));
     } catch (error) {
       console.error('Error deleting sessions from storage:', error);
@@ -123,7 +135,7 @@ export const sessionStorage = {
   async getSessionsByType(type: SessionType): Promise<Session[]> {
     try {
       const sessions = await this.getAllSessions();
-      return sessions.filter(s => s.type === type);
+      return sessions.filter((s) => s.type === type);
     } catch (error) {
       console.error('Error getting sessions by type:', error);
       return [];
@@ -142,7 +154,7 @@ export const sessionStorage = {
   async createSession(
     title: string,
     type: SessionType,
-    initialStatus: SessionStatus = 'new'
+    initialStatus: SessionStatus = 'new',
   ): Promise<Session> {
     const newSession: Session = {
       id: Date.now().toString(),
@@ -173,7 +185,10 @@ export const sessionStorage = {
         console.log('[SessionStorage] session ID:', newSession.sessionId);
       }
     } catch (error) {
-      console.error('[SessionStorage] Failed to create event on server:', error);
+      console.error(
+        '[SessionStorage] Failed to create event on server:',
+        error,
+      );
       // Don't throw the error - we still want to create the session locally
       // even if the API call fails
     }
@@ -184,15 +199,16 @@ export const sessionStorage = {
     return newSession;
   },
 
-  async updateSessionStatus(
-    id: string,
-    status: SessionStatus
-  ): Promise<void> {
+  async updateSessionStatus(id: string, status: SessionStatus): Promise<void> {
     const session = await this.getSessionById(id);
     if (session) {
       session.status = status;
 
-      if (status === 'recorded' || status === 'transcribed' || status === 'completed') {
+      if (
+        status === 'recorded' ||
+        status === 'transcribed' ||
+        status === 'completed'
+      ) {
         session.hasRecording = true;
       }
 
@@ -213,7 +229,11 @@ export const sessionStorage = {
     }
   },
 
-  async markSessionAsRecorded(id: string, duration: string, audioPath?: string): Promise<void> {
+  async markSessionAsRecorded(
+    id: string,
+    duration: string,
+    audioPath?: string,
+  ): Promise<void> {
     const session = await this.getSessionById(id);
     if (session) {
       session.status = 'recorded';
@@ -247,10 +267,16 @@ export const sessionStorage = {
           const fileExists = await RNFS.exists(session.audioPath);
           if (fileExists) {
             await RNFS.unlink(session.audioPath);
-            console.log('[SessionStorage] Deleted audio file during reset:', session.audioPath);
+            console.log(
+              '[SessionStorage] Deleted audio file during reset:',
+              session.audioPath,
+            );
           }
         } catch (fileError) {
-          console.error('[SessionStorage] Failed to delete audio file during reset:', fileError);
+          console.error(
+            '[SessionStorage] Failed to delete audio file during reset:',
+            fileError,
+          );
           // Continue with reset even if file deletion fails
         }
       }
@@ -272,7 +298,11 @@ export const sessionStorage = {
     }
   },
 
-  async updateSessionTranscript(id: string, transcriptText: string, utterances?: any[]): Promise<void> {
+  async updateSessionTranscript(
+    id: string,
+    transcriptText: string,
+    utterances?: any[],
+  ): Promise<void> {
     const session = await this.getSessionById(id);
     if (session) {
       // Delete audio file after transcription since we no longer need it
@@ -282,10 +312,16 @@ export const sessionStorage = {
           const fileExists = await RNFS.exists(session.audioPath);
           if (fileExists) {
             await RNFS.unlink(session.audioPath);
-            console.log('[SessionStorage] ✅ Deleted audio file after transcription:', session.audioPath);
+            console.log(
+              '[SessionStorage] ✅ Deleted audio file after transcription:',
+              session.audioPath,
+            );
           }
         } catch (fileError) {
-          console.error('[SessionStorage] ❌ Failed to delete audio file after transcription:', fileError);
+          console.error(
+            '[SessionStorage] ❌ Failed to delete audio file after transcription:',
+            fileError,
+          );
           // Continue with transcript save even if file deletion fails
         }
       }
@@ -296,7 +332,10 @@ export const sessionStorage = {
       session.hasTranscription = true;
       session.audioPath = null; // Clear audio path since file is deleted
       await this.saveSession(session);
-      console.log('[SessionStorage] 💾 Transcript saved and audio file removed for session:', id);
+      console.log(
+        '[SessionStorage] 💾 Transcript saved and audio file removed for session:',
+        id,
+      );
     }
   },
 

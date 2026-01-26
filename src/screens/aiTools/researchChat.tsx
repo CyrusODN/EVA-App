@@ -59,23 +59,23 @@ const THEME = {
   surface: '#F9FAFB',
   surfaceAlt: '#F3F4F6',
   userBubble: '#F3F4F6',
-  
+
   // Text
   navy: '#111827',
   secondary: '#6B7280',
   tertiary: '#9CA3AF',
   placeholder: '#9CA3AF',
-  
+
   // Brand
   brand: '#46B7C6',
   brandLight: 'rgba(70, 183, 198, 0.08)',
   brandMedium: 'rgba(70, 183, 198, 0.15)',
   brandDark: '#3AA8B7',
-  
+
   // Borders
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
-  
+
   // States
   inactive: '#D1D5DB',
   success: '#10B981',
@@ -126,10 +126,16 @@ const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'medium') => {
 // ============================================================================
 // MOCK DATA & HELPERS
 // ============================================================================
-const getMockResponse = (mode: ResearchMode, query: string): { content: string; citations: Citation[] } => {
+const getMockResponse = (
+  mode: ResearchMode,
+  query: string,
+): { content: string; citations: Citation[] } => {
   if (mode === 'general') {
     return {
-      content: `Based on my analysis of the relevant medical literature, here's what I found regarding "${query.slice(0, 50)}...":
+      content: `Based on my analysis of the relevant medical literature, here's what I found regarding "${query.slice(
+        0,
+        50,
+      )}...":
 
 **Key Findings:**
 
@@ -144,9 +150,24 @@ const getMockResponse = (mode: ResearchMode, query: string): { content: string; 
 **Clinical Implications:**
 This evidence supports the use of this therapeutic approach in appropriate patient populations, with careful monitoring for adverse effects.`,
       citations: [
-        { id: '1', title: 'Meta-analysis of Treatment Efficacy', source: 'JAMA Internal Medicine', page: 'pp. 234-241' },
-        { id: '2', title: 'Pathophysiology and Mechanisms', source: 'Nature Reviews', page: 'pp. 112-128' },
-        { id: '3', title: 'Clinical Practice Guidelines 2024', source: 'ACC/AHA', page: 'Section 4.2' },
+        {
+          id: '1',
+          title: 'Meta-analysis of Treatment Efficacy',
+          source: 'JAMA Internal Medicine',
+          page: 'pp. 234-241',
+        },
+        {
+          id: '2',
+          title: 'Pathophysiology and Mechanisms',
+          source: 'Nature Reviews',
+          page: 'pp. 112-128',
+        },
+        {
+          id: '3',
+          title: 'Clinical Practice Guidelines 2024',
+          source: 'ACC/AHA',
+          page: 'Section 4.2',
+        },
       ],
     };
   } else {
@@ -181,8 +202,18 @@ Overall Response Rate (ORR) at Week 24, assessed by independent central review u
 **Sample Size:**
 N=450 (randomized 2:1), providing 85% power to detect a 15% absolute improvement in ORR.`,
       citations: [
-        { id: '1', title: 'Study Protocol v3.2', source: 'ClinicalTrials.gov NCT04XXXXXX', page: 'Section 6' },
-        { id: '2', title: 'Statistical Analysis Plan', source: 'Protocol Appendix B', page: 'pp. 45-52' },
+        {
+          id: '1',
+          title: 'Study Protocol v3.2',
+          source: 'ClinicalTrials.gov NCT04XXXXXX',
+          page: 'Section 6',
+        },
+        {
+          id: '2',
+          title: 'Statistical Analysis Plan',
+          source: 'Protocol Appendix B',
+          page: 'pp. 45-52',
+        },
       ],
     };
   }
@@ -212,7 +243,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     const glow = Animated.loop(
@@ -229,7 +260,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -243,11 +274,9 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
-        <Image 
-          source={{ uri: CHATBOT_AVATAR }} 
-          style={styles.avatarImage}
-        />
+      <Animated.View
+        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+        <Image source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
   );
@@ -262,8 +291,7 @@ const SuggestionChip: React.FC<{
   <TouchableOpacity
     style={styles.suggestionChip}
     onPress={onPress}
-    activeOpacity={0.7}
-  >
+    activeOpacity={0.7}>
     <Icon size={14} color={THEME.brand} strokeWidth={2} />
     <Text style={styles.suggestionChipText}>{text}</Text>
   </TouchableOpacity>
@@ -368,10 +396,12 @@ const MessageBubble: React.FC<{
         style={[
           styles.messageBubbleWrapper,
           { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-        ]}
-      >
+        ]}>
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
         <View style={styles.bubbleContent}>
           <ThinkingIndicator />
@@ -386,28 +416,28 @@ const MessageBubble: React.FC<{
         styles.messageBubbleWrapper,
         isUser && styles.userBubbleWrapper,
         { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-      ]}
-    >
+      ]}>
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
       )}
-      
+
       <View
         style={[
           styles.messageBubble,
           isUser ? styles.userBubble : styles.assistantBubble,
-        ]}
-      >
+        ]}>
         {/* Copy button for assistant messages */}
         {!isUser && (
           <TouchableOpacity
             style={styles.copyButton}
             onPress={handleCopy}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <Copy size={14} color={THEME.brand} strokeWidth={2} />
           </TouchableOpacity>
         )}
@@ -429,8 +459,7 @@ const MessageBubble: React.FC<{
                 key={citation.id}
                 style={styles.citationChip}
                 onPress={() => onCitationPress?.(citation)}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.citationNumber}>
                   <Text style={styles.citationNumberText}>{index + 1}</Text>
                 </View>
@@ -473,7 +502,7 @@ const ThinkingIndicator: React.FC = () => {
             duration: 400,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
 
     animateDot(dot1, 0).start();
@@ -521,7 +550,9 @@ const FileChip: React.FC<{
       <Text style={styles.fileChipName} numberOfLines={1}>
         {file.name}
       </Text>
-      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <TouchableOpacity
+        onPress={onRemove}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <X size={14} color={THEME.secondary} />
       </TouchableOpacity>
     </View>
@@ -535,21 +566,24 @@ const ContextFilesModal: React.FC<{
   onClose: () => void;
 }> = ({ visible, files, onClose }) => {
   const { t } = useTranslation();
-  
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={styles.modalContent}
+          onPress={(e) => e.stopPropagation()}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {t('researchChat.contextFiles')}
             </Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={THEME.navy} />
             </TouchableOpacity>
           </View>
@@ -557,7 +591,12 @@ const ContextFilesModal: React.FC<{
           <ScrollView style={styles.modalFilesList}>
             {files.length > 0 ? (
               files.map((file, index) => {
-                const Icon = file.type === 'pdf' ? FileText : file.type === 'image' ? ImageIcon : File;
+                const Icon =
+                  file.type === 'pdf'
+                    ? FileText
+                    : file.type === 'image'
+                    ? ImageIcon
+                    : File;
                 return (
                   <View key={file.id} style={styles.modalFileItem}>
                     <Icon size={18} color={THEME.brand} />
@@ -600,7 +639,8 @@ const InputBar: React.FC<{
   placeholder,
   isLoading,
 }) => {
-  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
+  const canSend =
+    (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
 
   const handleSend = () => {
     if (canSend) {
@@ -636,8 +676,7 @@ const InputBar: React.FC<{
         <TouchableOpacity
           style={styles.attachButton}
           onPress={handleAttach}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Plus size={22} color={THEME.secondary} strokeWidth={2} />
         </TouchableOpacity>
 
@@ -659,13 +698,8 @@ const InputBar: React.FC<{
             style={[styles.sendButton, styles.sendButtonActive]}
             onPress={handleSend}
             disabled={!canSend}
-            activeOpacity={0.7}
-          >
-            <ArrowUp
-              size={18}
-              color={THEME.pure}
-              strokeWidth={2.5}
-            />
+            activeOpacity={0.7}>
+            <ArrowUp size={18} color={THEME.pure} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
       </View>
@@ -680,13 +714,14 @@ const ResearchChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-  
+
   const mode: ResearchMode = route.params?.mode || 'general';
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Get user name from store
   const loggedInUser = userStore((state: any) => state.loggedInUser);
-  const userName = loggedInUser?.firstName || loggedInUser?.name?.split(' ')[0] || 'Doctor';
+  const userName =
+    loggedInUser?.firstName || loggedInUser?.name?.split(' ')[0] || 'Doctor';
 
   // State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -699,19 +734,44 @@ const ResearchChatScreen: React.FC = () => {
   const isEmptyState = messages.length === 0;
 
   // Suggestion chips based on mode
-  const suggestionChips = mode === 'general'
-    ? [
-        { icon: FileText, text: t('researchChat.suggestions.general.executiveSummary') },
-        { icon: Sparkles, text: t('researchChat.suggestions.general.clinicalImplications') },
-        { icon: Beaker, text: t('researchChat.suggestions.general.methodologyAnalysis') },
-        { icon: AlertCircle, text: t('researchChat.suggestions.general.evidenceGrading') },
-      ]
-    : [
-        { icon: FileText, text: t('researchChat.suggestions.protocol.synopsis') },
-        { icon: ClipboardList, text: t('researchChat.suggestions.protocol.eligibility') },
-        { icon: BookOpen, text: t('researchChat.suggestions.protocol.schedule') },
-        { icon: AlertCircle, text: t('researchChat.suggestions.protocol.safetyEndpoints') },
-      ];
+  const suggestionChips =
+    mode === 'general'
+      ? [
+          {
+            icon: FileText,
+            text: t('researchChat.suggestions.general.executiveSummary'),
+          },
+          {
+            icon: Sparkles,
+            text: t('researchChat.suggestions.general.clinicalImplications'),
+          },
+          {
+            icon: Beaker,
+            text: t('researchChat.suggestions.general.methodologyAnalysis'),
+          },
+          {
+            icon: AlertCircle,
+            text: t('researchChat.suggestions.general.evidenceGrading'),
+          },
+        ]
+      : [
+          {
+            icon: FileText,
+            text: t('researchChat.suggestions.protocol.synopsis'),
+          },
+          {
+            icon: ClipboardList,
+            text: t('researchChat.suggestions.protocol.eligibility'),
+          },
+          {
+            icon: BookOpen,
+            text: t('researchChat.suggestions.protocol.schedule'),
+          },
+          {
+            icon: AlertCircle,
+            text: t('researchChat.suggestions.protocol.safetyEndpoints'),
+          },
+        ];
 
   // Handlers
   const handleBack = () => {
@@ -723,30 +783,36 @@ const ResearchChatScreen: React.FC = () => {
     setShowContextModal(true);
   };
 
-  const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role,
-      content,
-      citations,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-    
-    return newMessage.id;
-  }, []);
+  const addMessage = useCallback(
+    (role: MessageRole, content: string, citations?: Citation[]) => {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role,
+        content,
+        citations,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+
+      return newMessage.id;
+    },
+    [],
+  );
 
   const handleSend = async () => {
     const query = inputText.trim();
     if (!query && attachedFiles.length === 0) return;
 
-    const userContent = attachedFiles.length > 0
-      ? `${query}\n\n[${t('researchChat.attached')}: ${attachedFiles.map(f => f.name).join(', ')}]`
-      : query;
+    const userContent =
+      attachedFiles.length > 0
+        ? `${query}\n\n[${t('researchChat.attached')}: ${attachedFiles
+            .map((f) => f.name)
+            .join(', ')}]`
+        : query;
     addMessage('user', userContent);
 
     if (attachedFiles.length > 0) {
@@ -761,12 +827,18 @@ const ResearchChatScreen: React.FC = () => {
     const loadingId = Date.now().toString() + '-loading';
     setMessages((prev) => [
       ...prev,
-      { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
+      {
+        id: loadingId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isLoading: true,
+      },
     ]);
 
     setTimeout(() => {
       const { content, citations } = getMockResponse(mode, query);
-      
+
       setMessages((prev) => prev.filter((m) => m.id !== loadingId));
       addMessage('assistant', content, citations);
       setIsLoading(false);
@@ -795,19 +867,21 @@ const ResearchChatScreen: React.FC = () => {
           if (buttonIndex === 1) handleFilePick();
           else if (buttonIndex === 2) handleScan();
           else if (buttonIndex === 3) handleGallery();
-        }
+        },
       );
     } else {
-      Alert.alert(
-        t('researchChat.attachTitle'),
-        '',
-        [
-          { text: t('researchChat.attachOptions.uploadPdf'), onPress: handleFilePick },
-          { text: t('researchChat.attachOptions.scan'), onPress: handleScan },
-          { text: t('researchChat.attachOptions.gallery'), onPress: handleGallery },
-          { text: t('researchChat.attachOptions.cancel'), style: 'cancel' },
-        ]
-      );
+      Alert.alert(t('researchChat.attachTitle'), '', [
+        {
+          text: t('researchChat.attachOptions.uploadPdf'),
+          onPress: handleFilePick,
+        },
+        { text: t('researchChat.attachOptions.scan'), onPress: handleScan },
+        {
+          text: t('researchChat.attachOptions.gallery'),
+          onPress: handleGallery,
+        },
+        { text: t('researchChat.attachOptions.cancel'), style: 'cancel' },
+      ]);
     }
   };
 
@@ -886,36 +960,40 @@ const ResearchChatScreen: React.FC = () => {
     // Could open in browser or show details
   };
 
-  const screenTitle = mode === 'general' 
-    ? t('researchChat.title.general') 
-    : t('researchChat.title.protocol');
-  const placeholderText = mode === 'general'
-    ? t('researchChat.placeholder.general')
-    : t('researchChat.placeholder.protocol');
+  const screenTitle =
+    mode === 'general'
+      ? t('researchChat.title.general')
+      : t('researchChat.title.protocol');
+  const placeholderText =
+    mode === 'general'
+      ? t('researchChat.placeholder.general')
+      : t('researchChat.placeholder.protocol');
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
+        keyboardVerticalOffset={0}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
             <ChevronLeft size={24} color={THEME.navy} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>{screenTitle}</Text>
             {contextFiles.length > 0 && (
               <Text style={styles.headerSubtitle}>
-                {contextFiles.length} {t('researchChat.filesLoaded', { count: contextFiles.length })}
+                {contextFiles.length}{' '}
+                {t('researchChat.filesLoaded', { count: contextFiles.length })}
               </Text>
             )}
           </View>
 
-          <TouchableOpacity onPress={handleViewFiles} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={handleViewFiles}
+            style={styles.headerButton}>
             <FolderOpen size={22} color={THEME.navy} />
           </TouchableOpacity>
         </View>
@@ -926,13 +1004,13 @@ const ResearchChatScreen: React.FC = () => {
             /* Empty State */
             <View style={styles.emptyState}>
               <PulsingAILogo />
-              
+
               <Text style={styles.emptyStateGreeting}>
                 {mode === 'general'
                   ? t('researchChat.greeting.general')
                   : t('researchChat.greeting.protocol')}
               </Text>
-              
+
               <Text style={styles.emptyStateSubtext}>
                 {mode === 'general'
                   ? t('researchChat.subtitle.general')
@@ -958,8 +1036,7 @@ const ResearchChatScreen: React.FC = () => {
               style={styles.chatStream}
               contentContainerStyle={styles.chatStreamContent}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}

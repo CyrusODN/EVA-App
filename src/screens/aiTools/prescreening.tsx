@@ -96,7 +96,7 @@ const Prescreening = () => {
       size: 1024 * 2.1, // 2.1KB
       type: 'text/plain',
     };
-    setPdfFiles(prev => [...prev, mockFile]);
+    setPdfFiles((prev) => [...prev, mockFile]);
   };
 
   const handleLoadDemoData = () => {
@@ -197,20 +197,17 @@ Social History:
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.savedAnalysisButton}
-            onPress={handleSavedAnalyses}
-          >
+            onPress={handleSavedAnalyses}>
             <LinearGradient
               colors={['#53A0CD', '#44C2AD']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.savedAnalysisButtonGradient}
-            >
+              style={styles.savedAnalysisButtonGradient}>
               <View style={{ width: wp(1) }} />
               <FolderOpen size={16} color="white" />
               <Text
                 variant="labelMedium"
-                style={styles.savedAnalysisButtonText}
-              >
+                style={styles.savedAnalysisButtonText}>
                 {t('preScreening.buttons.savedAnalyses')}
               </Text>
               <View style={{ width: wp(1) }} />
@@ -232,14 +229,12 @@ Social History:
                     <View style={styles.protocolCardText}>
                       <Text
                         variant="titleMedium"
-                        style={styles.protocolCardTitle}
-                      >
+                        style={styles.protocolCardTitle}>
                         {t('preScreening.studyProtocol.title')}
                       </Text>
                       <Text
                         variant="bodySmall"
-                        style={styles.protocolCardDescription}
-                      >
+                        style={styles.protocolCardDescription}>
                         {t('preScreening.studyProtocol.description')}
                       </Text>
                     </View>
@@ -253,27 +248,23 @@ Social History:
                 <View style={styles.sectionHeader}>
                   <Text
                     variant="headlineMedium"
-                    style={textStyles.sectionTitle}
-                  >
+                    style={textStyles.sectionTitle}>
                     {t('preScreening.labels.medicalHistory')}
                   </Text>
                   <View style={styles.medicalHistoryActions}>
                     <TouchableOpacity
                       style={styles.uploadTxtButton}
-                      onPress={handleUploadPDF}
-                    >
+                      onPress={handleUploadPDF}>
                       <LinearGradient
                         colors={['#53A0CD', '#44C2AD']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={styles.uploadTxtButtonGradient}
-                      >
+                        style={styles.uploadTxtButtonGradient}>
                         <View style={{ width: wp(1) }} />
                         <FileText size={16} color="white" />
                         <Text
                           variant="labelMedium"
-                          style={styles.uploadTxtButtonText}
-                        >
+                          style={styles.uploadTxtButtonText}>
                           {t('preScreening.buttons.uploadTxt')}
                         </Text>
                         <View style={{ width: wp(1) }} />
@@ -281,20 +272,17 @@ Social History:
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.patientHistoryButton}
-                      onPress={handleLoadDemoData}
-                    >
+                      onPress={handleLoadDemoData}>
                       <LinearGradient
                         colors={['#53A0CD', '#44C2AD']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={styles.patientHistoryButtonGradient}
-                      >
+                        style={styles.patientHistoryButtonGradient}>
                         <View style={{ width: wp(1) }} />
                         <RotateCcw size={16} color="white" />
                         <Text
                           variant="labelMedium"
-                          style={styles.patientHistoryButtonText}
-                        >
+                          style={styles.patientHistoryButtonText}>
                           {t('preScreening.buttons.patientHistory')}
                         </Text>
                         <View style={{ width: wp(1) }} />
@@ -331,26 +319,22 @@ Social History:
                   disabled={
                     isAnalyzing ||
                     (!medicalHistory.trim() && pdfFiles.length === 0)
-                  }
-                >
+                  }>
                   <LinearGradient
                     colors={['#53A0CD', '#44C2AD']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.startAnalysisButtonGradient}
-                  >
+                    style={styles.startAnalysisButtonGradient}>
                     {isAnalyzing ? (
                       <Text
                         variant="labelLarge"
-                        style={styles.startAnalysisButtonText}
-                      >
+                        style={styles.startAnalysisButtonText}>
                         {t('preScreening.loading.title')}
                       </Text>
                     ) : (
                       <Text
                         variant="labelLarge"
-                        style={styles.startAnalysisButtonText}
-                      >
+                        style={styles.startAnalysisButtonText}>
                         {t('preScreening.buttons.startAnalysis')}
                       </Text>
                     )}
@@ -397,8 +381,7 @@ Social History:
                           <View key={index} style={styles.comorbidityItem}>
                             <Text
                               variant="bodySmall"
-                              style={styles.comorbidityText}
-                            >
+                              style={styles.comorbidityText}>
                               {comorbidity}
                             </Text>
                           </View>
@@ -421,14 +404,12 @@ Social History:
                   <View style={styles.criteriaStatItem}>
                     <Text
                       variant="headlineLarge"
-                      style={styles.criteriaStatNumber}
-                    >
+                      style={styles.criteriaStatNumber}>
                       {analysisResults.criteriaAnalysis.total}
                     </Text>
                     <Text
                       variant="labelMedium"
-                      style={styles.criteriaStatLabel}
-                    >
+                      style={styles.criteriaStatLabel}>
                       {t('preScreening.sections.totalCriteria')}
                     </Text>
                   </View>
@@ -438,14 +419,12 @@ Social History:
                       style={[
                         styles.criteriaStatNumber,
                         { color: colors.lightGreen },
-                      ]}
-                    >
+                      ]}>
                       {analysisResults.criteriaAnalysis.positive}
                     </Text>
                     <Text
                       variant="labelMedium"
-                      style={styles.criteriaStatLabel}
-                    >
+                      style={styles.criteriaStatLabel}>
                       {t('preScreening.sections.positiveCriteria')}
                     </Text>
                   </View>
@@ -455,28 +434,24 @@ Social History:
                       style={[
                         styles.criteriaStatNumber,
                         { color: colors.error },
-                      ]}
-                    >
+                      ]}>
                       {analysisResults.criteriaAnalysis.problems}
                     </Text>
                     <Text
                       variant="labelMedium"
-                      style={styles.criteriaStatLabel}
-                    >
+                      style={styles.criteriaStatLabel}>
                       {t('preScreening.sections.problemCriteria')}
                     </Text>
                   </View>
                   <View style={styles.criteriaStatItem}>
                     <Text
                       variant="headlineLarge"
-                      style={[styles.criteriaStatNumber, { color: '#F59E0B' }]}
-                    >
+                      style={[styles.criteriaStatNumber, { color: '#F59E0B' }]}>
                       {analysisResults.criteriaAnalysis.verification}
                     </Text>
                     <Text
                       variant="labelMedium"
-                      style={styles.criteriaStatLabel}
-                    >
+                      style={styles.criteriaStatLabel}>
                       {t('preScreening.sections.verificationNeeded')}
                     </Text>
                   </View>
@@ -513,8 +488,7 @@ Social History:
                             analysisResults.overallQualification,
                           ),
                         },
-                      ]}
-                    >
+                      ]}>
                       {t('preScreening.conclusion.probablyQualifies')}
                     </Text>
                   </View>
@@ -533,8 +507,7 @@ Social History:
                             analysisResults.overallQualification,
                           ),
                         },
-                      ]}
-                    >
+                      ]}>
                       {analysisResults.qualificationProbability}%
                     </Text>
                   </View>
@@ -578,8 +551,7 @@ Social History:
                         <CheckCircle size={16} color={colors.lightGreen} />
                         <Text
                           variant="bodyMedium"
-                          style={styles.criticalInfoText}
-                        >
+                          style={styles.criticalInfoText}>
                           {info}
                         </Text>
                       </View>
@@ -595,12 +567,10 @@ Social History:
                   onPress={() => {
                     setShowResults(false);
                     setAnalysisResults(null);
-                  }}
-                >
+                  }}>
                   <Text
                     variant="labelMedium"
-                    style={styles.newAnalysisButtonText}
-                  >
+                    style={styles.newAnalysisButtonText}>
                     {t('preScreening.buttons.analyzeNewPatient')}
                   </Text>
                 </TouchableOpacity>

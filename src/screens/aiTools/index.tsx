@@ -87,13 +87,12 @@ const AITools = () => {
       <TouchableOpacity
         style={styles.toolItem}
         onPress={() => navigation.navigate(item.screenName as never)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <View style={styles.toolRow}>
           <View style={styles.iconContainer}>
             <Icon size={24} color={colors.primary} strokeWidth={2} />
           </View>
-          
+
           <View style={styles.textContainer}>
             <Text variant="titleMedium" style={styles.toolTitle}>
               {t(item.title)}
@@ -101,8 +100,7 @@ const AITools = () => {
             <Text
               variant="bodySmall"
               style={styles.toolDescription}
-              numberOfLines={1}
-            >
+              numberOfLines={1}>
               {t(item.description)}
             </Text>
           </View>
@@ -120,7 +118,11 @@ const AITools = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Image source={images.logo} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={images.logo}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <View style={styles.headerSeparator} />
             <Text variant="headlineLarge" style={styles.aiToolsTitle}>
               {t('aiTools.title')}

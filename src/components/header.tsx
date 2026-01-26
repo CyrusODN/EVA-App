@@ -50,7 +50,12 @@ const Header: React.FC<HeaderProps> = ({
   showBorder = true,
 }) => {
   return (
-    <View style={[styles.headerContainer, { backgroundColor }, !showBorder && styles.noBorder]}>
+    <View
+      style={[
+        styles.headerContainer,
+        { backgroundColor },
+        !showBorder && styles.noBorder,
+      ]}>
       <View style={styles.headerContent}>
         {/* Left Icon */}
         {leftIcon && (
@@ -69,8 +74,7 @@ const Header: React.FC<HeaderProps> = ({
           <View style={styles.headerTextContainer}>
             <Text
               variant="headlineLarge"
-              style={[textStyles.headlineLarge, { color: textColor }]}
-            >
+              style={[textStyles.headlineLarge, { color: textColor }]}>
               {title}
             </Text>
             {showSubtitle && subtitle && (
@@ -153,8 +157,7 @@ const styles = StyleSheet.create({
   subtitle: {
     color: colors.onSurfaceVariant,
     marginTop: 2,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
     fontSize: 13,
     letterSpacing: 0.2,
   },

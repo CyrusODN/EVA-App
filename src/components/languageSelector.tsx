@@ -61,9 +61,9 @@ const LanguageSelector = ({
   const [showModal, setShowModal] = useState(false);
 
   const currentLanguage = i18n.language as LanguageCode;
-  const currentLangConfig = SUPPORTED_LANGUAGES.find(
-    lang => lang.code === currentLanguage
-  ) || SUPPORTED_LANGUAGES[0];
+  const currentLangConfig =
+    SUPPORTED_LANGUAGES.find((lang) => lang.code === currentLanguage) ||
+    SUPPORTED_LANGUAGES[0];
 
   const handleLanguageSelect = async (langCode: LanguageCode) => {
     try {
@@ -83,9 +83,10 @@ const LanguageSelector = ({
         <TouchableOpacity
           style={styles.compactButton}
           onPress={() => setShowModal(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.compactCode}>{currentLanguage.toUpperCase()}</Text>
+          activeOpacity={0.7}>
+          <Text style={styles.compactCode}>
+            {currentLanguage.toUpperCase()}
+          </Text>
         </TouchableOpacity>
         {renderModal()}
       </>
@@ -99,8 +100,7 @@ const LanguageSelector = ({
         <TouchableOpacity
           style={styles.inlineButton}
           onPress={() => setShowModal(true)}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Globe size={18} color="#64748B" strokeWidth={2} />
           <Text style={styles.inlineText}>{currentLanguage.toUpperCase()}</Text>
         </TouchableOpacity>
@@ -116,24 +116,23 @@ const LanguageSelector = ({
         visible={showModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowModal(false)}
-      >
+        onRequestClose={() => setShowModal(false)}>
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowModal(false)}
-        >
+          onPress={() => setShowModal(false)}>
           <TouchableOpacity
             style={styles.modalContent}
             activeOpacity={1}
-            onPress={e => e.stopPropagation()}
-          >
+            onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('settings.language.select')}</Text>
+              <Text style={styles.modalTitle}>
+                {t('settings.language.select')}
+              </Text>
             </View>
 
             <View style={styles.languageList}>
-              {SUPPORTED_LANGUAGES.map(lang => {
+              {SUPPORTED_LANGUAGES.map((lang) => {
                 const isSelected = lang.code === currentLanguage;
                 return (
                   <TouchableOpacity
@@ -143,11 +142,12 @@ const LanguageSelector = ({
                       isSelected && styles.languageItemSelected,
                     ]}
                     onPress={() => handleLanguageSelect(lang.code)}
-                    activeOpacity={0.7}
-                  >
+                    activeOpacity={0.7}>
                     <View style={styles.languageInfo}>
                       <View style={styles.languageCodeBadge}>
-                        <Text style={styles.languageCode}>{lang.code.toUpperCase()}</Text>
+                        <Text style={styles.languageCode}>
+                          {lang.code.toUpperCase()}
+                        </Text>
                       </View>
                       <Text style={styles.languageName}>{lang.nativeName}</Text>
                     </View>
@@ -169,8 +169,7 @@ const LanguageSelector = ({
       <TouchableOpacity
         style={styles.fullButton}
         onPress={() => setShowModal(true)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <View style={styles.fullButtonContent}>
           <View style={styles.fullButtonLeft}>
             <View style={styles.iconContainer}>
@@ -178,14 +177,18 @@ const LanguageSelector = ({
             </View>
             <View>
               {showLabel && (
-                <Text style={styles.fullButtonLabel}>{t('settings.language.label')}</Text>
+                <Text style={styles.fullButtonLabel}>
+                  {t('settings.language.label')}
+                </Text>
               )}
               <Text style={styles.fullButtonValue}>
                 {currentLangConfig.nativeName}
               </Text>
             </View>
           </View>
-          <Text style={styles.fullButtonCode}>{currentLanguage.toUpperCase()}</Text>
+          <Text style={styles.fullButtonCode}>
+            {currentLanguage.toUpperCase()}
+          </Text>
         </View>
       </TouchableOpacity>
       {renderModal()}
@@ -284,7 +287,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
     letterSpacing: 0.5,
   },
-  
+
   // LANGUAGE CODE BADGE - Industry standard
   languageCodeBadge: {
     width: 44,

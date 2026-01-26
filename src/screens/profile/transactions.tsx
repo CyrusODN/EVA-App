@@ -35,7 +35,11 @@ const MOCK_TRANSACTIONS_DATA: Transaction[] = [
     id: 1,
     user: 'Jan Nowak',
     email: 'jannowak@gmail.com',
-    serviceKeys: ['aiTools.notes.title', 'aiTools.consult.title', 'aiTools.research.title'],
+    serviceKeys: [
+      'aiTools.notes.title',
+      'aiTools.consult.title',
+      'aiTools.research.title',
+    ],
     amount: '220.00 PLN',
     date: '15/03/2025',
   },
@@ -126,18 +130,19 @@ const Transactions = () => {
         rightIconSource={images.downloadIcon}
         onRightPress={handleExport}
       />
-      
+
       <View style={styles.container}>
         <ScrollView
           style={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View style={styles.transactionsSection}>
-            
             {MOCK_TRANSACTIONS_DATA.length > 0 ? (
               <View style={styles.transactionsList}>
                 {MOCK_TRANSACTIONS_DATA.map((transaction) => (
-                  <TransactionCard key={transaction.id} transaction={transaction} />
+                  <TransactionCard
+                    key={transaction.id}
+                    transaction={transaction}
+                  />
                 ))}
               </View>
             ) : (
@@ -171,7 +176,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
     marginBottom: 16,
   },
   transactionsList: {
@@ -206,31 +212,36 @@ const styles = StyleSheet.create({
   },
   numberLabel: {
     color: colors.surface,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   transactionAmount: {},
   amountText: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
   },
   transactionUser: {
     marginBottom: 12,
   },
   userName: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
     marginBottom: 2,
   },
   userEmail: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   servicesContainer: {
     marginBottom: 12,
   },
   servicesLabel: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     marginBottom: 8,
   },
   servicesTags: {
@@ -248,7 +259,8 @@ const styles = StyleSheet.create({
   },
   serviceTagText: {
     color: '#1E40AF',
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     fontSize: 11,
   },
   transactionFooter: {
@@ -258,11 +270,13 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   dateText: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -271,7 +285,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     textAlign: 'center',
   },
 });

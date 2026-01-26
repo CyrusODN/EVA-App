@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -68,7 +75,7 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const [previewKey, setPreviewKey] = useState(0);
-  
+
   const currentLanguage = i18n.language.startsWith('pl') ? 'pl' : 'en';
   const examples = NOTE_EXAMPLES[currentLanguage];
   const currentExample = examples[selectedLength];
@@ -79,7 +86,7 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
     }
     onSelect(length);
     // Trigger preview animation
-    setPreviewKey(prev => prev + 1);
+    setPreviewKey((prev) => prev + 1);
   };
 
   return (
@@ -87,39 +94,35 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>←  {t('onboarding.back')}</Text>
+          <Text style={styles.backText}>← {t('onboarding.back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
           <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Title */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-          style={styles.title}
-        >
+          style={styles.title}>
           {t('onboarding.noteLength.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text 
+        <Animated.Text
           entering={FadeInDown.delay(150).duration(DURATIONS.normal)}
-          style={styles.subtitle}
-        >
+          style={styles.subtitle}>
           {t('onboarding.noteLength.subtitle')}
         </Animated.Text>
 
         {/* Segmented Control */}
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(200).duration(DURATIONS.normal)}
-          style={styles.segmentedControl}
-        >
+          style={styles.segmentedControl}>
           {LENGTH_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
@@ -128,12 +131,13 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
                 selectedLength === option.id && styles.segmentButtonActive,
               ]}
               onPress={() => handleSelect(option.id)}
-              activeOpacity={0.8}
-            >
-              <Text style={[
-                styles.segmentButtonText,
-                selectedLength === option.id && styles.segmentButtonTextActive,
-              ]}>
+              activeOpacity={0.8}>
+              <Text
+                style={[
+                  styles.segmentButtonText,
+                  selectedLength === option.id &&
+                    styles.segmentButtonTextActive,
+                ]}>
                 {t(option.titleKey)}
               </Text>
             </TouchableOpacity>
@@ -141,51 +145,52 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
         </Animated.View>
 
         {/* Description of selected option */}
-        <Animated.Text 
+        <Animated.Text
           key={`desc-${selectedLength}`}
           entering={FadeIn.duration(DURATIONS.fast)}
-          style={styles.optionDescription}
-        >
-          {t(LENGTH_OPTIONS.find(o => o.id === selectedLength)?.descKey || '')}
+          style={styles.optionDescription}>
+          {t(
+            LENGTH_OPTIONS.find((o) => o.id === selectedLength)?.descKey || '',
+          )}
         </Animated.Text>
 
         {/* Live Preview Card */}
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(300).duration(DURATIONS.normal)}
-          style={styles.previewCard}
-        >
-          <Text style={styles.previewLabel}>{t('onboarding.noteLength.previewTitle')}</Text>
-          
-          <Animated.View 
+          style={styles.previewCard}>
+          <Text style={styles.previewLabel}>
+            {t('onboarding.noteLength.previewTitle')}
+          </Text>
+
+          <Animated.View
             key={`preview-${previewKey}`}
             entering={FadeIn.duration(DURATIONS.normal)}
             layout={Layout.springify()}
-            style={styles.previewContent}
-          >
+            style={styles.previewContent}>
             <Text style={styles.previewTitle}>{currentExample.title}</Text>
             <Text style={styles.previewText}>{currentExample.content}</Text>
           </Animated.View>
         </Animated.View>
 
         {/* Progress dots */}
-        <Animated.View 
+        <Animated.View
           entering={FadeIn.delay(400).duration(DURATIONS.normal)}
-          style={styles.dotsContainer}
-        >
-          <OnboardingProgressDots totalSteps={totalSteps} currentStep={currentStep} />
+          style={styles.dotsContainer}>
+          <OnboardingProgressDots
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+          />
         </Animated.View>
       </ScrollView>
 
       {/* Continue Button */}
-      <Animated.View 
+      <Animated.View
         entering={FadeInDown.delay(500).duration(DURATIONS.normal)}
-        style={styles.buttonContainer}
-      >
+        style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.ctaButton}
           onPress={onContinue}
-          activeOpacity={0.9}
-        >
+          activeOpacity={0.9}>
           <Text style={styles.ctaText}>{t('onboarding.next')}</Text>
         </TouchableOpacity>
       </Animated.View>

@@ -257,8 +257,7 @@ const Subscription = () => {
             style={[
               styles.statusText,
               { color: getStatusStyle(plan.status).color },
-            ]}
-          >
+            ]}>
             {t(statusTranslationKeys[plan.status])}
           </Text>
         </View>
@@ -339,8 +338,7 @@ const Subscription = () => {
           {plan.subPlans && (
             <TouchableOpacity
               style={styles.viewToolsButton}
-              onPress={() => setExpandedPlan(isExpanded ? null : plan.nameKey)}
-            >
+              onPress={() => setExpandedPlan(isExpanded ? null : plan.nameKey)}>
               <Text variant="labelMedium" style={styles.viewToolsText}>
                 {t('pricing.viewTools')}
               </Text>
@@ -357,14 +355,12 @@ const Subscription = () => {
               plan.featured && styles.subscribeButtonFeatured,
             ]}
             onPress={() => handleSubscribe(plan.nameKey)}
-            activeOpacity={0.8}
-          >
+            activeOpacity={0.8}>
             <Text
               style={[
                 styles.subscribeButtonText,
                 plan.featured && styles.subscribeButtonTextFeatured,
-              ]}
-            >
+              ]}>
               {t('pricing.subscribe')}
             </Text>
           </TouchableOpacity>
@@ -396,8 +392,7 @@ const Subscription = () => {
                         <CheckCircle2 size={12} color="#46B7C6" />
                         <Text
                           variant="bodySmall"
-                          style={styles.subPlanFeatureText}
-                        >
+                          style={styles.subPlanFeatureText}>
                           {t(featureKey)}
                         </Text>
                       </View>
@@ -408,8 +403,7 @@ const Subscription = () => {
                     onPress={() =>
                       handleSubscribe(`${plan.nameKey}-${subPlan.nameKey}`)
                     }
-                    activeOpacity={0.8}
-                  >
+                    activeOpacity={0.8}>
                     <Text style={styles.subPlanSubscribeButtonText}>
                       {t('pricing.subscribe')}
                     </Text>
@@ -431,29 +425,25 @@ const Subscription = () => {
             styles.tab,
             billingPeriod === 'monthly' && styles.selectedTab,
           ]}
-          onPress={() => setBillingPeriod('monthly')}
-        >
+          onPress={() => setBillingPeriod('monthly')}>
           <Text
             variant="labelMedium"
             style={[
               styles.tabText,
               billingPeriod === 'monthly' && styles.selectedTabText,
-            ]}
-          >
+            ]}>
             {t('pricing.billing.monthly')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, billingPeriod === 'yearly' && styles.selectedTab]}
-          onPress={() => setBillingPeriod('yearly')}
-        >
+          onPress={() => setBillingPeriod('yearly')}>
           <Text
             variant="labelMedium"
             style={[
               styles.tabText,
               billingPeriod === 'yearly' && styles.selectedTabText,
-            ]}
-          >
+            ]}>
             {t('pricing.billing.yearly')}
           </Text>
           {billingPeriod === 'yearly' && (
@@ -483,7 +473,7 @@ const Subscription = () => {
             <Text variant="titleLarge" style={textStyles.sectionTitle}>
               {t('subscription.title')}
             </Text>
-            {MOCK_PLANS.map(plan => (
+            {MOCK_PLANS.map((plan) => (
               <SubscribedPlanCard key={plan.id} plan={plan} />
             ))}
           </View>

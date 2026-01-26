@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,12 +14,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { 
-  Brain, 
-  Baby, 
-  Scissors, 
-  Sparkles, 
-  ClipboardList, 
+import {
+  Brain,
+  Baby,
+  Scissors,
+  Sparkles,
+  ClipboardList,
   RefreshCw,
   Check,
   LucideIcon,
@@ -29,10 +35,10 @@ import {
 } from '../constants/onboardingTheme';
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  'brain': Brain,
-  'baby': Baby,
-  'scissors': Scissors,
-  'sparkles': Sparkles,
+  brain: Brain,
+  baby: Baby,
+  scissors: Scissors,
+  sparkles: Sparkles,
   'clipboard-list': ClipboardList,
   'refresh-cw': RefreshCw,
 };
@@ -59,11 +65,13 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
   const scale = useSharedValue(1);
   const borderColorProgress = useSharedValue(isSelected ? 1 : 0);
   const checkmarkScale = useSharedValue(isSelected ? 1 : 0);
-  
+
   const IconComponent = ICON_MAP[iconName] || Sparkles;
 
   useEffect(() => {
-    borderColorProgress.value = withTiming(isSelected ? 1 : 0, { duration: DURATIONS.fast });
+    borderColorProgress.value = withTiming(isSelected ? 1 : 0, {
+      duration: DURATIONS.fast,
+    });
     checkmarkScale.value = withSpring(isSelected ? 1 : 0, SPRINGS.bouncy);
   }, [isSelected]);
 
@@ -72,21 +80,25 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     // Scale animation sequence (Things 3 style)
     scale.value = withSequence(
       withSpring(0.97, SPRINGS.snappy),
       withSpring(1.02, SPRINGS.bouncy),
-      withSpring(1.0, SPRINGS.gentle)
+      withSpring(1.0, SPRINGS.gentle),
     );
-    
+
     onSelect();
   };
 
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    borderColor: isSelected ? ONBOARDING_COLORS.primary : ONBOARDING_COLORS.border,
-    backgroundColor: isSelected ? ONBOARDING_COLORS.primarySubtle : ONBOARDING_COLORS.pureWhite,
+    borderColor: isSelected
+      ? ONBOARDING_COLORS.primary
+      : ONBOARDING_COLORS.border,
+    backgroundColor: isSelected
+      ? ONBOARDING_COLORS.primarySubtle
+      : ONBOARDING_COLORS.pureWhite,
   }));
 
   const checkmarkStyle = useAnimatedStyle(() => ({
@@ -95,30 +107,34 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
   }));
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={handlePress}
-      testID={testID}
-    >
+    <TouchableOpacity activeOpacity={0.9} onPress={handlePress} testID={testID}>
       <Animated.View style={[styles.container, containerStyle]}>
         <View style={styles.iconContainer}>
-          <IconComponent 
-            size={24} 
-            color={isSelected ? ONBOARDING_COLORS.primary : ONBOARDING_COLORS.textSecondary} 
+          <IconComponent
+            size={24}
+            color={
+              isSelected
+                ? ONBOARDING_COLORS.primary
+                : ONBOARDING_COLORS.textSecondary
+            }
             strokeWidth={2}
           />
         </View>
-        
+
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
           {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
           {hint && <Text style={styles.hint}>{hint}</Text>}
         </View>
-        
+
         {/* Animated checkmark */}
         <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
           <View style={styles.checkmark}>
-            <Check size={14} color={ONBOARDING_COLORS.pureWhite} strokeWidth={3} />
+            <Check
+              size={14}
+              color={ONBOARDING_COLORS.pureWhite}
+              strokeWidth={3}
+            />
           </View>
         </Animated.View>
       </Animated.View>

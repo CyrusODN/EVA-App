@@ -153,7 +153,9 @@ const Consult = () => {
   const navigation = useNavigation<any>();
 
   // State management
-  const [activeTab, setActiveTab] = useState<'visits' | 'chat' | 'pharmacopedia'>('visits');
+  const [activeTab, setActiveTab] = useState<
+    'visits' | 'chat' | 'pharmacopedia'
+  >('visits');
   const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -170,12 +172,13 @@ const Consult = () => {
         const raw = resp?.data;
         const payload = raw?.data || raw;
         const svcToken =
-          payload?.token ||
-          payload?.chatbotToken ||
-          payload?.serviceToken;
+          payload?.token || payload?.chatbotToken || payload?.serviceToken;
         if (svcToken) {
           try {
-            await AsyncStorage.setItem('chatbot_service_token', String(svcToken));
+            await AsyncStorage.setItem(
+              'chatbot_service_token',
+              String(svcToken),
+            );
           } catch (_) {}
         }
       } catch (_) {}
@@ -254,11 +257,11 @@ const Consult = () => {
   };
 
   const handleImport = (visit: Visit) => {
-    setImportedVisits(prev => new Set([...prev, visit.id]));
+    setImportedVisits((prev) => new Set([...prev, visit.id]));
   };
 
   const toggleFilter = (type: 'type' | 'specialization', value: string) => {
-    setFilters(prev => {
+    setFilters((prev) => {
       const newFilters = { ...prev };
       const set = new Set(prev[type]);
       set.has(value) ? set.delete(value) : set.add(value);
@@ -269,7 +272,7 @@ const Consult = () => {
 
   const handleSort = (field: SortBy) => {
     if (sortBy === field) {
-      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortBy(field);
       setSortOrder('desc');
@@ -286,7 +289,7 @@ const Consult = () => {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setCurrentMessage('');
 
     // Simulate AI response
@@ -315,19 +318,23 @@ const Consult = () => {
           },
         ],
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages((prev) => [...prev, aiResponse]);
     }, 1000);
   };
 
   const handleAddDrug = () => {
     if (drugInput.trim() && !selectedDrugs.includes(drugInput.trim())) {
       const newDrug = drugInput.trim();
-      setSelectedDrugs(prev => [...prev, newDrug]);
+      setSelectedDrugs((prev) => [...prev, newDrug]);
       setDrugInput('');
 
       // Mock interaction generation
       if (selectedDrugs.length >= 1) {
-        const severities: Interaction['severity'][] = ['high', 'moderate', 'low'];
+        const severities: Interaction['severity'][] = [
+          'high',
+          'moderate',
+          'low',
+        ];
         const newInteraction: Interaction = {
           id: Date.now().toString(),
           severity: severities[Math.floor(Math.random() * severities.length)],
@@ -339,7 +346,7 @@ const Consult = () => {
             'Monitor patient closely, consider dosage adjustment or alternative therapy.',
           drugs: [selectedDrugs[selectedDrugs.length - 1], newDrug],
         };
-        setDrugInteractions(prev => [...prev, newInteraction]);
+        setDrugInteractions((prev) => [...prev, newInteraction]);
       }
     }
   };
@@ -377,14 +384,12 @@ const Consult = () => {
         ) : (
           <TouchableOpacity
             style={styles.importButton}
-            onPress={() => handleImport(item)}
-          >
+            onPress={() => handleImport(item)}>
             <LinearGradient
               colors={LinearGradientColors}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.importButtonGradient}
-            >
+              style={styles.importButtonGradient}>
               <Import size={14} color="white" />
             </LinearGradient>
           </TouchableOpacity>
@@ -426,8 +431,7 @@ const Consult = () => {
       style={[
         styles.messageContainer,
         item.role === 'user' ? styles.userMessage : styles.assistantMessage,
-      ]}
-    >
+      ]}>
       <Text
         variant="bodyMedium"
         style={[
@@ -435,8 +439,7 @@ const Consult = () => {
           item.role === 'user'
             ? styles.userMessageText
             : styles.assistantMessageText,
-        ]}
-      >
+        ]}>
         {item.content}
       </Text>
       <Text variant="bodySmall" style={styles.messageTime}>
@@ -491,15 +494,13 @@ const Consult = () => {
         <View style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterChip, showFilters && styles.activeFilterChip]}
-            onPress={() => setShowFilters(!showFilters)}
-          >
+            onPress={() => setShowFilters(!showFilters)}>
             {showFilters ? (
               <LinearGradient
                 colors={LinearGradientColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.activeFilterChipGradient}
-              >
+                style={styles.activeFilterChipGradient}>
                 <Filter size={14} color="white" />
                 <Text variant="labelSmall" style={styles.activeFilterChipText}>
                   Filters
@@ -517,8 +518,7 @@ const Consult = () => {
 
           <TouchableOpacity
             style={styles.filterChip}
-            onPress={() => handleSort('date')}
-          >
+            onPress={() => handleSort('date')}>
             <ArrowUpDown size={14} color={colors.onSurface} />
             <Text variant="labelSmall" style={styles.filterChipText}>
               Sort
@@ -531,7 +531,7 @@ const Consult = () => {
       <FlatList
         data={filteredAndSortedVisits}
         renderItem={renderVisitItem}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         style={styles.visitsList}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.visitsListContent}
@@ -547,9 +547,10 @@ const Consult = () => {
           {item}
         </Text>
         <TouchableOpacity
-          onPress={() => setSelectedDrugs(prev => prev.filter(d => d !== item))}
-          style={styles.removeDrugButton}
-        >
+          onPress={() =>
+            setSelectedDrugs((prev) => prev.filter((d) => d !== item))
+          }
+          style={styles.removeDrugButton}>
           <Trash2 size={16} color={colors.error} />
         </TouchableOpacity>
       </View>
@@ -590,8 +591,7 @@ const Consult = () => {
             style={[
               styles.severityBadge,
               { backgroundColor: getSeverityColor(item.severity) },
-            ]}
-          >
+            ]}>
             {getSeverityIcon(item.severity)}
             <Text variant="labelMedium" style={styles.severityText}>
               {item.severity.toUpperCase()}
@@ -637,8 +637,11 @@ const Consult = () => {
         <View style={styles.specialitySection}>
           <View style={styles.startConsultationIntro}>
             <MessageSquare size={22} color={colors.lightGreen} />
-            <Text variant="bodyMedium" style={styles.startConsultationIntroText}>
-              Start a new consultation session to get AI-powered medical guidance and support
+            <Text
+              variant="bodyMedium"
+              style={styles.startConsultationIntroText}>
+              Start a new consultation session to get AI-powered medical
+              guidance and support
             </Text>
           </View>
           <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -649,8 +652,7 @@ const Consult = () => {
               style={styles.dropdownSelected}
               onPress={() =>
                 setShowSpecialityDropdown(!showSpecialityDropdown)
-              }
-            >
+              }>
               <Text variant="bodyMedium" style={styles.dropdownSelectedText}>
                 {selectedSpeciality || 'Select Speciality'}
               </Text>
@@ -662,38 +664,42 @@ const Consult = () => {
             </TouchableOpacity>
             {showSpecialityDropdown && (
               <View style={[styles.dropdownMenu, styles.dropdownMenuShadow]}>
-                {['Child Psychiatry', 'Adult Psychiatry', 'Internal Medicine'].map(
-                  spec => (
-                    <TouchableOpacity
-                      key={spec}
-                      style={[
-                        styles.dropdownOption,
-                        selectedSpeciality === spec && styles.activeDropdownOption,
-                      ]}
-                      onPress={() => {
-                        setSelectedSpeciality(spec);
-                        setShowSpecialityDropdown(false);
-                      }}
-                    >
-                      <View style={styles.dropdownOptionContent}>
-                        {spec === 'Internal Medicine' ? (
-                          <Stethoscope size={16} color={colors.onSurfaceVariant} />
-                        ) : (
-                          <User size={16} color={colors.onSurfaceVariant} />
-                        )}
-                        <Text
-                          variant="bodyMedium"
-                          style={styles.dropdownOptionText}
-                        >
-                          {spec}
-                        </Text>
-                      </View>
-                      {selectedSpeciality === spec && (
-                        <Check size={16} color={colors.lightGreen} />
+                {[
+                  'Child Psychiatry',
+                  'Adult Psychiatry',
+                  'Internal Medicine',
+                ].map((spec) => (
+                  <TouchableOpacity
+                    key={spec}
+                    style={[
+                      styles.dropdownOption,
+                      selectedSpeciality === spec &&
+                        styles.activeDropdownOption,
+                    ]}
+                    onPress={() => {
+                      setSelectedSpeciality(spec);
+                      setShowSpecialityDropdown(false);
+                    }}>
+                    <View style={styles.dropdownOptionContent}>
+                      {spec === 'Internal Medicine' ? (
+                        <Stethoscope
+                          size={16}
+                          color={colors.onSurfaceVariant}
+                        />
+                      ) : (
+                        <User size={16} color={colors.onSurfaceVariant} />
                       )}
-                    </TouchableOpacity>
-                  ),
-                )}
+                      <Text
+                        variant="bodyMedium"
+                        style={styles.dropdownOptionText}>
+                        {spec}
+                      </Text>
+                    </View>
+                    {selectedSpeciality === spec && (
+                      <Check size={16} color={colors.lightGreen} />
+                    )}
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
           </View>
@@ -704,7 +710,9 @@ const Consult = () => {
             <PrimaryButton
               iconComponent={Plus}
               text="Start New Consultation"
-              onPress={() => selectedSpeciality && setHasStartedConsultation(true)}
+              onPress={() =>
+                selectedSpeciality && setHasStartedConsultation(true)
+              }
               disabled={!selectedSpeciality}
               width={wp(85)}
             />
@@ -730,7 +738,7 @@ const Consult = () => {
           <FlatList
             data={messages}
             renderItem={renderMessage}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             style={styles.chatMessages}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.chatMessagesContent}
@@ -752,15 +760,13 @@ const Consult = () => {
                   !currentMessage.trim() && styles.sendButtonDisabled,
                 ]}
                 onPress={handleSendMessage}
-                disabled={!currentMessage.trim()}
-              >
+                disabled={!currentMessage.trim()}>
                 {currentMessage.trim() ? (
                   <LinearGradient
                     colors={LinearGradientColors}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.sendButtonGradient}
-                  >
+                    style={styles.sendButtonGradient}>
                     <Send size={18} color="white" />
                   </LinearGradient>
                 ) : (
@@ -768,8 +774,7 @@ const Consult = () => {
                     colors={['#94A3B8', '#94A3B8']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.sendButtonGradient}
-                  >
+                    style={styles.sendButtonGradient}>
                     <Send size={18} color="white" />
                   </LinearGradient>
                 )}
@@ -790,7 +795,7 @@ const Consult = () => {
       interactions: [],
       messages: [],
     };
-    setDrugQueries(prev => [...prev, newQuery]);
+    setDrugQueries((prev) => [...prev, newQuery]);
     setSelectedQuery(newQuery.id);
     setShowQueriesModal(false);
   };
@@ -803,8 +808,8 @@ const Consult = () => {
       content: pharmacopediaMessage,
       timestamp: new Date(),
     };
-    setDrugQueries(prev =>
-      prev.map(q =>
+    setDrugQueries((prev) =>
+      prev.map((q) =>
         q.id === selectedQuery
           ? { ...q, messages: [...(q.messages || []), newMessage] }
           : q,
@@ -820,8 +825,8 @@ const Consult = () => {
           'Analyzing your query in Pharmacopedia and compiling evidence-based information...',
         timestamp: new Date(),
       };
-      setDrugQueries(prev =>
-        prev.map(q =>
+      setDrugQueries((prev) =>
+        prev.map((q) =>
           q.id === selectedQuery
             ? { ...q, messages: [...(q.messages || []), aiResponse] }
             : q,
@@ -841,14 +846,12 @@ const Consult = () => {
           <View style={styles.pharmacopediaHeaderActions}>
             <TouchableOpacity
               style={styles.addQueryHeaderButton}
-              onPress={handleStartNewQuery}
-            >
+              onPress={handleStartNewQuery}>
               <Plus size={20} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.queriesButton}
-              onPress={() => setShowQueriesModal(true)}
-            >
+              onPress={() => setShowQueriesModal(true)}>
               <View style={styles.queriesButtonContent}>
                 <Pill size={18} color={colors.primary} />
                 <Text variant="labelMedium" style={styles.queriesButtonText}>
@@ -866,17 +869,19 @@ const Consult = () => {
       <ScrollView
         style={styles.pharmacopediaMainContent}
         contentContainerStyle={styles.pharmacopediaContentContainer}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {selectedQuery ? (
           <View style={styles.queryContent}>
-            {drugQueries.find(q => q.id === selectedQuery)?.messages &&
-            (drugQueries.find(q => q.id === selectedQuery)?.messages as Message[]).length >
-              0 ? (
+            {drugQueries.find((q) => q.id === selectedQuery)?.messages &&
+            (
+              drugQueries.find((q) => q.id === selectedQuery)
+                ?.messages as Message[]
+            ).length > 0 ? (
               <View style={styles.chatMessagesContent}>
-                {(drugQueries.find(q => q.id === selectedQuery)?.messages as Message[]).map(
-                  m => renderMessage({ item: m }),
-                )}
+                {(
+                  drugQueries.find((q) => q.id === selectedQuery)
+                    ?.messages as Message[]
+                ).map((m) => renderMessage({ item: m }))}
               </View>
             ) : (
               <View style={styles.emptyState}>
@@ -895,33 +900,44 @@ const Consult = () => {
               <View style={styles.pharmacopediaEmptyIconRow}>
                 <Pill size={hp(12)} color={colors.lightGreen} />
               </View>
-              <Text variant="titleMedium" style={styles.pharmacopediaEmptyTitle}>
+              <Text
+                variant="titleMedium"
+                style={styles.pharmacopediaEmptyTitle}>
                 AI Pharmacopedia
               </Text>
               <Text variant="bodyMedium" style={styles.pharmacopediaEmptyText}>
-                Get evidence-based drug information from trusted references with AI-powered search.
+                Get evidence-based drug information from trusted references with
+                AI-powered search.
               </Text>
               <View style={styles.pharmacopediaFeatureRow}>
                 <View style={styles.pharmacopediaFeatureChip}>
                   <Pill size={16} color={colors.lightGreen} />
-                  <Text variant="labelSmall" style={styles.pharmacopediaFeatureText}>
+                  <Text
+                    variant="labelSmall"
+                    style={styles.pharmacopediaFeatureText}>
                     Drug Info
                   </Text>
                 </View>
                 <View style={styles.pharmacopediaFeatureChip}>
                   <AlertTriangle size={16} color={colors.lightGreen} />
-                  <Text variant="labelSmall" style={styles.pharmacopediaFeatureText}>
+                  <Text
+                    variant="labelSmall"
+                    style={styles.pharmacopediaFeatureText}>
                     Interactions
                   </Text>
                 </View>
                 <View style={styles.pharmacopediaFeatureChip}>
                   <BookOpen size={16} color={colors.lightGreen} />
-                  <Text variant="labelSmall" style={styles.pharmacopediaFeatureText}>
+                  <Text
+                    variant="labelSmall"
+                    style={styles.pharmacopediaFeatureText}>
                     Guidelines
                   </Text>
                 </View>
               </View>
-              <Text variant="bodySmall" style={styles.pharmacopediaEmptySubtext}>
+              <Text
+                variant="bodySmall"
+                style={styles.pharmacopediaEmptySubtext}>
                 Start a new query to begin chatting with the AI Pharmacopedia
               </Text>
               <View style={styles.startNewQueryButton}>
@@ -954,15 +970,13 @@ const Consult = () => {
                 !pharmacopediaMessage.trim() && styles.sendButtonDisabled,
               ]}
               onPress={handleSendPharmacopediaMessage}
-              disabled={!pharmacopediaMessage.trim()}
-            >
+              disabled={!pharmacopediaMessage.trim()}>
               {pharmacopediaMessage.trim() ? (
                 <LinearGradient
                   colors={LinearGradientColors}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.sendButtonGradient}
-                >
+                  style={styles.sendButtonGradient}>
                   <Send size={18} color="white" />
                 </LinearGradient>
               ) : (
@@ -970,8 +984,7 @@ const Consult = () => {
                   colors={['#94A3B8', '#94A3B8']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.sendButtonGradient}
-                >
+                  style={styles.sendButtonGradient}>
                   <Send size={18} color="white" />
                 </LinearGradient>
               )}
@@ -985,8 +998,7 @@ const Consult = () => {
         visible={showQueriesModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowQueriesModal(false)}
-      >
+        onRequestClose={() => setShowQueriesModal(false)}>
         <SafeAreaView style={styles.queriesModalContainer}>
           <View style={styles.queriesModalHeader}>
             <Text variant="titleLarge" style={styles.queriesModalTitle}>
@@ -999,8 +1011,7 @@ const Consult = () => {
 
           <ScrollView
             style={styles.queriesModalContent}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             {drugQueries.length === 0 ? (
               <View style={styles.queriesModalEmptyState}>
                 <Pill size={64} color={colors.onSurfaceVariant} />
@@ -1009,14 +1020,13 @@ const Consult = () => {
                 </Text>
                 <Text
                   variant="bodyMedium"
-                  style={styles.queriesModalEmptySubtext}
-                >
+                  style={styles.queriesModalEmptySubtext}>
                   Start your first drug query
                 </Text>
               </View>
             ) : (
               <View style={styles.queriesList}>
-                {drugQueries.map(query => (
+                {drugQueries.map((query) => (
                   <TouchableOpacity
                     key={query.id}
                     style={[
@@ -1026,8 +1036,7 @@ const Consult = () => {
                     onPress={() => {
                       setSelectedQuery(query.id);
                       setShowQueriesModal(false);
-                    }}
-                  >
+                    }}>
                     <View style={styles.queryCardContent}>
                       <Pill
                         size={20}
@@ -1040,8 +1049,7 @@ const Consult = () => {
                       <View style={styles.queryCardText}>
                         <Text
                           variant="titleMedium"
-                          style={styles.queryCardTitle}
-                        >
+                          style={styles.queryCardTitle}>
                           {query.title}
                         </Text>
                         <Text variant="bodySmall" style={styles.queryCardDate}>
@@ -1084,8 +1092,7 @@ const Consult = () => {
         <View style={styles.bottomTabs}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'visits' && styles.activeTab]}
-            onPress={() => setActiveTab('visits')}
-          >
+            onPress={() => setActiveTab('visits')}>
             <FileSearch
               size={20}
               color={
@@ -1099,16 +1106,14 @@ const Consult = () => {
               style={[
                 styles.tabText,
                 activeTab === 'visits' && styles.activeTabText,
-              ]}
-            >
+              ]}>
               Visit History
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, activeTab === 'chat' && styles.activeTab]}
-            onPress={() => setActiveTab('chat')}
-          >
+            onPress={() => setActiveTab('chat')}>
             <Brain
               size={20}
               color={
@@ -1122,8 +1127,7 @@ const Consult = () => {
               style={[
                 styles.tabText,
                 activeTab === 'chat' && styles.activeTabText,
-              ]}
-            >
+              ]}>
               {t('remediusConsult.chat.tabTitle')}
             </Text>
             {messages.length > 0 && (
@@ -1140,8 +1144,7 @@ const Consult = () => {
               styles.tab,
               activeTab === 'pharmacopedia' && styles.activeTab,
             ]}
-            onPress={() => setActiveTab('pharmacopedia')}
-          >
+            onPress={() => setActiveTab('pharmacopedia')}>
             <FlaskConical
               size={20}
               color={
@@ -1155,8 +1158,7 @@ const Consult = () => {
               style={[
                 styles.tabText,
                 activeTab === 'pharmacopedia' && styles.activeTabText,
-              ]}
-            >
+              ]}>
               {t('aiTools.drugs.title')}
             </Text>
             {drugInteractions.length > 0 && (
@@ -1174,8 +1176,7 @@ const Consult = () => {
           visible={showFilters}
           animationType="slide"
           presentationStyle="pageSheet"
-          onRequestClose={() => setShowFilters(false)}
-        >
+          onRequestClose={() => setShowFilters(false)}>
           <SafeAreaView style={styles.filtersModal}>
             <View style={styles.filtersHeader}>
               <Text variant="titleLarge" style={styles.filtersTitle}>
@@ -1192,23 +1193,21 @@ const Consult = () => {
                   Visit Type
                 </Text>
                 <View style={styles.filterOptions}>
-                  {uniqueTypes.map(type => (
+                  {uniqueTypes.map((type) => (
                     <TouchableOpacity
                       key={type}
                       style={[
                         styles.filterOption,
                         filters.type.has(type) && styles.activeFilterOption,
                       ]}
-                      onPress={() => toggleFilter('type', type)}
-                    >
+                      onPress={() => toggleFilter('type', type)}>
                       <Text
                         variant="bodyMedium"
                         style={[
                           styles.filterOptionText,
                           filters.type.has(type) &&
                             styles.activeFilterOptionText,
-                        ]}
-                      >
+                        ]}>
                         {type}
                       </Text>
                       {filters.type.has(type) && (
@@ -1224,23 +1223,20 @@ const Consult = () => {
                   Specialization
                 </Text>
                 <View style={styles.filterOptions}>
-                  {uniqueSpecializations.map(spec => (
+                  {uniqueSpecializations.map((spec) => (
                     <TouchableOpacity
                       key={spec}
                       style={styles.filterOption}
-                      onPress={() => toggleFilter('specialization', spec)}
-                    >
+                      onPress={() => toggleFilter('specialization', spec)}>
                       {filters.specialization.has(spec) ? (
                         <LinearGradient
                           colors={LinearGradientColors}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 0 }}
-                          style={styles.activeFilterOptionGradient}
-                        >
+                          style={styles.activeFilterOptionGradient}>
                           <Text
                             variant="bodyMedium"
-                            style={styles.activeFilterOptionText}
-                          >
+                            style={styles.activeFilterOptionText}>
                             {spec}
                           </Text>
                           <Check size={16} color="white" />
@@ -1248,8 +1244,7 @@ const Consult = () => {
                       ) : (
                         <Text
                           variant="bodyMedium"
-                          style={styles.filterOptionText}
-                        >
+                          style={styles.filterOptionText}>
                           {spec}
                         </Text>
                       )}

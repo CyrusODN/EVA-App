@@ -43,11 +43,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
-
   GoogleSignin.configure({
-    webClientId: '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
+    webClientId:
+      '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
   });
-
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -85,21 +84,28 @@ const Login = () => {
           raw?.id ||
           raw?.data?.id;
         // eslint-disable-next-line no-console
-        console.log('2FA required. userId:', twoFAUserId, 'requires2FA:', !!payload?.requires2FA);
+        console.log(
+          '2FA required. userId:',
+          twoFAUserId,
+          'requires2FA:',
+          !!payload?.requires2FA,
+        );
         // eslint-disable-next-line no-console
         console.log('2FA payload message:', payload?.message || raw?.message);
         navigation.navigate('otpVerification', {
           context: 'login',
           email,
           password,
-          loginToken: payload?.loginToken ? String(payload.loginToken) : undefined,
+          loginToken: payload?.loginToken
+            ? String(payload.loginToken)
+            : undefined,
           userId: twoFAUserId ? String(twoFAUserId) : undefined,
           nextRoute: 'tabs',
         });
         try {
           await AsyncStorage.setItem('last_login_email', email);
           await AsyncStorage.setItem('last_login_password', password);
-        } catch (_) { }
+        } catch (_) {}
         const message =
           payload?.message ||
           raw?.message ||
@@ -145,33 +151,41 @@ const Login = () => {
       try {
         // Dynamically require to avoid build errors if the module isn't installed
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+        const {
+          GoogleSignin,
+        } = require('@react-native-google-signin/google-signin');
         try {
-          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        } catch (_) { }
+          await GoogleSignin.hasPlayServices({
+            showPlayServicesUpdateDialog: true,
+          });
+        } catch (_) {}
         try {
           await GoogleSignin.configure({});
-        } catch (_) { }
+        } catch (_) {}
         try {
           const account = await GoogleSignin.signIn();
-          console.log("Google Sign In Account:", account);
+          console.log('Google Sign In Account:', account);
           googleEmail = account?.user?.email || googleEmail;
-        } catch (_) { }
+        } catch (_) {}
         try {
           const silent = await GoogleSignin.signInSilently();
           googleEmail = silent?.user?.email || googleEmail;
-        } catch (_) { }
+        } catch (_) {}
         try {
           const current = await GoogleSignin.getCurrentUser();
           googleEmail = current?.user?.email || googleEmail;
-        } catch (_) { }
-      } catch (_) { }
+        } catch (_) {}
+      } catch (_) {}
 
       if (!googleEmail && email) {
         googleEmail = email;
       }
       if (!googleEmail) {
-        customToast('error', t('common.error'), 'Please enter your email or select a Google account');
+        customToast(
+          'error',
+          t('common.error'),
+          'Please enter your email or select a Google account',
+        );
         setLoading(false);
         return;
       }
@@ -199,23 +213,19 @@ const Login = () => {
     }
   };
 
-
-
   return (
     <View style={styles.mainContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            bounces={false}
-          >
+            bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
@@ -294,8 +304,7 @@ const Login = () => {
                 </View>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('forgotPassword')}
-                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
                   <Text variant="bodySmall" style={styles.forgotPasswordText}>
                     {t('login.forgotPassword')}
                   </Text>
@@ -324,8 +333,7 @@ const Login = () => {
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('signUp')}
-                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                >
+                  hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
                   <Text variant="bodyMedium" style={styles.signUpText}>
                     {t('login.signUp')}
                   </Text>
@@ -343,8 +351,7 @@ const Login = () => {
                 style={styles.googleButton}
                 onPress={handleGoogleLogin}
                 disabled={loading}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <Image source={images.googleIcon} style={styles.googleIcon} />
                 <Text variant="labelLarge" style={styles.googleButtonText}>
                   {t('login.signInWithGoogle')}
@@ -356,8 +363,7 @@ const Login = () => {
                 style={styles.skipButton}
                 onPress={handleSkipLogin}
                 disabled={loading}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <Text variant="labelLarge" style={styles.skipButtonText}>
                   Skip Login (Development)
                 </Text>

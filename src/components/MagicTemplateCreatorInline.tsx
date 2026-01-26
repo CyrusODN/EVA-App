@@ -11,10 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import Animated, { 
-  FadeIn, 
-  FadeInDown, 
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Settings, Mic, RotateCcw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import VoiceInputButton from './VoiceInputButton';
@@ -51,7 +48,7 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
 }) => {
   const { t } = useTranslation();
   const { defaultSpecialization } = useOnboardingStore();
-  
+
   const [step, setStep] = useState<CreatorStep>('input');
   const [isRecording, setIsRecording] = useState(false);
   const [textInput, setTextInput] = useState('');
@@ -59,7 +56,7 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
   const [previewTab, setPreviewTab] = useState<'note' | 'prompt'>('note');
   const [editedPrompt, setEditedPrompt] = useState('');
   const [templateTitle, setTemplateTitleInput] = useState('');
-  
+
   // Results from AI processing
   const [refinedPrompt, setRefinedPrompt] = useState('');
   const [humanSummary, setHumanSummary] = useState('');
@@ -71,7 +68,10 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
     if (isRecording) {
       setIsRecording(false);
       // Simulate transcription result
-      setTextInput(prev => prev || 'Krótkie notatki skupione na lekach, bez historii rodzinnej');
+      setTextInput(
+        (prev) =>
+          prev || 'Krótkie notatki skupione na lekach, bez historii rodzinnej',
+      );
     } else {
       setIsRecording(true);
       if (Platform.OS !== 'web') {
@@ -84,50 +84,53 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
 
   const handleCreateTemplate = async () => {
     if (!textInput.trim()) return;
-    
+
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setStep('processing');
-    
+
     try {
       // Step 1: Refine instructions
       setProcessingStatus(t('magicCreator.processing.analyzing'));
       const refinementResult = await refineTemplateInstructions(textInput);
-      
+
       if (!refinementResult.success) {
         throw new Error('Refinement failed');
       }
-      
+
       setRefinedPrompt(refinementResult.refinedPrompt);
       setHumanSummary(refinementResult.humanSummary);
       setEditedPrompt(refinementResult.refinedPrompt);
-      
+
       // Auto-generate title from AI summary
-      const autoTitle = refinementResult.humanSummary.split('.')[0].slice(0, 60);
+      const autoTitle = refinementResult.humanSummary
+        .split('.')[0]
+        .slice(0, 60);
       setTemplateTitleInput(autoTitle);
-      
+
       // Step 2: Generate sample note
       setProcessingStatus(t('magicCreator.processing.generating'));
       const specialization = defaultSpecialization || 'Psychiatry';
-      const patient = DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
-      
+      const patient =
+        DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
+
       const simulationResult = await generateSimulatedNote(
         refinementResult.refinedPrompt,
-        patient
+        patient,
       );
-      
+
       if (!simulationResult.success) {
         throw new Error('Simulation failed');
       }
-      
+
       setSampleNote(simulationResult.note);
       setPatientName(patient.name);
-      
+
       // Move to preview
       setStep('preview');
-      
+
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -155,7 +158,7 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    
+
     onSave({
       title: templateTitle || humanSummary.split('.')[0].slice(0, 60),
       content: humanSummary,
@@ -165,25 +168,29 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
 
   const handleRegenerateWithEdits = async () => {
     if (!editedPrompt.trim()) return;
-    
+
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setStep('processing');
     setProcessingStatus(t('magicCreator.processing.regenerating'));
-    
+
     try {
       const specialization = defaultSpecialization || 'Psychiatry';
-      const patient = DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
-      
-      const simulationResult = await generateSimulatedNote(editedPrompt, patient);
-      
+      const patient =
+        DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
+
+      const simulationResult = await generateSimulatedNote(
+        editedPrompt,
+        patient,
+      );
+
       if (simulationResult.success) {
         setRefinedPrompt(editedPrompt);
         setSampleNote(simulationResult.note);
         setStep('preview');
-        
+
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -197,28 +204,31 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
   // --- RENDER: Input Step ---
   const renderInputStep = () => (
     <Animated.View entering={FadeIn} style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+        keyboardShouldPersistTaps="handled">
         <View style={styles.contentWrapper}>
           <Text style={styles.title}>{t('magicCreator.input.title')}</Text>
-          <Text style={styles.subtitle}>{t('magicCreator.input.subtitle')}</Text>
-          
+          <Text style={styles.subtitle}>
+            {t('magicCreator.input.subtitle')}
+          </Text>
+
           <View style={styles.voiceSection}>
             <VoiceInputButton
               isRecording={isRecording}
               onPress={handleVoicePress}
             />
-            <Text style={styles.voiceHint}>{t('magicCreator.input.voiceHint')}</Text>
+            <Text style={styles.voiceHint}>
+              {t('magicCreator.input.voiceHint')}
+            </Text>
           </View>
-          
+
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>{t('common.or')}</Text>
             <View style={styles.dividerLine} />
           </View>
-          
+
           <TextInput
             style={styles.textInput}
             placeholder={t('magicCreator.input.placeholder')}
@@ -229,15 +239,16 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
             numberOfLines={5}
             textAlignVertical="top"
           />
-          
+
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[styles.secondaryButton, styles.buttonHalf]}
-              onPress={onCancel}
-            >
-              <Text style={styles.secondaryButtonText}>{t('common.cancel')}</Text>
+              onPress={onCancel}>
+              <Text style={styles.secondaryButtonText}>
+                {t('common.cancel')}
+              </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.primaryButton,
@@ -245,12 +256,12 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
                 !textInput.trim() && styles.buttonDisabled,
               ]}
               onPress={handleCreateTemplate}
-              disabled={!textInput.trim()}
-            >
-              <Text style={[
-                styles.primaryButtonText,
-                !textInput.trim() && styles.buttonDisabledText,
-              ]}>
+              disabled={!textInput.trim()}>
+              <Text
+                style={[
+                  styles.primaryButtonText,
+                  !textInput.trim() && styles.buttonDisabledText,
+                ]}>
                 {t('magicCreator.input.createButton')}
               </Text>
             </TouchableOpacity>
@@ -278,20 +289,39 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
           {/* Tabs */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.tabButton, previewTab === 'note' && styles.tabButtonActive]}
-              onPress={() => setPreviewTab('note')}
-            >
-              <Text style={[styles.tabText, previewTab === 'note' && styles.tabTextActive]}>
+              style={[
+                styles.tabButton,
+                previewTab === 'note' && styles.tabButtonActive,
+              ]}
+              onPress={() => setPreviewTab('note')}>
+              <Text
+                style={[
+                  styles.tabText,
+                  previewTab === 'note' && styles.tabTextActive,
+                ]}>
                 {t('magicCreator.preview.noteTab')}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.tabButton, previewTab === 'prompt' && styles.tabButtonActive]}
-              onPress={() => setPreviewTab('prompt')}
-            >
-              <Settings size={16} color={previewTab === 'prompt' ? ONBOARDING_COLORS.primary : ONBOARDING_COLORS.textSecondary} />
-              <Text style={[styles.tabText, previewTab === 'prompt' && styles.tabTextActive]}>
+              style={[
+                styles.tabButton,
+                previewTab === 'prompt' && styles.tabButtonActive,
+              ]}
+              onPress={() => setPreviewTab('prompt')}>
+              <Settings
+                size={16}
+                color={
+                  previewTab === 'prompt'
+                    ? ONBOARDING_COLORS.primary
+                    : ONBOARDING_COLORS.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  previewTab === 'prompt' && styles.tabTextActive,
+                ]}>
                 {t('magicCreator.preview.promptTab')}
               </Text>
             </TouchableOpacity>
@@ -300,17 +330,18 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
           {/* Tab Content */}
           {previewTab === 'note' ? (
             <View style={styles.tabContent}>
-              <Text style={styles.summaryLabel}>{t('magicCreator.preview.summaryLabel')}</Text>
+              <Text style={styles.summaryLabel}>
+                {t('magicCreator.preview.summaryLabel')}
+              </Text>
               <Text style={styles.summaryText}>{humanSummary}</Text>
-              
-              <SimulationCard
-                note={sampleNote}
-                patientName={patientName}
-              />
-              
+
+              <SimulationCard note={sampleNote} patientName={patientName} />
+
               {/* Editable Title */}
               <View style={styles.titleEditContainer}>
-                <Text style={styles.titleEditLabel}>{t('magicCreator.preview.titleLabel')}</Text>
+                <Text style={styles.titleEditLabel}>
+                  {t('magicCreator.preview.titleLabel')}
+                </Text>
                 <TextInput
                   style={styles.titleEditInput}
                   value={templateTitle}
@@ -335,8 +366,7 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
               />
               <TouchableOpacity
                 style={styles.regenerateButton}
-                onPress={handleRegenerateWithEdits}
-              >
+                onPress={handleRegenerateWithEdits}>
                 <Text style={styles.regenerateButtonText}>
                   {t('magicCreator.preview.regenerateButton')}
                 </Text>
@@ -348,18 +378,16 @@ const MagicTemplateCreatorInline: React.FC<MagicTemplateCreatorInlineProps> = ({
           <View style={styles.actionButtonsRow}>
             <TouchableOpacity
               style={[styles.compactButton, styles.buttonOutline]}
-              onPress={handleStartOver}
-            >
+              onPress={handleStartOver}>
               <RotateCcw size={16} color={ONBOARDING_COLORS.textSecondary} />
               <Text style={styles.compactButtonTextOutline}>
                 {t('magicCreator.preview.startOverButton')}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.compactButton, styles.buttonPrimary]}
-              onPress={handleSaveTemplate}
-            >
+              onPress={handleSaveTemplate}>
               <Text style={styles.compactButtonTextPrimary}>
                 {t('magicCreator.preview.saveButton')}
               </Text>

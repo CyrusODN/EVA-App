@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -27,7 +33,7 @@ interface CompletionStepProps {
 
 const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
   const { t } = useTranslation();
-  
+
   // Animation values
   const checkScale = useSharedValue(0);
   const checkOpacity = useSharedValue(0);
@@ -44,41 +50,56 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }, 300);
     }
-    
+
     // Staggered entrance animation
     checkOpacity.value = withDelay(
       100,
-      withTiming(1, { duration: DURATIONS.normal })
+      withTiming(1, { duration: DURATIONS.normal }),
     );
     checkScale.value = withDelay(
       100,
       withSequence(
         withSpring(1.2, SPRINGS.bouncy),
-        withSpring(1, SPRINGS.gentle)
-      )
+        withSpring(1, SPRINGS.gentle),
+      ),
     );
-    
+
     titleOpacity.value = withDelay(
       400,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
     titleTranslateY.value = withDelay(
       400,
-      withTiming(0, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(0, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
-    
+
     subtitleOpacity.value = withDelay(
       500,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
-    
+
     buttonOpacity.value = withDelay(
       700,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
     buttonTranslateY.value = withDelay(
       700,
-      withTiming(0, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(0, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
   }, []);
 
@@ -127,8 +148,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
         <TouchableOpacity
           style={styles.ctaButton}
           onPress={onComplete}
-          activeOpacity={0.9}
-        >
+          activeOpacity={0.9}>
           <Text style={styles.ctaText}>{t('onboarding.complete.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>

@@ -13,9 +13,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import Animated, { 
-  FadeIn, 
-  FadeInDown, 
+import Animated, {
+  FadeIn,
+  FadeInDown,
   FadeOut,
   useSharedValue,
   useAnimatedStyle,
@@ -61,7 +61,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
 }) => {
   const { t } = useTranslation();
   const { defaultSpecialization } = useOnboardingStore();
-  
+
   const [step, setStep] = useState<CreatorStep>('input');
   const [isRecording, setIsRecording] = useState(false);
   const [textInput, setTextInput] = useState('');
@@ -72,7 +72,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
   const [editedPrompt, setEditedPrompt] = useState('');
   const [showCurrentPrompt, setShowCurrentPrompt] = useState(false);
   const translateX = useSharedValue(0);
-  
+
   // Results from AI processing
   const [refinedPrompt, setRefinedPrompt] = useState('');
   const [humanSummary, setHumanSummary] = useState('');
@@ -105,7 +105,10 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
     if (isRecording) {
       setIsRecording(false);
       // Simulate transcription result
-      setTextInput(prev => prev || 'Krótkie notatki skupione na lekach, bez historii rodzinnej');
+      setTextInput(
+        (prev) =>
+          prev || 'Krótkie notatki skupione na lekach, bez historii rodzinnej',
+      );
     } else {
       setIsRecording(true);
       if (Platform.OS !== 'web') {
@@ -118,46 +121,47 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
 
   const handleCreateTemplate = async () => {
     if (!textInput.trim()) return;
-    
+
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setStep('processing');
-    
+
     try {
       // Step 1: Refine instructions
       setProcessingStatus(t('magicCreator.processing.analyzing'));
       const refinementResult = await refineTemplateInstructions(textInput);
-      
+
       if (!refinementResult.success) {
         throw new Error('Refinement failed');
       }
-      
+
       setRefinedPrompt(refinementResult.refinedPrompt);
       setHumanSummary(refinementResult.humanSummary);
       setEditedPrompt(refinementResult.refinedPrompt);
-      
+
       // Step 2: Generate sample note
       setProcessingStatus(t('magicCreator.processing.generating'));
       const specialization = defaultSpecialization || 'Psychiatry';
-      const patient = DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
-      
+      const patient =
+        DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
+
       const simulationResult = await generateSimulatedNote(
         refinementResult.refinedPrompt,
-        patient
+        patient,
       );
-      
+
       if (!simulationResult.success) {
         throw new Error('Simulation failed');
       }
-      
+
       setSampleNote(simulationResult.sampleNote);
       setPatientName(simulationResult.patientName);
-      
+
       // Move to preview
       setStep('preview');
-      
+
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -189,7 +193,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
     if (isRecordingRefinement) {
       setIsRecordingRefinement(false);
       // Simulate transcription result
-      setRefinementInput(prev => prev || 'Dodaj więcej szczegółów o lekach');
+      setRefinementInput((prev) => prev || 'Dodaj więcej szczegółów o lekach');
     } else {
       setIsRecordingRefinement(true);
       if (Platform.OS !== 'web') {
@@ -202,49 +206,52 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
 
   const handleApplyRefinement = async () => {
     if (!refinementInput.trim()) return;
-    
+
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setStep('processing');
-    
+
     try {
       // Apply refinement to existing template
-      setProcessingStatus(t('magicCreator.processing.refining') || 'Dostosuję szablon...');
-      
+      setProcessingStatus(
+        t('magicCreator.processing.refining') || 'Dostosuję szablon...',
+      );
+
       // Combine original prompt with refinement feedback
       const refinementResult = await refineTemplateInstructions(
-        textInput + '\n\nDodatkowe uwagi: ' + refinementInput
+        textInput + '\n\nDodatkowe uwagi: ' + refinementInput,
       );
-      
+
       if (!refinementResult.success) {
         throw new Error('Refinement failed');
       }
-      
+
       setRefinedPrompt(refinementResult.refinedPrompt);
       setHumanSummary(refinementResult.humanSummary);
-      
+
       // Generate new sample note with refinements
       setProcessingStatus(t('magicCreator.processing.generating'));
       const specialization = defaultSpecialization || 'Psychiatry';
-      const patient = DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
-      
+      const patient =
+        DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
+
       const simulationResult = await generateSimulatedNote(
         refinementResult.refinedPrompt,
-        patient
+        patient,
       );
-      
+
       if (!simulationResult.success) {
         throw new Error('Simulation failed');
       }
-      
+
       setSampleNote(simulationResult.sampleNote);
       setPatientName(simulationResult.patientName);
-      
+
       // Move back to preview
       setStep('preview');
-      
+
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -261,51 +268,52 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    
+
     // Use edited prompt if user modified it, otherwise use original refined prompt
     const finalPrompt = editedPrompt.trim() || refinedPrompt;
-    
+
     onSaveTemplate({
       name: `Magic Template - ${new Date().toLocaleDateString()}`,
       instructions: textInput,
       refinedPrompt: finalPrompt,
     });
-    
+
     handleClose();
   };
 
   const handleApplyManualEdit = async () => {
     if (!editedPrompt.trim()) return;
-    
+
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     setStep('processing');
-    
+
     try {
       // Generate new sample note with manually edited prompt
       setProcessingStatus(t('magicCreator.processing.generating'));
       const specialization = defaultSpecialization || 'Psychiatry';
-      const patient = DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
-      
+      const patient =
+        DUMMY_PATIENTS[specialization] || DUMMY_PATIENTS['Psychiatry'];
+
       const simulationResult = await generateSimulatedNote(
         editedPrompt,
-        patient
+        patient,
       );
-      
+
       if (!simulationResult.success) {
         throw new Error('Simulation failed');
       }
-      
+
       setSampleNote(simulationResult.sampleNote);
       setPatientName(simulationResult.patientName);
       setRefinedPrompt(editedPrompt); // Update refined prompt with edited version
-      
+
       // Move back to preview, note tab
       setStep('preview');
       setPreviewTab('note');
-      
+
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -350,21 +358,18 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       style={styles.scrollView}
       contentContainerStyle={styles.inputContent}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
+      keyboardShouldPersistTaps="handled">
       {/* Title */}
       <Animated.Text
         entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-        style={styles.stepTitle}
-      >
+        style={styles.stepTitle}>
         {t('magicCreator.voicePrompt')}
       </Animated.Text>
 
       {/* Voice Input Button */}
       <Animated.View
         entering={FadeIn.delay(200).duration(DURATIONS.normal)}
-        style={styles.voiceContainer}
-      >
+        style={styles.voiceContainer}>
         <VoiceInputButton
           isRecording={isRecording}
           onPress={handleVoicePress}
@@ -374,8 +379,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       {/* Or divider */}
       <Animated.View
         entering={FadeIn.delay(300).duration(DURATIONS.normal)}
-        style={styles.orDivider}
-      >
+        style={styles.orDivider}>
         <View style={styles.dividerLine} />
         <Text style={styles.orText}>{t('common.or') || 'lub'}</Text>
         <View style={styles.dividerLine} />
@@ -384,8 +388,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       {/* Text Input */}
       <Animated.View
         entering={FadeInDown.delay(350).duration(DURATIONS.normal)}
-        style={styles.textInputContainer}
-      >
+        style={styles.textInputContainer}>
         <TextInput
           style={styles.textInput}
           placeholder={t('magicCreator.textPlaceholder')}
@@ -401,8 +404,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       {/* Create Button */}
       <Animated.View
         entering={FadeInDown.delay(400).duration(DURATIONS.normal)}
-        style={styles.createButtonContainer}
-      >
+        style={styles.createButtonContainer}>
         <TouchableOpacity
           style={[
             styles.createButton,
@@ -410,14 +412,12 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
           ]}
           onPress={handleCreateTemplate}
           disabled={!textInput.trim()}
-          activeOpacity={0.9}
-        >
+          activeOpacity={0.9}>
           <Text
             style={[
               styles.createButtonText,
               !textInput.trim() && styles.createButtonTextDisabled,
-            ]}
-          >
+            ]}>
             {t('magicCreator.createButton')}
           </Text>
         </TouchableOpacity>
@@ -429,23 +429,17 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
     <View style={styles.processingContent}>
       <Animated.View
         entering={FadeIn.duration(DURATIONS.normal)}
-        style={styles.processingSpinner}
-      >
-        <ActivityIndicator
-          size="large"
-          color={ONBOARDING_COLORS.primary}
-        />
+        style={styles.processingSpinner}>
+        <ActivityIndicator size="large" color={ONBOARDING_COLORS.primary} />
       </Animated.View>
       <Animated.Text
         entering={FadeIn.delay(100).duration(DURATIONS.normal)}
-        style={styles.processingTitle}
-      >
+        style={styles.processingTitle}>
         {t('magicCreator.processing.title')}
       </Animated.Text>
       <Animated.Text
         entering={FadeIn.delay(200).duration(DURATIONS.normal)}
-        style={styles.processingStatus}
-      >
+        style={styles.processingStatus}>
         {processingStatus}
       </Animated.Text>
     </View>
@@ -458,24 +452,21 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         {/* Title */}
         <Animated.Text
           entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-          style={styles.stepTitle}
-        >
+          style={styles.stepTitle}>
           {t('magicCreator.refine.title')}
         </Animated.Text>
 
         {/* Subtitle */}
         <Animated.Text
           entering={FadeInDown.delay(150).duration(DURATIONS.normal)}
-          style={styles.refineSubtitle}
-        >
+          style={styles.refineSubtitle}>
           {t('magicCreator.refine.subtitle')}
         </Animated.Text>
 
         {/* Voice Input Button */}
         <Animated.View
           entering={FadeIn.delay(200).duration(DURATIONS.normal)}
-          style={styles.voiceContainer}
-        >
+          style={styles.voiceContainer}>
           <VoiceInputButton
             isRecording={isRecordingRefinement}
             onPress={handleVoiceRefinementPress}
@@ -485,8 +476,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         {/* Or divider */}
         <Animated.View
           entering={FadeIn.delay(250).duration(DURATIONS.normal)}
-          style={styles.orDivider}
-        >
+          style={styles.orDivider}>
           <View style={styles.dividerLine} />
           <Text style={styles.orText}>{t('common.or') || 'lub'}</Text>
           <View style={styles.dividerLine} />
@@ -498,13 +488,11 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         style={styles.refiningScroll}
         contentContainerStyle={styles.refiningContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+        keyboardShouldPersistTaps="handled">
         {/* Text Input */}
         <Animated.View
           entering={FadeInDown.delay(300).duration(DURATIONS.normal)}
-          style={styles.textInputContainer}
-        >
+          style={styles.textInputContainer}>
           <TextInput
             style={styles.textInput}
             placeholder={t('magicCreator.refine.placeholder')}
@@ -520,8 +508,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         {/* Collapsible Current Prompt Preview - For Advanced Users */}
         <Animated.View
           entering={FadeInDown.delay(350).duration(DURATIONS.normal)}
-          style={styles.collapsiblePromptContainer}
-        >
+          style={styles.collapsiblePromptContainer}>
           <TouchableOpacity
             style={styles.collapsiblePromptHeader}
             onPress={() => {
@@ -530,8 +517,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
                 Haptics.selectionAsync();
               }
             }}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <View style={styles.collapsiblePromptHeaderLeft}>
               <Text style={styles.collapsiblePromptTitle}>
                 {t('magicCreator.refine.viewTechnicalPrompt')}
@@ -541,15 +527,14 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
               {showCurrentPrompt ? '▼' : '▶'}
             </Text>
           </TouchableOpacity>
-          
+
           {showCurrentPrompt && (
             <View style={styles.collapsiblePromptContent}>
-              <ScrollView 
+              <ScrollView
                 style={styles.currentPromptScroll}
                 contentContainerStyle={styles.currentPromptContentInner}
                 showsVerticalScrollIndicator={true}
-                nestedScrollEnabled
-              >
+                nestedScrollEnabled>
                 <Text style={styles.currentPromptText}>
                   {refinedPrompt || humanSummary}
                 </Text>
@@ -561,8 +546,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         {/* Apply Button */}
         <Animated.View
           entering={FadeInDown.delay(400).duration(DURATIONS.normal)}
-          style={styles.createButtonContainer}
-        >
+          style={styles.createButtonContainer}>
           <TouchableOpacity
             style={[
               styles.createButton,
@@ -570,14 +554,12 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
             ]}
             onPress={handleApplyRefinement}
             disabled={!refinementInput.trim()}
-            activeOpacity={0.9}
-          >
+            activeOpacity={0.9}>
             <Text
               style={[
                 styles.createButtonText,
                 !refinementInput.trim() && styles.createButtonTextDisabled,
-              ]}
-            >
+              ]}>
               {t('magicCreator.refine.applyButton')}
             </Text>
           </TouchableOpacity>
@@ -586,11 +568,8 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
           <TouchableOpacity
             style={styles.backToPreviewButton}
             onPress={() => setStep('preview')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.backToPreviewText}>
-              {t('common.cancel')}
-            </Text>
+            activeOpacity={0.8}>
+            <Text style={styles.backToPreviewText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -602,12 +581,13 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       {/* Summary Card - Compact */}
       <Animated.View
         entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-        style={styles.summaryCard}
-      >
+        style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>
           {t('magicCreator.preview.understood')}
         </Text>
-        <Text style={styles.summaryText} numberOfLines={2}>{humanSummary}</Text>
+        <Text style={styles.summaryText} numberOfLines={2}>
+          {humanSummary}
+        </Text>
       </Animated.View>
 
       {/* Tab Selector */}
@@ -619,13 +599,16 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
             if (Platform.OS !== 'web') {
               Haptics.selectionAsync();
             }
-          }}
-        >
-          <Text style={[styles.tabText, previewTab === 'note' && styles.tabTextActive]}>
+          }}>
+          <Text
+            style={[
+              styles.tabText,
+              previewTab === 'note' && styles.tabTextActive,
+            ]}>
             {t('magicCreator.preview.noteTab')}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.tab, previewTab === 'prompt' && styles.tabActive]}
           onPress={() => {
@@ -637,21 +620,28 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
             if (!editedPrompt) {
               setEditedPrompt(refinedPrompt);
             }
-          }}
-        >
+          }}>
           <View style={styles.tabWithIcon}>
-            <Settings 
-              size={14} 
-              color={previewTab === 'prompt' ? ONBOARDING_COLORS.pureWhite : ONBOARDING_COLORS.textSecondary}
+            <Settings
+              size={14}
+              color={
+                previewTab === 'prompt'
+                  ? ONBOARDING_COLORS.pureWhite
+                  : ONBOARDING_COLORS.textSecondary
+              }
               strokeWidth={2.5}
             />
-            <Text style={[styles.tabText, previewTab === 'prompt' && styles.tabTextActive]}>
+            <Text
+              style={[
+                styles.tabText,
+                previewTab === 'prompt' && styles.tabTextActive,
+              ]}>
               {t('magicCreator.preview.promptTab')}
             </Text>
           </View>
         </TouchableOpacity>
       </View>
-      
+
       {/* Swipe hint */}
       <Text style={styles.swipeHint}>
         ← {t('magicCreator.preview.swipeHint')} →
@@ -662,10 +652,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         <View style={styles.tabContentContainer}>
           {previewTab === 'note' ? (
             // Note Preview Tab
-            <SimulationCard
-              sampleNote={sampleNote}
-              patientName={patientName}
-            />
+            <SimulationCard sampleNote={sampleNote} patientName={patientName} />
           ) : (
             // Prompt Edit Tab
             <View style={styles.promptEditContainer}>
@@ -675,8 +662,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
               <ScrollView
                 style={styles.promptEditScroll}
                 contentContainerStyle={styles.promptEditContent}
-                showsVerticalScrollIndicator={true}
-              >
+                showsVerticalScrollIndicator={true}>
                 <TextInput
                   style={styles.promptEditInput}
                   value={editedPrompt}
@@ -686,13 +672,12 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
                   placeholderTextColor={ONBOARDING_COLORS.textTertiary}
                 />
               </ScrollView>
-              
+
               {/* Apply button for manual edits */}
               <TouchableOpacity
                 style={styles.applyEditButton}
                 onPress={handleApplyManualEdit}
-                activeOpacity={0.9}
-              >
+                activeOpacity={0.9}>
                 <Text style={styles.applyEditButtonText}>
                   {t('magicCreator.preview.regenerateWithEdits')}
                 </Text>
@@ -705,14 +690,16 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       {/* Action Buttons - Compact, 3 buttons */}
       <Animated.View
         entering={FadeInDown.delay(300).duration(DURATIONS.normal)}
-        style={styles.actionButtons}
-      >
+        style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.actionButtonSmall}
           onPress={handleRefine}
-          activeOpacity={0.8}
-        >
-          <Mic size={16} color={ONBOARDING_COLORS.textSecondary} strokeWidth={2.5} />
+          activeOpacity={0.8}>
+          <Mic
+            size={16}
+            color={ONBOARDING_COLORS.textSecondary}
+            strokeWidth={2.5}
+          />
           <Text style={styles.actionButtonTextSmall}>
             {t('magicCreator.preview.refineButton')}
           </Text>
@@ -721,9 +708,12 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         <TouchableOpacity
           style={styles.actionButtonSmall}
           onPress={handleStartOver}
-          activeOpacity={0.8}
-        >
-          <RotateCcw size={16} color={ONBOARDING_COLORS.textSecondary} strokeWidth={2.5} />
+          activeOpacity={0.8}>
+          <RotateCcw
+            size={16}
+            color={ONBOARDING_COLORS.textSecondary}
+            strokeWidth={2.5}
+          />
           <Text style={styles.actionButtonTextSmall}>
             {t('magicCreator.preview.startOverButton')}
           </Text>
@@ -732,8 +722,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
         <TouchableOpacity
           style={styles.saveButtonCompact}
           onPress={handleSaveTemplate}
-          activeOpacity={0.9}
-        >
+          activeOpacity={0.9}>
           <Text style={styles.saveButtonTextCompact}>
             {t('magicCreator.preview.saveButton')}
           </Text>
@@ -747,19 +736,14 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={handleClose}
-    >
+      onRequestClose={handleClose}>
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoid}
-        >
+          style={styles.keyboardAvoid}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleClose}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{t('magicCreator.title')}</Text>

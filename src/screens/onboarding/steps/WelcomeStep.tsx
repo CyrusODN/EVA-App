@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -35,7 +41,7 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
   totalSteps,
 }) => {
   const { t } = useTranslation();
-  
+
   // Staggered animation values
   const headlineOpacity = useSharedValue(0);
   const headlineTranslateY = useSharedValue(20);
@@ -48,41 +54,62 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
   useEffect(() => {
     // Staggered entrance animation (Superhuman style)
     const baseDelay = 400;
-    
+
     // Headline
     headlineOpacity.value = withDelay(
       baseDelay,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
     headlineTranslateY.value = withDelay(
       baseDelay,
-      withTiming(0, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(0, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
-    
+
     // Subtitle
     subtitleOpacity.value = withDelay(
       baseDelay + 100,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
     subtitleTranslateY.value = withDelay(
       baseDelay + 100,
-      withTiming(0, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(0, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
-    
+
     // Dots
     dotsOpacity.value = withDelay(
       baseDelay + 200,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
-    
+
     // Button
     buttonOpacity.value = withDelay(
       baseDelay + 300,
-      withTiming(1, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(1, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
     buttonTranslateY.value = withDelay(
       baseDelay + 300,
-      withTiming(0, { duration: DURATIONS.normal, easing: Easing.out(Easing.ease) })
+      withTiming(0, {
+        duration: DURATIONS.normal,
+        easing: Easing.out(Easing.ease),
+      }),
     );
   }, []);
 
@@ -129,17 +156,19 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
 
         {/* Progress dots */}
         <Animated.View style={[styles.dotsContainer, dotsStyle]}>
-          <OnboardingProgressDots totalSteps={totalSteps} currentStep={currentStep} />
+          <OnboardingProgressDots
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+          />
         </Animated.View>
       </View>
 
       {/* CTA Button */}
       <Animated.View style={[styles.buttonContainer, buttonStyle]}>
-        <TouchableOpacity 
-          style={styles.ctaButton} 
+        <TouchableOpacity
+          style={styles.ctaButton}
           onPress={onContinue}
-          activeOpacity={0.9}
-        >
+          activeOpacity={0.9}>
           <Text style={styles.ctaText}>{t('onboarding.welcome.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>

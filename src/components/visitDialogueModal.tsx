@@ -105,7 +105,12 @@ interface VisitDialogModalProps {
   onCreateVisit: (visitName: string) => void;
 }
 
-const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitDialogModalProps) => {
+const VisitDialogModal = ({
+  visible,
+  onClose,
+  visitType,
+  onCreateVisit,
+}: VisitDialogModalProps) => {
   const { t } = useTranslation();
   const [visitName, setVisitName] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -205,39 +210,34 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitD
   if (!visible) return null;
 
   return (
-
-
     <Modal
       visible={visible}
       transparent
       animationType="none"
       onRequestClose={onClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <Animated.View
           style={[
             styles.backdrop,
             {
               opacity: fadeAnim,
             },
-          ]}
-        >
-          <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+          ]}>
+          <SafeAreaView
+            style={styles.safeArea}
+            edges={['top', 'bottom', 'left', 'right']}>
             <TouchableOpacity
               style={styles.backdropTouchable}
               activeOpacity={1}
-              onPress={onClose}
-            >
+              onPress={onClose}>
               <TouchableOpacity
                 activeOpacity={1}
-                onPress={e => e.stopPropagation()}
-                style={styles.modalTouchable}
-              >
+                onPress={(e) => e.stopPropagation()}
+                style={styles.modalTouchable}>
                 <Animated.View
                   style={[
                     styles.modalContainer,
@@ -245,8 +245,7 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitD
                       opacity: fadeAnim,
                       transform: [{ translateY: slideAnim }],
                     },
-                  ]}
-                >
+                  ]}>
                   <View style={styles.modalContent}>
                     {/* Shield Icon */}
                     <View style={styles.iconContainer}>
@@ -274,12 +273,12 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitD
                       <TouchableOpacity
                         style={styles.checkboxRow}
                         onPress={handleCheckboxToggle}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[
-                          styles.customCheckbox,
-                          agreedToTerms && styles.customCheckboxChecked
-                        ]}>
+                        activeOpacity={0.7}>
+                        <View
+                          style={[
+                            styles.customCheckbox,
+                            agreedToTerms && styles.customCheckboxChecked,
+                          ]}>
                           {agreedToTerms && (
                             <Check size={16} color="#FFFFFF" strokeWidth={3} />
                           )}
@@ -306,8 +305,7 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitD
                               },
                             ],
                           },
-                        ]}
-                      >
+                        ]}>
                         <View style={styles.inputLabelContainer}>
                           <Text style={styles.inputLabel}>
                             {t('visitNameInput.label')}
@@ -336,11 +334,15 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitD
                     {/* Primary Button */}
                     <View style={styles.buttonSection}>
                       <PrimaryButton
-                        text={agreedToTerms && visitName.trim()
-                          ? t('buttons.continue')
-                          : t('dialog.phi.continueButton')}
+                        text={
+                          agreedToTerms && visitName.trim()
+                            ? t('buttons.continue')
+                            : t('dialog.phi.continueButton')
+                        }
                         onPress={handleCreateVisit}
-                        disabled={!agreedToTerms || (agreedToTerms && !visitName.trim())}
+                        disabled={
+                          !agreedToTerms || (agreedToTerms && !visitName.trim())
+                        }
                         width={wp(78)}
                         useGradient={false}
                         backgroundColor="#46B7C6"

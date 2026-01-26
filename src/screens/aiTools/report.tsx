@@ -156,9 +156,7 @@ const Report = () => {
     useState<boolean>(false);
   const [showDocumentPreview, setShowDocumentPreview] =
     useState<boolean>(false);
-  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [previewFile, setPreviewFile] = useState<DocumentFile | null>(null);
 
@@ -171,7 +169,7 @@ const Report = () => {
   };
 
   const handleVisitSelect = (visitId: string) => {
-    setSelectedVisits(prev => {
+    setSelectedVisits((prev) => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
       return next;
@@ -179,7 +177,7 @@ const Report = () => {
   };
 
   const handleImportVisits = () => {
-    const selectedVisitData = MOCK_VISITS.filter(visit =>
+    const selectedVisitData = MOCK_VISITS.filter((visit) =>
       selectedVisits.has(visit.id),
     );
     setImportedVisitData(selectedVisitData);
@@ -187,8 +185,10 @@ const Report = () => {
   };
 
   const handleRemoveVisit = (visitId: string) => {
-    setImportedVisitData(prev => prev.filter(visit => visit.id !== visitId));
-    setSelectedVisits(prev => {
+    setImportedVisitData((prev) =>
+      prev.filter((visit) => visit.id !== visitId),
+    );
+    setSelectedVisits((prev) => {
       const next = new Set(prev);
       next.delete(visitId);
       return next;
@@ -202,11 +202,11 @@ const Report = () => {
       size: 1024 * 1024 * 2.5, // 2.5MB
       type: 'application/pdf',
     };
-    setPdfFiles(prev => [...prev, mockFile]);
+    setPdfFiles((prev) => [...prev, mockFile]);
   };
 
   const handleRemoveDocument = (fileName: string) => {
-    setPdfFiles(prev => prev.filter(file => file.name !== fileName));
+    setPdfFiles((prev) => prev.filter((file) => file.name !== fileName));
   };
 
   const handlePreviewDocument = (file: DocumentFile) => {
@@ -255,7 +255,7 @@ const Report = () => {
         certificateType: selectedCertificateType,
         certificateContent: `# ${t(
           CERTIFICATE_TYPES_DATA.find(
-            type => type.id === selectedCertificateType,
+            (type) => type.id === selectedCertificateType,
           )?.nameKey || '',
         )}\n\n**${t(
           'common.date',
@@ -264,7 +264,9 @@ const Report = () => {
         )}:**\n${observations || 'Generated based on imported data'}\n\n**${t(
           'remediusReport.preview.visitHistory',
         )}:**\n${importedVisitData
-          .map(visit => `- ${visit.name} (${visit.date.toLocaleDateString()})`)
+          .map(
+            (visit) => `- ${visit.name} (${visit.date.toLocaleDateString()})`,
+          )
           .join('\n')}\n\n**${t(
           'remediusReport.preview.certificateContent',
         )}:**\nThis is a mock generated certificate content that would be created by the AI system based on the provided patient data, observations, and imported visit information.`,
@@ -296,10 +298,10 @@ const Report = () => {
 
   const openVisitSelectDialog = () => {
     setShowVisitSelectDialog(true);
-    setSelectedVisits(new Set(importedVisitData.map(visit => visit.id)));
+    setSelectedVisits(new Set(importedVisitData.map((visit) => visit.id)));
   };
 
-  const filteredVisits: Visit[] = MOCK_VISITS.filter(visit =>
+  const filteredVisits: Visit[] = MOCK_VISITS.filter((visit) =>
     visit.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
@@ -313,13 +315,9 @@ const Report = () => {
           styles.certificateTypeCard,
           isSelected && styles.selectedCertificateTypeCard,
         ]}
-        onPress={() => handleCertificateTypeSelect(item.id)}
-      >
+        onPress={() => handleCertificateTypeSelect(item.id)}>
         <View style={styles.certificateTypeIcon}>
-          <Icon
-            size={20}
-            color={isSelected ? '#46B7C6' : '#64748B'}
-          />
+          <Icon size={20} color={isSelected ? '#46B7C6' : '#64748B'} />
         </View>
         <View style={styles.certificateTypeContent}>
           <Text
@@ -327,8 +325,7 @@ const Report = () => {
             style={[
               styles.certificateTypeName,
               isSelected && styles.selectedCertificateTypeName,
-            ]}
-          >
+            ]}>
             {t(item.nameKey)}
           </Text>
           <Text variant="bodySmall" style={styles.certificateTypeDescription}>
@@ -363,8 +360,7 @@ const Report = () => {
           </View>
           <TouchableOpacity
             onPress={() => handleRemoveVisit(item.id)}
-            style={styles.removeVisitButton}
-          >
+            style={styles.removeVisitButton}>
             <X size={16} color={colors.error} />
           </TouchableOpacity>
         </View>
@@ -381,8 +377,7 @@ const Report = () => {
         <Text
           variant="labelMedium"
           style={styles.documentName}
-          numberOfLines={1}
-        >
+          numberOfLines={1}>
           {item.name}
         </Text>
         <Text variant="bodySmall" style={styles.documentSize}>
@@ -392,14 +387,12 @@ const Report = () => {
       <View style={styles.documentActions}>
         <TouchableOpacity
           style={styles.documentActionButton}
-          onPress={() => handlePreviewDocument(item)}
-        >
+          onPress={() => handlePreviewDocument(item)}>
           <Eye size={14} color={colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.documentActionButton}
-          onPress={() => handleRemoveDocument(item.name)}
-        >
+          onPress={() => handleRemoveDocument(item.name)}>
           <Trash2 size={14} color={colors.error} />
         </TouchableOpacity>
       </View>
@@ -412,8 +405,7 @@ const Report = () => {
         styles.visitSelectItem,
         selectedVisits.has(item.id) && styles.selectedVisitSelectItem,
       ]}
-      onPress={() => handleVisitSelect(item.id)}
-    >
+      onPress={() => handleVisitSelect(item.id)}>
       <View style={styles.visitSelectContent}>
         <Text variant="titleMedium" style={styles.visitSelectName}>
           {item.name}
@@ -437,9 +429,7 @@ const Report = () => {
           </View>
         </View>
       </View>
-      {selectedVisits.has(item.id) && (
-        <Check size={20} color="#46B7C6" />
-      )}
+      {selectedVisits.has(item.id) && <Check size={20} color="#46B7C6" />}
     </TouchableOpacity>
   );
 
@@ -459,8 +449,7 @@ const Report = () => {
           {/* Main Content */}
           <ScrollView
             style={styles.mainContent}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             {/* Certificate Type Selection */}
             <View style={[styles.section, styles.certificateTypeSection]}>
               <Text variant="titleLarge" style={styles.sectionTitle}>
@@ -470,7 +459,7 @@ const Report = () => {
               <FlatList
                 data={CERTIFICATE_TYPES_DATA}
                 renderItem={renderCertificateType}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item.id}
                 numColumns={2}
                 scrollEnabled={false}
                 columnWrapperStyle={styles.certificateTypeRow}
@@ -486,12 +475,11 @@ const Report = () => {
                 <TouchableOpacity
                   style={styles.importButton}
                   onPress={openVisitSelectDialog}
-                  activeOpacity={0.85}
-                  >
-                    <Plus size={16} color="white" />
-                    <Text variant="titleMedium" style={styles.importButtonText}>
-                      {t('remediusReport.patientData.importButton')}
-                    </Text>
+                  activeOpacity={0.85}>
+                  <Plus size={16} color="white" />
+                  <Text variant="titleMedium" style={styles.importButtonText}>
+                    {t('remediusReport.patientData.importButton')}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -501,7 +489,7 @@ const Report = () => {
                   <FlatList
                     data={importedVisitData}
                     renderItem={renderImportedVisit}
-                    keyExtractor={item => item.id}
+                    keyExtractor={(item) => item.id}
                     scrollEnabled={false}
                   />
                 </View>
@@ -530,8 +518,7 @@ const Report = () => {
                 <TouchableOpacity
                   style={styles.uploadButton}
                   onPress={handleAddDocument}
-                  activeOpacity={0.85}
-                >
+                  activeOpacity={0.85}>
                   <Upload size={20} color="white" />
                   <Text variant="labelLarge" style={styles.uploadButtonText}>
                     {t('remediusReport.patientData.uploadDocuments')}
@@ -543,8 +530,7 @@ const Report = () => {
                   <View style={styles.uploadedDocumentsContainer}>
                     <Text
                       variant="labelMedium"
-                      style={styles.uploadedDocumentsTitle}
-                    >
+                      style={styles.uploadedDocumentsTitle}>
                       {t('remediusReport.patientData.uploadedDocuments', {
                         count: pdfFiles.length,
                       })}{' '}
@@ -586,41 +572,36 @@ const Report = () => {
                       !observations.trim() &&
                       pdfFiles.length === 0)
                   }
-                  activeOpacity={0.85}
-                  >
-                    <Text variant="labelLarge" style={styles.previewButtonText}>
-                      {t('remediusReport.preview.title')}
-                    </Text>
+                  activeOpacity={0.85}>
+                  <Text variant="labelLarge" style={styles.previewButtonText}>
+                    {t('remediusReport.preview.title')}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
                     styles.generateButton,
                     (isGenerating ||
-                    !selectedCertificateType ||
-                    (importedVisitData.length === 0 &&
-                      !observations.trim() &&
+                      !selectedCertificateType ||
+                      (importedVisitData.length === 0 &&
+                        !observations.trim() &&
                         pdfFiles.length === 0)) &&
                       styles.buttonDisabled,
                   ]}
                   onPress={handleGenerate}
                   disabled={
-                      isGenerating ||
-                      !selectedCertificateType ||
-                      (importedVisitData.length === 0 &&
-                        !observations.trim() &&
-                        pdfFiles.length === 0)
-                    }
-                  activeOpacity={0.85}
-                  >
-                    <Text
-                      variant="labelLarge"
-                      style={styles.generateButtonText}
-                    >
-                      {isGenerating
-                        ? t('remediusReport.generate.generating')
-                        : t('remediusReport.generate.button')}
-                    </Text>
+                    isGenerating ||
+                    !selectedCertificateType ||
+                    (importedVisitData.length === 0 &&
+                      !observations.trim() &&
+                      pdfFiles.length === 0)
+                  }
+                  activeOpacity={0.85}>
+                  <Text variant="labelLarge" style={styles.generateButtonText}>
+                    {isGenerating
+                      ? t('remediusReport.generate.generating')
+                      : t('remediusReport.generate.button')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -638,7 +619,7 @@ const Report = () => {
                     <Text variant="bodySmall" style={styles.previewSubtitle}>
                       {t(
                         CERTIFICATE_TYPES_DATA.find(
-                          type =>
+                          (type) =>
                             type.id === selectedCertificate.certificateType,
                         )?.nameKey || '',
                       )}
@@ -647,20 +628,17 @@ const Report = () => {
                   <View style={styles.previewActions}>
                     <TouchableOpacity
                       style={styles.previewActionButton}
-                      onPress={handleCopyCertificateContent}
-                    >
+                      onPress={handleCopyCertificateContent}>
                       <Copy size={18} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.previewActionButton}
-                      onPress={handleExport}
-                    >
+                      onPress={handleExport}>
                       <Download size={18} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.previewActionButton}
-                      onPress={() => setShowPreview(false)}
-                    >
+                      onPress={() => setShowPreview(false)}>
                       <X size={18} color={colors.onSurfaceVariant} />
                     </TouchableOpacity>
                   </View>
@@ -669,8 +647,7 @@ const Report = () => {
                 <ScrollView
                   style={styles.previewContent}
                   showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.previewContentContainer}
-                >
+                  contentContainerStyle={styles.previewContentContainer}>
                   <View style={styles.previewDateContainer}>
                     <Text variant="bodySmall" style={styles.previewDateLabel}>
                       {t('common.date')}
@@ -684,15 +661,13 @@ const Report = () => {
                     <View style={styles.certificateContentContainer}>
                       <Text
                         variant="labelMedium"
-                        style={styles.certificateContentTitle}
-                      >
+                        style={styles.certificateContentTitle}>
                         {t('remediusReport.preview.certificateContent')}
                       </Text>
                       <View style={styles.certificateContentBox}>
                         <Text
                           variant="bodySmall"
-                          style={styles.certificateContentText}
-                        >
+                          style={styles.certificateContentText}>
                           {selectedCertificate.certificateContent}
                         </Text>
                       </View>
@@ -713,8 +688,7 @@ const Report = () => {
                   {t('remediusReport.visitSelectDialog.title')}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setShowVisitSelectDialog(false)}
-                >
+                  onPress={() => setShowVisitSelectDialog(false)}>
                   <X size={24} color={colors.onSurface} />
                 </TouchableOpacity>
               </View>
@@ -739,7 +713,7 @@ const Report = () => {
               <FlatList
                 data={filteredVisits}
                 renderItem={renderVisitItem}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item.id}
                 style={styles.visitSelectList}
                 showsVerticalScrollIndicator={false}
               />
@@ -747,8 +721,7 @@ const Report = () => {
               <View style={styles.dialogActions}>
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => setShowVisitSelectDialog(false)}
-                >
+                  onPress={() => setShowVisitSelectDialog(false)}>
                   <Text variant="labelMedium" style={styles.cancelButtonText}>
                     {t('common.cancel')}
                   </Text>
@@ -756,14 +729,12 @@ const Report = () => {
                 <TouchableOpacity
                   style={styles.importVisitsButton}
                   onPress={handleImportVisits}
-                  activeOpacity={0.85}
-                  >
-                    <Text
-                      variant="labelMedium"
-                      style={styles.importVisitsButtonText}
-                    >
-                      {t('remediusReport.visitSelectDialog.importButton')}
-                    </Text>
+                  activeOpacity={0.85}>
+                  <Text
+                    variant="labelMedium"
+                    style={styles.importVisitsButtonText}>
+                    {t('remediusReport.visitSelectDialog.importButton')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -786,8 +757,7 @@ const Report = () => {
               <View style={styles.documentPreviewContent}>
                 <Text
                   variant="bodySmall"
-                  style={styles.documentPreviewFileName}
-                >
+                  style={styles.documentPreviewFileName}>
                   {t('remediusReport.documentPreview.fileName')}:{' '}
                   {previewFile.name}
                 </Text>

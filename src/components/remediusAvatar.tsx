@@ -1,6 +1,6 @@
 /**
  * Remedius Avatar Component
- * 
+ *
  * Animated avatar for empty states and AI assistant identity.
  * Subtle pulsing animation for "alive" feel without distraction.
  */
@@ -37,7 +37,7 @@ export const RemediusAvatar: React.FC<RemediusAvatarProps> = ({
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -49,20 +49,22 @@ export const RemediusAvatar: React.FC<RemediusAvatarProps> = ({
 
   return (
     <View style={[styles.container, { width: size + 20, height: size + 20 }]}>
-      <Animated.View 
+      <Animated.View
         style={[
           styles.innerContainer,
-          { 
-            width: size, 
-            height: size, 
+          {
+            width: size,
+            height: size,
             borderRadius: size / 2,
-            transform: [{ scale: pulseAnim }] 
-          }
-        ]}
-      >
-        <Image 
-          source={{ uri: REMEDIUS_AVATAR }} 
-          style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
+            transform: [{ scale: pulseAnim }],
+          },
+        ]}>
+        <Image
+          source={{ uri: REMEDIUS_AVATAR }}
+          style={[
+            styles.avatar,
+            { width: size, height: size, borderRadius: size / 2 },
+          ]}
         />
       </Animated.View>
     </View>

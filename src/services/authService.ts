@@ -115,7 +115,7 @@ export const uploadRecording = (
     uri: string;
     type: string;
     name: string;
-  }
+  },
 ): Promise<AxiosResponse<any>> => {
   const formData = new FormData();
   formData.append('recording', {
@@ -138,7 +138,7 @@ export const generateNotes = (
     visitType: string;
     specialization: string;
     length: string;
-  }
+  },
 ): Promise<AxiosResponse<any>> => {
   return api.post(`/event/${sessionId}/generate-notes/stream`, {
     ...payload,
@@ -154,7 +154,10 @@ export const deleteEvent = (sessionId: string): Promise<AxiosResponse<any>> => {
   return api.delete(`/event/${sessionId}`);
 };
 
-export const updateEvent = (sessionId: string, payload: { title: string }): Promise<AxiosResponse<any>> => {
+export const updateEvent = (
+  sessionId: string,
+  payload: { title: string },
+): Promise<AxiosResponse<any>> => {
   return api.put(`/event/${sessionId}`, payload);
 };
 
@@ -166,7 +169,9 @@ export const createCustomPrompt = (payload: {
   return api.post('/event/prompts', payload);
 };
 
-export const deleteCustomPrompt = (promptId: string): Promise<AxiosResponse<any>> => {
+export const deleteCustomPrompt = (
+  promptId: string,
+): Promise<AxiosResponse<any>> => {
   return api.delete(`/event/prompts/${promptId}`);
 };
 

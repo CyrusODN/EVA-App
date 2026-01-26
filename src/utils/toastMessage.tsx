@@ -54,7 +54,11 @@ const ToastLayout: React.FC<ToastLayoutProps> = ({ type, text1, text2 }) => {
     <View style={[styles.container, ClinicalTheme.shadow.floating]}>
       <View style={[styles.accentBar, { backgroundColor: getAccentColor() }]} />
       <View style={styles.contentContainer}>
-        <View style={[styles.iconContainer, { backgroundColor: getBackgroundColor() }]}>
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: getBackgroundColor() },
+          ]}>
           {getIcon()}
         </View>
         <View style={styles.textContainer}>
@@ -110,9 +114,9 @@ const styles = StyleSheet.create({
     // Shadow is applied via style prop from ClinicalTheme
     ...Platform.select({
       android: {
-        elevation: 4
-      }
-    })
+        elevation: 4,
+      },
+    }),
   },
   accentBar: {
     width: 4,

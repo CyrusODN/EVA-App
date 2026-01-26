@@ -6,9 +6,9 @@ interface RemedyLogoIconProps {
   color?: string;
 }
 
-const RemedyLogoIcon: React.FC<RemedyLogoIconProps> = ({ 
-  size = 24, 
-  color = '#A6A6A6' 
+const RemedyLogoIcon: React.FC<RemedyLogoIconProps> = ({
+  size = 24,
+  color = '#A6A6A6',
 }) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 178 178">

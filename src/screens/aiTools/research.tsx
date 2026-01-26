@@ -15,12 +15,7 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import {
-  BookOpen,
-  FileText,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react-native';
+import { BookOpen, FileText, ArrowRight, Sparkles } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import Header from '../../components/header';
@@ -31,17 +26,17 @@ const THEME = {
   pure: '#FFFFFF',
   surface: '#F9FAFB',
   surfaceAlt: '#F3F4F6',
-  
+
   // Text
   navy: '#111827',
   secondary: '#6B7280',
   tertiary: '#9CA3AF',
-  
+
   // Brand
   brand: '#46B7C6',
   brandLight: 'rgba(70, 183, 198, 0.08)',
   brandMedium: 'rgba(70, 183, 198, 0.15)',
-  
+
   // Borders
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
@@ -79,8 +74,7 @@ const ResearchModuleCard: React.FC<ResearchModuleCardProps> = ({
       style={({ pressed }) => [
         styles.moduleCard,
         pressed && styles.moduleCardPressed,
-      ]}
-    >
+      ]}>
       <View style={styles.cardContent}>
         {/* Icon container */}
         <View style={styles.iconWrapper}>
@@ -131,8 +125,7 @@ const Research = () => {
         <ScrollView
           style={styles.content}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+          contentContainerStyle={styles.scrollContent}>
           {/* Module cards */}
           <View style={styles.modulesContainer}>
             <ResearchModuleCard
@@ -155,7 +148,8 @@ const Research = () => {
           {/* Info footer */}
           <View style={styles.infoFooter}>
             <Text style={styles.infoText}>
-              Upload PDFs, research papers, or clinical protocols for instant AI analysis
+              Upload PDFs, research papers, or clinical protocols for instant AI
+              analysis
             </Text>
           </View>
         </ScrollView>
@@ -213,7 +207,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   iconWrapper: {
     marginRight: wp(4),
   },

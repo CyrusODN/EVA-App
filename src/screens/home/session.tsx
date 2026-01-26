@@ -37,22 +37,26 @@ import {
 } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as DocumentPicker from '@react-native-documents/picker';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import { useCallback } from 'react';
 import PrimaryButton from '../../components/primaryButton';
 import { colors } from '../../constants/colors';
 import { customToast } from '../../utils/toastMessage';
-import { sessionStorage, Session as SessionType, SessionType as SessionTypeEnum } from '../../utils/sessionStorage';
+import {
+  sessionStorage,
+  Session as SessionType,
+  SessionType as SessionTypeEnum,
+} from '../../utils/sessionStorage';
 import { uploadRecording } from '../../services/authService';
-import Sound, {
-  PlayBackType,
-  RecordBackType,
-} from 'react-native-nitro-sound';
+import Sound, { PlayBackType, RecordBackType } from 'react-native-nitro-sound';
 
 // const audioRecorderPlayer = new AudioRecorderPlayer();
 
 type PickedAudioFile = DocumentPicker.DocumentPickerResponse;
-
 
 const Session = () => {
   const { t } = useTranslation();
@@ -69,7 +73,9 @@ const Session = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
-  const [_uploadedFile, setUploadedFile] = useState<PickedAudioFile | null>(null);
+  const [_uploadedFile, setUploadedFile] = useState<PickedAudioFile | null>(
+    null,
+  );
   const initialTitle =
     (sessionData && sessionData.title) || t('mainContent.recording.newSession');
   const [sessionTitle, setSessionTitle] = useState(initialTitle);
@@ -77,7 +83,9 @@ const Session = () => {
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [renameValue, setRenameValue] = useState(initialTitle);
   const [recordedPath, setRecordedPath] = useState<string | null>(null);
-  const [currentSession, setCurrentSession] = useState<SessionType | null>(null);
+  const [currentSession, setCurrentSession] = useState<SessionType | null>(
+    null,
+  );
 
   useEffect(() => {
     loadSessionData();
@@ -86,7 +94,7 @@ const Session = () => {
   useFocusEffect(
     useCallback(() => {
       loadSessionData();
-    }, [])
+    }, []),
   );
 
   const getRNFS = async (): Promise<any | null> => {
@@ -113,24 +121,24 @@ const Session = () => {
     }
   };
 
-
-  const session = currentSession || sessionData || {
-    id: '1',
-    title: t('mainContent.recording.newSession'),
-    type: (sessionType as SessionTypeEnum) || 'patient',
-    date: new Date().toISOString(),
-    duration: null,
-    hasRecording: false,
-    hasTranscription: false,
-    status: 'new',
-  };
+  const session = currentSession ||
+    sessionData || {
+      id: '1',
+      title: t('mainContent.recording.newSession'),
+      type: (sessionType as SessionTypeEnum) || 'patient',
+      date: new Date().toISOString(),
+      duration: null,
+      hasRecording: false,
+      hasTranscription: false,
+      status: 'new',
+    };
 
   // Timer effect for recording
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
     if (isRecording) {
       interval = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime((prev) => prev + 1);
       }, 1000);
     }
     return () => {
@@ -155,11 +163,12 @@ const Session = () => {
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
           {
             title: 'Audio Recording Permission',
-            message: 'This app needs access to your microphone to record audio.',
+            message:
+              'This app needs access to your microphone to record audio.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
-          }
+          },
         );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           return;
@@ -179,7 +188,7 @@ const Session = () => {
     } catch (error) {
       Alert.alert(
         t('common.error'),
-        'Audio module is not linked. Please run pod install and rebuild iOS.'
+        'Audio module is not linked. Please run pod install and rebuild iOS.',
       );
       setIsRecording(false);
     }
@@ -204,7 +213,7 @@ const Session = () => {
               console.error('[Session] No path returned from stopRecorder');
               Alert.alert(
                 t('common.error'),
-                'Failed to get recording path. Please try again.'
+                'Failed to get recording path. Please try again.',
               );
               return;
             }
@@ -221,12 +230,19 @@ const Session = () => {
                   await RNFS.mkdir(dir);
                   console.log('[Session] Directory created/verified');
                 } catch (mkdirError) {
-                  console.log('[Session] Directory may already exist:', mkdirError);
+                  console.log(
+                    '[Session] Directory may already exist:',
+                    mkdirError,
+                  );
                 }
 
-                const ext = path.includes('.') ? `.${path.split('.').pop()}` : '.m4a';
+                const ext = path.includes('.')
+                  ? `.${path.split('.').pop()}`
+                  : '.m4a';
                 const dest = `${dir}/${session.id}${ext}`;
-                const src = path.startsWith('file://') ? path.replace('file://', '') : path;
+                const src = path.startsWith('file://')
+                  ? path.replace('file://', '')
+                  : path;
 
                 console.log('[Session] Preparing to copy audio file...');
                 console.log('[Session] Source:', src);
@@ -240,7 +256,11 @@ const Session = () => {
                 }
 
                 const sourceStats = await RNFS.stat(src);
-                console.log('[Session] Source file size:', sourceStats.size, 'bytes');
+                console.log(
+                  '[Session] Source file size:',
+                  sourceStats.size,
+                  'bytes',
+                );
 
                 if (sourceStats.size === 0) {
                   console.error('[Session] Source file is empty');
@@ -250,7 +270,9 @@ const Session = () => {
                 // Check if destination file already exists and delete it
                 const destExists = await RNFS.exists(dest);
                 if (destExists) {
-                  console.log('[Session] Destination file already exists, deleting...');
+                  console.log(
+                    '[Session] Destination file already exists, deleting...',
+                  );
                   await RNFS.unlink(dest);
                 }
 
@@ -261,13 +283,19 @@ const Session = () => {
                 // Verify copy succeeded
                 const destExistsAfterCopy = await RNFS.exists(dest);
                 if (!destExistsAfterCopy) {
-                  console.error('[Session] Copy failed - destination file not created');
+                  console.error(
+                    '[Session] Copy failed - destination file not created',
+                  );
                   throw new Error('Failed to copy audio file');
                 }
 
                 const destStats = await RNFS.stat(dest);
                 console.log('[Session] File copied successfully');
-                console.log('[Session] Destination file size:', destStats.size, 'bytes');
+                console.log(
+                  '[Session] Destination file size:',
+                  destStats.size,
+                  'bytes',
+                );
 
                 if (destStats.size === 0) {
                   console.error('[Session] Destination file is empty');
@@ -275,7 +303,10 @@ const Session = () => {
                 }
 
                 persistedPath = dest;
-                console.log('[Session] Audio file persisted at:', persistedPath);
+                console.log(
+                  '[Session] Audio file persisted at:',
+                  persistedPath,
+                );
               } catch (copyError: any) {
                 console.error('[Session] File copy error:', copyError);
                 console.error('[Session] Error message:', copyError?.message);
@@ -291,17 +322,23 @@ const Session = () => {
             const duration = formatTime(recordingTime);
             console.log('[Session] Recording duration:', duration);
 
-            await sessionStorage.markSessionAsRecorded(session.id, duration, finalPath || undefined);
+            await sessionStorage.markSessionAsRecorded(
+              session.id,
+              duration,
+              finalPath || undefined,
+            );
             await loadSessionData();
 
             // Automatically transcribe the recorded audio
-            console.log('[Session] Recording saved. Starting automatic transcription...');
+            console.log(
+              '[Session] Recording saved. Starting automatic transcription...',
+            );
             await transcribeAudio(finalPath);
           } catch (error: any) {
             console.error('[Session] Stop recording error:', error);
             Alert.alert(
               t('common.error'),
-              `Failed to stop recording: ${error?.message || 'Unknown error'}`
+              `Failed to stop recording: ${error?.message || 'Unknown error'}`,
             );
           }
         },
@@ -331,7 +368,7 @@ const Session = () => {
           console.error('[Session] No URI in picked file');
           Alert.alert(
             t('session.error'),
-            'Failed to get file path. Please try again.'
+            'Failed to get file path. Please try again.',
           );
           return;
         }
@@ -353,7 +390,9 @@ const Session = () => {
 
             const ext = uri.includes('.') ? `.${uri.split('.').pop()}` : '.m4a';
             const dest = `${dir}/${session.id}${ext}`;
-            const src = uri.startsWith('file://') ? uri.replace('file://', '') : uri;
+            const src = uri.startsWith('file://')
+              ? uri.replace('file://', '')
+              : uri;
 
             console.log('[Session] Preparing to copy uploaded file...');
             console.log('[Session] Source:', src);
@@ -367,7 +406,11 @@ const Session = () => {
             }
 
             const sourceStats = await RNFS.stat(src);
-            console.log('[Session] Source file size:', sourceStats.size, 'bytes');
+            console.log(
+              '[Session] Source file size:',
+              sourceStats.size,
+              'bytes',
+            );
 
             if (sourceStats.size === 0) {
               console.error('[Session] Source file is empty');
@@ -377,7 +420,9 @@ const Session = () => {
             // Check if destination file already exists and delete it
             const destExistsBefore = await RNFS.exists(dest);
             if (destExistsBefore) {
-              console.log('[Session] Destination file already exists, deleting...');
+              console.log(
+                '[Session] Destination file already exists, deleting...',
+              );
               await RNFS.unlink(dest);
             }
 
@@ -388,13 +433,19 @@ const Session = () => {
             // Verify copy succeeded
             const destExists = await RNFS.exists(dest);
             if (!destExists) {
-              console.error('[Session] Copy failed - destination file not created');
+              console.error(
+                '[Session] Copy failed - destination file not created',
+              );
               throw new Error('Failed to copy audio file');
             }
 
             const destStats = await RNFS.stat(dest);
             console.log('[Session] File copied successfully');
-            console.log('[Session] Destination file size:', destStats.size, 'bytes');
+            console.log(
+              '[Session] Destination file size:',
+              destStats.size,
+              'bytes',
+            );
 
             if (destStats.size === 0) {
               console.error('[Session] Destination file is empty');
@@ -408,7 +459,9 @@ const Session = () => {
             console.error('[Session] Error message:', copyError?.message);
             Alert.alert(
               t('session.error'),
-              `Failed to copy audio file: ${copyError?.message || 'Unknown error'}`
+              `Failed to copy audio file: ${
+                copyError?.message || 'Unknown error'
+              }`,
             );
             return;
           }
@@ -418,7 +471,11 @@ const Session = () => {
         console.log('[Session] Final audio path to use:', finalPath);
 
         setRecordedPath(finalPath);
-        await sessionStorage.markSessionAsRecorded(session.id, '00:00', finalPath || undefined);
+        await sessionStorage.markSessionAsRecorded(
+          session.id,
+          '00:00',
+          finalPath || undefined,
+        );
         await loadSessionData();
 
         // Verify file exists before transcription
@@ -432,22 +489,28 @@ const Session = () => {
             try {
               const exists = await RNFS.exists(normalizedPath);
               if (!exists) {
-                console.error('[Session] Audio file does not exist for transcription:', normalizedPath);
+                console.error(
+                  '[Session] Audio file does not exist for transcription:',
+                  normalizedPath,
+                );
                 Alert.alert(
                   t('common.error'),
-                  'Audio file not found. Please try selecting the file again.'
+                  'Audio file not found. Please try selecting the file again.',
                 );
                 return;
               }
 
               const stats = await RNFS.stat(normalizedPath);
-              console.log('[Session] Audio file verified for transcription, size:', stats.size);
+              console.log(
+                '[Session] Audio file verified for transcription, size:',
+                stats.size,
+              );
 
               if (stats.size === 0) {
                 console.error('[Session] Audio file is empty');
                 Alert.alert(
                   t('common.error'),
-                  'Audio file is empty. Please select a different file.'
+                  'Audio file is empty. Please select a different file.',
                 );
                 return;
               }
@@ -462,7 +525,7 @@ const Session = () => {
           console.error('[Session] No audio path available for transcription');
           Alert.alert(
             t('session.error'),
-            'Failed to process audio file. Please try again.'
+            'Failed to process audio file. Please try again.',
           );
         }
       }
@@ -484,7 +547,7 @@ const Session = () => {
     if (!session.sessionId) {
       Alert.alert(
         t('common.error'),
-        'Session ID not found. Please try creating a new session.'
+        'Session ID not found. Please try creating a new session.',
       );
       return;
     }
@@ -508,7 +571,10 @@ const Session = () => {
 
       console.log('[Session] ===== UPLOAD RESPONSE =====');
       console.log('[Session] Response status:', response.status);
-      console.log('[Session] Response data:', JSON.stringify(response.data, null, 2));
+      console.log(
+        '[Session] Response data:',
+        JSON.stringify(response.data, null, 2),
+      );
       console.log('[Session] ===== END RESPONSE =====');
 
       // Check if the request was successful
@@ -525,11 +591,17 @@ const Session = () => {
 
           // Save transcript to local storage
           if (text) {
-            await sessionStorage.updateSessionTranscript(session.id, text, utterances || []);
+            await sessionStorage.updateSessionTranscript(
+              session.id,
+              text,
+              utterances || [],
+            );
             await loadSessionData();
 
             // Navigate to transcription completed screen
-            const updatedSession = await sessionStorage.getSessionById(session.id);
+            const updatedSession = await sessionStorage.getSessionById(
+              session.id,
+            );
             console.log('[Session] Navigating to transcription screen...');
             navigation.replace('transcriptionCompleted', {
               sessionData: updatedSession,
@@ -537,16 +609,30 @@ const Session = () => {
             });
           } else {
             console.log('[Session] No transcription text in response');
-            customToast('error', 'Warning', 'Transcription completed but no text was returned.');
+            customToast(
+              'error',
+              'Warning',
+              'Transcription completed but no text was returned.',
+            );
           }
         } else {
-          console.log('[Session] No transcription data in response yet - will be processed asynchronously');
+          console.log(
+            '[Session] No transcription data in response yet - will be processed asynchronously',
+          );
 
           // Still navigate to transcription screen so user can wait for transcription
-          const updatedSession = await sessionStorage.getSessionById(session.id);
-          console.log('[Session] Navigating to transcription screen (processing)...');
+          const updatedSession = await sessionStorage.getSessionById(
+            session.id,
+          );
+          console.log(
+            '[Session] Navigating to transcription screen (processing)...',
+          );
 
-          customToast('info', 'Processing', 'Audio uploaded successfully. Transcription is being processed.');
+          customToast(
+            'info',
+            'Processing',
+            'Audio uploaded successfully. Transcription is being processed.',
+          );
 
           navigation.replace('transcriptionCompleted', {
             sessionData: updatedSession,
@@ -557,10 +643,7 @@ const Session = () => {
         // Handle unsuccessful response
         const errorMessage = response.data?.message || 'Upload failed';
         console.error('[Session] Upload failed:', errorMessage);
-        Alert.alert(
-          t('common.error'),
-          errorMessage
-        );
+        Alert.alert(t('common.error'), errorMessage);
       }
     } catch (e: any) {
       console.error('[Session] Transcription error:', e);
@@ -574,14 +657,13 @@ const Session = () => {
         `Transcription failed: ${msg}\n\nPlease check your internet connection and try again.`,
         [
           { text: t('common.cancel'), style: 'cancel' },
-          { text: 'Retry', onPress: () => transcribeAudio(path) }
-        ]
+          { text: 'Retry', onPress: () => transcribeAudio(path) },
+        ],
       );
     } finally {
       setIsTranscribing(false);
     }
   };
-
 
   const getSessionIcon = () => {
     switch (session.type) {
@@ -683,12 +765,14 @@ const Session = () => {
                 styles.recordButton,
                 isRecording && styles.recordButtonActive,
               ]}
-              onPress={isRecording ? handleStopRecording : handleStartRecording}
-            >
-              <View style={[
-                styles.recordButtonContent,
-                { backgroundColor: isRecording ? '#ef4444' : '#46B7C6' }
-              ]}>
+              onPress={
+                isRecording ? handleStopRecording : handleStartRecording
+              }>
+              <View
+                style={[
+                  styles.recordButtonContent,
+                  { backgroundColor: isRecording ? '#ef4444' : '#46B7C6' },
+                ]}>
                 {isRecording ? (
                   <Square size={32} color="white" fill="white" />
                 ) : (
@@ -701,8 +785,10 @@ const Session = () => {
               <Clock size={16} color={isRecording ? '#ef4444' : '#86868b'} />
               <Text
                 variant="titleSmall"
-                style={[styles.timerText, { color: isRecording ? '#ef4444' : '#86868b' }]}
-              >
+                style={[
+                  styles.timerText,
+                  { color: isRecording ? '#ef4444' : '#86868b' },
+                ]}>
                 {formatTime(recordingTime)}
               </Text>
             </View>
@@ -713,8 +799,7 @@ const Session = () => {
         <View style={styles.uploadSection}>
           <TouchableOpacity
             style={styles.uploadCard}
-            onPress={handleFileUpload}
-          >
+            onPress={handleFileUpload}>
             <View style={styles.uploadContent}>
               <Upload size={32} color="#86868b" />
               <Text variant="titleMedium" style={styles.uploadTitle}>
@@ -734,8 +819,7 @@ const Session = () => {
         <View style={styles.qrSection}>
           <TouchableOpacity
             style={styles.qrCard}
-            onPress={() => setShowQRCode(!showQRCode)}
-          >
+            onPress={() => setShowQRCode(!showQRCode)}>
             <View style={styles.qrContent}>
               <QrCode size={32} color="#46B7C6" />
               <Text variant="titleMedium" style={styles.qrTitle}>
@@ -771,7 +855,9 @@ const Session = () => {
       {/* Compact Header - Pro Tool Style */}
       <View style={styles.compactHeader}>
         <View style={styles.compactHeaderLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
             <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
 
@@ -798,20 +884,17 @@ const Session = () => {
         <View style={styles.compactHeaderRight}>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={handleRenameOpen}
-          >
+            onPress={handleRenameOpen}>
             <Edit3 size={20} color="#A6A6A6" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={handleRestart}
-          >
+            onPress={handleRestart}>
             <RotateCcw size={20} color="#A6A6A6" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={() => setShowDeleteDialog(true)}
-          >
+            onPress={() => setShowDeleteDialog(true)}>
             <Trash2 size={20} color="#A6A6A6" />
           </TouchableOpacity>
         </View>
@@ -821,40 +904,64 @@ const Session = () => {
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {renderRecordingState()}
       </ScrollView>
 
-      <Modal transparent visible={showDeleteDialog} animationType="fade" onRequestClose={() => setShowDeleteDialog(false)}>
+      <Modal
+        transparent
+        visible={showDeleteDialog}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteDialog(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowDeleteDialog(false)}>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setShowDeleteDialog(false)}>
               <X size={18} color={colors.onSurface} />
             </TouchableOpacity>
-            <Text variant="headlineLarge" style={styles.modalTitle}>Delete Session</Text>
+            <Text variant="headlineLarge" style={styles.modalTitle}>
+              Delete Session
+            </Text>
             <Text variant="bodyMedium" style={styles.modalDescription}>
-              Are you sure you want to delete this session? This action cannot be undone.
+              Are you sure you want to delete this session? This action cannot
+              be undone.
             </Text>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setShowDeleteDialog(false)}>
-                <Text variant="titleSmall" style={styles.modalButtonText}>Cancel</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowDeleteDialog(false)}>
+                <Text variant="titleSmall" style={styles.modalButtonText}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.modalDangerButton]} onPress={handleDeleteConfirm}>
-                <Text variant="titleSmall" style={styles.modalDangerText}>Delete</Text>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalDangerButton]}
+                onPress={handleDeleteConfirm}>
+                <Text variant="titleSmall" style={styles.modalDangerText}>
+                  Delete
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      <Modal transparent visible={showRenameDialog} animationType="fade" onRequestClose={() => setShowRenameDialog(false)}>
+      <Modal
+        transparent
+        visible={showRenameDialog}
+        animationType="fade"
+        onRequestClose={() => setShowRenameDialog(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <TouchableOpacity style={styles.modalClose} onPress={() => setShowRenameDialog(false)}>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setShowRenameDialog(false)}>
               <X size={18} color={colors.onSurface} />
             </TouchableOpacity>
-            <Text variant="headlineLarge" style={styles.modalTitle}>Rename Session</Text>
+            <Text variant="headlineLarge" style={styles.modalTitle}>
+              Rename Session
+            </Text>
             <View style={styles.renameInputWrapper}>
               <TextInput
                 value={renameValue}
@@ -865,11 +972,19 @@ const Session = () => {
               />
             </View>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setShowRenameDialog(false)}>
-                <Text variant="titleSmall" style={styles.modalButtonText}>Cancel</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowRenameDialog(false)}>
+                <Text variant="titleSmall" style={styles.modalButtonText}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.modalPrimaryButton]} onPress={handleRenameSave}>
-                <Text variant="titleSmall" style={styles.modalPrimaryText}>Save</Text>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalPrimaryButton]}
+                onPress={handleRenameSave}>
+                <Text variant="titleSmall" style={styles.modalPrimaryText}>
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

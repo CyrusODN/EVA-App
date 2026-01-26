@@ -33,7 +33,12 @@ import Header from '../../components/header';
 import { useNavigation } from '@react-navigation/native';
 import Gap from '../../components/gap';
 import { textStyles } from '../../constants/textStyles';
-import { changePassword, setAuthToken, forgetPassword, getAuthContext } from '../../services/authService';
+import {
+  changePassword,
+  setAuthToken,
+  forgetPassword,
+  getAuthContext,
+} from '../../services/authService';
 import userStore from '../../store/user';
 import { api } from '../../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,7 +59,7 @@ const Settings = () => {
   const navigation = useNavigation<any>();
   const [uploading, setUploading] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  
+
   // Onboarding preferences
   const {
     defaultSpecialization,
@@ -111,10 +116,15 @@ const Settings = () => {
       });
       if (res.didCancel) return;
       if (res.errorMessage || res.errorCode) {
-        customToast('error', t('common.error'), res.errorMessage || 'Failed to open gallery');
+        customToast(
+          'error',
+          t('common.error'),
+          res.errorMessage || 'Failed to open gallery',
+        );
         return;
       }
-      const asset = res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
+      const asset =
+        res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
       if (!asset || !asset.uri) {
         customToast('error', t('common.error'), 'No image selected');
         return;
@@ -126,7 +136,9 @@ const Settings = () => {
       }
       setUser((prev: any) => ({ ...(prev as any), profilePicture: asset.uri }));
       setUploading(true);
-      const token = userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+      const token =
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       const form = new FormData();
       form.append('profileImage', {
@@ -143,7 +155,9 @@ const Settings = () => {
             email: ctx?.email || (user as any).email,
             name:
               ctx?.fname ||
-              (ctx?.email ? String(ctx.email).split('@')[0] : (user as any).name),
+              (ctx?.email
+                ? String(ctx.email).split('@')[0]
+                : (user as any).name),
             profilePicture: ctx?.profileImage || (user as any).profilePicture,
             role: ctx?.role,
             settings: ctx?.settings,
@@ -160,7 +174,9 @@ const Settings = () => {
       customToast('success', t('common.success'), 'Profile image updated');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || 'Failed to upload image';
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to upload image';
       customToast('error', t('common.error'), message);
     } finally {
       setUploading(false);
@@ -177,16 +193,26 @@ const Settings = () => {
       return;
     }
     if (String(newPassword).trim().length < 6) {
-      customToast('error', t('common.error'), 'New password must be at least 6 characters');
+      customToast(
+        'error',
+        t('common.error'),
+        'New password must be at least 6 characters',
+      );
       return;
     }
     if (newPassword === currentPassword) {
-      customToast('error', t('common.error'), 'New password must differ from current password');
+      customToast(
+        'error',
+        t('common.error'),
+        'New password must differ from current password',
+      );
       return;
     }
     setChangingPassword(true);
     try {
-      let token = userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
+      let token =
+        userStore.getState().token ||
+        (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       try {
         const ctxResp = await getAuthContext();
@@ -205,7 +231,11 @@ const Settings = () => {
       });
       const raw = resp?.data;
       const payload = raw?.data || raw;
-      if ((resp?.status && resp.status >= 200 && resp.status < 300) || payload?.success || payload?.message) {
+      if (
+        (resp?.status && resp.status >= 200 && resp.status < 300) ||
+        payload?.success ||
+        payload?.message
+      ) {
         customToast('success', t('settings.password.alertChanged'));
         setCurrentPassword('');
         setNewPassword('');
@@ -220,12 +250,20 @@ const Settings = () => {
         //@ts-ignore
         (navigation as any).reset({ index: 0, routes: [{ name: 'login' }] });
       } else {
-        customToast('error', t('common.error'), payload?.message || 'Failed to change password');
+        customToast(
+          'error',
+          t('common.error'),
+          payload?.message || 'Failed to change password',
+        );
       }
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 401) {
-        customToast('error', t('common.error'), 'Session expired. Please log in again.');
+        customToast(
+          'error',
+          t('common.error'),
+          'Session expired. Please log in again.',
+        );
         try {
           userStore.getState().purgeAuth();
           await AsyncStorage.removeItem('auth_token');
@@ -241,25 +279,35 @@ const Settings = () => {
         try {
           const emailToUse = user?.email;
           if (!emailToUse) {
-            customToast('error', t('common.error'), 'No email found for current user');
+            customToast(
+              'error',
+              t('common.error'),
+              'No email found for current user',
+            );
             return;
           }
           const resp = await forgetPassword({ email: emailToUse });
           const raw = resp?.data;
           const message =
-            raw?.message || raw?.data || 'Password reset link sent. Check your email.';
+            raw?.message ||
+            raw?.data ||
+            'Password reset link sent. Check your email.';
           customToast('success', t('common.success'), String(message));
           setCurrentPassword('');
           setNewPassword('');
           setConfirmPassword('');
         } catch (e: any) {
           const msg =
-            e?.response?.data?.message || e?.message || 'Failed to send reset link';
+            e?.response?.data?.message ||
+            e?.message ||
+            'Failed to send reset link';
           customToast('error', t('common.error'), msg);
         }
       } else {
         const message =
-          error?.response?.data?.message || error?.message || 'Failed to change password';
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to change password';
         customToast('error', t('common.error'), message);
       }
     } finally {
@@ -318,13 +366,11 @@ const Settings = () => {
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.mainContainer}
-      >
+        style={styles.mainContainer}>
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+          keyboardShouldPersistTaps="handled">
           {/* Profile Picture Section */}
           <Section title={t('settings.profile.picture')}>
             <View style={styles.profileSection}>
@@ -335,8 +381,7 @@ const Settings = () => {
                 />
                 <TouchableOpacity
                   style={styles.editButton}
-                  onPress={handleImagePicker}
-                >
+                  onPress={handleImagePicker}>
                   <IconButton
                     icon="camera"
                     size={14}
@@ -348,18 +393,18 @@ const Settings = () => {
               <TouchableOpacity
                 style={styles.changeAvatarButton}
                 onPress={handleImagePicker}
-                activeOpacity={0.85}
-                >
-                  <Camera size={16} color="white" />
+                activeOpacity={0.85}>
+                <Camera size={16} color="white" />
                 <Text variant="labelLarge" style={styles.changeAvatarText}>
-                    {t('settings.profile.changeAvatar')}
-                  </Text>
+                  {t('settings.profile.changeAvatar')}
+                </Text>
               </TouchableOpacity>
             </View>
           </Section>
 
           {/* AI Scribe Preferences Section */}
-          <Section title={t('settings.aiScribe.title') || 'AI Scribe Preferences'}>
+          <Section
+            title={t('settings.aiScribe.title') || 'AI Scribe Preferences'}>
             <View style={styles.aiScribeSection}>
               <View style={styles.preferenceRow}>
                 <View style={styles.preferenceContent}>
@@ -367,42 +412,54 @@ const Settings = () => {
                     {t('settings.aiScribe.specialization') || 'Specialization'}
                   </Text>
                   <Text style={styles.preferenceValue}>
-                    {defaultSpecialization 
-                      ? t(`onboarding.specialization.${defaultSpecialization.toLowerCase().replace(' ', '')}`) || defaultSpecialization
+                    {defaultSpecialization
+                      ? t(
+                          `onboarding.specialization.${defaultSpecialization
+                            .toLowerCase()
+                            .replace(' ', '')}`,
+                        ) || defaultSpecialization
                       : t('settings.aiScribe.notSet') || 'Not set'}
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.preferenceRowDivider} />
-              
+
               <View style={styles.preferenceRow}>
                 <View style={styles.preferenceContent}>
                   <Text style={styles.preferenceLabel}>
                     {t('settings.aiScribe.noteLength') || 'Note Length'}
                   </Text>
                   <Text style={styles.preferenceValue}>
-                    {t(`onboarding.noteLength.${defaultNoteLength.toLowerCase()}`) || defaultNoteLength}
+                    {t(
+                      `onboarding.noteLength.${defaultNoteLength.toLowerCase()}`,
+                    ) || defaultNoteLength}
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.preferenceRowDivider} />
-              
+
               <View style={styles.preferenceRow}>
                 <View style={styles.preferenceContent}>
                   <Text style={styles.preferenceLabel}>
                     {t('settings.aiScribe.visitType') || 'Default Visit Type'}
                   </Text>
                   <Text style={styles.preferenceValue}>
-                    {t(`onboarding.visitType.${defaultVisitType === 'First Visit' ? 'firstVisit' : 'followUp'}`) || defaultVisitType}
+                    {t(
+                      `onboarding.visitType.${
+                        defaultVisitType === 'First Visit'
+                          ? 'firstVisit'
+                          : 'followUp'
+                      }`,
+                    ) || defaultVisitType}
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.preferenceRowDivider} />
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.rerunOnboardingButton}
                 onPress={() => {
                   resetOnboarding();
@@ -410,10 +467,10 @@ const Settings = () => {
                     index: 0,
                     routes: [{ name: 'Onboarding' }],
                   });
-                }}
-              >
+                }}>
                 <Text style={styles.rerunOnboardingText}>
-                  {t('settings.aiScribe.rerunOnboarding') || 'Re-run Setup Wizard'}
+                  {t('settings.aiScribe.rerunOnboarding') ||
+                    'Re-run Setup Wizard'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -505,8 +562,7 @@ const Settings = () => {
             onDismiss={() => {
               setShowDeleteDialog(false);
               setDeleteConfirmText('');
-            }}
-          >
+            }}>
             <Dialog.Title style={styles.dialogTitle}>
               {t('settings.deleteAccount.dialogTitle')}
             </Dialog.Title>
@@ -531,16 +587,14 @@ const Settings = () => {
                 onPress={() => {
                   setShowDeleteDialog(false);
                   setDeleteConfirmText('');
-                }}
-              >
+                }}>
                 {t('common.cancel')}
               </Button>
               <Button
                 onPress={handleDeleteAccount}
                 disabled={deleteConfirmText !== 'DELETE'}
                 buttonColor={colors.error}
-                mode="contained"
-              >
+                mode="contained">
                 {t('settings.deleteAccount.button')}
               </Button>
             </Dialog.Actions>

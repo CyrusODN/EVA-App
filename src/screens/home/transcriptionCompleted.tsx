@@ -1,6 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect, useRef } from 'react';
-import { connectSocket, disconnectSocket, getSocket } from '../../services/socketService';
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+} from '../../services/socketService';
 import userStore from '../../store/user';
 import {
   StyleSheet,
@@ -51,8 +55,19 @@ import CustomTemplateManager, {
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';
-import { generateNotes, resetEvent, deleteEvent, updateEvent, getAuthContext } from '../../services/authService';
-import { createNotesPrompt, getNotesPrompts, deleteNotesPrompt, type NotesPrompt } from '../../services/promptsApi';
+import {
+  generateNotes,
+  resetEvent,
+  deleteEvent,
+  updateEvent,
+  getAuthContext,
+} from '../../services/authService';
+import {
+  createNotesPrompt,
+  getNotesPrompts,
+  deleteNotesPrompt,
+  type NotesPrompt,
+} from '../../services/promptsApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../constants/colors';
 
@@ -125,11 +140,8 @@ const TranscriptionComplete = () => {
   const route = useRoute();
 
   // Get onboarding defaults
-  const {
-    defaultSpecialization,
-    defaultNoteLength,
-    defaultVisitType,
-  } = useOnboardingStore();
+  const { defaultSpecialization, defaultNoteLength, defaultVisitType } =
+    useOnboardingStore();
 
   // Get session data from route params
   const { sessionData, sessionType } = ((route as any).params || {}) as {
@@ -138,13 +150,15 @@ const TranscriptionComplete = () => {
   };
 
   // --- NEW ARCHITECTURE STATE ---
-  const [generationMode, setGenerationMode] = useState<'standard' | 'custom'>('standard');
+  const [generationMode, setGenerationMode] = useState<'standard' | 'custom'>(
+    'standard',
+  );
   // ------------------------------
 
   // State management - initialized with onboarding defaults
   const [noteType, setNoteType] = useState<string>('SOAP'); // Default to SOAP for standard mode
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
-    defaultSpecialization || ''
+    defaultSpecialization || '',
   );
   const [visitType, setVisitType] = useState<string>(defaultVisitType || '');
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -154,15 +168,16 @@ const TranscriptionComplete = () => {
   const [showVisitTypeModal, setShowVisitTypeModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [newSessionName, setNewSessionName] = useState<string>('');
-  const [selectedFollowUpVisits, setSelectedFollowUpVisits] = useState<Set<string>>(
-    new Set<string>(),
-  );
+  const [selectedFollowUpVisits, setSelectedFollowUpVisits] = useState<
+    Set<string>
+  >(new Set<string>());
   const [importedFollowUpVisits, setImportedFollowUpVisits] = useState<
     Array<{ _id: string; title: string; date: Date | string }>
   >([]);
   const [visitSearchQuery, setVisitSearchQuery] = useState<string>('');
   const [manualFollowUpText, setManualFollowUpText] = useState<string>('');
-  const [showManualTextModal, setShowManualTextModal] = useState<boolean>(false);
+  const [showManualTextModal, setShowManualTextModal] =
+    useState<boolean>(false);
   const [tempManualText, setTempManualText] = useState<string>('');
   // removed unused followUpPhoto state
   const [isRenaming, setIsRenaming] = useState(false);
@@ -181,7 +196,8 @@ const TranscriptionComplete = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,
   );
-  const [selectedTemplateTitle, setSelectedTemplateTitle] = useState<string>('');
+  const [selectedTemplateTitle, setSelectedTemplateTitle] =
+    useState<string>('');
 
   const noteLengthOptions: Array<'Small' | 'Medium' | 'Large'> = [
     'Small',
@@ -193,15 +209,40 @@ const TranscriptionComplete = () => {
   const [savedPrompts, setSavedPrompts] = useState<NotesPrompt[]>([]); // Saved custom prompts
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null); // Currently selected prompt
   const specializationOptions = [
-    { key: 'Psychiatry', label: t('mainContent.transcriptionComplete.specialization.psychiatry') },
-    { key: 'Child Psychiatry', label: t('mainContent.transcriptionComplete.specialization.childPsychiatry') },
-    { key: 'Surgery', label: t('mainContent.transcriptionComplete.specialization.surgery') },
-    { key: 'Family Medicine', label: t('mainContent.transcriptionComplete.specialization.familyMedicine') },
-    { key: 'Smart Select', label: t('mainContent.transcriptionComplete.specialization.smartSelect') },
+    {
+      key: 'Psychiatry',
+      label: t('mainContent.transcriptionComplete.specialization.psychiatry'),
+    },
+    {
+      key: 'Child Psychiatry',
+      label: t(
+        'mainContent.transcriptionComplete.specialization.childPsychiatry',
+      ),
+    },
+    {
+      key: 'Surgery',
+      label: t('mainContent.transcriptionComplete.specialization.surgery'),
+    },
+    {
+      key: 'Family Medicine',
+      label: t(
+        'mainContent.transcriptionComplete.specialization.familyMedicine',
+      ),
+    },
+    {
+      key: 'Smart Select',
+      label: t('mainContent.transcriptionComplete.specialization.smartSelect'),
+    },
   ];
   const visitTypeOptions = [
-    { key: 'First Visit', label: t('mainContent.transcriptionComplete.visitType.firstVisit') },
-    { key: 'Follow-up', label: t('mainContent.transcriptionComplete.visitType.followUp') },
+    {
+      key: 'First Visit',
+      label: t('mainContent.transcriptionComplete.visitType.firstVisit'),
+    },
+    {
+      key: 'Follow-up',
+      label: t('mainContent.transcriptionComplete.visitType.followUp'),
+    },
   ];
 
   // Helper to switch modes with animation
@@ -230,7 +271,7 @@ const TranscriptionComplete = () => {
       await deleteNotesPrompt(promptId);
 
       // Remove from local state
-      setSavedPrompts(prev => prev.filter(p => p._id !== promptId));
+      setSavedPrompts((prev) => prev.filter((p) => p._id !== promptId));
 
       // Clear selection if deleted prompt was selected
       if (selectedPromptId === promptId) {
@@ -244,7 +285,11 @@ const TranscriptionComplete = () => {
       console.log('[TranscriptionComplete] Prompt deleted:', promptId);
     } catch (error: any) {
       console.error('[TranscriptionComplete] Failed to delete prompt:', error);
-      customToast('error', 'Error', error?.message || 'Failed to delete prompt');
+      customToast(
+        'error',
+        'Error',
+        error?.message || 'Failed to delete prompt',
+      );
     }
   };
 
@@ -282,20 +327,27 @@ const TranscriptionComplete = () => {
         const allSessions = await sessionStorage.getAllSessions();
         // Filter to only show sessions with transcriptions, same type, excluding current session
         const filteredSessions = allSessions
-          .filter(s =>
-            s.type === session.type &&
-            s.id !== session.id &&
-            s.hasTranscription === true
+          .filter(
+            (s) =>
+              s.type === session.type &&
+              s.id !== session.id &&
+              s.hasTranscription === true,
           )
-          .map(s => ({
+          .map((s) => ({
             _id: s.id,
             title: s.title,
             date: new Date(s.date),
           }));
         setAvailableSessions(filteredSessions);
-        console.log('[TranscriptionComplete] Loaded available sessions for follow-up:', filteredSessions.length);
+        console.log(
+          '[TranscriptionComplete] Loaded available sessions for follow-up:',
+          filteredSessions.length,
+        );
       } catch (error) {
-        console.error('[TranscriptionComplete] Failed to load sessions:', error);
+        console.error(
+          '[TranscriptionComplete] Failed to load sessions:',
+          error,
+        );
       }
     };
     loadSessions();
@@ -305,9 +357,14 @@ const TranscriptionComplete = () => {
   useEffect(() => {
     const loadPrompts = async () => {
       try {
-        const prompts = await getNotesPrompts(session.type as 'patient' | 'meeting' | 'lecture');
+        const prompts = await getNotesPrompts(
+          session.type as 'patient' | 'meeting' | 'lecture',
+        );
         setSavedPrompts(prompts);
-        console.log('[TranscriptionComplete] Loaded custom prompts:', prompts.length);
+        console.log(
+          '[TranscriptionComplete] Loaded custom prompts:',
+          prompts.length,
+        );
       } catch (error) {
         console.error('[TranscriptionComplete] Failed to load prompts:', error);
       }
@@ -320,27 +377,37 @@ const TranscriptionComplete = () => {
     const loadSavedNotes = async () => {
       if (sessionData?.id) {
         try {
-          const latestSession = await sessionStorage.getSessionById(sessionData.id);
+          const latestSession = await sessionStorage.getSessionById(
+            sessionData.id,
+          );
           if (latestSession?.generatedNotes) {
-            console.log('[TranscriptionComplete] Loaded saved notes from storage:', latestSession.generatedNotes.length, 'characters');
+            console.log(
+              '[TranscriptionComplete] Loaded saved notes from storage:',
+              latestSession.generatedNotes.length,
+              'characters',
+            );
             setGeneratedNotes(latestSession.generatedNotes);
             generatedNotesRef.current = latestSession.generatedNotes;
           } else {
-            console.log('[TranscriptionComplete] No saved notes found for session:', sessionData.id);
+            console.log(
+              '[TranscriptionComplete] No saved notes found for session:',
+              sessionData.id,
+            );
           }
         } catch (error) {
-          console.error('[TranscriptionComplete] Failed to load saved notes:', error);
+          console.error(
+            '[TranscriptionComplete] Failed to load saved notes:',
+            error,
+          );
         }
       }
     };
     loadSavedNotes();
   }, [sessionData?.id]);
 
-  const filteredFollowUpVisits = availableSessions.filter(visit =>
+  const filteredFollowUpVisits = availableSessions.filter((visit) =>
     visit.title.toLowerCase().includes(visitSearchQuery.toLowerCase()),
   );
-
-
 
   // Mock follow-up visits data
   const mockFollowUpVisits = [
@@ -369,19 +436,27 @@ const TranscriptionComplete = () => {
 
   const getSessionIcon = () => {
     switch (session.type) {
-      case 'patient': return Users;
-      case 'meeting': return FileText;
-      case 'lecture': return Brain;
-      default: return FileText;
+      case 'patient':
+        return Users;
+      case 'meeting':
+        return FileText;
+      case 'lecture':
+        return Brain;
+      default:
+        return FileText;
     }
   };
 
   const getSessionTypeText = () => {
     switch (session.type) {
-      case 'patient': return t('tabs.patients');
-      case 'meeting': return t('tabs.meetings');
-      case 'lecture': return t('tabs.lectures');
-      default: return t('tabs.patients');
+      case 'patient':
+        return t('tabs.patients');
+      case 'meeting':
+        return t('tabs.meetings');
+      case 'lecture':
+        return t('tabs.lectures');
+      default:
+        return t('tabs.patients');
     }
   };
 
@@ -402,16 +477,26 @@ const TranscriptionComplete = () => {
       // Update on backend if sessionId exists
       if (session.sessionId) {
         try {
-          await updateEvent(session.sessionId, { title: newSessionName.trim() });
-          console.log('[TranscriptionComplete] Session title updated on backend');
+          await updateEvent(session.sessionId, {
+            title: newSessionName.trim(),
+          });
+          console.log(
+            '[TranscriptionComplete] Session title updated on backend',
+          );
         } catch (error) {
-          console.error('[TranscriptionComplete] Failed to update session title on backend:', error);
+          console.error(
+            '[TranscriptionComplete] Failed to update session title on backend:',
+            error,
+          );
           // Continue with local update even if backend fails
         }
       }
 
       // Update in local storage
-      await sessionStorage.updateSessionTitle(session.id, newSessionName.trim());
+      await sessionStorage.updateSessionTitle(
+        session.id,
+        newSessionName.trim(),
+      );
       setShowRenameModal(false);
       customToast('success', t('common.success'), t('success.sessionRenamed'));
     } catch (error) {
@@ -431,7 +516,10 @@ const TranscriptionComplete = () => {
           await deleteEvent(session.sessionId);
           console.log('[TranscriptionComplete] Session deleted from backend');
         } catch (error) {
-          console.error('[TranscriptionComplete] Failed to delete session from backend:', error);
+          console.error(
+            '[TranscriptionComplete] Failed to delete session from backend:',
+            error,
+          );
           // Continue with local deletion even if backend fails
         }
       }
@@ -458,7 +546,10 @@ const TranscriptionComplete = () => {
           await resetEvent(session.sessionId);
           console.log('[TranscriptionComplete] Session reset on backend');
         } catch (error) {
-          console.error('[TranscriptionComplete] Failed to reset session on backend:', error);
+          console.error(
+            '[TranscriptionComplete] Failed to reset session on backend:',
+            error,
+          );
           // Continue with local reset even if backend fails
         }
       }
@@ -477,7 +568,7 @@ const TranscriptionComplete = () => {
   };
 
   const handleFollowUpVisitSelect = (visitId: string) => {
-    setSelectedFollowUpVisits(prev => {
+    setSelectedFollowUpVisits((prev) => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
       return next;
@@ -486,8 +577,8 @@ const TranscriptionComplete = () => {
 
   const handleImportFollowUpVisits = () => {
     const selectedVisitData = mockFollowUpVisits
-      .filter(visit => selectedFollowUpVisits.has(visit._id))
-      .map(visit => ({
+      .filter((visit) => selectedFollowUpVisits.has(visit._id))
+      .map((visit) => ({
         _id: visit._id,
         title: visit.title,
         date: visit.date,
@@ -507,19 +598,33 @@ const TranscriptionComplete = () => {
         </Text>
         <View style={styles.compactSegmentedControl}>
           <TouchableOpacity
-            style={[styles.segmentBtn, generationMode === 'standard' && styles.segmentBtnActive]}
-            onPress={() => handleModeChange('standard')}
-          >
-            <Text style={generationMode === 'standard' ? styles.segmentTextActive : styles.segmentTextInactive}>
+            style={[
+              styles.segmentBtn,
+              generationMode === 'standard' && styles.segmentBtnActive,
+            ]}
+            onPress={() => handleModeChange('standard')}>
+            <Text
+              style={
+                generationMode === 'standard'
+                  ? styles.segmentTextActive
+                  : styles.segmentTextInactive
+              }>
               {t('mainContent.transcriptionComplete.modes.standard')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentBtn, generationMode === 'custom' && styles.segmentBtnActive]}
-            onPress={() => handleModeChange('custom')}
-          >
-            <Text style={generationMode === 'custom' ? styles.segmentTextActive : styles.segmentTextInactive}>
+            style={[
+              styles.segmentBtn,
+              generationMode === 'custom' && styles.segmentBtnActive,
+            ]}
+            onPress={() => handleModeChange('custom')}>
+            <Text
+              style={
+                generationMode === 'custom'
+                  ? styles.segmentTextActive
+                  : styles.segmentTextInactive
+              }>
               {t('mainContent.transcriptionComplete.modes.custom')}
             </Text>
           </TouchableOpacity>
@@ -533,9 +638,19 @@ const TranscriptionComplete = () => {
     if (session.type === 'patient') return null;
     return (
       <View style={styles.noteTypeContainer}>
-        <Text variant="labelMedium" style={styles.sectionLabel}>{t('mainContent.transcriptionComplete.noteType')}</Text>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.noteType')}
+        </Text>
         <View style={styles.compactSegmentedControl}>
-          <TouchableOpacity style={[styles.compactSegmentButton, styles.compactSegmentButtonSelected]}><Text style={styles.compactSegmentTextSelected}>{t('mainContent.transcriptionComplete.noteOptions.general')}</Text></TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.compactSegmentButton,
+              styles.compactSegmentButtonSelected,
+            ]}>
+            <Text style={styles.compactSegmentTextSelected}>
+              {t('mainContent.transcriptionComplete.noteOptions.general')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -549,10 +664,19 @@ const TranscriptionComplete = () => {
         </Text>
         <TouchableOpacity
           style={styles.compactDropdownField}
-          onPress={() => setShowSpecializationModal(true)}
-        >
-          <Text variant="bodySmall" style={selectedSpecialization ? styles.compactDropdownValue : styles.compactDropdownPlaceholder}>
-            {selectedSpecialization ? specializationOptions.find(s => s.key === selectedSpecialization)?.label : t('mainContent.transcriptionComplete.specialization.select')}
+          onPress={() => setShowSpecializationModal(true)}>
+          <Text
+            variant="bodySmall"
+            style={
+              selectedSpecialization
+                ? styles.compactDropdownValue
+                : styles.compactDropdownPlaceholder
+            }>
+            {selectedSpecialization
+              ? specializationOptions.find(
+                  (s) => s.key === selectedSpecialization,
+                )?.label
+              : t('mainContent.transcriptionComplete.specialization.select')}
           </Text>
           <ChevronRight size={18} color="#A6A6A6" />
         </TouchableOpacity>
@@ -568,10 +692,17 @@ const TranscriptionComplete = () => {
         </Text>
         <TouchableOpacity
           style={styles.compactDropdownField}
-          onPress={() => setShowVisitTypeModal(true)}
-        >
-          <Text variant="bodySmall" style={visitType ? styles.compactDropdownValue : styles.compactDropdownPlaceholder}>
-            {visitType ? visitTypeOptions.find(v => v.key === visitType)?.label : t('mainContent.transcriptionComplete.visitType.select')}
+          onPress={() => setShowVisitTypeModal(true)}>
+          <Text
+            variant="bodySmall"
+            style={
+              visitType
+                ? styles.compactDropdownValue
+                : styles.compactDropdownPlaceholder
+            }>
+            {visitType
+              ? visitTypeOptions.find((v) => v.key === visitType)?.label
+              : t('mainContent.transcriptionComplete.visitType.select')}
           </Text>
           <ChevronRight size={18} color="#A6A6A6" />
         </TouchableOpacity>
@@ -592,22 +723,20 @@ const TranscriptionComplete = () => {
           {t('mainContent.transcriptionComplete.noteLength.select')}
         </Text>
         <View style={styles.compactSegmentedControl}>
-          {noteLengthOptions.map(length => (
+          {noteLengthOptions.map((length) => (
             <TouchableOpacity
               key={length}
               style={[
                 styles.compactSegmentButton,
                 noteLength === length && styles.compactSegmentButtonSelected,
               ]}
-              onPress={() => setNoteLength(length)}
-            >
+              onPress={() => setNoteLength(length)}>
               <Text
                 variant="bodySmall"
                 style={[
                   styles.compactSegmentText,
                   noteLength === length && styles.compactSegmentTextSelected,
-                ]}
-              >
+                ]}>
                 {noteLengthLabels[length]}
               </Text>
             </TouchableOpacity>
@@ -623,17 +752,20 @@ const TranscriptionComplete = () => {
     return (
       <View style={styles.selectionSection}>
         <Text variant="labelMedium" style={styles.sectionLabel}>
-          {t('mainContent.transcriptionComplete.followUpVisits.previousVisitContext')}
+          {t(
+            'mainContent.transcriptionComplete.followUpVisits.previousVisitContext',
+          )}
         </Text>
 
         <View style={styles.followUpOptionsRow}>
           <TouchableOpacity
             style={styles.followUpOptionButton}
-            onPress={() => setShowFollowUpModal(true)}
-          >
+            onPress={() => setShowFollowUpModal(true)}>
             <Plus size={14} color={DESIGN_TOKENS.colors.primary} />
             <Text variant="bodySmall" style={styles.followUpOptionText}>
-              {t('mainContent.transcriptionComplete.followUpVisits.fromHistory')}
+              {t(
+                'mainContent.transcriptionComplete.followUpVisits.fromHistory',
+              )}
             </Text>
           </TouchableOpacity>
 
@@ -642,8 +774,7 @@ const TranscriptionComplete = () => {
             onPress={() => {
               setTempManualText(manualFollowUpText);
               setShowManualTextModal(true);
-            }}
-          >
+            }}>
             <Type size={14} color={DESIGN_TOKENS.colors.primary} />
             <Text variant="bodySmall" style={styles.followUpOptionText}>
               {t('mainContent.transcriptionComplete.followUpVisits.typeText')}
@@ -653,9 +784,14 @@ const TranscriptionComplete = () => {
           <TouchableOpacity
             style={styles.followUpOptionButton}
             onPress={() => {
-              customToast('info', t('common.comingSoon'), t('mainContent.transcriptionComplete.followUpVisits.photoComingSoon'));
-            }}
-          >
+              customToast(
+                'info',
+                t('common.comingSoon'),
+                t(
+                  'mainContent.transcriptionComplete.followUpVisits.photoComingSoon',
+                ),
+              );
+            }}>
             <Camera size={14} color={DESIGN_TOKENS.colors.primary} />
             <Text variant="bodySmall" style={styles.followUpOptionText}>
               {t('mainContent.transcriptionComplete.followUpVisits.takePhoto')}
@@ -666,12 +802,22 @@ const TranscriptionComplete = () => {
         {/* Manual Text Preview */}
         {manualFollowUpText.trim() && (
           <View style={styles.manualTextPreview}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
               <View style={{ flex: 1 }}>
                 <Text variant="bodySmall" style={styles.customNoteLabel}>
-                  {t('mainContent.transcriptionComplete.followUpVisits.manualContext')}
+                  {t(
+                    'mainContent.transcriptionComplete.followUpVisits.manualContext',
+                  )}
                 </Text>
-                <Text variant="bodySmall" style={styles.manualTextSnippet} numberOfLines={2}>
+                <Text
+                  variant="bodySmall"
+                  style={styles.manualTextSnippet}
+                  numberOfLines={2}>
                   {manualFollowUpText}
                 </Text>
               </View>
@@ -681,14 +827,12 @@ const TranscriptionComplete = () => {
                   onPress={() => {
                     setTempManualText(manualFollowUpText);
                     setShowManualTextModal(true);
-                  }}
-                >
+                  }}>
                   <Edit3 size={16} color="#46B7C6" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.customNoteActionButton}
-                  onPress={() => setManualFollowUpText('')}
-                >
+                  onPress={() => setManualFollowUpText('')}>
                   <X size={16} color="#ef4444" />
                 </TouchableOpacity>
               </View>
@@ -700,11 +844,14 @@ const TranscriptionComplete = () => {
         {importedFollowUpVisits.length > 0 && (
           <View style={styles.importedVisitsContainer}>
             <Text variant="bodySmall" style={styles.importedVisitsCount}>
-              {t('mainContent.transcriptionComplete.followUpVisits.selectedVisits', {
-                count: importedFollowUpVisits.length,
-              })}
+              {t(
+                'mainContent.transcriptionComplete.followUpVisits.selectedVisits',
+                {
+                  count: importedFollowUpVisits.length,
+                },
+              )}
             </Text>
-            {importedFollowUpVisits.map(visit => (
+            {importedFollowUpVisits.map((visit) => (
               <View key={visit._id} style={styles.importedVisitItem}>
                 <View style={styles.importedVisitInfo}>
                   <Text variant="bodyMedium" style={styles.importedVisitTitle}>
@@ -716,11 +863,10 @@ const TranscriptionComplete = () => {
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    setImportedFollowUpVisits(prev =>
-                      prev.filter(v => v._id !== visit._id),
+                    setImportedFollowUpVisits((prev) =>
+                      prev.filter((v) => v._id !== visit._id),
                     );
-                  }}
-                >
+                  }}>
                   <X size={16} color="#86868b" />
                 </TouchableOpacity>
               </View>
@@ -732,7 +878,14 @@ const TranscriptionComplete = () => {
   };
 
   const generateMockNote = () => {
-    return `${t('mainContent.transcriptionComplete.noteGenerated', { mode: generationMode === 'standard' ? t('mainContent.transcriptionComplete.modes.standardSOAP') : t('mainContent.transcriptionComplete.modes.custom') })}...\n\n${t('mainContent.transcriptionComplete.noteSubjective')}:\n${t('mainContent.transcriptionComplete.patientPresents')}...`;
+    return `${t('mainContent.transcriptionComplete.noteGenerated', {
+      mode:
+        generationMode === 'standard'
+          ? t('mainContent.transcriptionComplete.modes.standardSOAP')
+          : t('mainContent.transcriptionComplete.modes.custom'),
+    })}...\n\n${t('mainContent.transcriptionComplete.noteSubjective')}:\n${t(
+      'mainContent.transcriptionComplete.patientPresents',
+    )}...`;
   };
 
   const getGeneratedSummary = () => {
@@ -741,11 +894,18 @@ const TranscriptionComplete = () => {
     }
     if (generationMode === 'standard') {
       const specializationLabel =
-        specializationOptions.find(s => s.key === selectedSpecialization)?.label ||
-        t('mainContent.transcriptionComplete.modes.standard');
-      return t('mainContent.transcriptionComplete.generatedUsing.standardMode', { specialization: specializationLabel });
+        specializationOptions.find((s) => s.key === selectedSpecialization)
+          ?.label || t('mainContent.transcriptionComplete.modes.standard');
+      return t(
+        'mainContent.transcriptionComplete.generatedUsing.standardMode',
+        { specialization: specializationLabel },
+      );
     }
-    return t('mainContent.transcriptionComplete.generatedUsing.customMode', { template: selectedTemplateTitle || t('mainContent.transcriptionComplete.customTemplate') });
+    return t('mainContent.transcriptionComplete.generatedUsing.customMode', {
+      template:
+        selectedTemplateTitle ||
+        t('mainContent.transcriptionComplete.customTemplate'),
+    });
   };
 
   const renderGenerateButton = () => {
@@ -759,7 +919,8 @@ const TranscriptionComplete = () => {
       <TouchableOpacity
         style={[
           styles.floatingGenerateButton,
-          (!canGenerate || isGeneratingNotes) && styles.floatingGenerateButtonDisabled,
+          (!canGenerate || isGeneratingNotes) &&
+            styles.floatingGenerateButtonDisabled,
         ]}
         onPress={async () => {
           if (!canGenerate) {
@@ -777,7 +938,7 @@ const TranscriptionComplete = () => {
             customToast(
               'error',
               t('common.error'),
-              'Session ID not found. Please create a new session.'
+              'Session ID not found. Please create a new session.',
             );
             return;
           }
@@ -785,7 +946,9 @@ const TranscriptionComplete = () => {
           // Check if we have userId for socket connection
           let userId = loggedInUser?.id;
           if (!userId) {
-            console.warn('[TranscriptionComplete] No logged in user ID for socket auth, attempting to fetch auth context...');
+            console.warn(
+              '[TranscriptionComplete] No logged in user ID for socket auth, attempting to fetch auth context...',
+            );
             try {
               const authCtx = await getAuthContext();
               const ctx = authCtx?.data?.data;
@@ -793,7 +956,10 @@ const TranscriptionComplete = () => {
                 const userObj: any = {
                   id: ctx._id || ctx.id || ctx.userId,
                   email: ctx.email || '',
-                  name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
+                  name:
+                    ctx.fname ||
+                    ctx.name ||
+                    (ctx.email ? String(ctx.email).split('@')[0] : ''),
                   profilePicture: ctx.profileImage || '',
                   role: ctx.role,
                   settings: ctx.settings,
@@ -801,24 +967,34 @@ const TranscriptionComplete = () => {
                   token: userStore.getState().token,
                 };
                 userStore.getState().setAuth(userObj);
-                await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
-                console.log('[TranscriptionComplete] Successfully fetched and stored user context');
+                await AsyncStorage.setItem(
+                  'auth_user',
+                  JSON.stringify(userObj),
+                );
+                console.log(
+                  '[TranscriptionComplete] Successfully fetched and stored user context',
+                );
                 userId = userObj.id;
               } else {
-                console.error('[TranscriptionComplete] Auth context fetch failed - no user ID found');
+                console.error(
+                  '[TranscriptionComplete] Auth context fetch failed - no user ID found',
+                );
                 customToast(
                   'error',
                   t('common.error'),
-                  'User session error. Please log in again.'
+                  'User session error. Please log in again.',
                 );
                 return;
               }
             } catch (ctxError: any) {
-              console.error('[TranscriptionComplete] Failed to fetch auth context:', ctxError);
+              console.error(
+                '[TranscriptionComplete] Failed to fetch auth context:',
+                ctxError,
+              );
               customToast(
                 'error',
                 t('common.error'),
-                'User session error. Please log in again.'
+                'User session error. Please log in again.',
               );
               return;
             }
@@ -829,7 +1005,9 @@ const TranscriptionComplete = () => {
 
           // Fallback: If socket is not initialized, try to connect now
           if (!socket) {
-            console.log('[TranscriptionComplete] Socket not initialized, attempting connection now...');
+            console.log(
+              '[TranscriptionComplete] Socket not initialized, attempting connection now...',
+            );
             socket = connectSocket(userId) || null;
           }
 
@@ -838,49 +1016,66 @@ const TranscriptionComplete = () => {
             customToast(
               'error',
               t('common.error'),
-              'Socket connection failed. Please try again.'
+              'Socket connection failed. Please try again.',
             );
             return;
           }
 
           // Wait for socket connection if not connected (max 5 seconds)
           if (!socket.connected) {
-            console.log('[TranscriptionComplete] Socket not connected, waiting...');
+            console.log(
+              '[TranscriptionComplete] Socket not connected, waiting...',
+            );
 
             let attempts = 0;
             const maxAttempts = 10;
 
             while (!socket.connected && attempts < maxAttempts) {
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
               attempts++;
-              console.log('[TranscriptionComplete] Waiting for connection, attempt:', attempts);
+              console.log(
+                '[TranscriptionComplete] Waiting for connection, attempt:',
+                attempts,
+              );
             }
 
             if (!socket.connected) {
-              console.error('[TranscriptionComplete] Socket connection timeout');
+              console.error(
+                '[TranscriptionComplete] Socket connection timeout',
+              );
               customToast(
                 'error',
                 t('common.error'),
-                'Could not establish connection. Please check your internet and try again.'
+                'Could not establish connection. Please check your internet and try again.',
               );
               return;
             }
 
-            console.log('[TranscriptionComplete] Socket connected after waiting');
+            console.log(
+              '[TranscriptionComplete] Socket connected after waiting',
+            );
           }
 
           setIsGeneratingNotes(true);
           setGeneratedNotes(''); // Clear previous notes
 
           try {
-            console.log('[TranscriptionComplete] Generating notes via API + Socket...');
-            console.log('[TranscriptionComplete] Session ID:', session.sessionId);
+            console.log(
+              '[TranscriptionComplete] Generating notes via API + Socket...',
+            );
+            console.log(
+              '[TranscriptionComplete] Session ID:',
+              session.sessionId,
+            );
 
             // Prepare payload matching backend expectations from guide
             // Prepare payload matching backend expectations from guide
             // Set appropriate default noteType based on session type
-            const defaultNoteType = session.type === 'lecture' ? 'medical'
-              : session.type === 'meeting' ? 'general'
+            const defaultNoteType =
+              session.type === 'lecture'
+                ? 'medical'
+                : session.type === 'meeting'
+                ? 'general'
                 : 'SOAP';
 
             let payload: any = {};
@@ -889,14 +1084,19 @@ const TranscriptionComplete = () => {
               payload = {
                 noteType: 'custom',
                 promptId: selectedTemplateId, // Use selectedTemplateId as it holds the custom prompt ID
-                llmModel: 'gpt-4.1'
+                llmModel: 'gpt-4.1',
               };
-              console.log('[TranscriptionComplete] Using custom prompt ID:', selectedTemplateId);
+              console.log(
+                '[TranscriptionComplete] Using custom prompt ID:',
+                selectedTemplateId,
+              );
             } else {
               payload = {
                 noteType: noteType || defaultNoteType,
-                visitType: visitType.toLowerCase().replace(' ', '-') || 'first-visit',
-                specialization: selectedSpecialization.toLowerCase() || 'psychiatry',
+                visitType:
+                  visitType.toLowerCase().replace(' ', '-') || 'first-visit',
+                specialization:
+                  selectedSpecialization.toLowerCase() || 'psychiatry',
                 length: noteLength.toLowerCase(),
                 llmModel: 'gemini-3-pro-preview',
               };
@@ -910,13 +1110,18 @@ const TranscriptionComplete = () => {
             // Set up socket listeners for streaming (matching guide implementation)
             socket.on('notes_generation_started', (event: any) => {
               if (event.payload?.eventId === session.sessionId) {
-                console.log('[TranscriptionComplete] ✅ Notes generation started:', event.payload.eventId);
+                console.log(
+                  '[TranscriptionComplete] ✅ Notes generation started:',
+                  event.payload.eventId,
+                );
               }
             });
 
             socket.on('notes_generation_chunk', (event: any) => {
               if (event.payload?.eventId === session.sessionId) {
-                console.log('[TranscriptionComplete] 📝 Received chunk (accumulated)');
+                console.log(
+                  '[TranscriptionComplete] 📝 Received chunk (accumulated)',
+                );
                 // The guide's example uses setNoteContent(event.payload.content) which replaces the content.
                 // This suggests the backend sends the full accumulated string.
                 if (event.payload?.content !== undefined) {
@@ -927,31 +1132,65 @@ const TranscriptionComplete = () => {
             });
 
             socket.on('notes_generation_completed', (event: any) => {
-              console.log('[TranscriptionComplete] 🎯 Completion event received!', event);
-              console.log('[TranscriptionComplete] 🔑 Event eventId:', event.payload?.eventId);
-              console.log('[TranscriptionComplete] 🔑 Session sessionId:', session.sessionId);
-              console.log('[TranscriptionComplete] 🔑 Match:', event.payload?.eventId === session.sessionId);
+              console.log(
+                '[TranscriptionComplete] 🎯 Completion event received!',
+                event,
+              );
+              console.log(
+                '[TranscriptionComplete] 🔑 Event eventId:',
+                event.payload?.eventId,
+              );
+              console.log(
+                '[TranscriptionComplete] 🔑 Session sessionId:',
+                session.sessionId,
+              );
+              console.log(
+                '[TranscriptionComplete] 🔑 Match:',
+                event.payload?.eventId === session.sessionId,
+              );
 
               if (event.payload?.eventId === session.sessionId) {
-                console.log('[TranscriptionComplete] ✅ Notes generation complete - INSIDE IF');
-                console.log('[TranscriptionComplete] 🔍 Event payload:', event.payload);
+                console.log(
+                  '[TranscriptionComplete] ✅ Notes generation complete - INSIDE IF',
+                );
+                console.log(
+                  '[TranscriptionComplete] 🔍 Event payload:',
+                  event.payload,
+                );
 
                 // Use ref to get the latest notes content (state might not be updated yet)
-                const contentToSave = event.payload?.content || generatedNotesRef.current;
-                console.log('[TranscriptionComplete] 💾 Content to save length:', contentToSave?.length || 0);
-                console.log('[TranscriptionComplete] 💾 Ref content length:', generatedNotesRef.current?.length || 0);
+                const contentToSave =
+                  event.payload?.content || generatedNotesRef.current;
+                console.log(
+                  '[TranscriptionComplete] 💾 Content to save length:',
+                  contentToSave?.length || 0,
+                );
+                console.log(
+                  '[TranscriptionComplete] 💾 Ref content length:',
+                  generatedNotesRef.current?.length || 0,
+                );
 
                 if (contentToSave && contentToSave.length > 0) {
-                  console.log('[TranscriptionComplete] 💾 Saving notes from completion handler...');
-                  sessionStorage.updateSessionNotes(session.id, contentToSave)
+                  console.log(
+                    '[TranscriptionComplete] 💾 Saving notes from completion handler...',
+                  );
+                  sessionStorage
+                    .updateSessionNotes(session.id, contentToSave)
                     .then(() => {
-                      console.log('[TranscriptionComplete] ✅ Notes saved from completion handler successfully!');
+                      console.log(
+                        '[TranscriptionComplete] ✅ Notes saved from completion handler successfully!',
+                      );
                     })
                     .catch((error) => {
-                      console.error('[TranscriptionComplete] ❌ Failed to save notes from completion handler:', error);
+                      console.error(
+                        '[TranscriptionComplete] ❌ Failed to save notes from completion handler:',
+                        error,
+                      );
                     });
                 } else {
-                  console.warn('[TranscriptionComplete] ⚠️ No content to save in completion handler');
+                  console.warn(
+                    '[TranscriptionComplete] ⚠️ No content to save in completion handler',
+                  );
                 }
 
                 // Update session status in local storage
@@ -969,16 +1208,21 @@ const TranscriptionComplete = () => {
                 customToast(
                   'success',
                   t('common.success'),
-                  'Notes generated successfully!'
+                  'Notes generated successfully!',
                 );
               } else {
-                console.warn('[TranscriptionComplete] ⚠️ EventId mismatch - not processing');
+                console.warn(
+                  '[TranscriptionComplete] ⚠️ EventId mismatch - not processing',
+                );
               }
             });
 
             socket.on('notes_generation_error', (event: any) => {
               if (event.payload?.eventId === session.sessionId) {
-                console.error('[TranscriptionComplete] ❌ Notes generation error:', event.payload);
+                console.error(
+                  '[TranscriptionComplete] ❌ Notes generation error:',
+                  event.payload,
+                );
                 setIsGeneratingNotes(false);
 
                 // Clean up listeners
@@ -990,37 +1234,43 @@ const TranscriptionComplete = () => {
                 customToast(
                   'error',
                   t('common.error'),
-                  event.payload?.error || 'Failed to generate notes. Please try again.'
+                  event.payload?.error ||
+                    'Failed to generate notes. Please try again.',
                 );
               }
             });
 
             // Trigger the note generation via HTTP API (as per guide Step 3)
             await generateNotes(session.sessionId, payload);
-            console.log('[TranscriptionComplete] 🚀 Triggered generation via API');
-
+            console.log(
+              '[TranscriptionComplete] 🚀 Triggered generation via API',
+            );
           } catch (error: any) {
-            console.error('[TranscriptionComplete] Generate notes error:', error);
+            console.error(
+              '[TranscriptionComplete] Generate notes error:',
+              error,
+            );
             setIsGeneratingNotes(false);
 
             customToast(
               'error',
               t('common.error'),
-              error?.response?.data?.message || error?.message || 'Failed to trigger notes generation.'
+              error?.response?.data?.message ||
+                error?.message ||
+                'Failed to trigger notes generation.',
             );
           }
         }}
         disabled={!canGenerate || isGeneratingNotes}
-        activeOpacity={0.85}
-      >
+        activeOpacity={0.85}>
         <Text variant="bodyMedium" style={styles.floatingGenerateButtonText}>
-          {isGeneratingNotes ? t('common.generating') : t('mainContent.transcriptionComplete.generateNote')}
+          {isGeneratingNotes
+            ? t('common.generating')
+            : t('mainContent.transcriptionComplete.generateNote')}
         </Text>
       </TouchableOpacity>
     );
   };
-
-
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -1029,7 +1279,9 @@ const TranscriptionComplete = () => {
       {/* Compact Header */}
       <View style={styles.compactHeader}>
         <View style={styles.compactHeaderLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
             <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
 
@@ -1056,27 +1308,23 @@ const TranscriptionComplete = () => {
           {session.type === 'patient' && (
             <TouchableOpacity
               style={styles.compactActionButton}
-              onPress={() => (navigation as any).navigate('consult')}
-            >
+              onPress={() => (navigation as any).navigate('consult')}>
               <MessageSquare size={20} color="#A6A6A6" />
             </TouchableOpacity>
           )}
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={() => setShowRenameModal(true)}
-          >
+            onPress={() => setShowRenameModal(true)}>
             <Edit3 size={20} color="#A6A6A6" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={() => setShowDeleteModal(true)}
-          >
+            onPress={() => setShowDeleteModal(true)}>
             <Trash2 size={20} color="#A6A6A6" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={() => setShowResetModal(true)}
-          >
+            onPress={() => setShowResetModal(true)}>
             <RotateCcw size={20} color="#A6A6A6" />
           </TouchableOpacity>
         </View>
@@ -1086,8 +1334,7 @@ const TranscriptionComplete = () => {
         <TouchableOpacity
           style={styles.generatedSummaryBar}
           onPress={handleExpandConfig}
-          activeOpacity={0.85}
-        >
+          activeOpacity={0.85}>
           <View style={styles.generatedSummaryTextGroup}>
             <Text variant="bodyMedium" style={styles.generatedSummaryTitle}>
               {getGeneratedSummary()}
@@ -1107,9 +1354,10 @@ const TranscriptionComplete = () => {
               </Text>
               <TouchableOpacity
                 onPress={handleCollapseConfig}
-                style={styles.settingsHeaderAction}
-              >
-                <Text variant="bodySmall" style={styles.settingsHeaderActionText}>
+                style={styles.settingsHeaderAction}>
+                <Text
+                  variant="bodySmall"
+                  style={styles.settingsHeaderActionText}>
                   {t('mainContent.transcriptionComplete.hide')}
                 </Text>
               </TouchableOpacity>
@@ -1125,13 +1373,19 @@ const TranscriptionComplete = () => {
             <View>
               <View style={{ height: hp(1) }} />
               <View style={styles.twoColumnGrid}>
-                <View style={styles.gridColumn}>{renderSpecializationSection()}</View>
-                <View style={styles.gridColumn}>{renderVisitTypeSection()}</View>
+                <View style={styles.gridColumn}>
+                  {renderSpecializationSection()}
+                </View>
+                <View style={styles.gridColumn}>
+                  {renderVisitTypeSection()}
+                </View>
               </View>
               <View style={{ height: hp(1) }} />
               {renderNoteLengthSection()}
 
-              {visitType === 'Follow-up' && <View style={{ height: hp(0.6) }} />}
+              {visitType === 'Follow-up' && (
+                <View style={{ height: hp(0.6) }} />
+              )}
               {renderFollowUpSection()}
             </View>
           )}
@@ -1155,23 +1409,28 @@ const TranscriptionComplete = () => {
             <ScrollView
               style={styles.noteDocumentContent}
               contentContainerStyle={styles.noteDocumentScrollContent}
-              showsVerticalScrollIndicator={true}
-            >
+              showsVerticalScrollIndicator={true}>
               <Text variant="bodyMedium" style={styles.noteDocumentText}>
                 {(() => {
                   return generatedNotes.split('\n').map((line, lineIndex) => {
                     const cleanLine = line.trim();
                     // Check if line is a heading: formatting is **...** OR content is UPPERCASE (min 4 chars to avoid tiny abbr)
-                    const isAllUppercase = cleanLine.length > 3 && cleanLine === cleanLine.toUpperCase() && /[A-Z]/.test(cleanLine);
+                    const isAllUppercase =
+                      cleanLine.length > 3 &&
+                      cleanLine === cleanLine.toUpperCase() &&
+                      /[A-Z]/.test(cleanLine);
 
                     if (isAllUppercase) {
                       return (
-                        <Text key={lineIndex} style={{
-                          fontWeight: '700',
-                          fontFamily: DESIGN_TOKENS.fonts.semibold,
-                          color: colors.bluish
-                        }}>
-                          {line}{'\n'}
+                        <Text
+                          key={lineIndex}
+                          style={{
+                            fontWeight: '700',
+                            fontFamily: DESIGN_TOKENS.fonts.semibold,
+                            color: colors.bluish,
+                          }}>
+                          {line}
+                          {'\n'}
                         </Text>
                       );
                     }
@@ -1189,8 +1448,7 @@ const TranscriptionComplete = () => {
                                   fontWeight: '700',
                                   fontFamily: DESIGN_TOKENS.fonts.semibold,
                                   color: colors.bluish,
-                                }}
-                              >
+                                }}>
                                 {part.slice(2, -2)}
                               </Text>
                             );
@@ -1211,8 +1469,7 @@ const TranscriptionComplete = () => {
                   if (!generatedNotes.trim()) return;
                   await Clipboard.setString(generatedNotes);
                   customToast('success', 'Copied', 'Note copied to clipboard');
-                }}
-              >
+                }}>
                 <ClipboardIcon size={16} color={DESIGN_TOKENS.colors.primary} />
                 <Text variant="bodySmall" style={styles.noteCopyButtonText}>
                   {t('common.copy')}
@@ -1243,8 +1500,7 @@ const TranscriptionComplete = () => {
         visible={showRenameModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowRenameModal(false)}
-      >
+        onRequestClose={() => setShowRenameModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text variant="titleLarge" style={styles.modalTitle}>
@@ -1259,8 +1515,7 @@ const TranscriptionComplete = () => {
             <View style={styles.renameButtonsRow}>
               <TouchableOpacity
                 style={[styles.renameButton, styles.renameCancelButton]}
-                onPress={() => setShowRenameModal(false)}
-              >
+                onPress={() => setShowRenameModal(false)}>
                 <Text variant="bodyMedium" style={styles.renameCancelText}>
                   {t('common.cancel')}
                 </Text>
@@ -1272,8 +1527,7 @@ const TranscriptionComplete = () => {
                   isRenaming && styles.renameSaveButtonDisabled,
                 ]}
                 onPress={handleRename}
-                disabled={isRenaming}
-              >
+                disabled={isRenaming}>
                 {isRenaming ? (
                   <ActivityIndicator
                     size="small"
@@ -1295,8 +1549,7 @@ const TranscriptionComplete = () => {
         visible={showDeleteModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowDeleteModal(false)}
-      >
+        onRequestClose={() => setShowDeleteModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text variant="titleLarge" style={styles.modalTitle}>
@@ -1308,8 +1561,7 @@ const TranscriptionComplete = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowDeleteModal(false)}
-              >
+                onPress={() => setShowDeleteModal(false)}>
                 <Text variant="bodyMedium" style={styles.cancelButtonText}>
                   {t('common.cancel')}
                 </Text>
@@ -1317,8 +1569,7 @@ const TranscriptionComplete = () => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.deleteButton]}
                 onPress={handleDelete}
-                disabled={isDeleting}
-              >
+                disabled={isDeleting}>
                 <Text variant="bodyMedium" style={styles.deleteButtonText}>
                   {isDeleting ? t('common.deleting') : t('common.delete')}
                 </Text>
@@ -1333,8 +1584,7 @@ const TranscriptionComplete = () => {
         visible={showResetModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowResetModal(false)}
-      >
+        onRequestClose={() => setShowResetModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text variant="titleLarge" style={styles.modalTitle}>
@@ -1346,8 +1596,7 @@ const TranscriptionComplete = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowResetModal(false)}
-              >
+                onPress={() => setShowResetModal(false)}>
                 <Text variant="bodyMedium" style={styles.cancelButtonText}>
                   {t('common.cancel')}
                 </Text>
@@ -1355,8 +1604,7 @@ const TranscriptionComplete = () => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.deleteButton]}
                 onPress={handleReset}
-                disabled={isResetting}
-              >
+                disabled={isResetting}>
                 <Text variant="bodyMedium" style={styles.deleteButtonText}>
                   {isResetting ? t('common.resetting') : t('common.reset')}
                 </Text>
@@ -1371,33 +1619,32 @@ const TranscriptionComplete = () => {
         visible={showSpecializationModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowSpecializationModal(false)}
-      >
+        onRequestClose={() => setShowSpecializationModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.transcriptionComplete.specialization.select')}
             </Text>
             <View style={styles.optionsList}>
-              {specializationOptions.map(option => (
+              {specializationOptions.map((option) => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
                     styles.optionItem,
-                    selectedSpecialization === option.key && styles.selectedOptionItem,
+                    selectedSpecialization === option.key &&
+                      styles.selectedOptionItem,
                   ]}
                   onPress={() => {
                     setSelectedSpecialization(option.key);
                     setShowSpecializationModal(false);
-                  }}
-                >
+                  }}>
                   <Text
                     variant="bodyMedium"
                     style={[
                       styles.optionText,
-                      selectedSpecialization === option.key && styles.selectedOptionText,
-                    ]}
-                  >
+                      selectedSpecialization === option.key &&
+                        styles.selectedOptionText,
+                    ]}>
                     {option.label}
                   </Text>
                   {selectedSpecialization === option.key && (
@@ -1407,9 +1654,12 @@ const TranscriptionComplete = () => {
               ))}
             </View>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton, { width: '100%' }]}
-              onPress={() => setShowSpecializationModal(false)}
-            >
+              style={[
+                styles.modalButton,
+                styles.cancelButton,
+                { width: '100%' },
+              ]}
+              onPress={() => setShowSpecializationModal(false)}>
               <Text variant="bodyMedium" style={styles.cancelButtonText}>
                 {t('common.cancel')}
               </Text>
@@ -1423,15 +1673,14 @@ const TranscriptionComplete = () => {
         visible={showVisitTypeModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowVisitTypeModal(false)}
-      >
+        onRequestClose={() => setShowVisitTypeModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.transcriptionComplete.visitType.select')}
             </Text>
             <View style={styles.optionsList}>
-              {visitTypeOptions.map(option => (
+              {visitTypeOptions.map((option) => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
@@ -1441,15 +1690,13 @@ const TranscriptionComplete = () => {
                   onPress={() => {
                     setVisitType(option.key);
                     setShowVisitTypeModal(false);
-                  }}
-                >
+                  }}>
                   <Text
                     variant="bodyMedium"
                     style={[
                       styles.optionText,
                       visitType === option.key && styles.selectedOptionText,
-                    ]}
-                  >
+                    ]}>
                     {option.label}
                   </Text>
                   {visitType === option.key && (
@@ -1459,9 +1706,12 @@ const TranscriptionComplete = () => {
               ))}
             </View>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton, { width: '100%' }]}
-              onPress={() => setShowVisitTypeModal(false)}
-            >
+              style={[
+                styles.modalButton,
+                styles.cancelButton,
+                { width: '100%' },
+              ]}
+              onPress={() => setShowVisitTypeModal(false)}>
               <Text variant="bodyMedium" style={styles.cancelButtonText}>
                 {t('common.cancel')}
               </Text>
@@ -1475,18 +1725,18 @@ const TranscriptionComplete = () => {
         visible={showFollowUpModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowFollowUpModal(false)}
-      >
+        onRequestClose={() => setShowFollowUpModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.followUpModalCard}>
             <View style={styles.followUpModalHeader}>
               <Text variant="titleLarge" style={styles.followUpModalTitle}>
-                {t('mainContent.transcriptionComplete.followUpVisits.selectDialog.title')}
+                {t(
+                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.title',
+                )}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowFollowUpModal(false)}
-                style={styles.followUpCloseButton}
-              >
+                style={styles.followUpCloseButton}>
                 <X size={18} color="#A6A6A6" />
               </TouchableOpacity>
             </View>
@@ -1494,7 +1744,9 @@ const TranscriptionComplete = () => {
             <View style={styles.followUpSearchBar}>
               <Search size={18} color={DESIGN_TOKENS.colors.textSecondary} />
               <TextInput
-                placeholder={t('mainContent.transcriptionComplete.followUpVisits.selectDialog.searchPlaceholder')}
+                placeholder={t(
+                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.searchPlaceholder',
+                )}
                 placeholderTextColor={DESIGN_TOKENS.colors.textSecondary}
                 value={visitSearchQuery}
                 onChangeText={setVisitSearchQuery}
@@ -1507,11 +1759,15 @@ const TranscriptionComplete = () => {
               {filteredFollowUpVisits.length === 0 ? (
                 <Text variant="bodyMedium" style={styles.noVisitsText}>
                   {mockFollowUpVisits.length === 0
-                    ? t('mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable')
-                    : t('mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsFound')}
+                    ? t(
+                        'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable',
+                      )
+                    : t(
+                        'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsFound',
+                      )}
                 </Text>
               ) : (
-                filteredFollowUpVisits.map(visit => {
+                filteredFollowUpVisits.map((visit) => {
                   const isSelected = selectedFollowUpVisits.has(visit._id);
                   return (
                     <TouchableOpacity
@@ -1521,25 +1777,25 @@ const TranscriptionComplete = () => {
                         isSelected && styles.visitCardSelected,
                       ]}
                       onPress={() => handleFollowUpVisitSelect(visit._id)}
-                      activeOpacity={0.9}
-                    >
+                      activeOpacity={0.9}>
                       <View style={styles.visitCardLeft}>
                         <View style={styles.visitIconCircle}>
-                          <PhoneCall size={15} color={DESIGN_TOKENS.colors.primary} />
+                          <PhoneCall
+                            size={15}
+                            color={DESIGN_TOKENS.colors.primary}
+                          />
                         </View>
                         <View style={styles.visitInfo}>
                           <Text
                             variant="bodyMedium"
                             style={styles.visitTitle}
-                            numberOfLines={1}
-                          >
+                            numberOfLines={1}>
                             {visit.title}
                           </Text>
                           <Text
                             variant="bodySmall"
                             style={styles.visitSubtitle}
-                            numberOfLines={1}
-                          >
+                            numberOfLines={1}>
                             {visit.label}
                           </Text>
                         </View>
@@ -1557,10 +1813,12 @@ const TranscriptionComplete = () => {
                           style={[
                             styles.visitCheckbox,
                             isSelected && styles.visitCheckboxSelected,
-                          ]}
-                        >
+                          ]}>
                           {isSelected && (
-                            <Check size={14} color={DESIGN_TOKENS.colors.background} />
+                            <Check
+                              size={14}
+                              color={DESIGN_TOKENS.colors.background}
+                            />
                           )}
                         </View>
                       </View>
@@ -1573,14 +1831,17 @@ const TranscriptionComplete = () => {
             <TouchableOpacity
               style={[
                 styles.followUpImportButton,
-                selectedFollowUpVisits.size === 0 && styles.followUpImportButtonDisabled,
+                selectedFollowUpVisits.size === 0 &&
+                  styles.followUpImportButtonDisabled,
               ]}
               onPress={handleImportFollowUpVisits}
               disabled={selectedFollowUpVisits.size === 0}
-              activeOpacity={0.85}
-            >
+              activeOpacity={0.85}>
               <Text style={styles.followUpImportButtonText}>
-                {t('mainContent.transcriptionComplete.followUpVisits.selectDialog.importButton', { count: selectedFollowUpVisits.size })}
+                {t(
+                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.importButton',
+                  { count: selectedFollowUpVisits.size },
+                )}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1592,19 +1853,19 @@ const TranscriptionComplete = () => {
         visible={showManualTextModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowManualTextModal(false)}
-      >
+        onRequestClose={() => setShowManualTextModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.slimModalContent}>
             <TouchableOpacity
               onPress={() => setShowManualTextModal(false)}
-              style={styles.slimModalClose}
-            >
+              style={styles.slimModalClose}>
               <X size={18} color="#A6A6A6" />
             </TouchableOpacity>
 
             <Text variant="titleMedium" style={styles.slimModalTitle}>
-              {t('mainContent.transcriptionComplete.followUpVisits.manualContextTitle')}
+              {t(
+                'mainContent.transcriptionComplete.followUpVisits.manualContextTitle',
+              )}
             </Text>
 
             <TouchableOpacity
@@ -1614,13 +1875,26 @@ const TranscriptionComplete = () => {
                   const text = await Clipboard.getString();
                   if (text) {
                     setTempManualText(text);
-                    customToast('success', t('mainContent.transcriptionComplete.followUpVisits.pastedTitle'), t('mainContent.transcriptionComplete.followUpVisits.pastedMessage'));
+                    customToast(
+                      'success',
+                      t(
+                        'mainContent.transcriptionComplete.followUpVisits.pastedTitle',
+                      ),
+                      t(
+                        'mainContent.transcriptionComplete.followUpVisits.pastedMessage',
+                      ),
+                    );
                   }
                 } catch (error) {
-                  customToast('error', t('common.error'), t('mainContent.transcriptionComplete.followUpVisits.pasteFailed'));
+                  customToast(
+                    'error',
+                    t('common.error'),
+                    t(
+                      'mainContent.transcriptionComplete.followUpVisits.pasteFailed',
+                    ),
+                  );
                 }
-              }}
-            >
+              }}>
               <ClipboardIcon size={14} color="#46B7C6" />
               <Text variant="bodySmall" style={styles.slimPasteButtonText}>
                 {t('mainContent.transcriptionComplete.followUpVisits.paste')}
@@ -1628,7 +1902,9 @@ const TranscriptionComplete = () => {
             </TouchableOpacity>
 
             <Input
-              placeholder={t('mainContent.transcriptionComplete.followUpVisits.typePlaceholder')}
+              placeholder={t(
+                'mainContent.transcriptionComplete.followUpVisits.typePlaceholder',
+              )}
               value={tempManualText}
               setValue={setTempManualText}
               width={wp(80)}
@@ -1640,8 +1916,7 @@ const TranscriptionComplete = () => {
             <View style={styles.slimModalActions}>
               <TouchableOpacity
                 style={styles.slimCancelButton}
-                onPress={() => setShowManualTextModal(false)}
-              >
+                onPress={() => setShowManualTextModal(false)}>
                 <Text variant="bodySmall" style={styles.slimCancelText}>
                   {t('common.cancel')}
                 </Text>
@@ -1653,10 +1928,17 @@ const TranscriptionComplete = () => {
                   setManualFollowUpText(tempManualText);
                   setShowManualTextModal(false);
                   if (tempManualText.trim()) {
-                    customToast('success', t('mainContent.transcriptionComplete.followUpVisits.savedTitle'), t('mainContent.transcriptionComplete.followUpVisits.savedMessage'));
+                    customToast(
+                      'success',
+                      t(
+                        'mainContent.transcriptionComplete.followUpVisits.savedTitle',
+                      ),
+                      t(
+                        'mainContent.transcriptionComplete.followUpVisits.savedMessage',
+                      ),
+                    );
                   }
-                }}
-              >
+                }}>
                 <Text variant="bodySmall" style={styles.slimSaveText}>
                   {t('common.save')}
                 </Text>
@@ -1665,7 +1947,6 @@ const TranscriptionComplete = () => {
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 };
