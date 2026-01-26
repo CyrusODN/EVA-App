@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createEvent } from '../services/authService';
+import { createEvent, deleteEvent } from '../services/authService';
 
 export type SessionType = 'patient' | 'meeting' | 'lecture';
 export type SessionStatus = 'new' | 'recorded' | 'transcribed' | 'completed';
@@ -71,6 +71,17 @@ export const sessionStorage = {
     try {
       const sessions = await this.getAllSessions();
       const sessionToDelete = sessions.find(s => s.id === id);
+
+      // Delete from backend API if sessionId exists
+      if (sessionToDelete?.sessionId) {
+        try {
+          await deleteEvent(sessionToDelete.sessionId);
+          console.log('[SessionStorage] Session deleted from backend:', sessionToDelete.sessionId);
+        } catch (apiError) {
+          console.error('[SessionStorage] Failed to delete session from backend:', apiError);
+          // Continue with local deletion even if API call fails
+        }
+      }
 
       // Delete audio file if it exists
       if (sessionToDelete?.audioPath) {

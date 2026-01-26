@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Image, 
-  TouchableOpacity, 
-  TextInput, 
+import {
+  StyleSheet,
+  View,
+  Image,
+  TouchableOpacity,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -27,6 +27,7 @@ import {
   verifyLoginOtp,
   login,
   ssoRequest,
+  getAuthContext,
 } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
 import userStore from '../../store/user';
@@ -100,22 +101,22 @@ const OtpVerification = () => {
 
   const handleDigitChange = (index: number, text: string) => {
     if (expired) return;
-    
+
     // Handle pasting or auto-fill of multiple digits
     if (text.length > 1) {
       const sanitized = text.replace(/[^0-9]/g, '');
       const digits = sanitized.split('').slice(0, 6);
-      
+
       // Full Code Override: If exactly 6 digits, always start from index 0
       const startIndex = digits.length === 6 ? 0 : index;
       const next = [...otpDigits];
-      
+
       digits.forEach((digit, i) => {
         if (startIndex + i < 6) {
           next[startIndex + i] = digit;
         }
       });
-      
+
       setOtpDigits(next);
       const finalCode = next.join('');
 
@@ -125,7 +126,7 @@ const OtpVerification = () => {
         handleVerify(finalCode);
         return;
       }
-      
+
       // Focus Logic for partial pastes
       const lastIndex = Math.min(startIndex + digits.length - 1, 5);
       if (lastIndex === 5) {
@@ -220,6 +221,32 @@ const OtpVerification = () => {
       if (accessToken) {
         setAuthToken(accessToken);
         userStore.getState().setToken(accessToken);
+        await AsyncStorage.setItem(
+          'auth_session_expires_at',
+          String(Date.now() + 24 * 60 * 60 * 1000),
+        );
+
+        try {
+          const authCtx = await getAuthContext();
+          const ctx = authCtx?.data?.data;
+          if (ctx) {
+            const userObj: any = {
+              id: ctx._id || ctx.id || ctx.userId || payload?.userId || payload?.id,
+              email: ctx.email || '',
+              name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
+              profilePicture: ctx.profileImage || '',
+              role: ctx.role,
+              settings: ctx.settings,
+              whitelist: ctx.whitelist,
+              token: accessToken,
+            };
+            userStore.getState().setAuth(userObj);
+            await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
+          }
+        } catch (ctxError) {
+          console.warn('[OtpVerification] Failed to fetch auth context:', ctxError);
+        }
+
         customToast('success', 'Success', 'Verified successfully');
         navigation.reset({
           index: 0,
@@ -255,7 +282,7 @@ const OtpVerification = () => {
             const p = await AsyncStorage.getItem('last_login_password');
             if (p) password = p;
           }
-        } catch (_) {}
+        } catch (_) { }
         if (!email || !password) {
           customToast('error', 'Error', 'Missing email or password for resend');
           setLoading(false);
@@ -442,8 +469,8 @@ const OtpVerification = () => {
                 <Text variant="bodySmall" style={styles.resendText}>
                   {expired ? 'Code expired' : `${t('login.resendCodeIn')} ${formatTime(secondsLeft)}`}
                 </Text>
-                <TouchableOpacity 
-                  disabled={!canResend} 
+                <TouchableOpacity
+                  disabled={!canResend}
                   onPress={handleResend}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                 >

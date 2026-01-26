@@ -43,10 +43,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
-  
-GoogleSignin.configure({
-  webClientId: '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
-});
+
+  GoogleSignin.configure({
+    webClientId: '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
+  });
 
 
   const handleLogin = async () => {
@@ -99,7 +99,7 @@ GoogleSignin.configure({
         try {
           await AsyncStorage.setItem('last_login_email', email);
           await AsyncStorage.setItem('last_login_password', password);
-        } catch (_) {}
+        } catch (_) { }
         const message =
           payload?.message ||
           raw?.message ||
@@ -148,24 +148,24 @@ GoogleSignin.configure({
         const { GoogleSignin } = require('@react-native-google-signin/google-signin');
         try {
           await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-        } catch (_) {}
+        } catch (_) { }
         try {
           await GoogleSignin.configure({});
-        } catch (_) {}
+        } catch (_) { }
         try {
           const account = await GoogleSignin.signIn();
           console.log("Google Sign In Account:", account);
           googleEmail = account?.user?.email || googleEmail;
-        } catch (_) {}
+        } catch (_) { }
         try {
           const silent = await GoogleSignin.signInSilently();
           googleEmail = silent?.user?.email || googleEmail;
-        } catch (_) {}
+        } catch (_) { }
         try {
           const current = await GoogleSignin.getCurrentUser();
           googleEmail = current?.user?.email || googleEmail;
-        } catch (_) {}
-      } catch (_) {}
+        } catch (_) { }
+      } catch (_) { }
 
       if (!googleEmail && email) {
         googleEmail = email;
@@ -199,13 +199,13 @@ GoogleSignin.configure({
     }
   };
 
- 
+
 
   return (
     <View style={styles.mainContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardAvoidingView}
         >
@@ -218,16 +218,16 @@ GoogleSignin.configure({
           >
             {/* Header Section */}
             <View style={styles.headerSection}>
-               <View style={styles.logoWrapper}>
-                  <Image
-                    source={images.logo}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-               </View>
-               <View style={styles.languageSelectorWrapper}>
-                  <LanguageSelector variant="inline" showLabel={false} />
-               </View>
+              <View style={styles.logoWrapper}>
+                <Image
+                  source={images.logo}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={styles.languageSelectorWrapper}>
+                <LanguageSelector variant="inline" showLabel={false} />
+              </View>
             </View>
 
             {/* Form Section */}
@@ -251,7 +251,7 @@ GoogleSignin.configure({
                   blurOnSubmit={false}
                 />
               </View>
-              
+
               <View style={styles.inputWrapper}>
                 <Input
                   ref={passwordRef}
@@ -322,7 +322,7 @@ GoogleSignin.configure({
                 <Text variant="bodyMedium" style={styles.noAccountText}>
                   {t('login.noAccount')}{' '}
                 </Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => navigation.navigate('signUp')}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                 >
@@ -333,9 +333,9 @@ GoogleSignin.configure({
               </View>
 
               <View style={styles.orDivider}>
-                 <View style={styles.dividerLine} />
-                 <Text style={styles.dividerText}>{t('login.or')}</Text>
-                 <View style={styles.dividerLine} />
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{t('login.or')}</Text>
+                <View style={styles.dividerLine} />
               </View>
 
               {/* Google Sign In - Apple Style */}
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     paddingTop: hp(2),
     paddingBottom: hp(2), // Bottom padding for safety
   },
-  
+
   // Header Section
   headerSection: {
     alignItems: 'center', // Center alignment for premium symmetry

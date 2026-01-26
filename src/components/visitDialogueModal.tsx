@@ -12,6 +12,7 @@ import {
   Vibration,
 } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -97,7 +98,14 @@ import { textStyles } from '../constants/textStyles';
 //   return <View style={styles.dnaHelixContainer}>{dots}</View>;
 // };
 
-const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
+interface VisitDialogModalProps {
+  visible: boolean;
+  onClose: () => void;
+  visitType: 'patient' | 'meeting' | 'lecture' | string;
+  onCreateVisit: (visitName: string) => void;
+}
+
+const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }: VisitDialogModalProps) => {
   const { t } = useTranslation();
   const [visitName, setVisitName] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -197,6 +205,8 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
   if (!visible) return null;
 
   return (
+
+
     <Modal
       visible={visible}
       transparent
@@ -217,129 +227,131 @@ const VisitDialogModal = ({ visible, onClose, visitType, onCreateVisit }) => {
             },
           ]}
         >
-          <TouchableOpacity
-            style={styles.backdropTouchable}
-            activeOpacity={1}
-            onPress={onClose}
-          >
+          <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
             <TouchableOpacity
+              style={styles.backdropTouchable}
               activeOpacity={1}
-              onPress={e => e.stopPropagation()}
-              style={styles.modalTouchable}
+              onPress={onClose}
             >
-              <Animated.View
-                style={[
-                  styles.modalContainer,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }],
-                  },
-                ]}
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={e => e.stopPropagation()}
+                style={styles.modalTouchable}
               >
-                <View style={styles.modalContent}>
-                  {/* Shield Icon */}
-                  <View style={styles.iconContainer}>
-                    <View style={styles.shieldBackground}>
-                      <Shield size={32} color="#46B7C6" strokeWidth={2} />
+                <Animated.View
+                  style={[
+                    styles.modalContainer,
+                    {
+                      opacity: fadeAnim,
+                      transform: [{ translateY: slideAnim }],
+                    },
+                  ]}
+                >
+                  <View style={styles.modalContent}>
+                    {/* Shield Icon */}
+                    <View style={styles.iconContainer}>
+                      <View style={styles.shieldBackground}>
+                        <Shield size={32} color="#46B7C6" strokeWidth={2} />
+                      </View>
+                    </View>
+
+                    {/* Title */}
+                    <View style={styles.titleSection}>
+                      <Text style={styles.modalTitle}>
+                        {t('dialog.phi.title')}
+                      </Text>
+                    </View>
+
+                    {/* Description */}
+                    <View style={styles.descriptionSection}>
+                      <Text style={styles.modalDescription}>
+                        {t('dialog.phi.description')}
+                      </Text>
+                    </View>
+
+                    {/* Checkbox Agreement */}
+                    <View style={styles.checkboxSection}>
+                      <TouchableOpacity
+                        style={styles.checkboxRow}
+                        onPress={handleCheckboxToggle}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[
+                          styles.customCheckbox,
+                          agreedToTerms && styles.customCheckboxChecked
+                        ]}>
+                          {agreedToTerms && (
+                            <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                          )}
+                        </View>
+                        <Text style={styles.checkboxText}>
+                          {t('dialog.phi.agreement')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Input Section - Shows when checkbox is checked */}
+                    {agreedToTerms && (
+                      <Animated.View
+                        style={[
+                          styles.inputAnimatedSection,
+                          {
+                            opacity: inputOpacity,
+                            transform: [
+                              {
+                                translateY: inputOpacity.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [-10, 0],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}
+                      >
+                        <View style={styles.inputLabelContainer}>
+                          <Text style={styles.inputLabel}>
+                            {t('visitNameInput.label')}
+                          </Text>
+                        </View>
+                        <View style={styles.inputWrapper}>
+                          <TextInput
+                            placeholder={getPlaceholder()}
+                            value={visitName}
+                            onChangeText={setVisitName}
+                            style={styles.textInput}
+                            placeholderTextColor="#C7C7CC"
+                            underlineColor="transparent"
+                            outlineColor="transparent"
+                            autoFocus={true}
+                          />
+                        </View>
+                        {visitType === 'patient' && (
+                          <Text style={styles.tooltipText}>
+                            {t('visitNameInput.tooltip')}
+                          </Text>
+                        )}
+                      </Animated.View>
+                    )}
+
+                    {/* Primary Button */}
+                    <View style={styles.buttonSection}>
+                      <PrimaryButton
+                        text={agreedToTerms && visitName.trim()
+                          ? t('buttons.continue')
+                          : t('dialog.phi.continueButton')}
+                        onPress={handleCreateVisit}
+                        disabled={!agreedToTerms || (agreedToTerms && !visitName.trim())}
+                        width={wp(78)}
+                        useGradient={false}
+                        backgroundColor="#46B7C6"
+                        borderRadius={16}
+                      />
                     </View>
                   </View>
-
-                  {/* Title */}
-                  <View style={styles.titleSection}>
-                    <Text style={styles.modalTitle}>
-                      {t('dialog.phi.title')}
-                    </Text>
-                  </View>
-
-                  {/* Description */}
-                  <View style={styles.descriptionSection}>
-                    <Text style={styles.modalDescription}>
-                      {t('dialog.phi.description')}
-                    </Text>
-                  </View>
-
-                  {/* Checkbox Agreement */}
-                  <View style={styles.checkboxSection}>
-                    <TouchableOpacity
-                      style={styles.checkboxRow}
-                      onPress={handleCheckboxToggle}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[
-                        styles.customCheckbox,
-                        agreedToTerms && styles.customCheckboxChecked
-                      ]}>
-                        {agreedToTerms && (
-                          <Check size={16} color="#FFFFFF" strokeWidth={3} />
-                        )}
-                      </View>
-                      <Text style={styles.checkboxText}>
-                        {t('dialog.phi.agreement')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Input Section - Shows when checkbox is checked */}
-                  {agreedToTerms && (
-                    <Animated.View
-                      style={[
-                        styles.inputAnimatedSection,
-                        {
-                          opacity: inputOpacity,
-                          transform: [
-                            {
-                              translateY: inputOpacity.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [-10, 0],
-                              }),
-                            },
-                          ],
-                        },
-                      ]}
-                    >
-                      <View style={styles.inputLabelContainer}>
-                        <Text style={styles.inputLabel}>
-                          {t('visitNameInput.label')}
-                        </Text>
-                      </View>
-                      <View style={styles.inputWrapper}>
-                        <TextInput
-                          placeholder={getPlaceholder()}
-                          value={visitName}
-                          onChangeText={setVisitName}
-                          style={styles.textInput}
-                          placeholderTextColor="#C7C7CC"
-                          underlineColor="transparent"
-                          outlineColor="transparent"
-                          autoFocus={true}
-                        />
-                      </View>
-                      {visitType === 'patient' && (
-                        <Text style={styles.tooltipText}>
-                          {t('visitNameInput.tooltip')}
-                        </Text>
-                      )}
-                    </Animated.View>
-                  )}
-
-                  {/* Primary Button */}
-                  <View style={styles.buttonSection}>
-                    <PrimaryButton
-                      text={agreedToTerms && visitName.trim() 
-                        ? t('buttons.continue') 
-                        : t('dialog.phi.continueButton')}
-                      onPress={agreedToTerms && visitName.trim() ? handleCreateVisit : undefined}
-                      disabled={!agreedToTerms || (agreedToTerms && !visitName.trim())}
-                      width={wp(78)}
-                      useGradient={false}
-                      backgroundColor="#46B7C6"
-                      borderRadius={16}
-                    />
-                  </View>
-                </View>
-              </Animated.View>
+                </Animated.View>
+              </TouchableOpacity>
             </TouchableOpacity>
-          </TouchableOpacity>
+          </SafeAreaView>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -375,7 +387,8 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: wp(88),
     maxWidth: 480,
-    maxHeight: hp(85),
+    marginTop: hp(2),
+    maxHeight: hp(70),
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
@@ -396,61 +409,61 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    padding: 32,
+    padding: 24,
     alignItems: 'center',
   },
   // Shield Icon Section
   iconContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 14,
   },
   shieldBackground: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: wp(15),
+    height: wp(15),
+    borderRadius: 30,
     backgroundColor: '#EAF8FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Title Section
   titleSection: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: '#0D0D0D',
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Bold',
     letterSpacing: -0.5,
   },
-  
+
   // Description Section
   descriptionSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     paddingHorizontal: 8,
   },
   modalDescription: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '400',
     color: '#A6A6A6',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  
+
   // Checkbox Section
   checkboxSection: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 2,
   },
   customCheckbox: {
     width: 24,
@@ -461,7 +474,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   customCheckboxChecked: {
     backgroundColor: '#46B7C6',
@@ -469,23 +482,23 @@ const styles = StyleSheet.create({
   },
   checkboxText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#0D0D0D',
-    lineHeight: 20,
+    lineHeight: 18,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  
+
   // Input Section
   inputAnimatedSection: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   inputLabelContainer: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#0D0D0D',
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
@@ -493,7 +506,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: '#46B7C6',
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#FAFAFA',
@@ -501,23 +514,27 @@ const styles = StyleSheet.create({
   textInput: {
     width: '100%',
     backgroundColor: '#FAFAFA',
-    fontSize: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    fontSize: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 1,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
   tooltipText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#A6A6A6',
-    marginTop: 8,
+    marginTop: 6,
     fontStyle: 'italic',
-    lineHeight: 16,
+    lineHeight: 14,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  
+
   // Button Section
   buttonSection: {
     width: '100%',
     alignItems: 'center',
+  },
+  safeArea: {
+    flex: 1,
+    width: '100%',
   },
 });

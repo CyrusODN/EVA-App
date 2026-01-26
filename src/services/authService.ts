@@ -165,3 +165,17 @@ export const createCustomPrompt = (payload: {
 }): Promise<AxiosResponse<any>> => {
   return api.post('/event/prompts', payload);
 };
+
+export const deleteCustomPrompt = (promptId: string): Promise<AxiosResponse<any>> => {
+  return api.delete(`/event/prompts/${promptId}`);
+};
+
+export const updateCustomPrompt = (
+  promptId: string,
+  payload: {
+    title: string;
+    content: string;
+  },
+): Promise<AxiosResponse<any>> => {
+  return api.put(`/event/prompts/${promptId}`, payload);
+};

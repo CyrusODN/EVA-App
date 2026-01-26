@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { connectSocket, disconnectSocket, getSocket } from '../../services/socketService';
 import userStore from '../../store/user';
 import {
@@ -51,7 +51,10 @@ import CustomTemplateManager, {
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';
-import { generateNotes } from '../../services/authService';
+import { generateNotes, resetEvent, deleteEvent, updateEvent, getAuthContext } from '../../services/authService';
+import { createNotesPrompt, getNotesPrompts, deleteNotesPrompt, type NotesPrompt } from '../../services/promptsApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '../../constants/colors';
 
 // Enable LayoutAnimation for Android
 if (
@@ -139,7 +142,7 @@ const TranscriptionComplete = () => {
   // ------------------------------
 
   // State management - initialized with onboarding defaults
-  const [noteType, setNoteType] = useState<string | null>(null);
+  const [noteType, setNoteType] = useState<string>('SOAP'); // Default to SOAP for standard mode
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
     defaultSpecialization || ''
   );
@@ -165,8 +168,9 @@ const TranscriptionComplete = () => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedNote, setGeneratedNote] = useState<string>('');
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+  const [generatedNotes, setGeneratedNotes] = useState<string>('');
+  const generatedNotesRef = useRef<string>(''); // To track latest value inside socket callbacks
   const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
   const [noteLength, setNoteLength] = useState<'Small' | 'Medium' | 'Large'>(
     defaultNoteLength || 'Medium',
@@ -184,10 +188,15 @@ const TranscriptionComplete = () => {
     'Medium',
     'Large',
   ];
+  // Prompts states
+  const [customPromptTitle, setCustomPromptTitle] = useState<string>('');
+  const [savedPrompts, setSavedPrompts] = useState<NotesPrompt[]>([]); // Saved custom prompts
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null); // Currently selected prompt
   const specializationOptions = [
     { key: 'Psychiatry', label: t('mainContent.transcriptionComplete.specialization.psychiatry') },
     { key: 'Child Psychiatry', label: t('mainContent.transcriptionComplete.specialization.childPsychiatry') },
     { key: 'Surgery', label: t('mainContent.transcriptionComplete.specialization.surgery') },
+    { key: 'Family Medicine', label: t('mainContent.transcriptionComplete.specialization.familyMedicine') },
     { key: 'Smart Select', label: t('mainContent.transcriptionComplete.specialization.smartSelect') },
   ];
   const visitTypeOptions = [
@@ -212,8 +221,31 @@ const TranscriptionComplete = () => {
     setCustomNote('');
     setSelectedTemplateId(null);
     setSelectedTemplateTitle('');
-    setNoteType(null);
+    setNoteType('SOAP'); // Reset to default SOAP
     customToast('success', t('common.success'), 'Custom prompt cleared');
+  };
+
+  const handleDeletePrompt = async (promptId: string, promptTitle: string) => {
+    try {
+      await deleteNotesPrompt(promptId);
+
+      // Remove from local state
+      setSavedPrompts(prev => prev.filter(p => p._id !== promptId));
+
+      // Clear selection if deleted prompt was selected
+      if (selectedPromptId === promptId) {
+        setSelectedPromptId(null);
+        setCustomNote('');
+        setCustomPromptTitle('');
+        setNoteType('SOAP'); // Reset to default SOAP
+      }
+
+      customToast('success', 'Deleted', `"${promptTitle}" has been deleted`);
+      console.log('[TranscriptionComplete] Prompt deleted:', promptId);
+    } catch (error: any) {
+      console.error('[TranscriptionComplete] Failed to delete prompt:', error);
+      customToast('error', 'Error', error?.message || 'Failed to delete prompt');
+    }
   };
 
   const handleSelectTemplate = (template: CustomTemplate | null) => {
@@ -239,7 +271,76 @@ const TranscriptionComplete = () => {
     status: 'transcribed',
   };
 
-  const isNoteReady = generatedNote.trim().length > 0;
+  const isNoteReady = generatedNotes.trim().length > 0;
+  // State for available sessions to use as follow-up visits
+  const [availableSessions, setAvailableSessions] = useState<any[]>([]);
+
+  // Load available sessions for follow-up visits
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        const allSessions = await sessionStorage.getAllSessions();
+        // Filter to only show sessions with transcriptions, same type, excluding current session
+        const filteredSessions = allSessions
+          .filter(s =>
+            s.type === session.type &&
+            s.id !== session.id &&
+            s.hasTranscription === true
+          )
+          .map(s => ({
+            _id: s.id,
+            title: s.title,
+            date: new Date(s.date),
+          }));
+        setAvailableSessions(filteredSessions);
+        console.log('[TranscriptionComplete] Loaded available sessions for follow-up:', filteredSessions.length);
+      } catch (error) {
+        console.error('[TranscriptionComplete] Failed to load sessions:', error);
+      }
+    };
+    loadSessions();
+  }, [session.type, session.id]);
+
+  // Load saved custom prompts for this session type
+  useEffect(() => {
+    const loadPrompts = async () => {
+      try {
+        const prompts = await getNotesPrompts(session.type as 'patient' | 'meeting' | 'lecture');
+        setSavedPrompts(prompts);
+        console.log('[TranscriptionComplete] Loaded custom prompts:', prompts.length);
+      } catch (error) {
+        console.error('[TranscriptionComplete] Failed to load prompts:', error);
+      }
+    };
+    loadPrompts();
+  }, [session.type]);
+
+  // Load saved notes from storage if session already has notes
+  useEffect(() => {
+    const loadSavedNotes = async () => {
+      if (sessionData?.id) {
+        try {
+          const latestSession = await sessionStorage.getSessionById(sessionData.id);
+          if (latestSession?.generatedNotes) {
+            console.log('[TranscriptionComplete] Loaded saved notes from storage:', latestSession.generatedNotes.length, 'characters');
+            setGeneratedNotes(latestSession.generatedNotes);
+            generatedNotesRef.current = latestSession.generatedNotes;
+          } else {
+            console.log('[TranscriptionComplete] No saved notes found for session:', sessionData.id);
+          }
+        } catch (error) {
+          console.error('[TranscriptionComplete] Failed to load saved notes:', error);
+        }
+      }
+    };
+    loadSavedNotes();
+  }, [sessionData?.id]);
+
+  const filteredFollowUpVisits = availableSessions.filter(visit =>
+    visit.title.toLowerCase().includes(visitSearchQuery.toLowerCase()),
+  );
+
+
 
   // Mock follow-up visits data
   const mockFollowUpVisits = [
@@ -265,122 +366,6 @@ const TranscriptionComplete = () => {
       label: 'Cardiology • Follow-up',
     },
   ];
-
-  const filteredFollowUpVisits = mockFollowUpVisits.filter(visit =>
-    visit.title.toLowerCase().includes(visitSearchQuery.toLowerCase()),
-  );
-
-  useEffect(() => {
-    console.log('[TranscriptionComplete] Component mounted');
-    console.log('[TranscriptionComplete] Session data:', JSON.stringify(session, null, 2));
-    console.log('[TranscriptionComplete] Session ID:', session.id);
-    console.log('[TranscriptionComplete] Session sessionId (backend):', session.sessionId);
-    console.log('[TranscriptionComplete] Session type:', session.type);
-
-    setNewSessionName(session.title);
-    if (session.type === 'patient') {
-      setNoteType('SOAP');
-      console.log('[TranscriptionComplete] Set noteType to SOAP for patient session');
-    }
-  }, [session.title, session.type]);
-
-  // Socket connection and note streaming
-  useEffect(() => {
-    console.log('[TranscriptionComplete] ========== SOCKET SETUP START ==========');
-    const userId = userStore.getState().user?._id;
-
-    console.log('[TranscriptionComplete] User ID from store:', userId);
-
-    if (!userId) {
-      console.warn('[TranscriptionComplete] ⚠️ No userId available for socket connection');
-      return;
-    }
-
-    // Connect socket
-    console.log('[TranscriptionComplete] 🔌 Initiating socket connection...');
-    connectSocket(userId);
-
-    const socket = getSocket();
-    if (!socket) {
-      console.error('[TranscriptionComplete] ❌ Failed to get socket instance');
-      return;
-    }
-
-    console.log('[TranscriptionComplete] ✅ Socket instance obtained');
-    console.log('[TranscriptionComplete] Socket connected:', socket.connected);
-    console.log('[TranscriptionComplete] Socket ID:', socket.id);
-
-    // Listen for note generation events
-    console.log('[TranscriptionComplete] 📡 Registering socket event listeners...');
-
-    socket.on('note-chunk', (data: { chunk: string; sessionId: string }) => {
-      console.log('[TranscriptionComplete] 📝 Received note chunk');
-      console.log('[TranscriptionComplete] Chunk sessionId:', data.sessionId);
-      console.log('[TranscriptionComplete] Current session.sessionId:', session.sessionId);
-      console.log('[TranscriptionComplete] Chunk length:', data.chunk.length);
-      console.log('[TranscriptionComplete] Chunk preview:', data.chunk.substring(0, 50) + '...');
-
-      if (data.sessionId === session.sessionId) {
-        console.log('[TranscriptionComplete] ✅ SessionId matches, appending chunk to note');
-        setGeneratedNote((prev) => {
-          const newNote = prev + data.chunk;
-          console.log('[TranscriptionComplete] Total note length now:', newNote.length);
-          return newNote;
-        });
-      } else {
-        console.warn('[TranscriptionComplete] ⚠️ SessionId mismatch, ignoring chunk');
-      }
-    });
-
-    socket.on('note-complete', (data: { sessionId: string; fullNote: string }) => {
-      console.log('[TranscriptionComplete] ✅ Note generation complete!');
-      console.log('[TranscriptionComplete] Complete sessionId:', data.sessionId);
-      console.log('[TranscriptionComplete] Full note length:', data.fullNote.length);
-
-      if (data.sessionId === session.sessionId) {
-        console.log('[TranscriptionComplete] ✅ SessionId matches, setting final note');
-        setGeneratedNote(data.fullNote);
-        setIsGenerating(false);
-        customToast('success', t('common.success'), 'Note generated successfully');
-
-        console.log('[TranscriptionComplete] 💾 Saving note to session storage...');
-        // Save the generated note to session storage
-        sessionStorage.updateSessionNotes(session.id, data.fullNote);
-        console.log('[TranscriptionComplete] ✅ Note saved successfully');
-      } else {
-        console.warn('[TranscriptionComplete] ⚠️ SessionId mismatch, ignoring complete event');
-      }
-    });
-
-    socket.on('note-error', (data: { sessionId: string; error: string }) => {
-      console.error('[TranscriptionComplete] ❌ Note generation error!');
-      console.error('[TranscriptionComplete] Error sessionId:', data.sessionId);
-      console.error('[TranscriptionComplete] Error message:', data.error);
-
-      if (data.sessionId === session.sessionId) {
-        console.log('[TranscriptionComplete] SessionId matches, handling error');
-        setIsGenerating(false);
-        customToast('error', t('common.error'), 'Failed to generate note');
-      } else {
-        console.warn('[TranscriptionComplete] ⚠️ SessionId mismatch, ignoring error');
-      }
-    });
-
-    console.log('[TranscriptionComplete] ✅ All socket event listeners registered');
-    console.log('[TranscriptionComplete] ========== SOCKET SETUP COMPLETE ==========');
-
-    // Cleanup on unmount
-    return () => {
-      console.log('[TranscriptionComplete] ========== CLEANUP START ==========');
-      console.log('[TranscriptionComplete] 🧹 Removing socket listeners');
-      socket.off('note-chunk');
-      socket.off('note-complete');
-      socket.off('note-error');
-      console.log('[TranscriptionComplete] 🔌 Disconnecting socket');
-      disconnectSocket();
-      console.log('[TranscriptionComplete] ========== CLEANUP COMPLETE ==========');
-    };
-  }, [session.id, session.sessionId, t]);
 
   const getSessionIcon = () => {
     switch (session.type) {
@@ -414,9 +399,24 @@ const TranscriptionComplete = () => {
     if (!newSessionName.trim()) return;
     setIsRenaming(true);
     try {
+      // Update on backend if sessionId exists
+      if (session.sessionId) {
+        try {
+          await updateEvent(session.sessionId, { title: newSessionName.trim() });
+          console.log('[TranscriptionComplete] Session title updated on backend');
+        } catch (error) {
+          console.error('[TranscriptionComplete] Failed to update session title on backend:', error);
+          // Continue with local update even if backend fails
+        }
+      }
+
+      // Update in local storage
       await sessionStorage.updateSessionTitle(session.id, newSessionName.trim());
       setShowRenameModal(false);
       customToast('success', t('common.success'), t('success.sessionRenamed'));
+    } catch (error) {
+      console.error('[TranscriptionComplete] Rename error:', error);
+      customToast('error', t('common.error'), 'Failed to rename session');
     } finally {
       setIsRenaming(false);
     }
@@ -425,10 +425,25 @@ const TranscriptionComplete = () => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
+      // Delete from backend if sessionId exists
+      if (session.sessionId) {
+        try {
+          await deleteEvent(session.sessionId);
+          console.log('[TranscriptionComplete] Session deleted from backend');
+        } catch (error) {
+          console.error('[TranscriptionComplete] Failed to delete session from backend:', error);
+          // Continue with local deletion even if backend fails
+        }
+      }
+
+      // Delete from local storage
       await sessionStorage.deleteSession(session.id);
       setShowDeleteModal(false);
       customToast('success', t('common.success'), t('success.sessionDeleted'));
       (navigation as any).goBack();
+    } catch (error) {
+      console.error('[TranscriptionComplete] Delete error:', error);
+      customToast('error', t('common.error'), 'Failed to delete session');
     } finally {
       setIsDeleting(false);
     }
@@ -437,13 +452,25 @@ const TranscriptionComplete = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
+      // Reset on backend if sessionId exists
+      if (session.sessionId) {
+        try {
+          await resetEvent(session.sessionId);
+          console.log('[TranscriptionComplete] Session reset on backend');
+        } catch (error) {
+          console.error('[TranscriptionComplete] Failed to reset session on backend:', error);
+          // Continue with local reset even if backend fails
+        }
+      }
+
+      // Reset in local storage
       await sessionStorage.resetSession(session.id);
       setShowResetModal(false);
       customToast('success', t('common.success'), t('success.sessionReset'));
-      (navigation as any).replace('session', {
-        sessionData: session,
-        sessionType: session.type,
-      });
+      (navigation as any).goBack();
+    } catch (error) {
+      console.error('[TranscriptionComplete] Reset error:', error);
+      customToast('error', t('common.error'), 'Failed to reset session');
     } finally {
       setIsResetting(false);
     }
@@ -722,153 +749,278 @@ const TranscriptionComplete = () => {
   };
 
   const renderGenerateButton = () => {
-    // LOGIC UPDATE: Validation depends on Mode
-    let canGenerate = false;
-
-    if (session.type !== 'patient') {
-      canGenerate = true;
-    } else {
-      if (generationMode === 'standard') {
-        // Standard Mode Requirements
-        canGenerate = !!selectedSpecialization && !!visitType;
-      } else {
-        // Custom Mode Requirements
-        canGenerate = !!selectedTemplateId;
-      }
-    }
+    const canGenerate =
+      noteType &&
+      (noteType === 'custom' ||
+        session.type !== 'patient' ||
+        (selectedSpecialization && visitType));
 
     return (
       <TouchableOpacity
         style={[
           styles.floatingGenerateButton,
-          (!canGenerate || isGenerating) && styles.floatingGenerateButtonDisabled,
+          (!canGenerate || isGeneratingNotes) && styles.floatingGenerateButtonDisabled,
         ]}
         onPress={async () => {
-          console.log('[TranscriptionComplete] ========== GENERATE NOTE BUTTON PRESSED ==========');
-          console.log('[TranscriptionComplete] canGenerate:', canGenerate);
-          console.log('[TranscriptionComplete] isGenerating:', isGenerating);
-          console.log('[TranscriptionComplete] generationMode:', generationMode);
-          console.log('[TranscriptionComplete] noteType:', noteType);
-          console.log('[TranscriptionComplete] selectedSpecialization:', selectedSpecialization);
-          console.log('[TranscriptionComplete] visitType:', visitType);
-          console.log('[TranscriptionComplete] noteLength:', noteLength);
-          console.log('[TranscriptionComplete] selectedTemplateId:', selectedTemplateId);
-          console.log('[TranscriptionComplete] customNote length:', customNote?.length || 0);
-
-          if (canGenerate) {
-            try {
-              console.log('[TranscriptionComplete] ✅ Validation passed, starting generation...');
-              setIsGenerating(true);
-              setGeneratedNote(''); // Clear previous note
-              console.log('[TranscriptionComplete] Cleared previous note');
-
-              // Get the current session with sessionId
-              console.log('[TranscriptionComplete] Fetching session from storage...');
-              const currentSession = await sessionStorage.getSessionById(session.id);
-              console.log('[TranscriptionComplete] Current session:', currentSession);
-
-              if (!currentSession?.sessionId) {
-                console.error('[TranscriptionComplete] ❌ No sessionId available in session');
-                throw new Error('No sessionId available');
-              }
-
-              console.log('[TranscriptionComplete] ✅ SessionId found:', currentSession.sessionId);
-
-              // Prepare payload based on generation mode
-              let payload: {
-                noteType: string;
-                visitType: string;
-                specialization: string;
-                length: string;
-                customPrompt?: string;
-              };
-
-              if (generationMode === 'standard') {
-                console.log('[TranscriptionComplete] 📋 Preparing STANDARD mode payload...');
-                // Standard mode payload
-                payload = {
-                  noteType: noteType || 'SOAP',
-                  visitType: visitType,
-                  specialization: selectedSpecialization,
-                  length: noteLength,
-                };
-              } else {
-                console.log('[TranscriptionComplete] 📋 Preparing CUSTOM mode payload...');
-                // Custom mode payload
-                payload = {
-                  noteType: 'custom',
-                  visitType: visitType || 'First Visit',
-                  specialization: selectedSpecialization || 'General',
-                  length: noteLength,
-                  customPrompt: customNote,
-                };
-              }
-
-              console.log('[TranscriptionComplete] 📤 Payload prepared:', JSON.stringify(payload, null, 2));
-              console.log('[TranscriptionComplete] 🚀 Calling generateNotes API...');
-
-              // Call the API - this will trigger socket streaming
-              const response = await generateNotes(currentSession.sessionId, payload);
-
-              console.log('[TranscriptionComplete] ✅ API call successful!');
-              console.log('[TranscriptionComplete] API Response:', response.data);
-              console.log('[TranscriptionComplete] 📡 Waiting for socket events (note-chunk, note-complete)...');
-
-              // Save metadata
-              console.log('[TranscriptionComplete] 💾 Saving note metadata...');
-              const specializationLabel =
-                specializationOptions.find(s => s.key === selectedSpecialization)?.label;
-              const visitTypeLabel =
-                visitTypeOptions.find(v => v.key === visitType)?.label;
-
-              await sessionStorage.updateSessionNoteMeta(session.id, {
-                generationMode,
-                specializationLabel: generationMode === 'standard' ? specializationLabel : undefined,
-                visitTypeLabel: generationMode === 'standard' ? visitTypeLabel : undefined,
-                customTemplateTitle: generationMode === 'custom' ? selectedTemplateTitle : undefined,
-              });
-              console.log('[TranscriptionComplete] ✅ Metadata saved');
-
-              handleCollapseConfig();
-              console.log('[TranscriptionComplete] ✅ Config collapsed');
-
-              console.log('[TranscriptionComplete] ⏳ Note: isGenerating will be set to false by socket "note-complete" event');
-              console.log('[TranscriptionComplete] ========== GENERATE NOTE INITIATED ==========');
-            } catch (error: any) {
-              console.error('[TranscriptionComplete] ========== ERROR GENERATING NOTES ==========');
-              console.error('[TranscriptionComplete] Error type:', error?.constructor?.name);
-              console.error('[TranscriptionComplete] Error message:', error?.message);
-              console.error('[TranscriptionComplete] Full error:', error);
-              setIsGenerating(false);
-              customToast(
-                'error',
-                t('common.error'),
-                'Failed to generate note. Please try again.',
-              );
-              console.error('[TranscriptionComplete] ========== ERROR HANDLED ==========');
-            }
-          } else {
-            console.warn('[TranscriptionComplete] ⚠️ Validation failed!');
-            const errorMsg = generationMode === 'standard'
-              ? 'Please select Specialization and Visit Type'
-              : 'Please select a Custom Template';
-            console.warn('[TranscriptionComplete] Error message:', errorMsg);
+          if (!canGenerate) {
             customToast(
               'error',
               t('common.error'),
-              errorMsg,
+              t('errors.noteTypeRequired'),
+            );
+            return;
+          }
+          const loggedInUser = userStore.getState().loggedInUser;
+
+          // Check if we have sessionId
+          if (!session.sessionId) {
+            customToast(
+              'error',
+              t('common.error'),
+              'Session ID not found. Please create a new session.'
+            );
+            return;
+          }
+
+          // Check if we have userId for socket connection
+          let userId = loggedInUser?.id;
+          if (!userId) {
+            console.warn('[TranscriptionComplete] No logged in user ID for socket auth, attempting to fetch auth context...');
+            try {
+              const authCtx = await getAuthContext();
+              const ctx = authCtx?.data?.data;
+              if (ctx && (ctx._id || ctx.id || ctx.userId)) {
+                const userObj: any = {
+                  id: ctx._id || ctx.id || ctx.userId,
+                  email: ctx.email || '',
+                  name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
+                  profilePicture: ctx.profileImage || '',
+                  role: ctx.role,
+                  settings: ctx.settings,
+                  whitelist: ctx.whitelist,
+                  token: userStore.getState().token,
+                };
+                userStore.getState().setAuth(userObj);
+                await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
+                console.log('[TranscriptionComplete] Successfully fetched and stored user context');
+                userId = userObj.id;
+              } else {
+                console.error('[TranscriptionComplete] Auth context fetch failed - no user ID found');
+                customToast(
+                  'error',
+                  t('common.error'),
+                  'User session error. Please log in again.'
+                );
+                return;
+              }
+            } catch (ctxError: any) {
+              console.error('[TranscriptionComplete] Failed to fetch auth context:', ctxError);
+              customToast(
+                'error',
+                t('common.error'),
+                'User session error. Please log in again.'
+              );
+              return;
+            }
+          }
+
+          // Get socket instance from service
+          let socket = getSocket();
+
+          // Fallback: If socket is not initialized, try to connect now
+          if (!socket) {
+            console.log('[TranscriptionComplete] Socket not initialized, attempting connection now...');
+            socket = connectSocket(userId) || null;
+          }
+
+          // Check if socket is connected, wait a bit if not
+          if (!socket) {
+            customToast(
+              'error',
+              t('common.error'),
+              'Socket connection failed. Please try again.'
+            );
+            return;
+          }
+
+          // Wait for socket connection if not connected (max 5 seconds)
+          if (!socket.connected) {
+            console.log('[TranscriptionComplete] Socket not connected, waiting...');
+
+            let attempts = 0;
+            const maxAttempts = 10;
+
+            while (!socket.connected && attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+              attempts++;
+              console.log('[TranscriptionComplete] Waiting for connection, attempt:', attempts);
+            }
+
+            if (!socket.connected) {
+              console.error('[TranscriptionComplete] Socket connection timeout');
+              customToast(
+                'error',
+                t('common.error'),
+                'Could not establish connection. Please check your internet and try again.'
+              );
+              return;
+            }
+
+            console.log('[TranscriptionComplete] Socket connected after waiting');
+          }
+
+          setIsGeneratingNotes(true);
+          setGeneratedNotes(''); // Clear previous notes
+
+          try {
+            console.log('[TranscriptionComplete] Generating notes via API + Socket...');
+            console.log('[TranscriptionComplete] Session ID:', session.sessionId);
+
+            // Prepare payload matching backend expectations from guide
+            // Prepare payload matching backend expectations from guide
+            // Set appropriate default noteType based on session type
+            const defaultNoteType = session.type === 'lecture' ? 'medical'
+              : session.type === 'meeting' ? 'general'
+                : 'SOAP';
+
+            let payload: any = {};
+
+            if (noteType === 'custom') {
+              payload = {
+                noteType: 'custom',
+                promptId: selectedTemplateId, // Use selectedTemplateId as it holds the custom prompt ID
+                llmModel: 'gpt-4.1'
+              };
+              console.log('[TranscriptionComplete] Using custom prompt ID:', selectedTemplateId);
+            } else {
+              payload = {
+                noteType: noteType || defaultNoteType,
+                visitType: visitType.toLowerCase().replace(' ', '-') || 'first-visit',
+                specialization: selectedSpecialization.toLowerCase() || 'psychiatry',
+                length: noteLength.toLowerCase(),
+                llmModel: 'gemini-3-pro-preview',
+              };
+            }
+
+            console.log('[TranscriptionComplete] Payload:', payload);
+
+            // Note: We don't remove listeners here because we want to catch the completion event
+            // Listeners will clean themselves up after firing
+
+            // Set up socket listeners for streaming (matching guide implementation)
+            socket.on('notes_generation_started', (event: any) => {
+              if (event.payload?.eventId === session.sessionId) {
+                console.log('[TranscriptionComplete] ✅ Notes generation started:', event.payload.eventId);
+              }
+            });
+
+            socket.on('notes_generation_chunk', (event: any) => {
+              if (event.payload?.eventId === session.sessionId) {
+                console.log('[TranscriptionComplete] 📝 Received chunk (accumulated)');
+                // The guide's example uses setNoteContent(event.payload.content) which replaces the content.
+                // This suggests the backend sends the full accumulated string.
+                if (event.payload?.content !== undefined) {
+                  setGeneratedNotes(event.payload.content);
+                  generatedNotesRef.current = event.payload.content; // Update ref for socket callbacks
+                }
+              }
+            });
+
+            socket.on('notes_generation_completed', (event: any) => {
+              console.log('[TranscriptionComplete] 🎯 Completion event received!', event);
+              console.log('[TranscriptionComplete] 🔑 Event eventId:', event.payload?.eventId);
+              console.log('[TranscriptionComplete] 🔑 Session sessionId:', session.sessionId);
+              console.log('[TranscriptionComplete] 🔑 Match:', event.payload?.eventId === session.sessionId);
+
+              if (event.payload?.eventId === session.sessionId) {
+                console.log('[TranscriptionComplete] ✅ Notes generation complete - INSIDE IF');
+                console.log('[TranscriptionComplete] 🔍 Event payload:', event.payload);
+
+                // Use ref to get the latest notes content (state might not be updated yet)
+                const contentToSave = event.payload?.content || generatedNotesRef.current;
+                console.log('[TranscriptionComplete] 💾 Content to save length:', contentToSave?.length || 0);
+                console.log('[TranscriptionComplete] 💾 Ref content length:', generatedNotesRef.current?.length || 0);
+
+                if (contentToSave && contentToSave.length > 0) {
+                  console.log('[TranscriptionComplete] 💾 Saving notes from completion handler...');
+                  sessionStorage.updateSessionNotes(session.id, contentToSave)
+                    .then(() => {
+                      console.log('[TranscriptionComplete] ✅ Notes saved from completion handler successfully!');
+                    })
+                    .catch((error) => {
+                      console.error('[TranscriptionComplete] ❌ Failed to save notes from completion handler:', error);
+                    });
+                } else {
+                  console.warn('[TranscriptionComplete] ⚠️ No content to save in completion handler');
+                }
+
+                // Update session status in local storage
+                sessionStorage.updateSessionStatus(session.id, 'completed');
+
+                // Set isGeneratingNotes to false
+                setIsGeneratingNotes(false);
+
+                // Clean up listeners AFTER save logic
+                socket.off('notes_generation_started');
+                socket.off('notes_generation_chunk');
+                socket.off('notes_generation_completed');
+                socket.off('notes_generation_error');
+
+                customToast(
+                  'success',
+                  t('common.success'),
+                  'Notes generated successfully!'
+                );
+              } else {
+                console.warn('[TranscriptionComplete] ⚠️ EventId mismatch - not processing');
+              }
+            });
+
+            socket.on('notes_generation_error', (event: any) => {
+              if (event.payload?.eventId === session.sessionId) {
+                console.error('[TranscriptionComplete] ❌ Notes generation error:', event.payload);
+                setIsGeneratingNotes(false);
+
+                // Clean up listeners
+                socket.off('notes_generation_started');
+                socket.off('notes_generation_chunk');
+                socket.off('notes_generation_completed');
+                socket.off('notes_generation_error');
+
+                customToast(
+                  'error',
+                  t('common.error'),
+                  event.payload?.error || 'Failed to generate notes. Please try again.'
+                );
+              }
+            });
+
+            // Trigger the note generation via HTTP API (as per guide Step 3)
+            await generateNotes(session.sessionId, payload);
+            console.log('[TranscriptionComplete] 🚀 Triggered generation via API');
+
+          } catch (error: any) {
+            console.error('[TranscriptionComplete] Generate notes error:', error);
+            setIsGeneratingNotes(false);
+
+            customToast(
+              'error',
+              t('common.error'),
+              error?.response?.data?.message || error?.message || 'Failed to trigger notes generation.'
             );
           }
         }}
-        disabled={!canGenerate || isGenerating}
+        disabled={!canGenerate || isGeneratingNotes}
         activeOpacity={0.85}
       >
         <Text variant="bodyMedium" style={styles.floatingGenerateButtonText}>
-          {isGenerating ? t('common.generating') : t('mainContent.transcriptionComplete.generateNote')}
+          {isGeneratingNotes ? t('common.generating') : t('mainContent.transcriptionComplete.generateNote')}
         </Text>
       </TouchableOpacity>
     );
   };
+
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -990,6 +1142,7 @@ const TranscriptionComplete = () => {
               <CustomTemplateManager
                 selectedTemplateId={selectedTemplateId}
                 onSelectTemplate={handleSelectTemplate}
+                savedPrompts={savedPrompts}
               />
             </View>
           )}
@@ -1005,15 +1158,58 @@ const TranscriptionComplete = () => {
               showsVerticalScrollIndicator={true}
             >
               <Text variant="bodyMedium" style={styles.noteDocumentText}>
-                {generatedNote}
+                {(() => {
+                  return generatedNotes.split('\n').map((line, lineIndex) => {
+                    const cleanLine = line.trim();
+                    // Check if line is a heading: formatting is **...** OR content is UPPERCASE (min 4 chars to avoid tiny abbr)
+                    const isAllUppercase = cleanLine.length > 3 && cleanLine === cleanLine.toUpperCase() && /[A-Z]/.test(cleanLine);
+
+                    if (isAllUppercase) {
+                      return (
+                        <Text key={lineIndex} style={{
+                          fontWeight: '700',
+                          fontFamily: DESIGN_TOKENS.fonts.semibold,
+                          color: colors.bluish
+                        }}>
+                          {line}{'\n'}
+                        </Text>
+                      );
+                    }
+
+                    // Standard markdown parsing for lines that aren't full headings
+                    const parts = line.split(/(\*\*.*?\*\*)/g);
+                    return (
+                      <Text key={lineIndex}>
+                        {parts.map((part, partIndex) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return (
+                              <Text
+                                key={partIndex}
+                                style={{
+                                  fontWeight: '700',
+                                  fontFamily: DESIGN_TOKENS.fonts.semibold,
+                                  color: colors.bluish,
+                                }}
+                              >
+                                {part.slice(2, -2)}
+                              </Text>
+                            );
+                          }
+                          return <Text key={partIndex}>{part}</Text>;
+                        })}
+                        {'\n'}
+                      </Text>
+                    );
+                  });
+                })()}
               </Text>
             </ScrollView>
             <View style={styles.noteDocumentFooter}>
               <TouchableOpacity
                 style={styles.noteCopyButton}
                 onPress={async () => {
-                  if (!generatedNote.trim()) return;
-                  await Clipboard.setString(generatedNote);
+                  if (!generatedNotes.trim()) return;
+                  await Clipboard.setString(generatedNotes);
                   customToast('success', 'Copied', 'Note copied to clipboard');
                 }}
               >

@@ -35,9 +35,15 @@ import {
 } from 'react-native-responsive-screen';
 // @ts-ignore
 import * as Haptics from 'expo-haptics';
-import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  Swipeable,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import MagicTemplateCreatorInline from './MagicTemplateCreatorInline';
+
+import { NotesPrompt } from '../services/promptsApi';
+import { customToast } from '../utils/toastMessage';
 
 export type CustomTemplate = {
   id: string;
@@ -49,6 +55,7 @@ export type CustomTemplate = {
 type CustomTemplateManagerProps = {
   onSelectTemplate: (template: CustomTemplate | null) => void;
   selectedTemplateId: string | null;
+  savedPrompts: NotesPrompt[];
 };
 
 // --- PREMIUM DESIGN TOKENS (Linear/Things3 Style) ---
@@ -74,43 +81,45 @@ const THEME = {
   },
 };
 
-const INITIAL_TEMPLATES: CustomTemplate[] = [
-  {
-    id: '1',
-    title: 'Psychiatry - First Visit',
-    content: 'Focus on history, affective symptoms, and suicidality risk. Format as SOAP.',
-  },
-  {
-    id: '2',
-    title: 'Cardiology - Follow-up',
-    content: 'Assess blood pressure, medication tolerance, dyspnea, and edema.',
-  },
-  {
-    id: '3',
-    title: 'General - Brief',
-    content: 'Include only key diagnoses and treatment plan. Keep the note concise.',
-  },
-];
-
 // --- VIEW STATES (Single Modal Architecture) ---
 type ViewState = 'closed' | 'library' | 'editor' | 'options';
 
 const CustomTemplateManager = ({
   onSelectTemplate,
   selectedTemplateId,
+  savedPrompts = [],
 }: CustomTemplateManagerProps) => {
   const { t } = useTranslation();
-  
+
   // --- STATE ---
-  const [templates, setTemplates] = useState<CustomTemplate[]>(INITIAL_TEMPLATES);
+  const [templates, setTemplates] = useState<CustomTemplate[]>([]);
   const [viewState, setViewState] = useState<ViewState>('closed');
-  const [editingTemplate, setEditingTemplate] = useState<CustomTemplate | null>(null);
-  const [optionsTarget, setOptionsTarget] = useState<CustomTemplate | null>(null);
-  
+  const [editingTemplate, setEditingTemplate] = useState<CustomTemplate | null>(
+    null,
+  );
+  const [optionsTarget, setOptionsTarget] = useState<CustomTemplate | null>(
+    null,
+  );
+
+  // Sync savedPrompts from API to local templates state
+  React.useEffect(() => {
+    if (savedPrompts) {
+      const mappedTemplates: CustomTemplate[] = savedPrompts.map((prompt) => ({
+        id: prompt._id,
+        title: prompt.title, // Corrected from uniqueName
+        content: prompt.content, // Corrected from promptText
+        lastUsed: new Date(prompt.createdAt),
+      }));
+      setTemplates(mappedTemplates);
+    }
+  }, [savedPrompts]);
+
   const [titleInput, setTitleInput] = useState('');
   const [contentInput, setContentInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [creationMethod, setCreationMethod] = useState<'manual' | 'ai' | null>(null);
+  const [creationMethod, setCreationMethod] = useState<'manual' | 'ai' | null>(
+    null,
+  );
 
   const swipeableRefs = useRef(new Map()).current;
   const searchInputRef = useRef<TextInput>(null);
@@ -118,14 +127,15 @@ const CustomTemplateManager = ({
 
   // --- COMPUTED ---
   const selectedTemplate = useMemo(
-    () => templates.find(t => t.id === selectedTemplateId) || null,
+    () => templates.find((t) => t.id === selectedTemplateId) || null,
     [templates, selectedTemplateId],
   );
 
   const filteredTemplates = useMemo(
-    () => templates.filter(t =>
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()),
-    ),
+    () =>
+      templates.filter((t) =>
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
     [templates, searchQuery],
   );
 
@@ -137,25 +147,28 @@ const CustomTemplateManager = ({
     setViewState('library');
   }, []);
 
-  const openEditor = useCallback((template?: CustomTemplate) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    swipeableRefs.forEach((ref: any) => ref?.close());
-    
-    if (template) {
-      // Editing existing template - go straight to manual editor
-      setEditingTemplate(template);
-      setTitleInput(template.title);
-      setContentInput(template.content);
-      setCreationMethod('manual');
-    } else {
-      // Creating new template - show method selection
-      setEditingTemplate(null);
-      setTitleInput('');
-      setContentInput('');
-      setCreationMethod(null);
-    }
-    setViewState('editor');
-  }, [swipeableRefs]);
+  const openEditor = useCallback(
+    (template?: CustomTemplate) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      swipeableRefs.forEach((ref: any) => ref?.close());
+
+      if (template) {
+        // Editing existing template - go straight to manual editor
+        setEditingTemplate(template);
+        setTitleInput(template.title);
+        setContentInput(template.content);
+        setCreationMethod('manual');
+      } else {
+        // Creating new template - show method selection
+        setEditingTemplate(null);
+        setTitleInput('');
+        setContentInput('');
+        setCreationMethod(null);
+      }
+      setViewState('editor');
+    },
+    [swipeableRefs],
+  );
 
   const openOptions = useCallback((template: CustomTemplate) => {
     Haptics.selectionAsync();
@@ -179,58 +192,150 @@ const CustomTemplateManager = ({
   const handleSaveTemplate = useCallback(() => {
     if (!titleInput.trim() || !contentInput.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(t('templates.errors.incompleteTitle'), t('templates.errors.incompleteMessage'));
+      Alert.alert(
+        t('templates.errors.incompleteTitle'),
+        t('templates.errors.incompleteMessage'),
+      );
       return;
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    if (editingTemplate) {
-      setTemplates(prev =>
-        prev.map(t =>
-          t.id === editingTemplate.id
-            ? { ...t, title: titleInput.trim(), content: contentInput.trim() }
-            : t,
-        ),
-      );
-    } else {
-      const newTemplate: CustomTemplate = {
-        id: Date.now().toString(),
-        title: titleInput.trim(),
-        content: contentInput.trim(),
-        lastUsed: new Date(),
-      };
-      setTemplates(prev => [newTemplate, ...prev]);
-    }
 
-    goBackToLibrary();
+    // We only support creating NEW prompts via API for now in this flow (editing existing is separate)
+    if (editingTemplate) {
+      import('../services/authService').then(async ({ updateCustomPrompt }) => {
+        try {
+          const payload = {
+            title: titleInput.trim(),
+            content: contentInput.trim(),
+          };
+          console.log('Updating custom prompt:', editingTemplate.id, payload);
+
+          await updateCustomPrompt(editingTemplate.id, payload);
+
+          setTemplates((prev) =>
+            prev.map((t) =>
+              t.id === editingTemplate.id
+                ? {
+                    ...t,
+                    title: titleInput.trim(),
+                    content: contentInput.trim(),
+                  }
+                : t,
+            ),
+          );
+          customToast(
+            'success',
+            t('common.success'),
+            'Template updated successfully',
+          );
+          goBackToLibrary();
+        } catch (error) {
+          console.error('Failed to update custom prompt:', error);
+          Alert.alert(
+            'Error',
+            'Failed to update the prompt. Please try again.',
+          );
+        }
+      });
+    } else {
+      // Call Backend to Create
+      import('../services/authService').then(async ({ createCustomPrompt }) => {
+        try {
+          const response = await createCustomPrompt({
+            title: titleInput.trim(),
+            content: contentInput.trim(),
+            noteType: 'patient', // Defaulting to patient notes context
+          });
+
+          if (response.data && response.data.data) {
+            console.log(
+              'Create Custom Prompt Response Data:',
+              response.data.data,
+            );
+            const newPrompt = response.data.data;
+            const newTemplate: CustomTemplate = {
+              id: newPrompt._id,
+              title: newPrompt.title,
+              content: newPrompt.content, // Ensure backend returns content field mapped correctly or update here
+              lastUsed: new Date(),
+            };
+            setTemplates((prev) => [newTemplate, ...prev]);
+            customToast(
+              'success',
+              t('common.success'),
+              'Custom prompt created successfully',
+            );
+            goBackToLibrary();
+          }
+        } catch (error) {
+          console.error('Failed to create custom prompt:', error);
+          Alert.alert('Error', 'Failed to save the prompt. Please try again.');
+        }
+      });
+    }
   }, [titleInput, contentInput, editingTemplate, goBackToLibrary]);
 
-  const handleDeleteTemplate = useCallback((id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
-    Alert.alert(t('templates.deleteTitle'), t('templates.deleteMessage'), [
-      { text: t('common.cancel'), style: 'cancel', onPress: () => {
-        swipeableRefs.get(id)?.close();
-        if (viewState === 'options') goBackToLibrary();
-      }},
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: () => {
-          setTemplates(prev => prev.filter(t => t.id !== id));
-          if (selectedTemplateId === id) onSelectTemplate(null);
-          goBackToLibrary();
-        },
-      },
-    ]);
-  }, [swipeableRefs, viewState, selectedTemplateId, onSelectTemplate, goBackToLibrary]);
+  const handleDeleteTemplate = useCallback(
+    (id: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-  const handleSelect = useCallback((item: CustomTemplate) => {
-    Haptics.selectionAsync();
-    onSelectTemplate(item);
-    closeModal();
-  }, [onSelectTemplate, closeModal]);
+      Alert.alert(t('templates.deleteTitle'), t('templates.deleteMessage'), [
+        {
+          text: t('common.cancel'),
+          style: 'cancel',
+          onPress: () => {
+            swipeableRefs.get(id)?.close();
+            if (viewState === 'options') goBackToLibrary();
+          },
+        },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            import('../services/authService').then(
+              async ({ deleteCustomPrompt }) => {
+                try {
+                  await deleteCustomPrompt(id);
+                  setTemplates((prev) => prev.filter((t) => t.id !== id));
+                  if (selectedTemplateId === id) onSelectTemplate(null);
+                  customToast(
+                    'success',
+                    t('common.success'),
+                    'Template deleted successfully',
+                  );
+                  console.log('Custom prompt deleted successfully', id);
+                  goBackToLibrary();
+                } catch (error) {
+                  console.error('Failed to delete custom prompt:', error);
+                  Alert.alert(
+                    'Error',
+                    'Failed to delete the prompt. Please try again.',
+                  );
+                }
+              },
+            );
+          },
+        },
+      ]);
+    },
+    [
+      swipeableRefs,
+      viewState,
+      selectedTemplateId,
+      onSelectTemplate,
+      goBackToLibrary,
+    ],
+  );
+
+  const handleSelect = useCallback(
+    (item: CustomTemplate) => {
+      Haptics.selectionAsync();
+      onSelectTemplate(item);
+      closeModal();
+    },
+    [onSelectTemplate, closeModal],
+  );
 
   const handleClear = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -238,34 +343,50 @@ const CustomTemplateManager = ({
   }, [onSelectTemplate]);
 
   // --- SWIPE ACTIONS ---
-  const renderRightActions = useCallback((id: string) => (
-    <TouchableOpacity style={styles.deleteAction} onPress={() => handleDeleteTemplate(id)}>
-      <Trash2 size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-  ), [handleDeleteTemplate]);
+  const renderRightActions = useCallback(
+    (id: string) => (
+      <TouchableOpacity
+        style={styles.deleteAction}
+        onPress={() => handleDeleteTemplate(id)}>
+        <Trash2 size={20} color="#FFFFFF" />
+      </TouchableOpacity>
+    ),
+    [handleDeleteTemplate],
+  );
 
-  const renderLeftActions = useCallback((item: CustomTemplate) => (
-    <TouchableOpacity style={styles.editAction} onPress={() => openEditor(item)}>
-      <Edit3 size={20} color="#FFFFFF" />
-    </TouchableOpacity>
-  ), [openEditor]);
+  const renderLeftActions = useCallback(
+    (item: CustomTemplate) => (
+      <TouchableOpacity
+        style={styles.editAction}
+        onPress={() => openEditor(item)}>
+        <Edit3 size={20} color="#FFFFFF" />
+      </TouchableOpacity>
+    ),
+    [openEditor],
+  );
 
   // --- RENDER: Library View ---
   const renderLibraryView = () => (
     <View style={styles.modalContainer}>
       {/* Header */}
       <View style={styles.modalHeader}>
-        <TouchableOpacity onPress={closeModal} hitSlop={12} style={styles.headerBtn}>
+        <TouchableOpacity
+          onPress={closeModal}
+          hitSlop={12}
+          style={styles.headerBtn}>
           <Text style={styles.headerBtnText}>{t('common.close')}</Text>
         </TouchableOpacity>
-        
+
         <Text style={styles.modalTitle}>{t('templates.title')}</Text>
-        
-        <TouchableOpacity onPress={() => openEditor()} hitSlop={12} style={styles.headerBtn}>
+
+        <TouchableOpacity
+          onPress={() => openEditor()}
+          hitSlop={12}
+          style={styles.headerBtn}>
           <Plus size={24} color={THEME.primary} />
         </TouchableOpacity>
       </View>
-      
+
       {/* Search Bar - Native TextInput, No Wrapper Borders */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
@@ -293,7 +414,7 @@ const CustomTemplateManager = ({
       {/* List */}
       <FlatList
         data={filteredTemplates}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         keyboardDismissMode="on-drag"
@@ -301,30 +422,44 @@ const CustomTemplateManager = ({
           const isSelected = selectedTemplateId === item.id;
           return (
             <Swipeable
-              ref={ref => { if (ref) swipeableRefs.set(item.id, ref); }}
+              ref={(ref) => {
+                if (ref) swipeableRefs.set(item.id, ref);
+              }}
               renderRightActions={() => renderRightActions(item.id)}
               renderLeftActions={() => renderLeftActions(item)}
-              containerStyle={styles.swipeContainer}
-            >
+              containerStyle={styles.swipeContainer}>
               <TouchableOpacity
                 style={[styles.cardItem, isSelected && styles.cardItemActive]}
                 onPress={() => handleSelect(item)}
-                activeOpacity={0.9}
-              >
+                activeOpacity={0.9}>
                 <View style={styles.cardItemBody}>
                   <View style={styles.cardHeaderRow}>
                     <View style={styles.cardTitleRow}>
-                      <Text style={[styles.cardTitle, isSelected && styles.cardTitleActive]} numberOfLines={1}>
+                      <Text
+                        style={[
+                          styles.cardTitle,
+                          isSelected && styles.cardTitleActive,
+                        ]}
+                        numberOfLines={1}>
                         {item.title}
                       </Text>
-                      {isSelected && <Check size={16} color={THEME.primary} style={{marginLeft: 6}} />}
+                      {isSelected && (
+                        <Check
+                          size={16}
+                          color={THEME.primary}
+                          style={{ marginLeft: 6 }}
+                        />
+                      )}
                     </View>
-                    
-                    <TouchableOpacity onPress={() => openOptions(item)} hitSlop={14} style={styles.cardOptionBtn}>
+
+                    <TouchableOpacity
+                      onPress={() => openOptions(item)}
+                      hitSlop={14}
+                      style={styles.cardOptionBtn}>
                       <MoreHorizontal size={20} color={THEME.textTertiary} />
                     </TouchableOpacity>
                   </View>
-                  
+
                   <Text style={styles.cardPreview} numberOfLines={2}>
                     {item.content}
                   </Text>
@@ -340,7 +475,9 @@ const CustomTemplateManager = ({
             </View>
             <Text style={styles.emptyStateText}>{t('templates.empty')}</Text>
             <TouchableOpacity onPress={() => openEditor()}>
-              <Text style={styles.emptyStateLink}>{t('templates.createNew')}</Text>
+              <Text style={styles.emptyStateLink}>
+                {t('templates.createNew')}
+              </Text>
             </TouchableOpacity>
           </View>
         }
@@ -355,11 +492,16 @@ const CustomTemplateManager = ({
       return (
         <View style={styles.modalContainer}>
           <View style={styles.editorHeader}>
-            <TouchableOpacity onPress={goBackToLibrary} hitSlop={12} style={styles.backBtn}>
+            <TouchableOpacity
+              onPress={goBackToLibrary}
+              hitSlop={12}
+              style={styles.backBtn}>
               <ChevronLeft size={24} color={THEME.textSecondary} />
               <Text style={styles.backBtnText}>{t('common.back')}</Text>
             </TouchableOpacity>
-            <Text style={styles.methodSelectionTitle}>{t('templates.howToCreate')}</Text>
+            <Text style={styles.methodSelectionTitle}>
+              {t('templates.howToCreate')}
+            </Text>
             <View style={{ width: 60 }} />
           </View>
 
@@ -375,13 +517,14 @@ const CustomTemplateManager = ({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setCreationMethod('manual');
               }}
-              activeOpacity={0.9}
-            >
+              activeOpacity={0.9}>
               <View style={styles.methodIconContainer}>
                 <Edit size={28} color={THEME.primary} strokeWidth={2} />
               </View>
               <View style={styles.methodTextContainer}>
-                <Text style={styles.methodTitle}>{t('templates.manualMethod')}</Text>
+                <Text style={styles.methodTitle}>
+                  {t('templates.manualMethod')}
+                </Text>
                 <Text style={styles.methodDescription}>
                   {t('templates.manualDescription')}
                 </Text>
@@ -396,9 +539,12 @@ const CustomTemplateManager = ({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setCreationMethod('ai');
               }}
-              activeOpacity={0.9}
-            >
-              <View style={[styles.methodIconContainer, styles.methodIconContainerAI]}>
+              activeOpacity={0.9}>
+              <View
+                style={[
+                  styles.methodIconContainer,
+                  styles.methodIconContainerAI,
+                ]}>
                 <Wand2 size={28} color={THEME.primary} strokeWidth={2} />
               </View>
               <View style={styles.methodTextContainer}>
@@ -420,42 +566,47 @@ const CustomTemplateManager = ({
     // Manual Editor (existing or after method selection)
     if (creationMethod === 'manual') {
       return (
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-        >
+          style={styles.modalContainer}>
           <View style={styles.editorHeader}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 if (editingTemplate) {
                   goBackToLibrary();
                 } else {
                   setCreationMethod(null);
                 }
-              }} 
-              hitSlop={12} 
-              style={styles.backBtn}
-            >
+              }}
+              hitSlop={12}
+              style={styles.backBtn}>
               <ChevronLeft size={24} color={THEME.textSecondary} />
               <Text style={styles.backBtnText}>{t('common.back')}</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              onPress={handleSaveTemplate} 
-              style={[styles.saveBtn, (!titleInput.trim() || !contentInput.trim()) && styles.saveBtnDisabled]}
-              disabled={!titleInput.trim() || !contentInput.trim()}
-            >
-              <Text style={[styles.saveBtnText, (!titleInput.trim() || !contentInput.trim()) && styles.saveBtnTextDisabled]}>
+
+            <TouchableOpacity
+              onPress={handleSaveTemplate}
+              style={[
+                styles.saveBtn,
+                (!titleInput.trim() || !contentInput.trim()) &&
+                  styles.saveBtnDisabled,
+              ]}
+              disabled={!titleInput.trim() || !contentInput.trim()}>
+              <Text
+                style={[
+                  styles.saveBtnText,
+                  (!titleInput.trim() || !contentInput.trim()) &&
+                    styles.saveBtnTextDisabled,
+                ]}>
                 {t('common.save')}
               </Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView 
-            style={styles.editorScroll} 
+          <ScrollView
+            style={styles.editorScroll}
             contentContainerStyle={styles.editorContent}
-            keyboardShouldPersistTaps="handled"
-          >
+            keyboardShouldPersistTaps="handled">
             <TextInput
               ref={titleInputRef}
               value={titleInput}
@@ -492,18 +643,19 @@ const CustomTemplateManager = ({
       return (
         <View style={styles.modalContainer}>
           <View style={styles.editorHeader}>
-            <TouchableOpacity 
-              onPress={() => setCreationMethod(null)} 
-              hitSlop={12} 
-              style={styles.backBtn}
-            >
+            <TouchableOpacity
+              onPress={() => setCreationMethod(null)}
+              hitSlop={12}
+              style={styles.backBtn}>
               <ChevronLeft size={24} color={THEME.textSecondary} />
               <Text style={styles.backBtnText}>{t('common.back')}</Text>
             </TouchableOpacity>
-            <Text style={styles.methodSelectionTitle}>{t('templates.aiMethod')}</Text>
+            <Text style={styles.methodSelectionTitle}>
+              {t('templates.aiMethod')}
+            </Text>
             <View style={{ width: 60 }} />
           </View>
-          
+
           <MagicTemplateCreatorInline
             onSave={(aiTemplate) => {
               // Create new template from AI result
@@ -513,15 +665,17 @@ const CustomTemplateManager = ({
                 content: aiTemplate.content,
                 lastUsed: new Date(),
               };
-              
-              setTemplates(prev => [newTemplate, ...prev]);
-              
+
+              setTemplates((prev) => [newTemplate, ...prev]);
+
               // Reset and go back
               setCreationMethod(null);
               goBackToLibrary();
-              
+
               if (Platform.OS !== 'web') {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                );
               }
             }}
             onCancel={() => setCreationMethod(null)}
@@ -536,33 +690,43 @@ const CustomTemplateManager = ({
   // --- RENDER: Options View (Bottom Sheet Overlay) ---
   const renderOptionsView = () => (
     <View style={styles.optionsOverlay}>
-      <TouchableOpacity style={styles.optionsBackdrop} activeOpacity={1} onPress={goBackToLibrary} />
-      
+      <TouchableOpacity
+        style={styles.optionsBackdrop}
+        activeOpacity={1}
+        onPress={goBackToLibrary}
+      />
+
       <View style={styles.bottomSheet}>
         <View style={styles.bottomSheetHandle} />
         <Text style={styles.bottomSheetTitle}>{optionsTarget?.title}</Text>
-        
-        <TouchableOpacity 
-          style={styles.bottomSheetOption} 
-          onPress={() => optionsTarget && openEditor(optionsTarget)}
-        >
+
+        <TouchableOpacity
+          style={styles.bottomSheetOption}
+          onPress={() => optionsTarget && openEditor(optionsTarget)}>
           <Edit3 size={20} color={THEME.text} />
-          <Text style={styles.bottomSheetOptionText}>{t('templates.edit')}</Text>
+          <Text style={styles.bottomSheetOptionText}>
+            {t('templates.edit')}
+          </Text>
         </TouchableOpacity>
-        
+
         <View style={styles.bottomSheetDivider} />
-        
-        <TouchableOpacity 
-          style={styles.bottomSheetOption} 
-          onPress={() => optionsTarget && handleDeleteTemplate(optionsTarget.id)}
-        >
+
+        <TouchableOpacity
+          style={styles.bottomSheetOption}
+          onPress={() =>
+            optionsTarget && handleDeleteTemplate(optionsTarget.id)
+          }>
           <Trash2 size={20} color={THEME.danger} />
-          <Text style={[styles.bottomSheetOptionText, {color: THEME.danger}]}>{t('templates.delete')}</Text>
+          <Text style={[styles.bottomSheetOptionText, { color: THEME.danger }]}>
+            {t('templates.delete')}
+          </Text>
         </TouchableOpacity>
-        
-        <View style={{height: 20}} />
-        
-        <TouchableOpacity style={styles.bottomSheetCancel} onPress={goBackToLibrary}>
+
+        <View style={{ height: 20 }} />
+
+        <TouchableOpacity
+          style={styles.bottomSheetCancel}
+          onPress={goBackToLibrary}>
           <Text style={styles.bottomSheetCancelText}>{t('common.cancel')}</Text>
         </TouchableOpacity>
       </View>
@@ -574,26 +738,38 @@ const CustomTemplateManager = ({
     <>
       {/* TRIGGER COMPONENT */}
       <View style={styles.triggerContainer}>
-        <Text style={styles.sectionLabel}>{t('templates.customNoteTemplate')}</Text>
-        
+        <Text style={styles.sectionLabel}>
+          {t('templates.customNoteTemplate')}
+        </Text>
+
         <TouchableOpacity
-          style={[styles.triggerCard, selectedTemplate && styles.triggerCardActive]}
+          style={[
+            styles.triggerCard,
+            selectedTemplate && styles.triggerCardActive,
+          ]}
           onPress={openLibrary}
-          activeOpacity={0.8}
-        >
+          activeOpacity={0.8}>
           <View style={styles.triggerContent}>
             {!selectedTemplate && (
               <View style={styles.triggerIconBox}>
-                <Search size={18} color={THEME.textSecondary} strokeWidth={2.5} />
+                <Search
+                  size={18}
+                  color={THEME.textSecondary}
+                  strokeWidth={2.5}
+                />
               </View>
             )}
 
             <View style={styles.triggerText}>
               <Text
-                style={[styles.triggerTitle, !selectedTemplate && styles.placeholderText]}
-                numberOfLines={1}
-              >
-                {selectedTemplate ? selectedTemplate.title : t('templates.selectTemplate')}
+                style={[
+                  styles.triggerTitle,
+                  !selectedTemplate && styles.placeholderText,
+                ]}
+                numberOfLines={1}>
+                {selectedTemplate
+                  ? selectedTemplate.title
+                  : t('templates.selectTemplate')}
               </Text>
               {selectedTemplate && (
                 <Text style={styles.triggerSubtitle} numberOfLines={1}>
@@ -601,9 +777,12 @@ const CustomTemplateManager = ({
                 </Text>
               )}
             </View>
-            
+
             {selectedTemplate ? (
-              <TouchableOpacity onPress={handleClear} hitSlop={14} style={styles.clearBtn}>
+              <TouchableOpacity
+                onPress={handleClear}
+                hitSlop={14}
+                style={styles.clearBtn}>
                 <View style={styles.clearBtnBg}>
                   <X size={14} color={THEME.textSecondary} strokeWidth={3} />
                 </View>
@@ -622,10 +801,9 @@ const CustomTemplateManager = ({
         visible={isModalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={viewState === 'library' ? closeModal : goBackToLibrary}
-      >
-        <GestureHandlerRootView style={{flex: 1}}>
-          <SafeAreaView style={{flex: 1, backgroundColor: THEME.bgAlt}}>
+        onRequestClose={viewState === 'library' ? closeModal : goBackToLibrary}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: THEME.bgAlt }}>
             {viewState === 'library' && renderLibraryView()}
             {viewState === 'editor' && renderEditorView()}
             {viewState === 'options' && (
@@ -787,7 +965,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   // List & Cards
   listContent: {
     padding: 16,

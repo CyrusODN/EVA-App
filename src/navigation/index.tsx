@@ -288,6 +288,7 @@ const Navigation = () => {
       try {
         const token = await AsyncStorage.getItem('auth_token');
         const expStr = await AsyncStorage.getItem('auth_session_expires_at');
+        AsyncStorage.getItem('auth_session_expires_at');
         const exp = expStr ? parseInt(expStr, 10) : 0;
         const valid = !!token && exp > Date.now();
         if (valid) {

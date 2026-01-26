@@ -47,7 +47,7 @@ export const en = {
 			"profile": "Profile"
 		}
 	},
-		"common": {
+	"common": {
 		"logout": "Log out",
 		"goToApplication": "Go to application",
 		"search": "Search...",
@@ -832,6 +832,7 @@ export const en = {
 				"psychiatry": "Psychiatry",
 				"childPsychiatry": "Child Psychiatry",
 				"surgery": "Surgery",
+				"familyMedicine": "Family Medicine",
 				"smartSelect": "Smart Select"
 			},
 			"visitType": {
@@ -1318,7 +1319,7 @@ export const en = {
 			"title": "Create New Project"
 		}
 	},
-		"dischargeAssistant": {
+	"dischargeAssistant": {
 		"inputBar": {
 			"placeholder": "Add clinical notes..."
 		},
