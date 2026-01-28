@@ -22,7 +22,11 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import { Settings, Mic, RotateCcw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import VoiceInputButton from './VoiceInputButton';
@@ -737,26 +741,28 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={handleClose}>
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoid}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('magicCreator.title')}</Text>
-            <View style={styles.headerSpacer} />
-          </View>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaView style={styles.container}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoid}>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>{t('magicCreator.title')}</Text>
+              <View style={styles.headerSpacer} />
+            </View>
 
-          {/* Content */}
-          {step === 'input' && renderInputStep()}
-          {step === 'processing' && renderProcessingStep()}
-          {step === 'preview' && renderPreviewStep()}
-          {step === 'refining' && renderRefiningStep()}
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            {/* Content */}
+            {step === 'input' && renderInputStep()}
+            {step === 'processing' && renderProcessingStep()}
+            {step === 'preview' && renderPreviewStep()}
+            {step === 'refining' && renderRefiningStep()}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </GestureHandlerRootView>
     </Modal>
   );
 };

@@ -354,4 +354,22 @@ export const sessionStorage = {
       await this.saveSession(session);
     }
   },
+
+  async updateSessionAfterGeneration(
+    id: string,
+    generatedNotes: string,
+    status: SessionStatus,
+  ): Promise<void> {
+    const session = await this.getSessionById(id);
+    if (session) {
+      session.generatedNotes = generatedNotes;
+      session.status = status;
+      
+      if (status === 'transcribed' || status === 'completed') {
+        session.hasTranscription = true;
+      }
+      
+      await this.saveSession(session);
+    }
+  },
 };

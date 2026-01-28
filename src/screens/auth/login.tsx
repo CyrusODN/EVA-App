@@ -28,7 +28,7 @@ import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 //@ts-ignore
 import CheckBox from 'react-native-check-box';
-import { login, setAuthToken, ssoRequest } from '../../services/authService';
+import { login, setAuthToken, ssoRequest, googleMobileLogin } from '../../services/authService';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { customToast } from '../../utils/toastMessage';
 import userStore from '../../store/user';
@@ -43,10 +43,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInput>(null);
 
-  GoogleSignin.configure({
-    webClientId:
-      '1032423224242-93453453453453453453453453453453.apps.googleusercontent.com',
-  });
+  // GoogleSignin configuration moved to handleGoogleLogin
+
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -74,7 +72,7 @@ const Login = () => {
         setAuthToken(token);
         userStore.getState().setToken(token);
         customToast('success', 'Success', 'Logged in successfully');
-        navigation.navigate('tabs');
+        navigation.replace('tabs');
       } else if (payload?.loginToken || payload?.requires2FA) {
         const twoFAUserId =
           payload?.userId ||
@@ -92,7 +90,7 @@ const Login = () => {
         );
         // eslint-disable-next-line no-console
         console.log('2FA payload message:', payload?.message || raw?.message);
-        navigation.navigate('otpVerification', {
+        navigation.replace('otpVerification', {
           context: 'login',
           email,
           password,
@@ -123,91 +121,174 @@ const Login = () => {
         error?.response?.data?.message ||
         error?.message ||
         'Failed to sign in. Please try again';
-      customToast('error', 'Error', message);
+
+      if (
+        message === 'User not authorized' ||
+        message.includes('not whitelisted')
+      ) {
+        customToast(
+          'error',
+          'Access Denied',
+          'You are not authorized to use this service',
+        );
+      } else {
+        customToast('error', 'Error', message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSkipLogin = async () => {
-    setLoading(true);
+  // const handleSkipLogin = async () => {
+  //   setLoading(true);
 
-    // Simulate a brief loading delay for UX
-    setTimeout(() => {
-      setLoading(false);
-      // Set a mock token for development
-      const mockToken = 'dev_token_' + Date.now();
-      setAuthToken(mockToken);
-      userStore.getState().setToken(mockToken);
-      customToast('success', 'Success', 'Development login successful');
-      navigation.navigate('tabs');
-    }, 800);
-  };
+  //   // Simulate a brief loading delay for UX
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     // Set a mock token for development
+  //     const mockToken = 'dev_token_' + Date.now();
+  //     setAuthToken(mockToken);
+  //     userStore.getState().setToken(mockToken);
+  //     customToast('success', 'Success', 'Development login successful');
+  //     navigation.navigate('tabs');
+  //   }, 800);
+  // };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      let googleEmail = email;
+      let googleEmail = '';
+      let idToken = '';
+
       try {
         // Dynamically require to avoid build errors if the module isn't installed
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const {
           GoogleSignin,
+          statusCodes,
         } = require('@react-native-google-signin/google-signin');
+
         try {
           await GoogleSignin.hasPlayServices({
             showPlayServicesUpdateDialog: true,
           });
         } catch (_) {}
-        try {
-          await GoogleSignin.configure({});
-        } catch (_) {}
-        try {
-          const account = await GoogleSignin.signIn();
-          console.log('Google Sign In Account:', account);
-          googleEmail = account?.user?.email || googleEmail;
-        } catch (_) {}
-        try {
-          const silent = await GoogleSignin.signInSilently();
-          googleEmail = silent?.user?.email || googleEmail;
-        } catch (_) {}
-        try {
-          const current = await GoogleSignin.getCurrentUser();
-          googleEmail = current?.user?.email || googleEmail;
-        } catch (_) {}
-      } catch (_) {}
 
-      if (!googleEmail && email) {
-        googleEmail = email;
+        try {
+          const webClientId = '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com'
+          await GoogleSignin.configure({
+            webClientId,
+          });
+        } catch (err) {
+          console.warn('GoogleSignin configure error:', err);
+        }
+
+        try {
+      const account = await GoogleSignin.signIn();
+          console.log('Google Sign In Account:', account);
+          if (account?.idToken) {
+            idToken = account.idToken;
+            googleEmail = account?.user?.email || account?.data?.user?.email || '';
+          } else if (account?.data?.idToken) {
+             idToken = account.data.idToken;
+             googleEmail = account?.user?.email || account?.data?.user?.email || '';
+          }
+        } catch (error: any) {
+          if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+            console.log('User cancelled the login flow');
+            setLoading(false);
+            return;
+          } else if (error.code === statusCodes.IN_PROGRESS) {
+            console.log('Sign in is in progress already');
+            return;
+          } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+            customToast('error', 'Error', 'Play services not available or outdated');
+            setLoading(false);
+            return;
+          } else {
+            console.error('Google Sign-In Error:', error);
+            throw error; // Rethrow to be caught by outer catch if it's a real error
+          }
+        }
+      } catch (err) {
+         // Module not found or other setup error
+         console.warn('Google Sign In setup error:', err);
       }
-      if (!googleEmail) {
-        customToast(
-          'error',
-          t('common.error'),
-          'Please enter your email or select a Google account',
-        );
+
+      if (!idToken) {
+        // If we didn't get an idToken from Google, stop here.
         setLoading(false);
+        customToast('error', 'Error', 'Error Signing In with Google');
         return;
       }
-      const resp = await ssoRequest({ provider: 'google', email: googleEmail });
+
+      // New API call using googleMobileLogin
+      const loginPayload = {
+        idToken,
+        email : googleEmail,
+        isSignup: false,
+      };
+      console.log('Google Sign-In caught. Preparing backend payload:', JSON.stringify(loginPayload, null, 2));
+
+      const resp = await googleMobileLogin(loginPayload);
+      console.log('Google Mobile Login Status:', resp.status);
+      console.log('Google Mobile Login API Response Body:', JSON.stringify(resp.data, null, 2));
+      
+      const payload = resp?.data?.data || resp?.data;
+      const token = payload?.token || payload?.accessToken;
+
+      if (token) {
+        setAuthToken(token);
+        userStore.getState().setToken(token);
+        customToast('success', 'Success', 'Logged in successfully');
+        navigation.replace('tabs');
+        return;
+      }
+
       const reqId =
-        resp?.data?.requestId ||
-        resp?.data?.data?.requestId ||
-        resp?.data?.id ||
-        resp?.data?.ssoRequestId ||
-        resp?.data?.data?.ssoRequestId;
-      navigation.navigate('otpVerification', {
-        context: 'sso',
-        requestId: reqId ? String(reqId) : undefined,
-        email: googleEmail,
-        nextRoute: 'tabs',
-      });
+        payload?.requestId ||
+        payload?.request_id ||
+        payload?.ssoRequestId ||
+        payload?.sso_request_id ||
+        payload?.userId;
+
+      if (reqId) {
+         navigation.replace('otpVerification', {
+          context: 'sso',
+          requestId: reqId ? String(reqId) : undefined,
+          email: googleEmail,
+          nextRoute: 'tabs',
+        });
+        return;
+      }
+      
+      // Fallback if no token and no requestId found (unexpected state)
+      customToast('error', 'Error', 'Unexpected response from server');
+
     } catch (error: any) {
+      console.error('Google Mobile Login FAILED:', error);
+      if (error?.response) {
+         console.error('Error Response Data:', JSON.stringify(error.response.data, null, 2));
+         console.error('Error Response Status:', error.response.status);
+      }
+
       const message =
         error?.response?.data?.message ||
         error?.message ||
         'Failed to initiate Google login';
-      customToast('error', t('common.error'), message);
+        
+      if (
+        message === 'User not authorized' ||
+        message.includes('not whitelisted')
+      ) {
+         customToast(
+          'error',
+          'Access Denied',
+          'You are not authorized to use this service',
+        );
+      } else {
+         customToast('error', t('common.error'), message);
+      }
     } finally {
       setLoading(false);
     }
@@ -359,7 +440,7 @@ const Login = () => {
               </TouchableOpacity>
 
               {/* Development Skip Login Button */}
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.skipButton}
                 onPress={handleSkipLogin}
                 disabled={loading}
@@ -367,7 +448,7 @@ const Login = () => {
                 <Text variant="labelLarge" style={styles.skipButtonText}>
                   Skip Login (Development)
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             {/* Footer - Pushed to bottom */}

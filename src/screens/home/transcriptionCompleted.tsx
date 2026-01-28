@@ -184,8 +184,10 @@ const TranscriptionComplete = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
-  const [generatedNotes, setGeneratedNotes] = useState<string>('');
-  const generatedNotesRef = useRef<string>(''); // To track latest value inside socket callbacks
+  const [generatedNotes, setGeneratedNotes] = useState<string>(
+    sessionData?.generatedNotes || '',
+  );
+  const generatedNotesRef = useRef<string>(sessionData?.generatedNotes || ''); // To track latest value inside socket callbacks
   const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
   const [noteLength, setNoteLength] = useState<'Small' | 'Medium' | 'Large'>(
     defaultNoteLength || 'Medium',
@@ -198,6 +200,15 @@ const TranscriptionComplete = () => {
   );
   const [selectedTemplateTitle, setSelectedTemplateTitle] =
     useState<string>('');
+
+  const noteScrollViewRef = useRef<ScrollView>(null);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (isGeneratingNotes && noteScrollViewRef.current) {
+      noteScrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [generatedNotes, isGeneratingNotes]);
 
   const noteLengthOptions: Array<'Small' | 'Medium' | 'Large'> = [
     'Small',
@@ -373,12 +384,17 @@ const TranscriptionComplete = () => {
   }, [session.type]);
 
   // Load saved notes from storage if session already has notes
+  // Load saved notes from storage if session already has notes
   useEffect(() => {
     const loadSavedNotes = async () => {
-      if (sessionData?.id) {
+      // Use session.id (which is reliable via the session variable) instead of sessionData?.id
+      if (session.id && session.id !== '1') {
         try {
+          // Add a small delay to ensure storage write matches read (rare race condition)
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           const latestSession = await sessionStorage.getSessionById(
-            sessionData.id,
+            session.id,
           );
           if (latestSession?.generatedNotes) {
             console.log(
@@ -391,7 +407,7 @@ const TranscriptionComplete = () => {
           } else {
             console.log(
               '[TranscriptionComplete] No saved notes found for session:',
-              sessionData.id,
+              session.id,
             );
           }
         } catch (error) {
@@ -403,36 +419,11 @@ const TranscriptionComplete = () => {
       }
     };
     loadSavedNotes();
-  }, [sessionData?.id]);
+  }, [session.id]);
 
   const filteredFollowUpVisits = availableSessions.filter((visit) =>
     visit.title.toLowerCase().includes(visitSearchQuery.toLowerCase()),
   );
-
-  // Mock follow-up visits data
-  const mockFollowUpVisits = [
-    {
-      _id: '1',
-      title: 'Wizyta kontrolna - JS45',
-      date: new Date('2024-01-15'),
-      mode: 'standard',
-      label: 'Psychiatry • First Visit',
-    },
-    {
-      _id: '2',
-      title: 'Konsultacja - JS45',
-      date: new Date('2024-01-20'),
-      mode: 'custom',
-      label: 'Custom • Psychiatry - First Visit',
-    },
-    {
-      _id: '3',
-      title: 'Badania kontrolne - JS45',
-      date: new Date('2024-01-25'),
-      mode: 'standard',
-      label: 'Cardiology • Follow-up',
-    },
-  ];
 
   const getSessionIcon = () => {
     switch (session.type) {
@@ -545,12 +536,16 @@ const TranscriptionComplete = () => {
         try {
           await resetEvent(session.sessionId);
           console.log('[TranscriptionComplete] Session reset on backend');
-        } catch (error) {
+        } catch (error: any) {
           console.error(
             '[TranscriptionComplete] Failed to reset session on backend:',
             error,
           );
-          // Continue with local reset even if backend fails
+          // If 404, it might be already deleted or just local, so we proceed
+          if (error?.response?.status !== 404) {
+             // For non-404 errors, we might want to alert, but for now we proceed to local reset
+             // to ensure the user can at least clear the app state.
+          }
         }
       }
 
@@ -576,7 +571,7 @@ const TranscriptionComplete = () => {
   };
 
   const handleImportFollowUpVisits = () => {
-    const selectedVisitData = mockFollowUpVisits
+    const selectedVisitData = availableSessions
       .filter((visit) => selectedFollowUpVisits.has(visit._id))
       .map((visit) => ({
         _id: visit._id,
@@ -1090,13 +1085,25 @@ const TranscriptionComplete = () => {
                 '[TranscriptionComplete] Using custom prompt ID:',
                 selectedTemplateId,
               );
+            } else if (session.type === 'meeting') {
+              payload = {
+                llmModel: 'gpt-4o',
+                noteType: 'general',
+              };
+            } else if ( session.type === 'lecture') {
+              payload = {
+                llmModel: 'gpt-4o',
+                noteType: 'medical',
+              };
             } else {
               payload = {
                 noteType: noteType || defaultNoteType,
                 visitType:
                   visitType.toLowerCase().replace(' ', '-') || 'first-visit',
                 specialization:
-                  selectedSpecialization.toLowerCase() || 'psychiatry',
+                  selectedSpecialization === 'Child Psychiatry'
+                    ? 'childPsychiatry'
+                    : selectedSpecialization.toLowerCase() || 'psychiatry',
                 length: noteLength.toLowerCase(),
                 llmModel: 'gemini-3-pro-preview',
               };
@@ -1172,18 +1179,19 @@ const TranscriptionComplete = () => {
 
                 if (contentToSave && contentToSave.length > 0) {
                   console.log(
-                    '[TranscriptionComplete] 💾 Saving notes from completion handler...',
+                    '[TranscriptionComplete] 💾 Saving notes and status from completion handler...',
                   );
+                  // Use atomic update to prevent race conditions
                   sessionStorage
-                    .updateSessionNotes(session.id, contentToSave)
+                    .updateSessionAfterGeneration(session.id, contentToSave, 'completed')
                     .then(() => {
                       console.log(
-                        '[TranscriptionComplete] ✅ Notes saved from completion handler successfully!',
+                        '[TranscriptionComplete] ✅ Session updated (notes + status) successfully!',
                       );
                     })
                     .catch((error) => {
                       console.error(
-                        '[TranscriptionComplete] ❌ Failed to save notes from completion handler:',
+                        '[TranscriptionComplete] ❌ Failed to update session:',
                         error,
                       );
                     });
@@ -1191,10 +1199,9 @@ const TranscriptionComplete = () => {
                   console.warn(
                     '[TranscriptionComplete] ⚠️ No content to save in completion handler',
                   );
+                  // Even if no notes, mark completed
+                  sessionStorage.updateSessionStatus(session.id, 'completed');
                 }
-
-                // Update session status in local storage
-                sessionStorage.updateSessionStatus(session.id, 'completed');
 
                 // Set isGeneratingNotes to false
                 setIsGeneratingNotes(false);
@@ -1234,7 +1241,8 @@ const TranscriptionComplete = () => {
                 customToast(
                   'error',
                   t('common.error'),
-                  event.payload?.error ||
+                  event.payload?.message ||
+                    event.payload?.error ||
                     'Failed to generate notes. Please try again.',
                 );
               }
@@ -1314,7 +1322,10 @@ const TranscriptionComplete = () => {
           )}
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={() => setShowRenameModal(true)}>
+            onPress={() => {
+              setNewSessionName(session.title);
+              setShowRenameModal(true);
+            }}>
             <Edit3 size={20} color="#A6A6A6" />
           </TouchableOpacity>
           <TouchableOpacity
@@ -1407,6 +1418,7 @@ const TranscriptionComplete = () => {
         {isNoteReady ? (
           <>
             <ScrollView
+              ref={noteScrollViewRef}
               style={styles.noteDocumentContent}
               contentContainerStyle={styles.noteDocumentScrollContent}
               showsVerticalScrollIndicator={true}>
@@ -1477,6 +1489,15 @@ const TranscriptionComplete = () => {
               </TouchableOpacity>
             </View>
           </>
+        ) : isGeneratingNotes ? (
+          <View style={styles.noteEmptyState}>
+            <ActivityIndicator size="large" color={DESIGN_TOKENS.colors.primary} />
+            <Text
+              variant="bodySmall"
+              style={[styles.noteEmptySubtitle, { marginTop: 12 }]}>
+              {t('common.generatingNote')}...
+            </Text>
+          </View>
         ) : (
           <View style={styles.noteEmptyState}>
             <Text variant="titleSmall" style={styles.noteEmptyTitle}>
@@ -1758,7 +1779,7 @@ const TranscriptionComplete = () => {
             <View style={styles.visitsList}>
               {filteredFollowUpVisits.length === 0 ? (
                 <Text variant="bodyMedium" style={styles.noVisitsText}>
-                  {mockFollowUpVisits.length === 0
+                  {availableSessions.length === 0
                     ? t(
                         'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable',
                       )
@@ -2008,6 +2029,8 @@ const styles = StyleSheet.create({
   },
   compactActionButton: {
     padding: 6,
+    fontWeight: '600',
+
   },
   settingsSection: {
     flexShrink: 0,

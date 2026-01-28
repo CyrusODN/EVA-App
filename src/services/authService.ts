@@ -101,6 +101,14 @@ export const ssoVerify = (payload: {
   return api.post('/auth/sso/verify', payload);
 };
 
+export const googleMobileLogin = (payload: {
+  idToken: string;
+  email: string;
+  isSignup: boolean;
+}): Promise<AxiosResponse<any>> => {
+  return api.post('/oauth/google/mobile', payload);
+};
+
 export const createEvent = (payload: {
   type: string;
   title: string;

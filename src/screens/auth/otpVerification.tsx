@@ -201,6 +201,7 @@ const OtpVerification = () => {
         }
         resp = await ssoVerify({
           requestId: reqId,
+          email: params.email,
           otp: code,
         });
       } else {
@@ -564,7 +565,7 @@ const styles = StyleSheet.create({
   },
   welcomeTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '300',
     color: '#000000',
     letterSpacing: -0.8,
     marginBottom: hp(1.5),

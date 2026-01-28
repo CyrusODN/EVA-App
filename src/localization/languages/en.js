@@ -111,6 +111,7 @@ export const en = {
     copyAll: 'Copy All',
     use: 'Use',
     generating: 'Generating...',
+    generatingNote: 'Generating note',
     loading: 'Loading...',
     maxConcurrentReached: 'Max concurrent generations reached',
     notSupportedYet: 'This feature is not supported yet',
@@ -2582,6 +2583,7 @@ export const en = {
       promptEditLabel: 'System Instructions (Advanced)',
       promptEditPlaceholder: 'Edit the AI instructions here...',
       regenerateButton: 'Regenerate with Edits',
+      regenerateWithEdits: 'Regenerate with Edits',
     },
     refine: {
       title: 'What would you like to change?',

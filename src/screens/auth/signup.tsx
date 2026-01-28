@@ -22,8 +22,9 @@ import PrimaryButton from '../../components/primaryButton';
 import { colors } from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
-import { signup, ssoRequest } from '../../services/authService';
+import {signup, googleMobileLogin, setAuthToken } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
+import userStore from '../../store/user';
 
 const SignUp = () => {
   const { t } = useTranslation();
@@ -52,7 +53,7 @@ const SignUp = () => {
         t('common.success'),
         'Account created. Please verify your email',
       );
-      navigation.navigate('login');
+      navigation.replace('login');
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -65,31 +66,140 @@ const SignUp = () => {
   };
 
   const handleGoogleSignUp = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const resp = await ssoRequest({ provider: 'google', email });
+      let googleEmail = '';
+      let idToken = '';
+
+      try {
+        // Dynamically require to avoid build errors if the module isn't installed
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const {
+          GoogleSignin,
+          statusCodes,
+        } = require('@react-native-google-signin/google-signin');
+
+        try {
+          await GoogleSignin.hasPlayServices({
+            showPlayServicesUpdateDialog: true,
+          });
+        } catch (_) {}
+
+        try {
+          const webClientId = '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com'
+          await GoogleSignin.configure({
+            webClientId,
+          });
+        } catch (err) {
+          console.warn('GoogleSignin configure error:', err);
+        }
+
+        try {
+      const account = await GoogleSignin.signIn();
+          console.log('Google Sign In Account:', account);
+          if (account?.idToken) {
+            idToken = account.idToken;
+            googleEmail = account?.user?.email || account?.data?.user?.email || '';
+          } else if (account?.data?.idToken) {
+             idToken = account.data.idToken;
+             googleEmail = account?.user?.email || account?.data?.user?.email || '';
+          }
+        } catch (error: any) {
+          if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+            console.log('User cancelled the login flow');
+            setLoading(false);
+            return;
+          } else if (error.code === statusCodes.IN_PROGRESS) {
+            console.log('Sign in is in progress already');
+            return;
+          } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+            customToast('error', 'Error', 'Play services not available or outdated');
+            setLoading(false);
+            return;
+          } else {
+            console.error('Google Sign-In Error:', error);
+            throw error; // Rethrow to be caught by outer catch if it's a real error
+          }
+        }
+      } catch (err) {
+         // Module not found or other setup error
+         console.warn('Google Sign In setup error:', err);
+      }
+
+      if (!idToken) {
+        // If we didn't get an idToken from Google, stop here.
+        setLoading(false);
+        customToast('error', 'Error', 'Error Signing In with Google');
+        return;
+      }
+
+      // New API call using googleMobileLogin
+      const loginPayload = {
+        idToken,
+        email : googleEmail,
+        isSignup: true,
+      };
+      console.log('Google Sign-In caught. Preparing backend payload:', JSON.stringify(loginPayload, null, 2));
+
+      const resp = await googleMobileLogin(loginPayload);
+      console.log('Google Mobile Login Status:', resp.status);
+      console.log('Google Mobile Login API Response Body:', JSON.stringify(resp.data, null, 2));
+      
+      const payload = resp?.data?.data || resp?.data;
+      const token = payload?.token || payload?.accessToken;
+
+      if (token) {
+        setAuthToken(token);
+        userStore.getState().setToken(token);
+        customToast('success', 'Success', 'Logged in successfully');
+        navigation.replace('tabs');
+        return;
+      }
+
       const reqId =
-        resp?.data?.requestId || resp?.data?.data?.requestId || resp?.data?.id;
+        payload?.requestId ||
+        payload?.request_id ||
+        payload?.ssoRequestId ||
+        payload?.sso_request_id ||
+        payload?.userId;
+
       if (reqId) {
-        navigation.navigate('otpVerification', {
+         navigation.replace('otpVerification', {
           context: 'sso',
-          requestId: String(reqId),
-          email,
+          requestId: reqId ? String(reqId) : undefined,
+          email: googleEmail,
           nextRoute: 'tabs',
         });
-      } else {
-        customToast(
-          'error',
-          t('common.error'),
-          'Failed to initiate Google sign up',
-        );
+        return;
       }
+      
+      // Fallback if no token and no requestId found (unexpected state)
+      customToast('error', 'Error', 'Unexpected response from server');
+
     } catch (error: any) {
+      console.error('Google Mobile Login FAILED:', error);
+      if (error?.response) {
+         console.error('Error Response Data:', JSON.stringify(error.response.data, null, 2));
+         console.error('Error Response Status:', error.response.status);
+      }
+
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        'Failed to initiate Google sign up';
-      customToast('error', t('common.error'), message);
+        'Failed to initiate Google login';
+        
+      if (
+        message === 'User not authorized' ||
+        message.includes('not whitelisted')
+      ) {
+         customToast(
+          'error',
+          'Access Denied',
+          'You are not authorized to use this service',
+        );
+      } else {
+         customToast('error', t('common.error'), message);
+      }
     } finally {
       setLoading(false);
     }
