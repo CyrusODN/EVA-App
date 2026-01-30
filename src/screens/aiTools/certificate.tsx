@@ -9,7 +9,6 @@ import {
   Platform,
   ActivityIndicator,
   ActionSheetIOS,
-  Modal,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -18,7 +17,7 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import { FileText, Sparkles, Bookmark } from 'lucide-react-native';
+import { ClipboardList, Sparkles, Bookmark } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { pick, types } from '@react-native-documents/picker';
@@ -43,27 +42,30 @@ import {
 const INITIAL_PROMPTS: CustomPrompt[] = [
   {
     id: 'p1',
-    title: 'Primary Care Summary',
-    content: 'Summarize for primary care physician in under 200 words.',
+    title: 'OL-9',
+    content:
+      'Generate standard OL-9 medical certificate. Include patient data, diagnosis, recommendations, and physician signature block.',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'p2',
-    title: 'Medication Changes Focus',
-    content: 'Focus only on medication changes and discharge plan.',
+    title: 'Zaświadczenie dla zespołu orzekającego',
+    content:
+      'Generate certificate for disability assessment board. Include detailed medical history, functional limitations, prognosis, and assessment of work capacity.',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'p3',
-    title: 'Short Discharge',
-    content: 'Keep it concise, bullet format, highlight follow-up.',
+    title: 'Zaświadczenie po e-ZLA',
+    content:
+      'Generate post-sick-leave certificate confirming no psychiatric contraindications for work. Include mental status examination, current treatment, and work readiness assessment.',
     createdAt: new Date().toISOString(),
   },
 ];
 
 const PRIMARY_COLOR = '#46B7C6';
 
-const Discharge = () => {
+const Certificate = () => {
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
   const navigation = useNavigation();
@@ -93,7 +95,7 @@ const Discharge = () => {
 
   const checkFirstTimeUser = async () => {
     try {
-      const hasSeenWelcome = await AsyncStorage.getItem('discharge_welcome_seen');
+      const hasSeenWelcome = await AsyncStorage.getItem('certificate_welcome_seen');
       if (!hasSeenWelcome) {
         setTimeout(() => {
           setShowWelcomeModal(true);
@@ -106,7 +108,7 @@ const Discharge = () => {
 
   const handleCloseWelcomeModal = async () => {
     try {
-      await AsyncStorage.setItem('discharge_welcome_seen', 'true');
+      await AsyncStorage.setItem('certificate_welcome_seen', 'true');
       setShowWelcomeModal(false);
     } catch (error) {
       console.log('Error saving welcome modal state:', error);
@@ -163,7 +165,7 @@ const Discharge = () => {
                   content:
                     obs.content ||
                     (type === 'image'
-                      ? 'Extracted clinical data...'
+                      ? 'Extracted medical data...'
                       : 'Analyzed document content...'),
                 }
               : obs
@@ -201,7 +203,7 @@ const Discharge = () => {
     } catch (error) {
       console.log('Camera error', error);
       Alert.alert('Camera unavailable', 'Using mock image for demo.');
-      addObservation('image', '', 'https://via.placeholder.com/300', 'monitor_scan.jpg');
+      addObservation('image', '', 'https://via.placeholder.com/300', 'document_scan.jpg');
     }
   };
 
@@ -240,10 +242,10 @@ const Discharge = () => {
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options: [
-            t('dischargeAssistant.actions.cancel'),
-            t('dischargeAssistant.actions.scanDocuments'),
-            t('dischargeAssistant.actions.gallery'),
-            t('dischargeAssistant.actions.files'),
+            t('certificateAssistant.actions.cancel'),
+            t('certificateAssistant.actions.scanDocuments'),
+            t('certificateAssistant.actions.gallery'),
+            t('certificateAssistant.actions.files'),
           ],
           cancelButtonIndex: 0,
           tintColor: PRIMARY_COLOR,
@@ -256,13 +258,13 @@ const Discharge = () => {
       );
     } else {
       Alert.alert(
-        t('dischargeAssistant.headerTitle'),
-        t('dischargeAssistant.inputBar.placeholder'),
+        t('certificateAssistant.headerTitle'),
+        t('certificateAssistant.inputBar.placeholder'),
         [
-          { text: t('dischargeAssistant.actions.scanDocuments'), onPress: handleScan },
-          { text: t('dischargeAssistant.actions.gallery'), onPress: handleGallery },
-          { text: t('dischargeAssistant.actions.files'), onPress: handleFile },
-          { text: t('dischargeAssistant.actions.cancel'), style: 'cancel' },
+          { text: t('certificateAssistant.actions.scanDocuments'), onPress: handleScan },
+          { text: t('certificateAssistant.actions.gallery'), onPress: handleGallery },
+          { text: t('certificateAssistant.actions.files'), onPress: handleFile },
+          { text: t('certificateAssistant.actions.cancel'), style: 'cancel' },
         ],
         { cancelable: true }
       );
@@ -271,7 +273,7 @@ const Discharge = () => {
 
   const handleGenerateSummary = () => {
     if (observations.length === 0) {
-      Alert.alert('No Data', 'Please add observations or scan documents first.');
+      Alert.alert('No Data', 'Please add medical notes or scan documents first.');
       return;
     }
 
@@ -281,35 +283,56 @@ const Discharge = () => {
     // Simulate AI Generation
     setTimeout(() => {
       const promptHeader = selectedPrompt
-        ? `**Prompt Applied**\n${selectedPrompt.title}\n\n`
+        ? `**Certificate Type: ${selectedPrompt.title}**\n\n`
         : '';
       setGeneratedSummary(`
-**DISCHARGE SUMMARY**
+**MEDICAL CERTIFICATE**
 
 ${promptHeader}
+**Physician Information**
+Dr. Jan Kowalski, MD
+Specialization: Psychiatry
+Medical License: PWZ 1234567
+Clinic: Medical Center "Health", ul. Przykładowa 123, Warsaw
+
 **Patient Information**
-Age: 45 | Gender: Male
-Admission Date: ${new Date(Date.now() - 86400000 * 4).toLocaleDateString()}
-Discharge Date: ${new Date().toLocaleDateString()}
+Name: [Patient Name]
+PESEL: [Patient PESEL]
+Address: [Patient Address]
+Date of Birth: [DOB]
 
-**Primary Diagnosis**
-Acute Exacerbation of COPD
-Hypertension, controlled
+**Certificate Date**
+Issued: ${new Date().toLocaleDateString()}
 
-**Hospital Course**
-Patient admitted with shortness of breath and wheezing. Started on IV corticosteroids and nebulizers. O2 saturation improved from 88% to 96% on room air over 48 hours. No fever spikes.
+**Medical Assessment**
 
-**Procedures**
-- Chest X-Ray: Hyperinflation, no consolidation.
-- Spirometry: FEV1 65% predicted.
+Based on the clinical examination and medical history review, I hereby certify that:
 
-**Discharge Medications**
-1. Prednisone 40mg daily x 5 days
-2. Albuterol Inhaler 2 puffs q4h prn
-3. Lisinopril 10mg daily
+**Diagnosis:**
+- Primary: Anxiety disorder, moderate severity (ICD-10: F41.1)
+- Secondary: Adjustment disorder with mixed anxiety and depressed mood (ICD-10: F43.22)
 
-**Follow-up**
-Follow up with Dr. Smith in Pulmonology in 2 weeks.
+**Current Treatment:**
+- Pharmacotherapy: Sertraline 50mg daily, Alprazolam 0.25mg prn
+- Psychotherapy: Weekly cognitive-behavioral therapy sessions
+
+**Clinical Status:**
+Patient demonstrates stable mental status with good treatment response. Currently able to perform daily activities without significant limitations. No contraindications to work identified at this time.
+
+**Recommendations:**
+- Continue current treatment regimen
+- Follow-up appointment in 4 weeks
+- Maintain regular psychotherapy sessions
+
+**Purpose of Certificate:**
+${selectedPrompt?.title || 'General medical documentation'}
+
+---
+
+**Physician Signature**
+Dr. Jan Kowalski
+Date: ${new Date().toLocaleDateString()}
+Stamp: [Medical Stamp]
       `);
       setIsSynthesizing(false);
       setShowSynthesis(true);
@@ -319,7 +342,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
 
   const handleSaveSummary = () => {
     if (!generatedSummary.trim()) return;
-    setSaveNameInput(`Discharge Summary ${savedSummaries.length + 1}`);
+    setSaveNameInput(`Medical Certificate ${savedSummaries.length + 1}`);
     setRenamingSummaryId(null);
     setShowSaveDialog(true);
   };
@@ -334,8 +357,8 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
     const name = saveNameInput.trim();
     if (!name) {
       Alert.alert(
-        t('dischargeAssistant.savedSummaries.nameRequiredTitle'),
-        t('dischargeAssistant.savedSummaries.nameRequiredMessage')
+        t('certificateAssistant.savedSummaries.nameRequiredTitle'),
+        t('certificateAssistant.savedSummaries.nameRequiredMessage')
       );
       return;
     }
@@ -353,7 +376,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
       };
       setSavedSummaries(prev => [newSummary, ...prev]);
       triggerHaptic('notification');
-      Alert.alert(t('dischargeAssistant.savedSummaries.savedSuccess'));
+      Alert.alert(t('certificateAssistant.savedSummaries.savedSuccess'));
     }
 
     setShowSaveDialog(false);
@@ -395,12 +418,12 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
 
   const handleDeleteSummary = (id: string, title: string) => {
     Alert.alert(
-      t('dischargeAssistant.savedSummaries.deleteTitle'),
-      t('dischargeAssistant.savedSummaries.deleteMessage'),
+      t('certificateAssistant.savedSummaries.deleteTitle'),
+      t('certificateAssistant.savedSummaries.deleteMessage'),
       [
-        { text: t('dischargeAssistant.actions.cancel'), style: 'cancel' },
+        { text: t('certificateAssistant.actions.cancel'), style: 'cancel' },
         {
-          text: t('dischargeAssistant.savedSummaries.deleteConfirm'),
+          text: t('certificateAssistant.savedSummaries.deleteConfirm'),
           style: 'destructive',
           onPress: () => {
             setSavedSummaries(prev => prev.filter(summary => summary.id !== id));
@@ -427,10 +450,10 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         {/* Header */}
         <View style={styles.headerWrapper}>
           <Header
-            title={t('dischargeAssistant.headerTitle')}
-            subtitle={t('dischargeAssistant.headerSubtitle')}
+            title={t('certificateAssistant.headerTitle')}
+            subtitle={t('certificateAssistant.headerSubtitle')}
             onLeftPress={handleBackPress}
-            icon={FileText}
+            icon={ClipboardList}
             showIcon={false}
             backgroundColor={DYNAMIC_THEME.background}
             showBorder={true}
@@ -458,14 +481,14 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         <ObservationTimeline
           items={observations}
           emptyState={{
-            title: t('dischargeAssistant.emptyState.title'),
-            subtitle: t('dischargeAssistant.emptyState.subtitle'),
+            title: t('certificateAssistant.emptyState.title'),
+            subtitle: t('certificateAssistant.emptyState.subtitle'),
           }}
           primaryColor={PRIMARY_COLOR}
           scrollViewRef={scrollViewRef}
           statusTexts={{
-            analyzingPixelData: t('dischargeAssistant.status.analyzingPixelData'),
-            analyzingDocument: t('dischargeAssistant.status.analyzingDocument'),
+            analyzingPixelData: t('certificateAssistant.status.analyzingPixelData'),
+            analyzingDocument: t('certificateAssistant.status.analyzingDocument'),
           }}
         />
 
@@ -494,7 +517,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
               activeOpacity={0.9}
             >
               <Sparkles size={18} color="white" style={{ marginRight: 8 }} />
-              <Text style={styles.generateText}>Generate Summary</Text>
+              <Text style={styles.generateText}>Generate Certificate</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -504,7 +527,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
           <View style={styles.synthesizingContainer}>
             <ActivityIndicator size="large" color={PRIMARY_COLOR} />
             <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>
-              Synthesizing clinical data...
+              Generating medical certificate...
             </Text>
           </View>
         )}
@@ -515,7 +538,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
           onChangeText={setInputText}
           onSendText={handleSendText}
           onPlusPress={handlePlusPress}
-          placeholder={t('dischargeAssistant.inputBar.placeholder')}
+          placeholder={t('certificateAssistant.inputBar.placeholder')}
           insets={insets}
           primaryColor={PRIMARY_COLOR}
         />
@@ -529,9 +552,9 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         onSave={handleSaveSummary}
         onCopy={() => Alert.alert('Copied')}
         onExport={() => Alert.alert('Export PDF')}
-        title="Discharge Summary"
+        title="Medical Certificate"
         primaryColor={PRIMARY_COLOR}
-        saveLabel={t('dischargeAssistant.savedSummaries.save')}
+        saveLabel={t('certificateAssistant.savedSummaries.save')}
       />
 
       {/* Saved Summaries Modal */}
@@ -542,11 +565,11 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
         onSelectItem={handleSelectSavedSummary}
         onRename={handleRenameSummary}
         onDelete={handleDeleteSummary}
-        title={t('dischargeAssistant.savedSummaries.title')}
-        emptyText={t('dischargeAssistant.savedSummaries.empty')}
-        renameText={t('dischargeAssistant.savedSummaries.rename')}
-        deleteText={t('dischargeAssistant.savedSummaries.delete')}
-        cancelText={t('dischargeAssistant.actions.cancel')}
+        title={t('certificateAssistant.savedSummaries.title')}
+        emptyText={t('certificateAssistant.savedSummaries.empty')}
+        renameText={t('certificateAssistant.savedSummaries.rename')}
+        deleteText={t('certificateAssistant.savedSummaries.delete')}
+        cancelText={t('certificateAssistant.actions.cancel')}
       />
 
       {/* Prompt Library with Magic Creator */}
@@ -564,9 +587,9 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
       <WelcomeModal
         visible={showWelcomeModal}
         onClose={handleCloseWelcomeModal}
-        title={t('dischargeAssistant.welcomeModal.title')}
-        description={t('dischargeAssistant.welcomeModal.description')}
-        buttonText={t('dischargeAssistant.welcomeModal.button')}
+        title={t('certificateAssistant.welcomeModal.title')}
+        description={t('certificateAssistant.welcomeModal.description')}
+        buttonText={t('certificateAssistant.welcomeModal.button')}
         iconColor={PRIMARY_COLOR}
       />
 
@@ -576,8 +599,8 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
           <View style={[styles.dialogCard, { backgroundColor: DYNAMIC_THEME.background, borderColor: DYNAMIC_THEME.border }]}>
             <Text style={[styles.dialogTitle, { color: DYNAMIC_THEME.text }]}>
               {renamingSummaryId
-                ? t('dischargeAssistant.savedSummaries.renameTitle')
-                : t('dischargeAssistant.savedSummaries.nameTitle')}
+                ? t('certificateAssistant.savedSummaries.renameTitle')
+                : t('certificateAssistant.savedSummaries.nameTitle')}
             </Text>
             <TextInput
               style={[
@@ -588,20 +611,20 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
                   backgroundColor: DYNAMIC_THEME.surface,
                 }
               ]}
-              placeholder={t('dischargeAssistant.savedSummaries.namePlaceholder')}
+              placeholder={t('certificateAssistant.savedSummaries.namePlaceholder')}
               placeholderTextColor={isDark ? themeColors.textMuted : colors.onSurfaceVariant}
               value={saveNameInput}
               onChangeText={setSaveNameInput}
             />
             <View style={styles.dialogActions}>
               <TouchableOpacity onPress={() => setShowSaveDialog(false)}>
-                <Text style={[styles.dialogCancel, { color: DYNAMIC_THEME.textSecondary }]}>{t('dischargeAssistant.actions.cancel')}</Text>
+                <Text style={[styles.dialogCancel, { color: DYNAMIC_THEME.textSecondary }]}>{t('certificateAssistant.actions.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleConfirmSaveName}>
                 <Text style={styles.dialogConfirm}>
                   {renamingSummaryId
-                    ? t('dischargeAssistant.savedSummaries.renameConfirm')
-                    : t('dischargeAssistant.savedSummaries.saveConfirm')}
+                    ? t('certificateAssistant.savedSummaries.renameConfirm')
+                    : t('certificateAssistant.savedSummaries.saveConfirm')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -612,7 +635,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
   );
 };
 
-export default Discharge;
+export default Certificate;
 
 const styles = StyleSheet.create({
   container: {

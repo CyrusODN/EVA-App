@@ -11,13 +11,14 @@ import VisitTypeStep from './steps/VisitTypeStep';
 import MagicTemplateIntro from './steps/MagicTemplateIntro';
 import CompletionStep from './steps/CompletionStep';
 import MagicTemplateCreator from '../../components/MagicTemplateCreator';
+import { templateStorage } from '../../utils/templateStorage';
 
 import useOnboardingStore, {
   Specialization,
   NoteLength,
   VisitType,
 } from '../../store/onboarding';
-import { ONBOARDING_COLORS } from '../../constants/onboardingTheme';
+import { useOnboardingTheme } from '../../constants/onboardingTheme';
 
 type OnboardingStep =
   | 'welcome'
@@ -31,6 +32,7 @@ const TOTAL_STEPS = 6;
 
 const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { colors: themeColors, isDark } = useOnboardingTheme();
   const {
     defaultSpecialization,
     defaultNoteLength,
@@ -133,13 +135,19 @@ const OnboardingScreen: React.FC = () => {
   };
 
   const handleSaveTemplate = useCallback(
-    (template: {
+    async (template: {
       name: string;
       instructions: string;
       refinedPrompt: string;
     }) => {
-      // In production, this would save to the templates store
-      console.log('Template saved:', template);
+      try {
+        await templateStorage.addTemplate({
+          title: template.name,
+          content: template.refinedPrompt,
+        });
+      } catch (error) {
+        console.error('Failed to save template from onboarding:', error);
+      }
       setShowMagicCreator(false);
       // Continue to completion
       setCurrentStep('completion');
@@ -218,10 +226,10 @@ const OnboardingScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={ONBOARDING_COLORS.background}
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <StatusBar 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+        backgroundColor={themeColors.background} 
       />
       {renderStep()}
 
@@ -241,7 +249,6 @@ const OnboardingScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ONBOARDING_COLORS.background,
   },
 });
 

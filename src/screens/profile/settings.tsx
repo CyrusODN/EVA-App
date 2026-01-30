@@ -12,7 +12,6 @@ import { customToast } from '../../utils/toastMessage';
 import {
   Text,
   Divider,
-  IconButton,
   Button,
   Dialog,
   Portal,
@@ -33,17 +32,14 @@ import Header from '../../components/header';
 import { useNavigation } from '@react-navigation/native';
 import Gap from '../../components/gap';
 import { textStyles } from '../../constants/textStyles';
-import {
-  changePassword,
-  setAuthToken,
-  forgetPassword,
-  getAuthContext,
-} from '../../services/authService';
+import { changePassword, setAuthToken, forgetPassword, getAuthContext } from '../../services/authService';
 import userStore from '../../store/user';
 import { api } from '../../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import useOnboardingStore from '../../store/onboarding';
+import { useTheme } from '../../constants/theme';
+import { Sun, Moon } from 'lucide-react-native';
 
 // Mock fallback if store does not have a user yet
 const mockUser = {
@@ -54,12 +50,13 @@ const mockUser = {
 
 const Settings = () => {
   const { t } = useTranslation();
+  const { colors: themeColors, isDark, toggleTheme } = useTheme();
   const storeUser = userStore.getState().loggedInUser;
   const [user, setUser] = useState(storeUser || mockUser);
   const navigation = useNavigation<any>();
   const [uploading, setUploading] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-
+  
   // Onboarding preferences
   const {
     defaultSpecialization,
@@ -116,15 +113,10 @@ const Settings = () => {
       });
       if (res.didCancel) return;
       if (res.errorMessage || res.errorCode) {
-        customToast(
-          'error',
-          t('common.error'),
-          res.errorMessage || 'Failed to open gallery',
-        );
+        customToast('error', t('common.error'), res.errorMessage || 'Failed to open gallery');
         return;
       }
-      const asset =
-        res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
+      const asset = res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
       if (!asset || !asset.uri) {
         customToast('error', t('common.error'), 'No image selected');
         return;
@@ -136,9 +128,7 @@ const Settings = () => {
       }
       setUser((prev: any) => ({ ...(prev as any), profilePicture: asset.uri }));
       setUploading(true);
-      const token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+      const token = userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       const form = new FormData();
       form.append('profileImage', {
@@ -155,9 +145,7 @@ const Settings = () => {
             email: ctx?.email || (user as any).email,
             name:
               ctx?.fname ||
-              (ctx?.email
-                ? String(ctx.email).split('@')[0]
-                : (user as any).name),
+              (ctx?.email ? String(ctx.email).split('@')[0] : (user as any).name),
             profilePicture: ctx?.profileImage || (user as any).profilePicture,
             role: ctx?.role,
             settings: ctx?.settings,
@@ -174,9 +162,7 @@ const Settings = () => {
       customToast('success', t('common.success'), 'Profile image updated');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to upload image';
+        err?.response?.data?.message || err?.message || 'Failed to upload image';
       customToast('error', t('common.error'), message);
     } finally {
       setUploading(false);
@@ -193,26 +179,16 @@ const Settings = () => {
       return;
     }
     if (String(newPassword).trim().length < 6) {
-      customToast(
-        'error',
-        t('common.error'),
-        'New password must be at least 6 characters',
-      );
+      customToast('error', t('common.error'), 'New password must be at least 6 characters');
       return;
     }
     if (newPassword === currentPassword) {
-      customToast(
-        'error',
-        t('common.error'),
-        'New password must differ from current password',
-      );
+      customToast('error', t('common.error'), 'New password must differ from current password');
       return;
     }
     setChangingPassword(true);
     try {
-      let token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+      let token = userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       try {
         const ctxResp = await getAuthContext();
@@ -231,11 +207,7 @@ const Settings = () => {
       });
       const raw = resp?.data;
       const payload = raw?.data || raw;
-      if (
-        (resp?.status && resp.status >= 200 && resp.status < 300) ||
-        payload?.success ||
-        payload?.message
-      ) {
+      if ((resp?.status && resp.status >= 200 && resp.status < 300) || payload?.success || payload?.message) {
         customToast('success', t('settings.password.alertChanged'));
         setCurrentPassword('');
         setNewPassword('');
@@ -250,20 +222,12 @@ const Settings = () => {
         //@ts-ignore
         (navigation as any).reset({ index: 0, routes: [{ name: 'login' }] });
       } else {
-        customToast(
-          'error',
-          t('common.error'),
-          payload?.message || 'Failed to change password',
-        );
+        customToast('error', t('common.error'), payload?.message || 'Failed to change password');
       }
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 401) {
-        customToast(
-          'error',
-          t('common.error'),
-          'Session expired. Please log in again.',
-        );
+        customToast('error', t('common.error'), 'Session expired. Please log in again.');
         try {
           userStore.getState().purgeAuth();
           await AsyncStorage.removeItem('auth_token');
@@ -279,35 +243,25 @@ const Settings = () => {
         try {
           const emailToUse = user?.email;
           if (!emailToUse) {
-            customToast(
-              'error',
-              t('common.error'),
-              'No email found for current user',
-            );
+            customToast('error', t('common.error'), 'No email found for current user');
             return;
           }
           const resp = await forgetPassword({ email: emailToUse });
           const raw = resp?.data;
           const message =
-            raw?.message ||
-            raw?.data ||
-            'Password reset link sent. Check your email.';
+            raw?.message || raw?.data || 'Password reset link sent. Check your email.';
           customToast('success', t('common.success'), String(message));
           setCurrentPassword('');
           setNewPassword('');
           setConfirmPassword('');
         } catch (e: any) {
           const msg =
-            e?.response?.data?.message ||
-            e?.message ||
-            'Failed to send reset link';
+            e?.response?.data?.message || e?.message || 'Failed to send reset link';
           customToast('error', t('common.error'), msg);
         }
       } else {
         const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          'Failed to change password';
+          error?.response?.data?.message || error?.message || 'Failed to change password';
         customToast('error', t('common.error'), message);
       }
     } finally {
@@ -349,16 +303,16 @@ const Settings = () => {
   type SectionProps = { title: string; children: React.ReactNode };
   const Section = ({ title, children }: SectionProps) => (
     <View style={styles.section}>
-      <Text variant="headlineMedium" style={textStyles.sectionTitle}>
+      <Text variant="headlineMedium" style={[textStyles.sectionTitle, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
         {title}
       </Text>
       {children}
-      <Divider style={styles.divider} />
+      <Divider style={[styles.divider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' }]}>
       <Header
         title={t('settings.title')}
         subtitle={t('settings.subtitle')}
@@ -366,100 +320,102 @@ const Settings = () => {
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.mainContainer}>
+        style={[styles.mainContainer, { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' }]}
+      >
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Profile Picture Section */}
           <Section title={t('settings.profile.picture')}>
-            <View style={styles.profileSection}>
+            <View style={[styles.profileSection, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+              shadowColor: isDark ? themeColors.accentPrimary : '#000'
+            }]}>
               <View style={styles.profileImageContainer}>
                 <Image
                   source={{ uri: user.profilePicture }}
-                  style={styles.profileImage}
+                  style={[styles.profileImage, { 
+                    borderColor: themeColors.accentPrimary,
+                    backgroundColor: isDark ? themeColors.layer1 : '#F8FAFC'
+                  }]}
                 />
                 <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={handleImagePicker}>
-                  <IconButton
-                    icon="camera"
-                    size={14}
-                    iconColor="white"
-                    style={styles.editIcon}
-                  />
+                  style={[styles.editButton, { 
+                    backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)',
+                    borderColor: isDark ? themeColors.layer2 : '#FFFFFF'
+                  }]}
+                  onPress={handleImagePicker}
+                  activeOpacity={0.7}
+                >
+                  <Camera size={16} color={themeColors.accentPrimary} strokeWidth={2} />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
-                style={styles.changeAvatarButton}
+                style={[styles.changeAvatarButton, {
+                  backgroundColor: themeColors.accentPrimary,
+                  shadowColor: themeColors.accentPrimary
+                }]}
                 onPress={handleImagePicker}
-                activeOpacity={0.85}>
-                <Camera size={16} color="white" />
+                activeOpacity={0.85}
+                >
+                  <Camera size={16} color="white" />
                 <Text variant="labelLarge" style={styles.changeAvatarText}>
-                  {t('settings.profile.changeAvatar')}
-                </Text>
+                    {t('settings.profile.changeAvatar')}
+                  </Text>
               </TouchableOpacity>
             </View>
           </Section>
 
           {/* AI Scribe Preferences Section */}
-          <Section
-            title={t('settings.aiScribe.title') || 'AI Scribe Preferences'}>
-            <View style={styles.aiScribeSection}>
+          <Section title={t('settings.aiScribe.title') || 'AI Scribe Preferences'}>
+            <View style={[styles.aiScribeSection, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+              shadowColor: isDark ? themeColors.accentPrimary : '#000'
+            }]}>
               <View style={styles.preferenceRow}>
                 <View style={styles.preferenceContent}>
-                  <Text style={styles.preferenceLabel}>
+                  <Text style={[styles.preferenceLabel, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                     {t('settings.aiScribe.specialization') || 'Specialization'}
                   </Text>
-                  <Text style={styles.preferenceValue}>
-                    {defaultSpecialization
-                      ? t(
-                          `onboarding.specialization.${defaultSpecialization
-                            .toLowerCase()
-                            .replace(' ', '')}`,
-                        ) || defaultSpecialization
+                  <Text style={[styles.preferenceValue, { color: isDark ? themeColors.textSecondary : '#64748B' }]}>
+                    {defaultSpecialization 
+                      ? t(`onboarding.specialization.${defaultSpecialization.toLowerCase().replace(' ', '')}`) || defaultSpecialization
                       : t('settings.aiScribe.notSet') || 'Not set'}
                   </Text>
                 </View>
               </View>
-
-              <View style={styles.preferenceRowDivider} />
-
+              
+              <View style={[styles.preferenceRowDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
               <View style={styles.preferenceRow}>
                 <View style={styles.preferenceContent}>
-                  <Text style={styles.preferenceLabel}>
+                  <Text style={[styles.preferenceLabel, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                     {t('settings.aiScribe.noteLength') || 'Note Length'}
                   </Text>
-                  <Text style={styles.preferenceValue}>
-                    {t(
-                      `onboarding.noteLength.${defaultNoteLength.toLowerCase()}`,
-                    ) || defaultNoteLength}
+                  <Text style={[styles.preferenceValue, { color: isDark ? themeColors.textSecondary : '#64748B' }]}>
+                    {t(`onboarding.noteLength.${defaultNoteLength.toLowerCase()}`) || defaultNoteLength}
                   </Text>
                 </View>
               </View>
-
-              <View style={styles.preferenceRowDivider} />
-
+              
+              <View style={[styles.preferenceRowDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
               <View style={styles.preferenceRow}>
                 <View style={styles.preferenceContent}>
-                  <Text style={styles.preferenceLabel}>
+                  <Text style={[styles.preferenceLabel, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                     {t('settings.aiScribe.visitType') || 'Default Visit Type'}
                   </Text>
-                  <Text style={styles.preferenceValue}>
-                    {t(
-                      `onboarding.visitType.${
-                        defaultVisitType === 'First Visit'
-                          ? 'firstVisit'
-                          : 'followUp'
-                      }`,
-                    ) || defaultVisitType}
+                  <Text style={[styles.preferenceValue, { color: isDark ? themeColors.textSecondary : '#64748B' }]}>
+                    {t(`onboarding.visitType.${defaultVisitType === 'First Visit' ? 'firstVisit' : 'followUp'}`) || defaultVisitType}
                   </Text>
                 </View>
               </View>
-
-              <View style={styles.preferenceRowDivider} />
-
-              <TouchableOpacity
+              
+              <View style={[styles.preferenceRowDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
+              <TouchableOpacity 
                 style={styles.rerunOnboardingButton}
                 onPress={() => {
                   resetOnboarding();
@@ -467,48 +423,82 @@ const Settings = () => {
                     index: 0,
                     routes: [{ name: 'Onboarding' }],
                   });
-                }}>
-                <Text style={styles.rerunOnboardingText}>
-                  {t('settings.aiScribe.rerunOnboarding') ||
-                    'Re-run Setup Wizard'}
+                }}
+              >
+                <Text style={[styles.rerunOnboardingText, { color: themeColors.accentPrimary }]}>
+                  {t('settings.aiScribe.rerunOnboarding') || 'Re-run Setup Wizard'}
                 </Text>
               </TouchableOpacity>
             </View>
           </Section>
 
-          {/* Language Selector Section */}
-          <Section title={t('settings.language.title') || 'Language'}>
+          {/* Language and Theme Selector Section */}
+          <Section title={t('settings.language.title') || 'Language & Theme'}>
+            <View style={[styles.languageThemeSection, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+              shadowColor: isDark ? themeColors.accentPrimary : '#000'
+            }]}>
             <LanguageSelector variant="full" showLabel={false} />
+              
+              <View style={[styles.preferenceRowDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
+              <View style={styles.themeToggleRow}>
+                <View style={styles.themeToggleContent}>
+                  <Text style={[styles.preferenceLabel, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
+                    {t('Theme') || 'Theme'}
+                  </Text>
+                  <Text style={[styles.preferenceValue, { color: isDark ? themeColors.textSecondary : '#64748B' }]}>
+                    {isDark ? (t('Dark Mode') || 'Dark Mode') : (t('Light Mode') || 'Light Mode')}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  style={[styles.themeToggleButton, { 
+                    backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)'
+                  }]}
+                  activeOpacity={0.7}
+                >
+                  {isDark ? (
+                    <Sun size={20} color="#FFD700" strokeWidth={2} />
+                  ) : (
+                    <Moon size={20} color="#475569" strokeWidth={2} />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </Section>
 
           {/* Change Password Section */}
-          <Text variant="headlineMedium" style={textStyles.sectionTitle}>
+          <Text variant="headlineMedium" style={[textStyles.sectionTitle, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
             {t('settings.password.title')}
           </Text>
-          <View style={styles.passwordSection}>
+          <View style={[styles.passwordSection, { 
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            shadowColor: isDark ? themeColors.accentPrimary : '#000'
+          }]}>
             <Input
               placeholder={t('settings.password.current')}
               value={currentPassword}
               setValue={setCurrentPassword}
               isPassword={true}
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
+              backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+              borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
             />
             <Input
               placeholder={t('settings.password.new')}
               value={newPassword}
               setValue={setNewPassword}
               isPassword={true}
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
+              backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+              borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
             />
             <Input
               placeholder={t('settings.password.confirm')}
               value={confirmPassword}
               setValue={setConfirmPassword}
               isPassword={true}
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
+              backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+              borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
             />
             <PrimaryButton
               text={t('settings.password.update')}
@@ -519,24 +509,27 @@ const Settings = () => {
           </View>
           <Gap height={hp(2)} />
           {/* Customer Support Section */}
-          <Text variant="headlineMedium" style={textStyles.sectionTitle}>
+          <Text variant="headlineMedium" style={[textStyles.sectionTitle, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
             {t('settings.support.title')}
           </Text>
-          <View style={styles.supportSection}>
+          <View style={[styles.supportSection, { 
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            shadowColor: isDark ? themeColors.accentPrimary : '#000'
+          }]}>
             <Input
               placeholder={t('settings.support.email')}
               value={supportEmail}
               setValue={setSupportEmail}
               mode="email"
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
+              backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+              borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
             />
             <Input
               placeholder={t('settings.support.subject')}
               value={supportSubject}
               setValue={setSupportSubject}
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
+              backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+              borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
             />
             <Input
               placeholder={t('settings.support.message')}
@@ -544,8 +537,8 @@ const Settings = () => {
               setValue={setSupportMessage}
               multiline={true}
               numberOfLines={4}
-              backgroundColor={colors.surface}
-              borderColor={colors.borderColor}
+              backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+              borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
             />
             <PrimaryButton
               text={t('settings.support.send')}
@@ -562,12 +555,14 @@ const Settings = () => {
             onDismiss={() => {
               setShowDeleteDialog(false);
               setDeleteConfirmText('');
-            }}>
-            <Dialog.Title style={styles.dialogTitle}>
+            }}
+            style={{ backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF' }}
+          >
+            <Dialog.Title style={[styles.dialogTitle, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
               {t('settings.deleteAccount.dialogTitle')}
             </Dialog.Title>
             <Dialog.Content>
-              <Paragraph style={styles.dialogDescription}>
+              <Paragraph style={[styles.dialogDescription, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                 {t('settings.deleteAccount.dialogDescription')}
               </Paragraph>
               <Text variant="bodySmall" style={styles.deleteWarning}>
@@ -577,8 +572,8 @@ const Settings = () => {
                 placeholder={t('settings.deleteAccount.confirm')}
                 value={deleteConfirmText}
                 setValue={setDeleteConfirmText}
-                backgroundColor={colors.surface}
-                borderColor={colors.borderColor}
+                backgroundColor={isDark ? themeColors.layer1 : colors.surface}
+                borderColor={isDark ? themeColors.borderNormal : colors.borderColor}
                 width={250}
               />
             </Dialog.Content>
@@ -587,14 +582,17 @@ const Settings = () => {
                 onPress={() => {
                   setShowDeleteDialog(false);
                   setDeleteConfirmText('');
-                }}>
+                }}
+                textColor={isDark ? themeColors.textPrimary : colors.darkPrimary}
+              >
                 {t('common.cancel')}
               </Button>
               <Button
                 onPress={handleDeleteAccount}
                 disabled={deleteConfirmText !== 'DELETE'}
                 buttonColor={colors.error}
-                mode="contained">
+                mode="contained"
+              >
                 {t('settings.deleteAccount.button')}
               </Button>
             </Dialog.Actions>
@@ -788,6 +786,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.2,
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+  languageThemeSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  themeToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  themeToggleContent: {
+    flex: 1,
+  },
+  themeToggleButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(70, 183, 198, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

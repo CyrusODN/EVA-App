@@ -22,7 +22,7 @@ import Input from '../../components/input';
 import PrimaryButton from '../../components/primaryButton';
 import LanguageSelector from '../../components/languageSelector';
 import { colors } from '../../constants/colors';
-import { Mail, Lock, Check } from 'lucide-react-native';
+import { Mail, Lock, Check, Sun, Moon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
@@ -33,10 +33,17 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { customToast } from '../../utils/toastMessage';
 import userStore from '../../store/user';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../../constants/theme';
+import useThemeStore from '../../store/themeStore';
+import RemedyLogo from '../../components/RemedyLogo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Login = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const { colors: themeColors, isDark } = useTheme();
+  const { toggleTheme } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -295,30 +302,57 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.mainContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor={themeColors.canvas} 
+      />
+       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.topRightControls}>
+          <TouchableOpacity 
+            onPress={toggleTheme}
+            style={styles.themeToggle}
+            accessibilityLabel="Toggle theme">
+            {isDark ? (
+              <Sun size={20} color="#FFD700" strokeWidth={2} />
+            ) : (
+              <Moon size={20} color="#475569" strokeWidth={2} />
+            )}
+          </TouchableOpacity>
+          <LanguageSelector variant="inline" showLabel={false} />
+        </View>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
+              
               <View style={styles.logoWrapper}>
-                <Image
-                  source={images.logo}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
+                <RemedyLogo width={wp(25.5)} height={wp(25.5)} />
+                                  <View style={styles.productNameContainer}>
+                    <Text style={[
+                      styles.mioText, 
+                      { 
+                        color: isDark ? '#FAFAFA' : '#1A202C',
+                        textShadowColor: isDark ? 'rgba(70, 183, 198, 0.5)' : 'transparent',
+                        textShadowOffset: { width: 0, height: 0 },
+                        textShadowRadius: 20
+                      }
+                    ]}>
+                      EVA
+                    </Text>
+                    <Text style={[styles.mioSubText, { color: themeColors.accentPrimary }]}>
+                      {t('login.productSubtitle')}
+                    </Text>
+               </View>
               </View>
-              <View style={styles.languageSelectorWrapper}>
-                <LanguageSelector variant="inline" showLabel={false} />
-              </View>
+
             </View>
 
             {/* Form Section */}
@@ -329,8 +363,10 @@ const Login = () => {
                   value={email}
                   setValue={setEmail}
                   mode="email"
-                  backgroundColor="#FAFAFA"
-                  borderColor="transparent"
+                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
+                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  textColor={themeColors.textPrimary}
+                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -350,8 +386,10 @@ const Login = () => {
                   value={password}
                   setValue={setPassword}
                   isPassword={true}
-                  backgroundColor="#FAFAFA"
-                  borderColor="transparent"
+                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
+                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  textColor={themeColors.textPrimary}
+                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -379,7 +417,7 @@ const Login = () => {
                     }
                     unCheckedImage={<View style={styles.uncheckedBox} />}
                   />
-                  <Text variant="bodySmall" style={styles.checkboxText}>
+                  <Text variant="bodySmall" style={[styles.checkboxText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
                     {t('login.rememberMe')}
                   </Text>
                 </View>
@@ -393,7 +431,7 @@ const Login = () => {
               </View>
 
               {/* Sign In Button */}
-              <View style={styles.primaryButtonWrapper}>
+              <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
                 <PrimaryButton
                   text={t('login.signIn')}
                   onPress={handleLogin}
@@ -401,7 +439,7 @@ const Login = () => {
                   disabled={loading}
                   width="100%"
                   borderRadius={16}
-                  backgroundColor="#46B7C6"
+                  backgroundColor={themeColors.accentPrimary}
                   useGradient={false}
                   accessibilityLabel={t('login.signIn')}
                 />
@@ -409,13 +447,13 @@ const Login = () => {
 
               {/* Sign Up Link */}
               <View style={styles.signUpSection}>
-                <Text variant="bodyMedium" style={styles.noAccountText}>
+                <Text variant="bodyMedium" style={[styles.noAccountText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
                   {t('login.noAccount')}{' '}
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('signUp')}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                  <Text variant="bodyMedium" style={styles.signUpText}>
+                  <Text variant="bodyMedium" style={[styles.signUpText, { color: themeColors.accentPrimary }]}>
                     {t('login.signUp')}
                   </Text>
                 </TouchableOpacity>
@@ -423,18 +461,24 @@ const Login = () => {
 
               <View style={styles.orDivider}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>{t('login.or')}</Text>
+                <Text style={[styles.dividerText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>{t('login.or')}</Text>
                 <View style={styles.dividerLine} />
               </View>
 
               {/* Google Sign In - Apple Style */}
               <TouchableOpacity
-                style={styles.googleButton}
+                style={[
+                  styles.googleButton,
+                  {
+                    backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+                    borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+                  }
+                ]}
                 onPress={handleGoogleLogin}
                 disabled={loading}
                 activeOpacity={0.7}>
                 <Image source={images.googleIcon} style={styles.googleIcon} />
-                <Text variant="labelLarge" style={styles.googleButtonText}>
+                <Text variant="labelLarge" style={[styles.googleButtonText, { color: isDark ? themeColors.textPrimary : '#86868b' }]}>
                   {t('login.signInWithGoogle')}
                 </Text>
               </TouchableOpacity>
@@ -482,33 +526,54 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: wp(8),
     paddingTop: hp(2),
-    paddingBottom: hp(2), // Bottom padding for safety
+    paddingBottom: hp(1), // Bottom padding for safety
   },
 
   // Header Section
   headerSection: {
     alignItems: 'center', // Center alignment for premium symmetry
-    marginTop: hp(4),
-    marginBottom: hp(5),
+    marginBottom: hp(4),
   },
   logoWrapper: {
-    marginBottom: hp(3),
+    marginTop: hp(4),
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
+    alignItems: 'center',
+  },
+  productNameContainer: {
+    alignItems: 'center',
+
+  },
+  mioText: {
+    fontSize: 40,
+    fontWeight: '300', // Light weight
+    letterSpacing: 12, // Very wide tracking
+    textTransform: 'uppercase',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    marginBottom: 2,
+  },
+  mioSubText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
+    opacity: 0.9,
   },
   languageSelectorWrapper: {
     marginTop: hp(2),
   },
   logo: {
-    width: wp(50),
-    height: wp(18), // Square logo looks more modern if icon-based, or adjust if full text
+    width: wp(25),
+    height: wp(25), // Square logo looks more modern if icon-based, or adjust if full text
   },
   textWrapper: {
     alignItems: 'center',
   },
+
   welcomeTitle: {
     fontSize: 24,
     fontWeight: '700', // SemiBold/Bold
@@ -706,6 +771,24 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
     letterSpacing: -0.2,
+  },
+  topRightControls: {
+    position: 'absolute',
+    top: 10,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    zIndex: 50,
+    marginTop: hp(6),
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(128, 128, 128, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

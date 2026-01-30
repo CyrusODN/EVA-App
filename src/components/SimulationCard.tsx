@@ -10,6 +10,7 @@ import {
   ONBOARDING_SHADOWS,
   DURATIONS,
 } from '../constants/onboardingTheme';
+import { useTheme } from '../constants/theme';
 
 interface SimulationCardProps {
   sampleNote: string;
@@ -21,36 +22,44 @@ const SimulationCard: React.FC<SimulationCardProps> = ({
   patientName,
 }) => {
   const { t } = useTranslation();
+  const { colors: themeColors, isDark } = useTheme();
 
   return (
     <Animated.View
       entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-      style={styles.container}>
+      style={[styles.container, { 
+        backgroundColor: isDark ? themeColors.layer2 : ONBOARDING_COLORS.pureWhite,
+        borderColor: themeColors.accentPrimary,
+        shadowColor: isDark ? themeColors.accentPrimary : ONBOARDING_SHADOWS.md.shadowColor
+      }]}
+    >
       {/* Header with badge */}
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {t('magicCreator.preview.previewTitle')}
-        </Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
+      <View style={[styles.header, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : ONBOARDING_COLORS.primarySubtle }]}>
+        <Text style={[styles.title, { color: themeColors.accentPrimary }]}>{t('magicCreator.preview.previewTitle')}</Text>
+        <View style={[styles.badge, { backgroundColor: themeColors.accentPrimary }]}>
+          <Text style={[styles.badgeText, { color: '#FFF' }]}>
             {t('magicCreator.preview.simulationWarning')}
           </Text>
         </View>
       </View>
 
       {/* Patient name */}
-      <Text style={styles.patientLabel}>{patientName}</Text>
+      <Text style={[styles.patientLabel, { 
+        color: themeColors.textSecondary,
+        backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : ONBOARDING_COLORS.primarySubtle
+      }]}>{patientName}</Text>
 
       {/* Divider */}
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: isDark ? themeColors.borderSubtle : ONBOARDING_COLORS.borderLight }]} />
 
       {/* Note content */}
       <ScrollView
         style={styles.noteScrollView}
         contentContainerStyle={styles.noteContent}
         showsVerticalScrollIndicator={false}
-        nestedScrollEnabled>
-        <Text style={styles.noteText}>{sampleNote}</Text>
+        nestedScrollEnabled
+      >
+        <Text style={[styles.noteText, { color: themeColors.textPrimary }]}>{sampleNote}</Text>
       </ScrollView>
     </Animated.View>
   );

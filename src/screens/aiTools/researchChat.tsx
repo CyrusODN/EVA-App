@@ -49,6 +49,8 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { pick, types } from '@react-native-documents/picker';
 import Markdown from 'react-native-markdown-display';
 import userStore from '../../store/user';
+import PromptLibrary from '../../components/PromptLibrary';
+import { useTheme } from '../../constants/theme';
 
 // ============================================================================
 // DESIGN TOKENS - "Invisible Luxury" / Clinical Zen
@@ -59,23 +61,23 @@ const THEME = {
   surface: '#F9FAFB',
   surfaceAlt: '#F3F4F6',
   userBubble: '#F3F4F6',
-
+  
   // Text
   navy: '#111827',
   secondary: '#6B7280',
   tertiary: '#9CA3AF',
   placeholder: '#9CA3AF',
-
+  
   // Brand
   brand: '#46B7C6',
   brandLight: 'rgba(70, 183, 198, 0.08)',
   brandMedium: 'rgba(70, 183, 198, 0.15)',
   brandDark: '#3AA8B7',
-
+  
   // Borders
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
-
+  
   // States
   inactive: '#D1D5DB',
   success: '#10B981',
@@ -113,7 +115,36 @@ interface AttachedFile {
   uri: string;
 }
 
+interface CustomPrompt {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+
 type ResearchMode = 'general' | 'protocol';
+
+// Default prompts for Remedius Research
+const DEFAULT_RESEARCH_PROMPTS: CustomPrompt[] = [
+  {
+    id: 'p1',
+    title: 'Executive Summary',
+    content: 'Provide a concise executive summary of key findings with clinical implications.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'p2',
+    title: 'Methodology Analysis',
+    content: 'Focus on study design, methodology, and statistical analysis.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'p3',
+    title: 'Clinical Protocol Review',
+    content: 'Detailed review of trial protocol including eligibility criteria and endpoints.',
+    createdAt: new Date().toISOString(),
+  },
+];
 
 // ============================================================================
 // HAPTICS HELPER
@@ -126,16 +157,10 @@ const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'medium') => {
 // ============================================================================
 // MOCK DATA & HELPERS
 // ============================================================================
-const getMockResponse = (
-  mode: ResearchMode,
-  query: string,
-): { content: string; citations: Citation[] } => {
+const getMockResponse = (mode: ResearchMode, query: string): { content: string; citations: Citation[] } => {
   if (mode === 'general') {
     return {
-      content: `Based on my analysis of the relevant medical literature, here's what I found regarding "${query.slice(
-        0,
-        50,
-      )}...":
+      content: `Based on my analysis of the relevant medical literature, here's what I found regarding "${query.slice(0, 50)}...":
 
 **Key Findings:**
 
@@ -150,24 +175,9 @@ const getMockResponse = (
 **Clinical Implications:**
 This evidence supports the use of this therapeutic approach in appropriate patient populations, with careful monitoring for adverse effects.`,
       citations: [
-        {
-          id: '1',
-          title: 'Meta-analysis of Treatment Efficacy',
-          source: 'JAMA Internal Medicine',
-          page: 'pp. 234-241',
-        },
-        {
-          id: '2',
-          title: 'Pathophysiology and Mechanisms',
-          source: 'Nature Reviews',
-          page: 'pp. 112-128',
-        },
-        {
-          id: '3',
-          title: 'Clinical Practice Guidelines 2024',
-          source: 'ACC/AHA',
-          page: 'Section 4.2',
-        },
+        { id: '1', title: 'Meta-analysis of Treatment Efficacy', source: 'JAMA Internal Medicine', page: 'pp. 234-241' },
+        { id: '2', title: 'Pathophysiology and Mechanisms', source: 'Nature Reviews', page: 'pp. 112-128' },
+        { id: '3', title: 'Clinical Practice Guidelines 2024', source: 'ACC/AHA', page: 'Section 4.2' },
       ],
     };
   } else {
@@ -202,18 +212,8 @@ Overall Response Rate (ORR) at Week 24, assessed by independent central review u
 **Sample Size:**
 N=450 (randomized 2:1), providing 85% power to detect a 15% absolute improvement in ORR.`,
       citations: [
-        {
-          id: '1',
-          title: 'Study Protocol v3.2',
-          source: 'ClinicalTrials.gov NCT04XXXXXX',
-          page: 'Section 6',
-        },
-        {
-          id: '2',
-          title: 'Statistical Analysis Plan',
-          source: 'Protocol Appendix B',
-          page: 'pp. 45-52',
-        },
+        { id: '1', title: 'Study Protocol v3.2', source: 'ClinicalTrials.gov NCT04XXXXXX', page: 'Section 6' },
+        { id: '2', title: 'Statistical Analysis Plan', source: 'Protocol Appendix B', page: 'pp. 45-52' },
       ],
     };
   }
@@ -243,7 +243,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ]),
+      ])
     );
 
     const glow = Animated.loop(
@@ -260,7 +260,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ]),
+      ])
     );
 
     pulse.start();
@@ -274,9 +274,11 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View
-        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
-        <Image source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
+      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+        <Image 
+          source={{ uri: CHATBOT_AVATAR }} 
+          style={styles.avatarImage}
+        />
       </Animated.View>
     </View>
   );
@@ -287,41 +289,46 @@ const SuggestionChip: React.FC<{
   icon: React.ComponentType<any>;
   text: string;
   onPress: () => void;
-}> = ({ icon: Icon, text, onPress }) => (
+  dynamicTheme: any;
+}> = ({ icon: Icon, text, onPress, dynamicTheme }) => (
   <TouchableOpacity
-    style={styles.suggestionChip}
+    style={[styles.suggestionChip, { 
+      backgroundColor: dynamicTheme.pure,
+      borderColor: dynamicTheme.borderLight
+    }]}
     onPress={onPress}
-    activeOpacity={0.7}>
-    <Icon size={14} color={THEME.brand} strokeWidth={2} />
-    <Text style={styles.suggestionChipText}>{text}</Text>
+    activeOpacity={0.7}
+  >
+    <Icon size={14} color={dynamicTheme.brand} strokeWidth={2} />
+    <Text style={[styles.suggestionChipText, { color: dynamicTheme.navy }]}>{text}</Text>
   </TouchableOpacity>
 );
 
-// Markdown styles for chat messages
-const markdownStyles = {
+// Markdown styles for chat messages - now a function
+const getMarkdownStyles = (dynamicTheme: any) => ({
   body: {
     fontSize: 15,
-    color: THEME.navy,
+    color: dynamicTheme.navy,
     lineHeight: 22,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
   heading1: {
     fontSize: 18,
     fontWeight: '700' as '700',
-    color: THEME.navy,
+    color: dynamicTheme.navy,
     marginTop: 8,
     marginBottom: 8,
   },
   heading2: {
     fontSize: 16,
     fontWeight: '600' as '600',
-    color: THEME.navy,
+    color: dynamicTheme.navy,
     marginTop: 6,
     marginBottom: 6,
   },
   strong: {
     fontWeight: '600' as '600',
-    color: THEME.navy,
+    color: dynamicTheme.navy,
   },
   em: {
     fontStyle: 'italic' as 'italic',
@@ -338,7 +345,7 @@ const markdownStyles = {
     marginBottom: 4,
   },
   code_inline: {
-    backgroundColor: THEME.surfaceAlt,
+    backgroundColor: dynamicTheme.surfaceAlt,
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: 4,
@@ -346,7 +353,7 @@ const markdownStyles = {
     fontSize: 13,
   },
   code_block: {
-    backgroundColor: THEME.surfaceAlt,
+    backgroundColor: dynamicTheme.surfaceAlt,
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
@@ -355,15 +362,16 @@ const markdownStyles = {
     fontSize: 13,
   },
   link: {
-    color: THEME.brand,
+    color: dynamicTheme.brand,
   },
-};
+});
 
 // Message Bubble
 const MessageBubble: React.FC<{
   message: Message;
   onCitationPress?: (citation: Citation) => void;
-}> = ({ message, onCitationPress }) => {
+  dynamicTheme: any;
+}> = ({ message, onCitationPress, dynamicTheme }) => {
   const handleCopy = () => {
     Clipboard.setString(message.content);
     triggerHaptic('light');
@@ -396,12 +404,10 @@ const MessageBubble: React.FC<{
         style={[
           styles.messageBubbleWrapper,
           { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-        ]}>
+        ]}
+      >
         <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: CHATBOT_AVATAR }}
-            style={styles.assistantAvatar}
-          />
+          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
         </View>
         <View style={styles.bubbleContent}>
           <ThinkingIndicator />
@@ -416,62 +422,70 @@ const MessageBubble: React.FC<{
         styles.messageBubbleWrapper,
         isUser && styles.userBubbleWrapper,
         { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-      ]}>
+      ]}
+    >
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: CHATBOT_AVATAR }}
-            style={styles.assistantAvatar}
-          />
+          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
         </View>
       )}
-
+      
       <View
         style={[
           styles.messageBubble,
-          isUser ? styles.userBubble : styles.assistantBubble,
-        ]}>
+          isUser ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }] : [
+            styles.assistantBubble, 
+            { 
+              backgroundColor: dynamicTheme.pure,
+              borderColor: dynamicTheme.borderLight,
+              shadowColor: '#000'
+            }
+          ],
+        ]}
+      >
         {/* Copy button for assistant messages */}
         {!isUser && (
           <TouchableOpacity
-            style={styles.copyButton}
+            style={[styles.copyButton, { backgroundColor: dynamicTheme.brandMedium }]}
             onPress={handleCopy}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            activeOpacity={0.7}>
-            <Copy size={14} color={THEME.brand} strokeWidth={2} />
+            activeOpacity={0.7}
+          >
+            <Copy size={14} color={dynamicTheme.brand} strokeWidth={2} />
           </TouchableOpacity>
         )}
 
         {isUser ? (
-          <Text style={[styles.messageText, styles.userMessageText]}>
+          <Text style={[styles.messageText, styles.userMessageText, { color: dynamicTheme.navy }]}>
             {message.content}
           </Text>
         ) : (
-          <Markdown style={markdownStyles}>{message.content}</Markdown>
+          <Markdown style={getMarkdownStyles(dynamicTheme)}>{message.content}</Markdown>
         )}
 
         {/* Citations */}
         {message.citations && message.citations.length > 0 && (
-          <View style={styles.citationsContainer}>
-            <Text style={styles.citationsLabel}>Sources</Text>
+          <View style={[styles.citationsContainer, { borderTopColor: dynamicTheme.borderLight }]}>
+            <Text style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>Sources</Text>
             {message.citations.map((citation, index) => (
               <TouchableOpacity
                 key={citation.id}
-                style={styles.citationChip}
+                style={[styles.citationChip, { backgroundColor: dynamicTheme.surfaceAlt }]}
                 onPress={() => onCitationPress?.(citation)}
-                activeOpacity={0.7}>
-                <View style={styles.citationNumber}>
-                  <Text style={styles.citationNumberText}>{index + 1}</Text>
+                activeOpacity={0.7}
+              >
+                <View style={[styles.citationNumber, { backgroundColor: dynamicTheme.brandMedium }]}>
+                  <Text style={[styles.citationNumberText, { color: dynamicTheme.brand }]}>{index + 1}</Text>
                 </View>
                 <View style={styles.citationContent}>
-                  <Text style={styles.citationTitle} numberOfLines={1}>
+                  <Text style={[styles.citationTitle, { color: dynamicTheme.navy }]} numberOfLines={1}>
                     {citation.title}
                   </Text>
-                  <Text style={styles.citationSource} numberOfLines={1}>
+                  <Text style={[styles.citationSource, { color: dynamicTheme.tertiary }]} numberOfLines={1}>
                     {citation.source} {citation.page && `• ${citation.page}`}
                   </Text>
                 </View>
-                <ExternalLink size={14} color={THEME.tertiary} />
+                <ExternalLink size={14} color={dynamicTheme.tertiary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -502,7 +516,7 @@ const ThinkingIndicator: React.FC = () => {
             duration: 400,
             useNativeDriver: true,
           }),
-        ]),
+        ])
       );
 
     animateDot(dot1, 0).start();
@@ -531,7 +545,8 @@ const ThinkingIndicator: React.FC = () => {
 const FileChip: React.FC<{
   file: AttachedFile;
   onRemove: () => void;
-}> = ({ file, onRemove }) => {
+  dynamicTheme: any;
+}> = ({ file, onRemove, dynamicTheme }) => {
   const getIcon = () => {
     switch (file.type) {
       case 'pdf':
@@ -545,15 +560,13 @@ const FileChip: React.FC<{
   const Icon = getIcon();
 
   return (
-    <View style={styles.fileChip}>
-      <Icon size={14} color={THEME.brand} />
-      <Text style={styles.fileChipName} numberOfLines={1}>
+    <View style={[styles.fileChip, { backgroundColor: dynamicTheme.brandLight }]}>
+      <Icon size={14} color={dynamicTheme.brand} />
+      <Text style={[styles.fileChipName, { color: dynamicTheme.navy }]} numberOfLines={1}>
         {file.name}
       </Text>
-      <TouchableOpacity
-        onPress={onRemove}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <X size={14} color={THEME.secondary} />
+      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <X size={14} color={dynamicTheme.secondary} />
       </TouchableOpacity>
     </View>
   );
@@ -564,50 +577,43 @@ const ContextFilesModal: React.FC<{
   visible: boolean;
   files: AttachedFile[];
   onClose: () => void;
-}> = ({ visible, files, onClose }) => {
+  dynamicTheme: any;
+}> = ({ visible, files, onClose, dynamicTheme }) => {
   const { t } = useTranslation();
-
+  
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable
-          style={styles.modalContent}
-          onPress={(e) => e.stopPropagation()}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
+        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
+          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
+            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>
               {t('researchChat.contextFiles')}
             </Text>
-            <TouchableOpacity
-              onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={24} color={THEME.navy} />
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <X size={24} color={dynamicTheme.navy} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalFilesList}>
             {files.length > 0 ? (
               files.map((file, index) => {
-                const Icon =
-                  file.type === 'pdf'
-                    ? FileText
-                    : file.type === 'image'
-                    ? ImageIcon
-                    : File;
+                const Icon = file.type === 'pdf' ? FileText : file.type === 'image' ? ImageIcon : File;
                 return (
                   <View key={file.id} style={styles.modalFileItem}>
-                    <Icon size={18} color={THEME.brand} />
-                    <Text style={styles.modalFileName}>{file.name}</Text>
+                    <Icon size={18} color={dynamicTheme.brand} />
+                    <Text style={[styles.modalFileName, { color: dynamicTheme.navy }]}>{file.name}</Text>
                   </View>
                 );
               })
             ) : (
               <View style={styles.modalEmptyState}>
-                <FolderOpen size={32} color={THEME.tertiary} />
-                <Text style={styles.modalEmptyText}>
+                <FolderOpen size={32} color={dynamicTheme.tertiary} />
+                <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary }]}>
                   {t('researchChat.noFilesUploaded')}
                 </Text>
               </View>
@@ -629,6 +635,7 @@ const InputBar: React.FC<{
   onRemoveFile: (id: string) => void;
   placeholder: string;
   isLoading: boolean;
+  dynamicTheme: any;
 }> = ({
   value,
   onChangeText,
@@ -638,9 +645,9 @@ const InputBar: React.FC<{
   onRemoveFile,
   placeholder,
   isLoading,
+  dynamicTheme,
 }) => {
-  const canSend =
-    (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
+  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
 
   const handleSend = () => {
     if (canSend) {
@@ -655,7 +662,10 @@ const InputBar: React.FC<{
   };
 
   return (
-    <View style={styles.inputBarWrapper}>
+    <View style={[styles.inputBarWrapper, { 
+      backgroundColor: dynamicTheme.pure,
+      borderTopColor: dynamicTheme.borderLight
+    }]}>
       {/* Attached files preview */}
       {attachedFiles.length > 0 && (
         <View style={styles.attachedFilesContainer}>
@@ -665,28 +675,33 @@ const InputBar: React.FC<{
                 key={file.id}
                 file={file}
                 onRemove={() => onRemoveFile(file.id)}
+                dynamicTheme={dynamicTheme}
               />
             ))}
           </ScrollView>
         </View>
       )}
 
-      <View style={styles.inputBarContainer}>
+      <View style={[styles.inputBarContainer, { 
+        backgroundColor: dynamicTheme.surfaceAlt,
+        borderColor: dynamicTheme.borderLight
+      }]}>
         {/* Attach button */}
         <TouchableOpacity
-          style={styles.attachButton}
+          style={[styles.attachButton, { backgroundColor: dynamicTheme.pure }]}
           onPress={handleAttach}
-          activeOpacity={0.7}>
-          <Plus size={22} color={THEME.secondary} strokeWidth={2} />
+          activeOpacity={0.7}
+        >
+          <Plus size={22} color={dynamicTheme.secondary} strokeWidth={2} />
         </TouchableOpacity>
 
         {/* Text input */}
         <TextInput
-          style={styles.textInput}
+          style={[styles.textInput, { color: dynamicTheme.navy }]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={THEME.placeholder}
+          placeholderTextColor={dynamicTheme.placeholder}
           multiline
           maxLength={4000}
           textAlignVertical="center"
@@ -695,11 +710,16 @@ const InputBar: React.FC<{
         {/* Send button - visible only when can send */}
         {value.trim().length > 0 && (
           <TouchableOpacity
-            style={[styles.sendButton, styles.sendButtonActive]}
+            style={[styles.sendButton, styles.sendButtonActive, { backgroundColor: dynamicTheme.brand }]}
             onPress={handleSend}
             disabled={!canSend}
-            activeOpacity={0.7}>
-            <ArrowUp size={18} color={THEME.pure} strokeWidth={2.5} />
+            activeOpacity={0.7}
+          >
+            <ArrowUp
+              size={18}
+              color={dynamicTheme.pure}
+              strokeWidth={2.5}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -714,14 +734,35 @@ const ResearchChatScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { t } = useTranslation();
-
+  const { colors: themeColors, isDark } = useTheme();
+  
   const mode: ResearchMode = route.params?.mode || 'general';
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Dynamic theme
+  const DYNAMIC_THEME = {
+    pure: isDark ? themeColors.canvas : THEME.pure,
+    surface: isDark ? themeColors.layer1 : THEME.surface,
+    surfaceAlt: isDark ? themeColors.layer2 : THEME.surfaceAlt,
+    userBubble: isDark ? themeColors.layer2 : THEME.userBubble,
+    navy: isDark ? themeColors.textPrimary : THEME.navy,
+    secondary: isDark ? themeColors.textSecondary : THEME.secondary,
+    tertiary: isDark ? themeColors.textMuted : THEME.tertiary,
+    placeholder: isDark ? themeColors.textMuted : THEME.placeholder,
+    brand: themeColors.accentPrimary,
+    brandLight: isDark ? 'rgba(70, 183, 198, 0.15)' : THEME.brandLight,
+    brandMedium: isDark ? 'rgba(70, 183, 198, 0.2)' : THEME.brandMedium,
+    brandDark: isDark ? themeColors.accentPrimary : THEME.brandDark,
+    border: isDark ? themeColors.borderNormal : THEME.border,
+    borderLight: isDark ? themeColors.borderSubtle : THEME.borderLight,
+    inactive: isDark ? themeColors.textMuted : THEME.inactive,
+    success: THEME.success,
+    error: THEME.error,
+  };
+
   // Get user name from store
   const loggedInUser = userStore((state: any) => state.loggedInUser);
-  const userName =
-    loggedInUser?.firstName || loggedInUser?.name?.split(' ')[0] || 'Doctor';
+  const userName = loggedInUser?.firstName || loggedInUser?.name?.split(' ')[0] || 'Doctor';
 
   // State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -730,48 +771,26 @@ const ResearchChatScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [contextFiles, setContextFiles] = useState<AttachedFile[]>([]);
   const [showContextModal, setShowContextModal] = useState(false);
+  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(DEFAULT_RESEARCH_PROMPTS);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
 
   const isEmptyState = messages.length === 0;
 
   // Suggestion chips based on mode
-  const suggestionChips =
-    mode === 'general'
-      ? [
-          {
-            icon: FileText,
-            text: t('researchChat.suggestions.general.executiveSummary'),
-          },
-          {
-            icon: Sparkles,
-            text: t('researchChat.suggestions.general.clinicalImplications'),
-          },
-          {
-            icon: Beaker,
-            text: t('researchChat.suggestions.general.methodologyAnalysis'),
-          },
-          {
-            icon: AlertCircle,
-            text: t('researchChat.suggestions.general.evidenceGrading'),
-          },
-        ]
-      : [
-          {
-            icon: FileText,
-            text: t('researchChat.suggestions.protocol.synopsis'),
-          },
-          {
-            icon: ClipboardList,
-            text: t('researchChat.suggestions.protocol.eligibility'),
-          },
-          {
-            icon: BookOpen,
-            text: t('researchChat.suggestions.protocol.schedule'),
-          },
-          {
-            icon: AlertCircle,
-            text: t('researchChat.suggestions.protocol.safetyEndpoints'),
-          },
-        ];
+  const suggestionChips = mode === 'general'
+    ? [
+        { icon: FileText, text: t('researchChat.suggestions.general.executiveSummary') },
+        { icon: Sparkles, text: t('researchChat.suggestions.general.clinicalImplications') },
+        { icon: Beaker, text: t('researchChat.suggestions.general.methodologyAnalysis') },
+        { icon: AlertCircle, text: t('researchChat.suggestions.general.evidenceGrading') },
+      ]
+    : [
+        { icon: FileText, text: t('researchChat.suggestions.protocol.synopsis') },
+        { icon: ClipboardList, text: t('researchChat.suggestions.protocol.eligibility') },
+        { icon: BookOpen, text: t('researchChat.suggestions.protocol.schedule') },
+        { icon: AlertCircle, text: t('researchChat.suggestions.protocol.safetyEndpoints') },
+      ];
 
   // Handlers
   const handleBack = () => {
@@ -783,36 +802,30 @@ const ResearchChatScreen: React.FC = () => {
     setShowContextModal(true);
   };
 
-  const addMessage = useCallback(
-    (role: MessageRole, content: string, citations?: Citation[]) => {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        role,
-        content,
-        citations,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, newMessage]);
-
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-
-      return newMessage.id;
-    },
-    [],
-  );
+  const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      role,
+      content,
+      citations,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    
+    return newMessage.id;
+  }, []);
 
   const handleSend = async () => {
     const query = inputText.trim();
     if (!query && attachedFiles.length === 0) return;
 
-    const userContent =
-      attachedFiles.length > 0
-        ? `${query}\n\n[${t('researchChat.attached')}: ${attachedFiles
-            .map((f) => f.name)
-            .join(', ')}]`
-        : query;
+    const userContent = attachedFiles.length > 0
+      ? `${query}\n\n[${t('researchChat.attached')}: ${attachedFiles.map(f => f.name).join(', ')}]`
+      : query;
     addMessage('user', userContent);
 
     if (attachedFiles.length > 0) {
@@ -827,18 +840,12 @@ const ResearchChatScreen: React.FC = () => {
     const loadingId = Date.now().toString() + '-loading';
     setMessages((prev) => [
       ...prev,
-      {
-        id: loadingId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date(),
-        isLoading: true,
-      },
+      { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
     ]);
 
     setTimeout(() => {
       const { content, citations } = getMockResponse(mode, query);
-
+      
       setMessages((prev) => prev.filter((m) => m.id !== loadingId));
       addMessage('assistant', content, citations);
       setIsLoading(false);
@@ -867,21 +874,19 @@ const ResearchChatScreen: React.FC = () => {
           if (buttonIndex === 1) handleFilePick();
           else if (buttonIndex === 2) handleScan();
           else if (buttonIndex === 3) handleGallery();
-        },
+        }
       );
     } else {
-      Alert.alert(t('researchChat.attachTitle'), '', [
-        {
-          text: t('researchChat.attachOptions.uploadPdf'),
-          onPress: handleFilePick,
-        },
-        { text: t('researchChat.attachOptions.scan'), onPress: handleScan },
-        {
-          text: t('researchChat.attachOptions.gallery'),
-          onPress: handleGallery,
-        },
-        { text: t('researchChat.attachOptions.cancel'), style: 'cancel' },
-      ]);
+      Alert.alert(
+        t('researchChat.attachTitle'),
+        '',
+        [
+          { text: t('researchChat.attachOptions.uploadPdf'), onPress: handleFilePick },
+          { text: t('researchChat.attachOptions.scan'), onPress: handleScan },
+          { text: t('researchChat.attachOptions.gallery'), onPress: handleGallery },
+          { text: t('researchChat.attachOptions.cancel'), style: 'cancel' },
+        ]
+      );
     }
   };
 
@@ -960,58 +965,98 @@ const ResearchChatScreen: React.FC = () => {
     // Could open in browser or show details
   };
 
-  const screenTitle =
-    mode === 'general'
-      ? t('researchChat.title.general')
-      : t('researchChat.title.protocol');
-  const placeholderText =
-    mode === 'general'
-      ? t('researchChat.placeholder.general')
-      : t('researchChat.placeholder.protocol');
+  const handleSaveMagicTemplate = (template: {
+    name: string;
+    instructions: string;
+    refinedPrompt: string;
+  }) => {
+    const newPrompt: CustomPrompt = {
+      id: Date.now().toString(),
+      title: template.name,
+      content: template.refinedPrompt,
+      createdAt: new Date().toISOString(),
+    };
+    setCustomPrompts(prev => [newPrompt, ...prev]);
+    setSelectedPromptId(newPrompt.id);
+    triggerHaptic('medium');
+  };
+
+  const handleSelectPrompt = (prompt: CustomPrompt) => {
+    setSelectedPromptId(prompt.id);
+    setShowPromptLibrary(false);
+  };
+
+  const handleDeletePrompt = (id: string) => {
+    setCustomPrompts(prev => prev.filter(p => p.id !== id));
+    if (selectedPromptId === id) setSelectedPromptId(null);
+  };
+
+  const selectedPrompt = customPrompts.find(p => p.id === selectedPromptId);
+
+  const screenTitle = mode === 'general' 
+    ? t('researchChat.title.general') 
+    : t('researchChat.title.protocol');
+  const placeholderText = mode === 'general'
+    ? t('researchChat.placeholder.general')
+    : t('researchChat.placeholder.protocol');
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}>
+        keyboardVerticalOffset={0}
+      >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { 
+          backgroundColor: DYNAMIC_THEME.pure,
+          borderBottomColor: DYNAMIC_THEME.borderLight
+        }]}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
-            <ChevronLeft size={24} color={THEME.navy} />
+            <ChevronLeft size={24} color={DYNAMIC_THEME.navy} />
           </TouchableOpacity>
-
+          
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{screenTitle}</Text>
+            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>{screenTitle}</Text>
             {contextFiles.length > 0 && (
-              <Text style={styles.headerSubtitle}>
-                {contextFiles.length}{' '}
-                {t('researchChat.filesLoaded', { count: contextFiles.length })}
+              <Text style={[styles.headerSubtitle, { color: DYNAMIC_THEME.secondary }]}>
+                {contextFiles.length} {t('researchChat.filesLoaded', { count: contextFiles.length })}
+              </Text>
+            )}
+            {selectedPrompt && (
+              <Text style={[styles.headerPromptBadge, { 
+                color: DYNAMIC_THEME.brand,
+                backgroundColor: DYNAMIC_THEME.brandLight
+              }]} numberOfLines={1}>
+                {selectedPrompt.title}
               </Text>
             )}
           </View>
 
-          <TouchableOpacity
-            onPress={handleViewFiles}
-            style={styles.headerButton}>
-            <FolderOpen size={22} color={THEME.navy} />
-          </TouchableOpacity>
+          <View style={styles.headerRightButtons}>
+            <TouchableOpacity onPress={() => setShowPromptLibrary(true)} style={styles.headerButton}>
+              <Sparkles size={20} color={DYNAMIC_THEME.brand} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleViewFiles} style={styles.headerButton}>
+              <FolderOpen size={22} color={DYNAMIC_THEME.navy} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Content area */}
-        <View style={styles.contentArea}>
+        <View style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
           {isEmptyState ? (
-            /* Empty State */
+            /* Empty State - przekażę DYNAMIC_THEME jako context */
             <View style={styles.emptyState}>
               <PulsingAILogo />
-
-              <Text style={styles.emptyStateGreeting}>
+              
+              <Text style={[styles.emptyStateGreeting, { color: DYNAMIC_THEME.navy }]}>
                 {mode === 'general'
                   ? t('researchChat.greeting.general')
                   : t('researchChat.greeting.protocol')}
               </Text>
-
-              <Text style={styles.emptyStateSubtext}>
+              
+              <Text style={[styles.emptyStateSubtext, { color: DYNAMIC_THEME.secondary }]}>
                 {mode === 'general'
                   ? t('researchChat.subtitle.general')
                   : t('researchChat.subtitle.protocol')}
@@ -1025,6 +1070,7 @@ const ResearchChatScreen: React.FC = () => {
                     icon={chip.icon}
                     text={chip.text}
                     onPress={() => handleSuggestionPress(chip.text)}
+                    dynamicTheme={DYNAMIC_THEME}
                   />
                 ))}
               </View>
@@ -1036,12 +1082,14 @@ const ResearchChatScreen: React.FC = () => {
               style={styles.chatStream}
               contentContainerStyle={styles.chatStreamContent}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled">
+              keyboardShouldPersistTaps="handled"
+            >
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
                   message={message}
                   onCitationPress={handleCitationPress}
+                  dynamicTheme={DYNAMIC_THEME}
                 />
               ))}
             </ScrollView>
@@ -1058,6 +1106,7 @@ const ResearchChatScreen: React.FC = () => {
           onRemoveFile={handleRemoveFile}
           placeholder={placeholderText}
           isLoading={isLoading}
+          dynamicTheme={DYNAMIC_THEME}
         />
       </KeyboardAvoidingView>
 
@@ -1066,6 +1115,17 @@ const ResearchChatScreen: React.FC = () => {
         visible={showContextModal}
         files={contextFiles}
         onClose={() => setShowContextModal(false)}
+        dynamicTheme={DYNAMIC_THEME}
+      />
+
+      <PromptLibrary
+        visible={showPromptLibrary}
+        onClose={() => setShowPromptLibrary(false)}
+        prompts={customPrompts}
+        selectedPromptId={selectedPromptId}
+        onSelectPrompt={handleSelectPrompt}
+        onDeletePrompt={handleDeletePrompt}
+        onSavePrompt={handleSaveMagicTemplate}
       />
     </SafeAreaView>
   );
@@ -1077,7 +1137,6 @@ const ResearchChatScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: THEME.pure,
   },
   keyboardView: {
     flex: 1,
@@ -1090,9 +1149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: wp(4),
     paddingVertical: hp(1.5),
-    backgroundColor: THEME.pure,
     borderBottomWidth: 1,
-    borderBottomColor: THEME.borderLight,
   },
   headerButton: {
     width: 40,
@@ -1108,20 +1165,30 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: THEME.brand,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'System',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: THEME.secondary,
     marginTop: 2,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
+  },
+  headerPromptBadge: {
+    fontSize: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginTop: 4,
+    overflow: 'hidden',
+    maxWidth: wp(60),
+  },
+  headerRightButtons: {
+    flexDirection: 'row',
+    gap: 4,
   },
 
   // Content area
   contentArea: {
     flex: 1,
-    backgroundColor: THEME.pure,
   },
 
   // Empty State
@@ -1162,14 +1229,12 @@ const styles = StyleSheet.create({
   emptyStateGreeting: {
     fontSize: 22,
     fontWeight: '600',
-    color: THEME.navy,
     textAlign: 'center',
     letterSpacing: -0.3,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'System',
   },
   emptyStateSubtext: {
     fontSize: 15,
-    color: THEME.secondary,
     textAlign: 'center',
     marginTop: hp(1),
     lineHeight: 22,
@@ -1185,17 +1250,14 @@ const styles = StyleSheet.create({
   suggestionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: THEME.pure,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: THEME.borderLight,
     gap: 6,
   },
   suggestionChipText: {
     fontSize: 13,
-    color: THEME.navy,
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
@@ -1227,7 +1289,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: THEME.surfaceAlt,
   },
   bubbleContent: {
     flex: 1,
@@ -1236,22 +1297,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userBubble: {
-    backgroundColor: THEME.surfaceAlt,
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   assistantBubble: {
-    backgroundColor: THEME.pure,
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 16,
     paddingVertical: 12,
     paddingTop: 28, // Space for copy button
     borderWidth: 1,
-    borderColor: THEME.borderLight,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
@@ -1264,19 +1321,16 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: THEME.brandMedium,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   messageText: {
     fontSize: 15,
-    color: THEME.navy,
     lineHeight: 22,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
   userMessageText: {
-    color: THEME.navy,
   },
 
   // Citations
@@ -1284,12 +1338,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: THEME.borderLight,
   },
   citationsLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: THEME.tertiary,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -1298,7 +1350,6 @@ const styles = StyleSheet.create({
   citationChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: THEME.surfaceAlt,
     borderRadius: 10,
     padding: 10,
     marginBottom: 6,
@@ -1308,14 +1359,12 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 6,
-    backgroundColor: THEME.brandMedium,
     justifyContent: 'center',
     alignItems: 'center',
   },
   citationNumberText: {
     fontSize: 11,
     fontWeight: '700',
-    color: THEME.brand,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
   citationContent: {
@@ -1324,12 +1373,10 @@ const styles = StyleSheet.create({
   citationTitle: {
     fontSize: 13,
     fontWeight: '500',
-    color: THEME.navy,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
   citationSource: {
     fontSize: 11,
-    color: THEME.tertiary,
     marginTop: 2,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
@@ -1348,14 +1395,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: THEME.secondary,
+    backgroundColor: '#6B7280', // Keep static as it's subtle
   },
 
   // Input Bar
   inputBarWrapper: {
-    backgroundColor: THEME.pure,
     borderTopWidth: 1,
-    borderTopColor: THEME.borderLight,
     paddingBottom: Platform.OS === 'ios' ? 0 : hp(1),
   },
   attachedFilesContainer: {
@@ -1371,10 +1416,8 @@ const styles = StyleSheet.create({
     marginBottom: hp(1),
     paddingHorizontal: 6,
     paddingVertical: 6,
-    backgroundColor: THEME.surfaceAlt,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: THEME.borderLight,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -1387,12 +1430,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 19,
-    backgroundColor: THEME.pure,
   },
   textInput: {
     flex: 1,
     fontSize: 15,
-    color: THEME.navy,
     paddingHorizontal: 12,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     maxHeight: 120,
@@ -1406,14 +1447,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonActive: {
-    backgroundColor: THEME.brand,
   },
 
   // File Chip
   fileChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: THEME.brandLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -1424,7 +1463,6 @@ const styles = StyleSheet.create({
   fileChipName: {
     flex: 1,
     fontSize: 12,
-    color: THEME.navy,
     fontWeight: '500',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
@@ -1438,7 +1476,6 @@ const styles = StyleSheet.create({
     padding: wp(5),
   },
   modalContent: {
-    backgroundColor: THEME.pure,
     borderRadius: 20,
     width: '100%',
     maxHeight: hp(60),
@@ -1451,12 +1488,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: THEME.borderLight,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: THEME.navy,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Display' : 'System',
   },
   modalFilesList: {
@@ -1470,7 +1505,6 @@ const styles = StyleSheet.create({
   },
   modalFileName: {
     fontSize: 15,
-    color: THEME.navy,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
   modalEmptyState: {
@@ -1479,7 +1513,6 @@ const styles = StyleSheet.create({
   },
   modalEmptyText: {
     fontSize: 15,
-    color: THEME.tertiary,
     marginTop: 12,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',

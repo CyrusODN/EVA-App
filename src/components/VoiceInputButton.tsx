@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -27,6 +21,7 @@ import {
   ONBOARDING_RADIUS,
   DURATIONS,
 } from '../constants/onboardingTheme';
+import { useTheme } from '../constants/theme';
 
 const AnimatedRemedyLogo = Animated.createAnimatedComponent(RemedyLogoIcon);
 
@@ -42,7 +37,8 @@ const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   disabled = false,
 }) => {
   const { t } = useTranslation();
-
+  const { colors: themeColors, isDark } = useTheme();
+  
   // Pulsing animation
   const innerScale = useSharedValue(1);
   const colorProgress = useSharedValue(0);
@@ -52,23 +48,20 @@ const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
       // Start pulsing animation
       innerScale.value = withRepeat(
         withSequence(
-          withTiming(0.95, {
-            duration: 400,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          withTiming(1, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.95, { duration: 400, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 400, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
-        false,
+        false
       );
       // Color shifting for recording state
       colorProgress.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
-        false,
+        false
       );
     } else {
       // Stop animation
@@ -86,7 +79,7 @@ const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
 
   const handlePress = () => {
     if (disabled) return;
-
+    
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -102,33 +95,43 @@ const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
       ? interpolateColor(
           colorProgress.value,
           [0, 1],
-          [ONBOARDING_COLORS.primary, '#3A9FAD'], // Darker shade of brand color
+          [themeColors.accentPrimary, '#3A9FAD'] // Darker shade of brand color
         )
-      : ONBOARDING_COLORS.primary;
+      : themeColors.accentPrimary;
 
     return {
       backgroundColor,
     };
   });
 
+  const neonGlowStyle = isDark ? {
+    shadowColor: themeColors.accentPrimary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 8,
+  } : ONBOARDING_SHADOWS.glow;
+
   return (
     <View style={styles.container}>
       {/* Main button */}
       <TouchableOpacity
-        style={[styles.button, disabled && styles.buttonDisabled]}
+        style={[
+          styles.button,
+          disabled && styles.buttonDisabled,
+        ]}
         onPress={handlePress}
         disabled={disabled}
-        activeOpacity={0.9}>
-        <Animated.View style={[styles.buttonInner, buttonStyle, innerStyle]}>
+        activeOpacity={0.9}
+      >
+        <Animated.View style={[styles.buttonInner, buttonStyle, innerStyle, neonGlowStyle]}>
           <RemedyLogoIcon size={36} color="#FFFFFF" />
         </Animated.View>
       </TouchableOpacity>
-
+      
       {/* Hint text */}
-      <Text style={[styles.hint, disabled && styles.hintDisabled]}>
-        {isRecording
-          ? t('magicCreator.recording') || 'Recording...'
-          : t('magicCreator.voiceHint')}
+      <Text style={[styles.hint, { color: themeColors.textSecondary }, disabled && styles.hintDisabled]}>
+        {isRecording ? t('magicCreator.recording') || 'Recording...' : t('magicCreator.voiceHint')}
       </Text>
     </View>
   );

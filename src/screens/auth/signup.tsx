@@ -25,16 +25,25 @@ import { images } from '../../constants/images';
 import {signup, googleMobileLogin, setAuthToken } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
 import userStore from '../../store/user';
+import { useTheme } from '../../constants/theme';
+import useThemeStore from '../../store/themeStore';
+import RemedyLogo from '../../components/RemedyLogo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Sun, Moon } from 'lucide-react-native';
+import LanguageSelector from '../../components/languageSelector';
 
 const SignUp = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const { colors: themeColors, isDark } = useTheme();
+  const { toggleTheme } = useThemeStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -206,14 +215,17 @@ const SignUp = () => {
   };
 
   return (
-    <View style={styles.mainContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor={themeColors.canvas} 
+      />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent ,{paddingBottom: insets.bottom + hp(2)}]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -221,11 +233,23 @@ const SignUp = () => {
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
-                <Image
-                  source={images.logo}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
+                <RemedyLogo width={wp(25.5)} height={wp(25.5)} />
+                <View style={styles.productNameContainer}>
+                  <Text style={[
+                    styles.mioText, 
+                    { 
+                      color: isDark ? '#FAFAFA' : '#1A202C',
+                      textShadowColor: isDark ? 'rgba(70, 183, 198, 0.5)' : 'transparent',
+                      textShadowOffset: { width: 0, height: 0 },
+                      textShadowRadius: 20
+                    }
+                  ]}>
+                    EVA
+                  </Text>
+                  <Text style={[styles.mioSubText, { color: themeColors.accentPrimary }]}>
+                    {t('login.productSubtitle')}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -237,8 +261,10 @@ const SignUp = () => {
                   value={email}
                   setValue={setEmail}
                   mode="email"
-                  backgroundColor="#FAFAFA"
-                  borderColor="transparent"
+                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
+                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  textColor={themeColors.textPrimary}
+                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -258,8 +284,10 @@ const SignUp = () => {
                   value={password}
                   setValue={setPassword}
                   isPassword={true}
-                  backgroundColor="#FAFAFA"
-                  borderColor="transparent"
+                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
+                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  textColor={themeColors.textPrimary}
+                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -279,8 +307,10 @@ const SignUp = () => {
                   value={confirmPassword}
                   setValue={setConfirmPassword}
                   isPassword={true}
-                  backgroundColor="#FAFAFA"
-                  borderColor="transparent"
+                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
+                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  textColor={themeColors.textPrimary}
+                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -293,7 +323,7 @@ const SignUp = () => {
               </View>
 
               {/* Sign Up Button */}
-              <View style={styles.primaryButtonWrapper}>
+              <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
                 <PrimaryButton
                   text={t('login.signUp')}
                   onPress={handleSignUp}
@@ -301,7 +331,7 @@ const SignUp = () => {
                   disabled={loading}
                   width="100%"
                   borderRadius={16}
-                  backgroundColor="#46B7C6"
+                  backgroundColor={themeColors.accentPrimary}
                   useGradient={false}
                   accessibilityLabel={t('login.signUp')}
                 />
@@ -309,32 +339,39 @@ const SignUp = () => {
 
               {/* Sign Up Link */}
               <View style={styles.signUpSection}>
-                <Text variant="bodyMedium" style={styles.noAccountText}>
+                 <Text variant="bodyMedium" style={[styles.noAccountText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
                   {t('login.alreadyHaveAccount')}{' '}
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('login')}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                  <Text variant="bodyMedium" style={styles.signUpText}>
+                  <Text variant="bodyMedium" style={[styles.signUpText, { color: themeColors.accentPrimary }]}>
                     {t('login.signIn')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.orDivider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>{t('login.or')}</Text>
-                <View style={styles.dividerLine} />
+
+                <View style={[styles.dividerLine, { backgroundColor: isDark ? themeColors.borderSubtle : '#E5E5EA' }]} />
+                <Text style={[styles.dividerText, { color: isDark ? themeColors.textMuted : '#86868b' }]}>{t('login.or')}</Text>
+                <View style={[styles.dividerLine, { backgroundColor: isDark ? themeColors.borderSubtle : '#E5E5EA' }]} />
               </View>
 
               {/* Google Sign In - Apple Style */}
               <TouchableOpacity
-                style={styles.googleButton}
+                                style={[
+                  styles.googleButton,
+                  { 
+                    backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+                    borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+                  }
+                ]}
                 onPress={handleGoogleSignUp}
                 disabled={loading}
                 activeOpacity={0.7}>
                 <Image source={images.googleIcon} style={styles.googleIcon} />
-                <Text variant="labelLarge" style={styles.googleButtonText}>
+                <Text variant="labelLarge" style={[styles.googleButtonText, { color: themeColors.textPrimary }]}>
                   {t('login.signUpWithGoogle')}
                 </Text>
               </TouchableOpacity>
@@ -342,9 +379,9 @@ const SignUp = () => {
 
             {/* Footer - Pushed to bottom */}
             <View style={styles.footer}>
-              <Text variant="bodySmall" style={styles.footerText}>
+              <Text variant="bodySmall" style={[styles.footerText, { color: themeColors.textMuted }]}>
                 {t('login.protectedBy')}{' '}
-                <Text variant="bodySmall" style={styles.brandText}>
+                <Text variant="bodySmall" style={[styles.brandText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
                   Remedy AI
                 </Text>
               </Text>
@@ -371,22 +408,42 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: wp(8),
     paddingTop: hp(2),
-    paddingBottom: hp(2),
   },
 
   // Header Section
   headerSection: {
     alignItems: 'center',
-    marginTop: hp(4),
+    marginTop: hp(1),
     marginBottom: hp(5),
   },
   logoWrapper: {
-    marginBottom: hp(3),
+    marginTop: hp(2),
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
+        alignItems: 'center',
+  },
+  productNameContainer: {
+    alignItems: 'center',
+    // marginTop: hp(2),
+  },
+  mioText: {
+    fontSize: 40,
+    fontWeight: '300', // Light weight
+    letterSpacing: 12, // Very wide tracking
+    textTransform: 'uppercase',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    marginBottom: 2,
+  },
+  mioSubText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
+    opacity: 0.9,
   },
   logo: {
     width: wp(50),
@@ -509,6 +566,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#86868b',
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+  topRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: hp(2),
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(128, 128, 128, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

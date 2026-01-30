@@ -6,6 +6,7 @@ import AITools from './aiTools';
 import Profile from './profile';
 import Session from './home/session';
 import Discharge from './aiTools/discharge';
+import Certificate from './aiTools/certificate';
 import ClinicalWorkspace from './aiTools/ClinicalWorkspace';
 import ConsultChat from './aiTools/consultChat';
 import PharmacopediaChat from './aiTools/pharmacopediaChat';
@@ -20,7 +21,7 @@ import Transactions from './profile/transactions';
 import TranscriptionComplete from './home/transcriptionCompleted';
 import OtpVerification from './auth/otpVerification';
 import Onboarding from './onboarding';
-
+ 
 export const screens = {
   Login,
   SignUp,
@@ -30,6 +31,7 @@ export const screens = {
   AITools,
   Session,
   Discharge,
+  Certificate,
   ClinicalWorkspace,
   ConsultChat,
   PharmacopediaChat,

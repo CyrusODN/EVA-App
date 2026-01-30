@@ -37,9 +37,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { customToast } from '../../utils/toastMessage';
 import * as DocumentPicker from '@react-native-documents/picker';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { useTheme } from '../../constants/theme';
 
 const Profile = () => {
   const { t } = useTranslation();
+  const { colors: themeColors, isDark } = useTheme();
   const storeUser = userStore.getState().loggedInUser;
   const [user, setUser] = useState(
     storeUser || { email: '', name: '', profilePicture: '' },
@@ -51,8 +53,7 @@ const Profile = () => {
     let mounted = true;
     const load = async () => {
       const token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (!token) return;
       setAuthToken(token);
       try {
@@ -68,7 +69,8 @@ const Profile = () => {
         const ctxUser: any = {
           email: ctx?.email || '',
           name:
-            ctx?.fname || (ctx?.email ? String(ctx.email).split('@')[0] : ''),
+            ctx?.fname ||
+            (ctx?.email ? String(ctx.email).split('@')[0] : ''),
           profilePicture: ctx?.profileImage || '',
           role: ctx?.role,
           settings: ctx?.settings,
@@ -126,15 +128,10 @@ const Profile = () => {
       });
       if (res.didCancel) return;
       if (res.errorMessage || res.errorCode) {
-        customToast(
-          'error',
-          'Error',
-          res.errorMessage || 'Failed to open gallery',
-        );
+        customToast('error', 'Error', res.errorMessage || 'Failed to open gallery');
         return;
       }
-      const asset =
-        res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
+      const asset = res.assets && res.assets.length > 0 ? res.assets[0] : undefined;
       if (!asset || !asset.uri) {
         customToast('error', 'Error', 'No image selected');
         return;
@@ -147,8 +144,7 @@ const Profile = () => {
       setUser((prev: any) => ({ ...prev, profilePicture: asset.uri }));
       setUploading(true);
       const token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       const form = new FormData();
       form.append('profileImage', {
@@ -182,9 +178,7 @@ const Profile = () => {
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to upload image';
+        err?.response?.data?.message || err?.message || 'Failed to upload image';
       customToast('error', 'Error', message);
     } finally {
       setUploading(false);
@@ -220,8 +214,7 @@ const Profile = () => {
     setUploading(true);
     try {
       const token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       const form = new FormData();
       form.append('profileImage', {
@@ -255,9 +248,7 @@ const Profile = () => {
       customToast('success', 'Success', 'Profile image updated');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to upload image';
+        err?.response?.data?.message || err?.message || 'Failed to upload image';
       customToast('error', 'Error', message);
     } finally {
       setUploading(false);
@@ -270,8 +261,7 @@ const Profile = () => {
     setUploading(true);
     try {
       const token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       try {
         await api.delete('/auth/profile-image');
@@ -289,9 +279,7 @@ const Profile = () => {
       customToast('success', 'Success', 'Profile image removed');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to remove image';
+        err?.response?.data?.message || err?.message || 'Failed to remove image';
       customToast('error', 'Error', message);
     } finally {
       setUploading(false);
@@ -319,8 +307,7 @@ const Profile = () => {
   const performDeleteAccount = async () => {
     try {
       const token =
-        userStore.getState().token ||
-        (await AsyncStorage.getItem('auth_token'));
+        userStore.getState().token || (await AsyncStorage.getItem('auth_token'));
       if (token) setAuthToken(token);
       await api.post('/auth/delete-account', {});
       customToast('success', 'Success', 'Account deleted');
@@ -363,11 +350,13 @@ const Profile = () => {
 
   type SectionProps = { title: string; children: React.ReactNode };
   const Section = ({ title, children }: SectionProps) => (
-    <View style={styles.section}>
-      <Text variant="bodyMedium" style={styles.sectionTitle}>
+    <View style={[styles.section, { backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF' }]}>
+      <Text variant="bodyMedium" style={[styles.sectionTitle, { color: isDark ? themeColors.textMuted : '#94A3B8' }]}>
         {title}
       </Text>
-      <View style={styles.sectionContent}>{children}</View>
+      <View style={styles.sectionContent}>
+      {children}
+      </View>
     </View>
   );
 
@@ -388,22 +377,24 @@ const Profile = () => {
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={title}
-      style={styles.listItem}>
-      <View style={styles.listItemIconContainer}>
-        <Icon size={20} color="#46B7C6" strokeWidth={2} />
+      style={[styles.listItem, { backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF' }]}
+    >
+      <View style={[styles.listItemIconContainer, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)' }]}>
+        <Icon size={20} color={themeColors.accentPrimary} strokeWidth={2} />
       </View>
-      <Text style={[styles.listItemTitle, titleStyle]}>{title}</Text>
-      <ChevronRight size={20} color="#94A3B8" strokeWidth={2} />
+      <Text style={[styles.listItemTitle, titleStyle, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>{title}</Text>
+      <ChevronRight size={20} color={isDark ? themeColors.textMuted : "#94A3B8"} strokeWidth={2} />
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' }]}>
       <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}>
+        contentContainerStyle={[styles.container, { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Profile Header */}
-        <View style={styles.profileHeader}>
+        <View style={[styles.profileHeader, { backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF' }]}>
           <View style={styles.profileImageContainer}>
             <Image
               source={{
@@ -413,17 +404,21 @@ const Profile = () => {
                     user.name || user.email || 'User',
                   )}`,
               }}
-              style={styles.profileImage}
+              style={[styles.profileImage, { borderColor: isDark ? themeColors.borderNormal : '#FFFFFF', backgroundColor: isDark ? themeColors.layer1 : '#F8FAFC' }]}
             />
             <TouchableOpacity
-              style={styles.editButton}
+              style={[styles.editButton, { 
+                backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)',
+                borderColor: isDark ? themeColors.layer2 : '#FFFFFF'
+              }]}
               onPress={() => setShowPickerSheet(true)}
-              activeOpacity={0.8}>
-              <Camera size={18} color="white" strokeWidth={2} />
+              activeOpacity={0.7}
+            >
+              <Camera size={20} color={themeColors.accentPrimary} strokeWidth={2} />
             </TouchableOpacity>
           </View>
 
-          <Text variant="titleMedium" style={styles.userEmail}>
+          <Text variant="titleMedium" style={[styles.userEmail, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
             {user.email}
           </Text>
         </View>
@@ -444,7 +439,7 @@ const Profile = () => {
             icon={CreditCard}
             onPress={() => handleNavigate('subscription')}
           />
-          <Divider style={styles.divider} />
+          <Divider style={[styles.divider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
           <PressableItem
             title={t('menu.transactions')}
             icon={Receipt}
@@ -460,7 +455,7 @@ const Profile = () => {
             onPress={handleLogout}
             titleStyle={styles.logoutText}
           />
-          <Divider style={styles.divider} />
+          <Divider style={[styles.divider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
           <PressableItem
             title={t('settings.deleteAccount.title')}
             icon={Trash2}
@@ -470,56 +465,59 @@ const Profile = () => {
         </Section>
       </ScrollView>
       <Modal visible={showPickerSheet} transparent animationType="slide">
-        <View style={styles.sheetBackdrop}>
+        <View style={[styles.sheetBackdrop, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
           <TouchableOpacity
             style={styles.sheetBackdrop}
             activeOpacity={1}
             onPress={() => setShowPickerSheet(false)}
           />
-          <View style={styles.sheetContainer}>
-            <View style={styles.sheetHandle} />
-            <Text variant="titleMedium" style={styles.sheetTitle}>
+          <View style={[styles.sheetContainer, { backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF' }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: isDark ? themeColors.borderNormal : '#E8EAED' }]} />
+            <Text variant="titleMedium" style={[styles.sheetTitle, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
               {t('Update profile picture') || 'Update Profile Photo'}
             </Text>
             <View style={styles.sheetList}>
-              <TouchableOpacity
-                onPress={handleImagePicker}
-                disabled={uploading}
+              <TouchableOpacity 
+                onPress={handleImagePicker} 
+                disabled={uploading} 
                 accessibilityLabel="Choose from Photos"
                 style={styles.sheetItem}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+              >
                 <View style={styles.sheetItemIcon}>
-                  <ImageIcon size={20} color="#46B7C6" strokeWidth={2} />
+                  <ImageIcon size={20} color={themeColors.accentPrimary} strokeWidth={2} />
                 </View>
-                <Text style={styles.sheetItemTitle}>
+                <Text style={[styles.sheetItemTitle, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                   {t('Choose Photo') || 'Choose from Photos'}
                 </Text>
               </TouchableOpacity>
-
-              <Divider style={styles.sheetDivider} />
-
-              <TouchableOpacity
-                onPress={pickFromFiles}
-                disabled={uploading}
+              
+              <Divider style={[styles.sheetDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
+              <TouchableOpacity 
+                onPress={pickFromFiles} 
+                disabled={uploading} 
                 accessibilityLabel="Choose from Files"
                 style={styles.sheetItem}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+              >
                 <View style={styles.sheetItemIcon}>
-                  <Folder size={20} color="#46B7C6" strokeWidth={2} />
+                  <Folder size={20} color={themeColors.accentPrimary} strokeWidth={2} />
                 </View>
-                <Text style={styles.sheetItemTitle}>
+                <Text style={[styles.sheetItemTitle, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                   {t('Select Files') || 'Select Files'}
                 </Text>
               </TouchableOpacity>
-
-              <Divider style={styles.sheetDivider} />
-
-              <TouchableOpacity
-                onPress={handleDeletePhoto}
-                disabled={uploading}
+              
+              <Divider style={[styles.sheetDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
+              <TouchableOpacity 
+                onPress={handleDeletePhoto} 
+                disabled={uploading} 
                 accessibilityLabel="Delete Photo"
                 style={styles.sheetItem}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+              >
                 <View style={styles.sheetItemIcon}>
                   <Trash2 size={20} color="#EF4444" strokeWidth={2} />
                 </View>
@@ -527,19 +525,20 @@ const Profile = () => {
                   {t('Delete Photo') || 'Delete Photo'}
                 </Text>
               </TouchableOpacity>
-
-              <Divider style={styles.sheetDivider} />
-
-              <TouchableOpacity
-                onPress={() => setShowPickerSheet(false)}
-                disabled={uploading}
+              
+              <Divider style={[styles.sheetDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]} />
+              
+              <TouchableOpacity 
+                onPress={() => setShowPickerSheet(false)} 
+                disabled={uploading} 
                 accessibilityLabel="Cancel"
                 style={styles.sheetItem}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+              >
                 <View style={styles.sheetItemIcon}>
-                  <X size={20} color="#64748B" strokeWidth={2} />
+                  <X size={20} color={isDark ? themeColors.textSecondary : "#64748B"} strokeWidth={2} />
                 </View>
-                <Text style={styles.sheetItemTitle}>
+                <Text style={[styles.sheetItemTitle, { color: isDark ? themeColors.textPrimary : '#1A1A1A' }]}>
                   {t('common.cancel') || 'Cancel'}
                 </Text>
               </TouchableOpacity>

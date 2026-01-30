@@ -17,6 +17,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { colors } from '../constants/colors';
 import { textStyles } from '../constants/textStyles';
 import { LinearGradientColors } from '../constants/linearGradientColors';
+import { useTheme } from '../constants/theme';
 
 interface HeaderProps {
   title: string;
@@ -44,41 +45,53 @@ const Header: React.FC<HeaderProps> = ({
   rightIconSource = 'bell',
   icon: Icon,
   showIcon = false,
-  textColor = colors.onSecondary,
-  backgroundColor = colors.surface,
+  textColor,
+  backgroundColor,
   showSubtitle = true,
   showBorder = true,
 }) => {
+  const { colors: themeColors, isDark } = useTheme();
+  
+  // Use props if provided, otherwise use theme colors
+  const finalTextColor = textColor || (isDark ? themeColors.textPrimary : colors.onSecondary);
+  const finalBackgroundColor = backgroundColor || (isDark ? themeColors.layer2 : colors.surface);
+  const finalBorderColor = isDark ? themeColors.borderNormal : colors.borderColor;
+  const finalSubtitleColor = isDark ? themeColors.textSecondary : colors.onSurfaceVariant;
+  const finalIconColor = isDark ? themeColors.textPrimary : colors.onSurface;
+  
   return (
-    <View
-      style={[
-        styles.headerContainer,
-        { backgroundColor },
-        !showBorder && styles.noBorder,
-      ]}>
+    <View style={[
+      styles.headerContainer, 
+      { 
+        backgroundColor: finalBackgroundColor,
+        borderBottomColor: finalBorderColor
+      }, 
+      !showBorder && styles.noBorder
+    ]}>
       <View style={styles.headerContent}>
         {/* Left Icon */}
         {leftIcon && (
           <TouchableOpacity onPress={onLeftPress} style={styles.leftButton}>
-            <ChevronLeft size={24} color={colors.onSurface} />
+            <ChevronLeft size={24} color={finalIconColor} />
           </TouchableOpacity>
         )}
 
         {/* Title Container */}
         <View style={styles.headerTitleContainer}>
           {showIcon && Icon && (
-            <View style={styles.headerIconContainer}>
+            <View style={[styles.headerIconContainer, { backgroundColor: themeColors.accentPrimary }]}>
               <Icon size={20} color="white" />
             </View>
           )}
           <View style={styles.headerTextContainer}>
             <Text
               variant="headlineLarge"
-              style={[textStyles.headlineLarge, { color: textColor }]}>
+              style={[textStyles.headlineLarge, { color: finalTextColor }]}
+            >
               {title}
             </Text>
             {showSubtitle && subtitle && (
-              <Text variant="bodySmall" style={styles.subtitle}>
+              <Text variant="bodySmall" style={[styles.subtitle, { color: finalSubtitleColor }]}>
                 {subtitle}
               </Text>
             )}
@@ -137,7 +150,6 @@ const styles = StyleSheet.create({
     marginRight: wp(3),
     alignSelf: 'flex-start',
     marginTop: hp(0.75),
-    backgroundColor: colors.primary,
   },
   headerTextContainer: {
     flex: 1,
@@ -155,9 +167,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   subtitle: {
-    color: colors.onSurfaceVariant,
     marginTop: 2,
-    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
     fontSize: 13,
     letterSpacing: 0.2,
   },

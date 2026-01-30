@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -53,6 +53,7 @@ import {
 } from '../../utils/sessionStorage';
 import { uploadRecording } from '../../services/authService';
 import Sound, { PlayBackType, RecordBackType } from 'react-native-nitro-sound';
+import { useTheme } from '../../constants/theme';
 
 // const audioRecorderPlayer = new AudioRecorderPlayer();
 
@@ -62,6 +63,7 @@ const Session = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { colors: themeColors, isDark } = useTheme();
 
   // Get session data from route params
   const { sessionData, sessionType } = (route.params || {}) as {
@@ -69,6 +71,7 @@ const Session = () => {
     sessionType?: SessionTypeEnum;
   };
 
+  const isPausedRef = useRef(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -133,20 +136,7 @@ const Session = () => {
       status: 'new',
     };
 
-  // Timer effect for recording
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isRecording]);
+
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -180,6 +170,7 @@ const Session = () => {
     setRecordingTime(0);
     try {
       Sound.addRecordBackListener((e: RecordBackType) => {
+        if (isPausedRef.current) return;
         const pos = Number(e.currentPosition) || 0;
         setRecordingTime(Math.floor(pos / 1000));
       });
@@ -194,17 +185,36 @@ const Session = () => {
     }
   };
 
-  const handleStopRecording = () => {
-    setIsRecording(false);
+  const handleStopRecording = async () => {
+    isPausedRef.current = true;
+    try {
+      await Sound.pauseRecorder();
+    } catch (err) {
+      console.error('[Session] Error pausing recorder:', err);
+    }
+
     Alert.alert(t('common.confirm'), t('session.stopRecordingConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+        onPress: async () => {
+          console.log('[Session] Cancel stop recording - resuming timer');
+          try {
+            await Sound.resumeRecorder();
+            isPausedRef.current = false;
+          } catch (err) {
+            console.error('[Session] Error resuming recorder:', err);
+            // Fallback: unpause UI anyway so user sees active state
+            isPausedRef.current = false;
+          }
+        },
+      },
       {
         text: t('common.confirm'),
         onPress: async () => {
           try {
             console.log('[Session] Stopping recorder...');
             const result = await Sound.stopRecorder();
-            Sound.removeRecordBackListener();
 
             const path = typeof result === 'string' ? result : null;
             console.log('[Session] Recording stopped, original path:', path);
@@ -713,6 +723,7 @@ const Session = () => {
     // Reset local state first
     setIsRecording(false);
     setRecordingTime(0);
+    isPausedRef.current = false;
     setIsTranscribing(false);
     setUploadedFile(null);
     setShowQRCode(false);
@@ -730,16 +741,20 @@ const Session = () => {
     if (isTranscribing) {
       return (
         <View style={styles.processingSection}>
-          <View style={styles.processingCard}>
-            <ActivityIndicator
-              size="large"
-              color="#46B7C6"
+          <View style={[styles.processingCard, { 
+            backgroundColor: isDark ? themeColors.layer2 : '#FAFAFA',
+            borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0',
+            shadowColor: themeColors.shadowColor
+          }]}>
+            <ActivityIndicator 
+              size="large" 
+              color={themeColors.accentPrimary} 
               style={styles.loadingSpinner}
             />
-            <Text variant="headlineSmall" style={styles.processingTitle}>
+            <Text variant="headlineSmall" style={[styles.processingTitle, { color: themeColors.textPrimary }]}>
               {t('session.processingAudio')}
             </Text>
-            <Text variant="bodyMedium" style={styles.processingDescription}>
+            <Text variant="bodyMedium" style={[styles.processingDescription, { color: themeColors.textSecondary }]}>
               {t('session.processingDescription')}
             </Text>
           </View>
@@ -751,9 +766,13 @@ const Session = () => {
       <>
         {/* Recording Section */}
         <View style={styles.recordingSection}>
-          <View style={styles.recordingCard}>
+          <View style={[styles.recordingCard, { 
+            backgroundColor: isDark ? themeColors.layer2 : '#FAFAFA',
+            borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0',
+            shadowColor: themeColors.shadowColor
+          }]}>
             <View style={styles.recordingHeader}>
-              <Text variant="titleLarge" style={styles.recordingTitle}>
+              <Text variant="titleLarge" style={[styles.recordingTitle, { color: themeColors.textPrimary }]}>
                 {isRecording
                   ? t('session.recordingInProgress')
                   : t('session.startRecording')}
@@ -764,15 +783,14 @@ const Session = () => {
               style={[
                 styles.recordButton,
                 isRecording && styles.recordButtonActive,
+                { shadowColor: isRecording ? themeColors.error : themeColors.shadowColor }
               ]}
-              onPress={
-                isRecording ? handleStopRecording : handleStartRecording
-              }>
-              <View
-                style={[
-                  styles.recordButtonContent,
-                  { backgroundColor: isRecording ? '#ef4444' : '#46B7C6' },
-                ]}>
+              onPress={isRecording ? handleStopRecording : handleStartRecording}
+            >
+              <View style={[
+                styles.recordButtonContent,
+                { backgroundColor: isRecording ? themeColors.error : themeColors.accentPrimary }
+              ]}>
                 {isRecording ? (
                   <Square size={32} color="white" fill="white" />
                 ) : (
@@ -781,14 +799,15 @@ const Session = () => {
               </View>
             </TouchableOpacity>
 
-            <View style={styles.timerContainer}>
-              <Clock size={16} color={isRecording ? '#ef4444' : '#86868b'} />
+            <View style={[styles.timerContainer, { 
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FAFAFA',
+              borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+            }]}>
+              <Clock size={16} color={isRecording ? themeColors.error : (isDark ? themeColors.textMuted : '#86868b')} />
               <Text
                 variant="titleSmall"
-                style={[
-                  styles.timerText,
-                  { color: isRecording ? '#ef4444' : '#86868b' },
-                ]}>
+                style={[styles.timerText, { color: isRecording ? themeColors.error : (isDark ? themeColors.textMuted : '#86868b') }]}
+              >
                 {formatTime(recordingTime)}
               </Text>
             </View>
@@ -798,17 +817,22 @@ const Session = () => {
         {/* Upload Section */}
         <View style={styles.uploadSection}>
           <TouchableOpacity
-            style={styles.uploadCard}
-            onPress={handleFileUpload}>
+            style={[styles.uploadCard, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FAFAFA',
+              borderColor: isDark ? themeColors.borderSubtle : '#E5E5EA',
+              shadowColor: themeColors.shadowColor
+            }]}
+            onPress={handleFileUpload}
+          >
             <View style={styles.uploadContent}>
-              <Upload size={32} color="#86868b" />
-              <Text variant="titleMedium" style={styles.uploadTitle}>
+              <Upload size={32} color={isDark ? themeColors.textMuted : "#86868b"} />
+              <Text variant="titleMedium" style={[styles.uploadTitle, { color: themeColors.textPrimary }]}>
                 {t('session.uploadAudioFile')}
               </Text>
-              <Text variant="bodySmall" style={styles.uploadDescription}>
+              <Text variant="bodySmall" style={[styles.uploadDescription, { color: themeColors.textSecondary }]}>
                 {t('session.selectAudioFile')}
               </Text>
-              <Text variant="bodySmall" style={styles.uploadFormats}>
+              <Text variant="bodySmall" style={[styles.uploadFormats, { color: themeColors.textMuted }]}>
                 {t('session.supportedFormats')}
               </Text>
             </View>
@@ -818,14 +842,19 @@ const Session = () => {
         {/* QR Code Section */}
         <View style={styles.qrSection}>
           <TouchableOpacity
-            style={styles.qrCard}
-            onPress={() => setShowQRCode(!showQRCode)}>
+            style={[styles.qrCard, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FAFAFA',
+              borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0',
+              shadowColor: themeColors.shadowColor
+            }]}
+            onPress={() => setShowQRCode(!showQRCode)}
+          >
             <View style={styles.qrContent}>
-              <QrCode size={32} color="#46B7C6" />
-              <Text variant="titleMedium" style={styles.qrTitle}>
+              <QrCode size={32} color={themeColors.accentPrimary} />
+              <Text variant="titleMedium" style={[styles.qrTitle, { color: themeColors.textPrimary }]}>
                 {t('session.connectExternalDevice')}
               </Text>
-              <Text variant="bodySmall" style={styles.qrDescription}>
+              <Text variant="bodySmall" style={[styles.qrDescription, { color: themeColors.textSecondary }]}>
                 {t('session.scanToConnect')}
               </Text>
             </View>
@@ -833,7 +862,11 @@ const Session = () => {
 
           {showQRCode && (
             <View style={styles.qrCodeContainer}>
-              <View style={styles.qrCodeWrapper}>
+              <View style={[styles.qrCodeWrapper, { 
+                backgroundColor: '#FFFFFF', // QR Code needs white background for readability
+                borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0',
+                shadowColor: themeColors.shadowColor
+              }]}>
                 <QRCode
                   value={`https://app.remedius.com/connect/${session.id}`}
                   size={120}
@@ -849,32 +882,35 @@ const Session = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.canvas }]} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.canvas} />
+      
       {/* Compact Header - Pro Tool Style */}
-      <View style={styles.compactHeader}>
+      <View style={[styles.compactHeader, { 
+        backgroundColor: themeColors.canvas,
+        borderBottomColor: isDark ? themeColors.borderSubtle : '#E5E5E5' 
+      }]}>
         <View style={styles.compactHeaderLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <ChevronLeft size={20} color="#000000" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ChevronLeft size={20} color={isDark ? themeColors.textPrimary : "#000000"} />
           </TouchableOpacity>
-
+          
           {(() => {
             const IconComponent = getSessionIcon();
             return (
-              <View style={styles.compactIconContainer}>
-                <IconComponent size={16} color="white" />
+              <View style={[styles.compactIconContainer, { 
+                backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)'
+              }]}>
+                <IconComponent size={16} color={themeColors.accentPrimary} />
               </View>
             );
           })()}
-
+          
           <View style={styles.compactTitleContainer}>
-            <Text variant="titleMedium" style={styles.compactTitle}>
+            <Text variant="titleMedium" style={[styles.compactTitle, { color: themeColors.textPrimary }]}>
               {sessionTitle}
             </Text>
-            <Text variant="bodySmall" style={styles.compactSubtitle}>
+            <Text variant="bodySmall" style={[styles.compactSubtitle, { color: themeColors.textSecondary }]}>
               {getSessionTypeText()}
             </Text>
           </View>
@@ -884,107 +920,93 @@ const Session = () => {
         <View style={styles.compactHeaderRight}>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={handleRenameOpen}>
-            <Edit3 size={20} color="#A6A6A6" />
+            onPress={handleRenameOpen}
+          >
+            <Edit3 size={20} color={isDark ? themeColors.textSecondary : "#A6A6A6"} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={handleRestart}>
-            <RotateCcw size={20} color="#A6A6A6" />
+            onPress={handleRestart}
+          >
+            <RotateCcw size={20} color={isDark ? themeColors.textSecondary : "#A6A6A6"} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.compactActionButton}
-            onPress={() => setShowDeleteDialog(true)}>
-            <Trash2 size={20} color="#A6A6A6" />
+            onPress={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 size={20} color={isDark ? themeColors.textSecondary : "#A6A6A6"} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Content */}
-      <ScrollView
-        style={styles.content}
+      <ScrollView 
+        style={styles.content} 
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         {renderRecordingState()}
       </ScrollView>
 
-      <Modal
-        transparent
-        visible={showDeleteDialog}
-        animationType="fade"
-        onRequestClose={() => setShowDeleteDialog(false)}>
+      <Modal transparent visible={showDeleteDialog} animationType="fade" onRequestClose={() => setShowDeleteDialog(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <TouchableOpacity
-              style={styles.modalClose}
-              onPress={() => setShowDeleteDialog(false)}>
-              <X size={18} color={colors.onSurface} />
+          <View style={[styles.modalCard, { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF', shadowColor: themeColors.shadowColor }]}>
+            <TouchableOpacity style={[styles.modalClose, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FAFAFA',
+              borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+            }]} onPress={() => setShowDeleteDialog(false)}>
+              <X size={18} color={themeColors.textPrimary} />
             </TouchableOpacity>
-            <Text variant="headlineLarge" style={styles.modalTitle}>
-              Delete Session
-            </Text>
-            <Text variant="bodyMedium" style={styles.modalDescription}>
-              Are you sure you want to delete this session? This action cannot
-              be undone.
+            <Text variant="headlineLarge" style={[styles.modalTitle, { color: themeColors.textPrimary }]}>Delete Session</Text>
+            <Text variant="bodyMedium" style={[styles.modalDescription, { color: themeColors.textSecondary }]}>
+              Are you sure you want to delete this session? This action cannot be undone.
             </Text>
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setShowDeleteDialog(false)}>
-                <Text variant="titleSmall" style={styles.modalButtonText}>
-                  Cancel
-                </Text>
+              <TouchableOpacity style={[styles.modalButton, { 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FAFAFA',
+                borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+              }]} onPress={() => setShowDeleteDialog(false)}>
+                <Text variant="titleSmall" style={[styles.modalButtonText, { color: themeColors.textPrimary }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalDangerButton]}
-                onPress={handleDeleteConfirm}>
-                <Text variant="titleSmall" style={styles.modalDangerText}>
-                  Delete
-                </Text>
+              <TouchableOpacity style={[styles.modalButton, styles.modalDangerButton]} onPress={handleDeleteConfirm}>
+                <Text variant="titleSmall" style={styles.modalDangerText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      <Modal
-        transparent
-        visible={showRenameDialog}
-        animationType="fade"
-        onRequestClose={() => setShowRenameDialog(false)}>
+      <Modal transparent visible={showRenameDialog} animationType="fade" onRequestClose={() => setShowRenameDialog(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <TouchableOpacity
-              style={styles.modalClose}
-              onPress={() => setShowRenameDialog(false)}>
-              <X size={18} color={colors.onSurface} />
+          <View style={[styles.modalCard, { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF', shadowColor: themeColors.shadowColor }]}>
+            <TouchableOpacity style={[styles.modalClose, { 
+              backgroundColor: isDark ? themeColors.layer2 : '#FAFAFA',
+              borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+            }]} onPress={() => setShowRenameDialog(false)}>
+              <X size={18} color={themeColors.textPrimary} />
             </TouchableOpacity>
-            <Text variant="headlineLarge" style={styles.modalTitle}>
-              Rename Session
-            </Text>
-            <View style={styles.renameInputWrapper}>
+            <Text variant="headlineLarge" style={[styles.modalTitle, { color: themeColors.textPrimary }]}>Rename Session</Text>
+            <View style={[styles.renameInputWrapper, { 
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FAFAFA',
+              borderColor: isDark ? themeColors.borderSubtle : '#E5E5EA'
+            }]}>
               <TextInput
                 value={renameValue}
                 onChangeText={setRenameValue}
-                style={styles.renameInput}
+                style={[styles.renameInput, { color: themeColors.textPrimary }]}
                 placeholder="Session name"
-                placeholderTextColor={colors.onSurfaceVariant}
+                placeholderTextColor={isDark ? themeColors.textMuted : colors.onSurfaceVariant}
               />
             </View>
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setShowRenameDialog(false)}>
-                <Text variant="titleSmall" style={styles.modalButtonText}>
-                  Cancel
-                </Text>
+              <TouchableOpacity style={[styles.modalButton, { 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FAFAFA',
+                borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
+              }]} onPress={() => setShowRenameDialog(false)}>
+                <Text variant="titleSmall" style={[styles.modalButtonText, { color: themeColors.textPrimary }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalPrimaryButton]}
-                onPress={handleRenameSave}>
-                <Text variant="titleSmall" style={styles.modalPrimaryText}>
-                  Save
-                </Text>
+              <TouchableOpacity style={[styles.modalButton, styles.modalPrimaryButton, { backgroundColor: themeColors.accentPrimary, borderColor: themeColors.accentPrimary }]} onPress={handleRenameSave}>
+                <Text variant="titleSmall" style={styles.modalPrimaryText}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>

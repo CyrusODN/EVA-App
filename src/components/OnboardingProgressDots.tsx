@@ -5,11 +5,7 @@ import Animated, {
   withSpring,
   interpolateColor,
 } from 'react-native-reanimated';
-import {
-  ONBOARDING_COLORS,
-  SPRINGS,
-  ONBOARDING_SPACING,
-} from '../constants/onboardingTheme';
+import { useOnboardingTheme, SPRINGS, ONBOARDING_SPACING } from '../constants/onboardingTheme';
 
 interface OnboardingProgressDotsProps {
   totalSteps: number;
@@ -23,11 +19,7 @@ const OnboardingProgressDots: React.FC<OnboardingProgressDotsProps> = ({
   return (
     <View style={styles.container}>
       {Array.from({ length: totalSteps }, (_, index) => (
-        <Dot
-          key={index}
-          isActive={index === currentStep}
-          isPast={index < currentStep}
-        />
+        <Dot key={index} isActive={index === currentStep} isPast={index < currentStep} />
       ))}
     </View>
   );
@@ -39,20 +31,22 @@ interface DotProps {
 }
 
 const Dot: React.FC<DotProps> = ({ isActive, isPast }) => {
+  const { colors: themeColors } = useOnboardingTheme();
+
   const animatedStyle = useAnimatedStyle(() => {
     const scale = withSpring(isActive ? 1 : 0.75, SPRINGS.snappy);
     const backgroundColor = isActive
-      ? ONBOARDING_COLORS.primary
+      ? themeColors.primary
       : isPast
-      ? ONBOARDING_COLORS.primary
-      : ONBOARDING_COLORS.border;
-
+      ? themeColors.primary
+      : themeColors.border;
+    
     return {
       transform: [{ scale }],
       backgroundColor,
       opacity: isPast ? 0.5 : 1,
     };
-  }, [isActive, isPast]);
+  }, [isActive, isPast, themeColors]);
 
   return <Animated.View style={[styles.dot, animatedStyle]} />;
 };

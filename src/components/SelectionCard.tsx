@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,31 +8,32 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import {
-  Brain,
-  Baby,
-  Scissors,
-  Sparkles,
-  ClipboardList,
+import { 
+  Brain, 
+  Baby, 
+  Scissors, 
+  Sparkles, 
+  ClipboardList, 
   RefreshCw,
   Check,
   LucideIcon,
 } from 'lucide-react-native';
 import {
-  ONBOARDING_COLORS,
+  useOnboardingTheme,
   ONBOARDING_SPACING,
   ONBOARDING_TYPOGRAPHY,
   ONBOARDING_SHADOWS,
+  ONBOARDING_SHADOWS_DARK,
   ONBOARDING_RADIUS,
   SPRINGS,
   DURATIONS,
 } from '../constants/onboardingTheme';
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  brain: Brain,
-  baby: Baby,
-  scissors: Scissors,
-  sparkles: Sparkles,
+  'brain': Brain,
+  'baby': Baby,
+  'scissors': Scissors,
+  'sparkles': Sparkles,
   'clipboard-list': ClipboardList,
   'refresh-cw': RefreshCw,
 };
@@ -62,16 +57,15 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
   onSelect,
   testID,
 }) => {
+  const { colors: themeColors, isDark } = useOnboardingTheme();
   const scale = useSharedValue(1);
   const borderColorProgress = useSharedValue(isSelected ? 1 : 0);
   const checkmarkScale = useSharedValue(isSelected ? 1 : 0);
-
+  
   const IconComponent = ICON_MAP[iconName] || Sparkles;
 
   useEffect(() => {
-    borderColorProgress.value = withTiming(isSelected ? 1 : 0, {
-      duration: DURATIONS.fast,
-    });
+    borderColorProgress.value = withTiming(isSelected ? 1 : 0, { duration: DURATIONS.fast });
     checkmarkScale.value = withSpring(isSelected ? 1 : 0, SPRINGS.bouncy);
   }, [isSelected]);
 
@@ -80,25 +74,23 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-
+    
     // Scale animation sequence (Things 3 style)
     scale.value = withSequence(
       withSpring(0.97, SPRINGS.snappy),
       withSpring(1.02, SPRINGS.bouncy),
-      withSpring(1.0, SPRINGS.gentle),
+      withSpring(1.0, SPRINGS.gentle)
     );
-
+    
     onSelect();
   };
 
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    borderColor: isSelected
-      ? ONBOARDING_COLORS.primary
-      : ONBOARDING_COLORS.border,
-    backgroundColor: isSelected
-      ? ONBOARDING_COLORS.primarySubtle
-      : ONBOARDING_COLORS.pureWhite,
+    borderColor: isSelected ? themeColors.primary : (isDark ? themeColors.border : themeColors.border),
+    backgroundColor: isSelected ? themeColors.primarySubtle : (isDark ? themeColors.surface : themeColors.pureWhite),
+    ...(isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm),
+    ...(isSelected && isDark ? ONBOARDING_SHADOWS_DARK.glow : {}),
   }));
 
   const checkmarkStyle = useAnimatedStyle(() => ({
@@ -107,34 +99,30 @@ const SelectionCard: React.FC<SelectionCardProps> = ({
   }));
 
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={handlePress} testID={testID}>
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={handlePress}
+      testID={testID}
+    >
       <Animated.View style={[styles.container, containerStyle]}>
-        <View style={styles.iconContainer}>
-          <IconComponent
-            size={24}
-            color={
-              isSelected
-                ? ONBOARDING_COLORS.primary
-                : ONBOARDING_COLORS.textSecondary
-            }
+        <View style={[styles.iconContainer, { backgroundColor: isDark ? themeColors.background : themeColors.surface }]}>
+          <IconComponent 
+            size={24} 
+            color={isSelected ? themeColors.primary : themeColors.textSecondary} 
             strokeWidth={2}
           />
         </View>
-
+        
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-          {hint && <Text style={styles.hint}>{hint}</Text>}
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>{title}</Text>
+          {subtitle && <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>{subtitle}</Text>}
+          {hint && <Text style={[styles.hint, { color: themeColors.primary }]}>{hint}</Text>}
         </View>
-
+        
         {/* Animated checkmark */}
         <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
-          <View style={styles.checkmark}>
-            <Check
-              size={14}
-              color={ONBOARDING_COLORS.pureWhite}
-              strokeWidth={3}
-            />
+          <View style={[styles.checkmark, { backgroundColor: themeColors.primary }]}>
+            <Check size={14} color={themeColors.pureWhite} strokeWidth={3} />
           </View>
         </Animated.View>
       </Animated.View>
@@ -149,14 +137,12 @@ const styles = StyleSheet.create({
     padding: ONBOARDING_SPACING.md,
     borderRadius: ONBOARDING_RADIUS.lg,
     borderWidth: 1,
-    ...ONBOARDING_SHADOWS.sm,
     minHeight: 80,
   },
   iconContainer: {
     width: 48,
     height: 48,
     borderRadius: ONBOARDING_RADIUS.md,
-    backgroundColor: ONBOARDING_COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: ONBOARDING_SPACING.md,
@@ -173,7 +159,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     ...ONBOARDING_TYPOGRAPHY.caption,
-    color: ONBOARDING_COLORS.primary,
     fontStyle: 'italic',
     marginTop: 4,
   },
@@ -186,7 +171,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: ONBOARDING_COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

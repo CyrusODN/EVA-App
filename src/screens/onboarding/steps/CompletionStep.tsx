@@ -18,10 +18,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import {
-  ONBOARDING_COLORS,
+  useOnboardingTheme,
   ONBOARDING_SPACING,
   ONBOARDING_TYPOGRAPHY,
   ONBOARDING_SHADOWS,
+  ONBOARDING_SHADOWS_DARK,
   ONBOARDING_RADIUS,
   SPRINGS,
   DURATIONS,
@@ -33,7 +34,7 @@ interface CompletionStepProps {
 
 const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
   const { t } = useTranslation();
-
+  const { colors:themeColors,isDark } = useOnboardingTheme();
   // Animation values
   const checkScale = useSharedValue(0);
   const checkOpacity = useSharedValue(0);
@@ -123,22 +124,26 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       <View style={styles.content}>
         {/* Animated checkmark */}
         <Animated.View style={[styles.checkContainer, checkStyle]}>
-          <View style={styles.checkCircle}>
-            <Text style={styles.checkIcon}>✓</Text>
+          <View style={[
+            styles.checkCircle, 
+            { backgroundColor: themeColors.primary },
+            isDark ? ONBOARDING_SHADOWS_DARK.lg : ONBOARDING_SHADOWS.lg
+          ]}>
+            <Text style={[styles.checkIcon, { color: themeColors.pureWhite }]}>✓</Text>
           </View>
         </Animated.View>
 
         {/* Title */}
-        <Animated.Text style={[styles.title, titleStyle]}>
+        <Animated.Text style={[styles.title, titleStyle, { color: themeColors.textPrimary }]}>
           {t('onboarding.complete.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text style={[styles.subtitle, subtitleStyle]}>
+        <Animated.Text style={[styles.subtitle, subtitleStyle, { color: themeColors.textSecondary }]}>
           {t('onboarding.complete.subtitle')}
         </Animated.Text>
       </View>
@@ -146,10 +151,14 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
       {/* CTA Button */}
       <Animated.View style={[styles.buttonContainer, buttonStyle]}>
         <TouchableOpacity
-          style={styles.ctaButton}
+          style={[
+            styles.ctaButton, 
+            { backgroundColor: themeColors.primary },
+            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow
+          ]}
           onPress={onComplete}
           activeOpacity={0.9}>
-          <Text style={styles.ctaText}>{t('onboarding.complete.cta')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.complete.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -159,7 +168,6 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ONBOARDING_COLORS.background,
     paddingHorizontal: ONBOARDING_SPACING.lg,
     paddingTop: ONBOARDING_SPACING.xxl,
     paddingBottom: ONBOARDING_SPACING.xl,
@@ -176,13 +184,10 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: ONBOARDING_COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...ONBOARDING_SHADOWS.lg,
   },
   checkIcon: {
-    color: ONBOARDING_COLORS.pureWhite,
     fontSize: 48,
     fontWeight: '600',
   },
@@ -192,7 +197,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textSecondary,
     textAlign: 'center',
     marginTop: ONBOARDING_SPACING.sm,
   },
@@ -200,16 +204,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: ONBOARDING_SPACING.md,
   },
   ctaButton: {
-    backgroundColor: ONBOARDING_COLORS.primary,
     height: 56,
     borderRadius: ONBOARDING_RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    ...ONBOARDING_SHADOWS.glow,
   },
   ctaText: {
     ...ONBOARDING_TYPOGRAPHY.title,
-    color: ONBOARDING_COLORS.pureWhite,
   },
 });
 

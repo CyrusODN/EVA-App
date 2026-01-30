@@ -1,33 +1,48 @@
 export const colors = {
-  primary: '#68BFB3',
-  lightPrimary: '#68BFB3',
-  darkPrimary: '#707070',
-  secondaryContainer: '#65BED620',
+  // Primary Brand Color - Clinical Turquoise
+  primary: '#46B7C6',
+  lightPrimary: '#46B7C6',
+  darkPrimary: '#3A9AA8',
+  
+  // Backgrounds
+  surface: '#FFFFFF',
+  background: '#FAFAFA',
+  backgroundSecondary: '#F7F9FB',
+  
+  // Text Colors
+  onSurface: '#000000',
+  onSurfaceVariant: '#86868b',
+  subText: '#86868b',
+  placeholderColor: '#C7C7CC',
+  
+  // Borders
+  borderColor: '#F0F0F0',
+  outline: '#E5E5EA',
+  outlineVariant: '#F0F0F0',
+  
+  // States
+  surfaceDisabled: '#F0F0F0',
+  onSurfaceDisabled: '#C7C7CC',
+  
+  // Legacy colors (keep for compatibility)
+  secondaryContainer: '#F0F0F0',
   tertiary: '#DAD5E0',
-  surface: '#ffffff',
   onPrimary: '#E4F9FF',
   lightOnPrimaryContainer: '#EADBFE',
   primaryContainer: '#f0f0f0',
-  onSurfaceVariant: 'rgb(74, 69, 78)',
   backdrop: '#0d0d0d',
-  onSecondary: '#4A90B9',
-  lightOnSecondary: '#5BA6B6',
-  error: 'rgb(186, 26, 26)',
+  onSecondary: '#46B7C6',
+  lightOnSecondary: '#46B7C6',
+  error: '#ef4444',
   errorContainer: 'rgb(255, 218, 214)',
-  outline: 'rgb(124, 117, 126)',
   onSecondaryContainer: '#f5f5f5',
   onTertiary: '#FFD700',
   tertiaryContainer: '#B8E6D3',
-  subText: '#4B5563',
   onTertiaryContainer: 'rgb(50, 16, 23)',
   onError: 'rgb(255, 255, 255)',
-
   onErrorContainer: 'rgb(65, 0, 2)',
   onBackground: 'rgb(29, 27, 30)',
-  onSurface: 'rgb(29, 27, 30)',
-  surfaceVariant: 'rgb(233, 223, 235)',
-
-  outlineVariant: 'rgb(204, 196, 206)',
+  surfaceVariant: '#FAFAFA',
   shadow: 'rgb(0, 0, 0)',
   scrim: 'rgb(0, 0, 0)',
   inverseSurface: 'rgb(50, 47, 51)',
@@ -35,21 +50,16 @@ export const colors = {
   inversePrimary: 'rgb(220, 184, 255)',
   elevation: {
     level0: 'transparent',
-    level1: 'rgb(248, 242, 251)',
-    level2: 'rgb(244, 236, 248)',
-    level3: 'rgb(240, 231, 246)',
-    level4: 'rgb(239, 229, 245)',
-    level5: 'rgb(236, 226, 243)',
+    level1: '#FAFAFA',
+    level2: '#F7F9FB',
+    level3: '#F5F5F5',
+    level4: '#F0F0F0',
+    level5: '#EEEEEE',
   },
-  surfaceDisabled: 'rgba(29, 27, 30, 0.12)',
-  onSurfaceDisabled: 'rgba(29, 27, 30, 0.38)',
-  placeholderColor: '#A5A5A5',
-  background: '#F7F9FB',
   bottomBar: '#9CA3AF',
   inputBackground: '#FFFFFF',
   buttonBackground: '#707070',
-  addBackground: '#EEEEEE',
-  borderColor: '#D9D9D9',
-  bluish: '#53A0CD',
+  addBackground: '#FAFAFA',
+  bluish: '#46B7C6',
   lightGreen: '#44C2AD',
 };

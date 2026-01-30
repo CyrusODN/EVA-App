@@ -1,9 +1,11 @@
 import { Platform, StyleSheet } from 'react-native';
+import useThemeStore from '../store/themeStore';
 
 // Premium Design System inspired by Things 3, Cron, Superhuman, Linear
 // "Invisible luxury" - every pixel matters
 
-export const ONBOARDING_COLORS = {
+// Light theme colors
+export const ONBOARDING_COLORS_LIGHT = {
   // Brand Accent
   primary: '#46B7C6',
   primaryLight: '#E0F4F7',
@@ -27,6 +29,46 @@ export const ONBOARDING_COLORS = {
   warning: '#F59E0B',
   error: '#EF4444',
 };
+
+// Dark theme colors
+export const ONBOARDING_COLORS_DARK = {
+  // Brand Accent
+  primary: '#46B7C6',
+  primaryLight: 'rgba(70, 183, 198, 0.25)',
+  primarySubtle: 'rgba(70, 183, 198, 0.15)',
+  
+  // Neutrals (Dark mode - Deep Obsidian)
+  pureWhite: '#FAFAFA',
+  background: '#0A0E12',
+  surface: '#141922',
+  borderLight: 'rgba(255, 255, 255, 0.08)',
+  border: 'rgba(255, 255, 255, 0.12)',
+  
+  // Text hierarchy
+  textPrimary: '#FAFAFA',
+  textSecondary: '#94A3B8',
+  textTertiary: '#64748B',
+  textDisabled: '#475569',
+  
+  // Semantic
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+};
+
+// Hook to get current theme colors
+export const useOnboardingTheme = () => {
+  const theme = useThemeStore((state) => state.theme);
+  const isDark = theme === 'dark';
+  
+  return {
+    colors: isDark ? ONBOARDING_COLORS_DARK : ONBOARDING_COLORS_LIGHT,
+    isDark,
+  };
+};
+
+// Legacy export for backward compatibility (use light theme as default)
+export const ONBOARDING_COLORS = ONBOARDING_COLORS_LIGHT;
 
 export const ONBOARDING_SPACING = {
   xxs: 4,
@@ -58,35 +100,30 @@ export const ONBOARDING_TYPOGRAPHY = StyleSheet.create({
     fontWeight: '600',
     fontSize: 32,
     letterSpacing: -0.8,
-    color: ONBOARDING_COLORS.textPrimary,
   },
   headline: {
     fontFamily: ONBOARDING_FONTS.display,
     fontWeight: '600',
     fontSize: 24,
     letterSpacing: -0.6,
-    color: ONBOARDING_COLORS.textPrimary,
   },
   title: {
     fontFamily: ONBOARDING_FONTS.text,
     fontWeight: '600',
     fontSize: 17,
     letterSpacing: -0.4,
-    color: ONBOARDING_COLORS.textPrimary,
   },
   body: {
     fontFamily: ONBOARDING_FONTS.text,
     fontWeight: '400',
     fontSize: 15,
     letterSpacing: -0.2,
-    color: ONBOARDING_COLORS.textPrimary,
   },
   caption: {
     fontFamily: ONBOARDING_FONTS.text,
     fontWeight: '400',
     fontSize: 13,
     letterSpacing: 0,
-    color: ONBOARDING_COLORS.textSecondary,
   },
   overline: {
     fontFamily: ONBOARDING_FONTS.text,
@@ -94,7 +131,6 @@ export const ONBOARDING_TYPOGRAPHY = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.5,
     textTransform: 'uppercase' as const,
-    color: ONBOARDING_COLORS.textSecondary,
   },
 });
 
@@ -125,6 +161,38 @@ export const ONBOARDING_SHADOWS = {
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
+    elevation: 6,
+  },
+};
+
+// Dark mode shadows
+export const ONBOARDING_SHADOWS_DARK = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  glow: {
+    shadowColor: '#46B7C6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
     elevation: 6,
   },
 };

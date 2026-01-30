@@ -11,9 +11,10 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import SelectionCard from '../../../components/SelectionCard';
 import OnboardingProgressDots from '../../../components/OnboardingProgressDots';
 import {
-  ONBOARDING_COLORS,
+  useOnboardingTheme,
   ONBOARDING_SPACING,
   ONBOARDING_TYPOGRAPHY,
+  ONBOARDING_SHADOWS_DARK,
   ONBOARDING_SHADOWS,
   ONBOARDING_RADIUS,
   DURATIONS,
@@ -57,16 +58,17 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
   totalSteps,
 }) => {
   const { t } = useTranslation();
+  const { colors: themeColors, isDark } = useOnboardingTheme();
 
   return (
-    <View style={styles.container}>
+     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>← {t('onboarding.back')}</Text>
+                    <Text style={[styles.backText, { color: themeColors.textSecondary }]}>←  {t('onboarding.back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-          <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
+          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -77,14 +79,14 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
         {/* Title */}
         <Animated.Text
           entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
-          style={styles.title}>
+          style={[styles.title, { color: themeColors.textPrimary }]}>
           {t('onboarding.visitType.title')}
         </Animated.Text>
 
         {/* Subtitle */}
         <Animated.Text
           entering={FadeInDown.delay(150).duration(DURATIONS.normal)}
-          style={styles.subtitle}>
+          style={[styles.subtitle, { color: themeColors.textSecondary }]}>
           {t('onboarding.visitType.subtitle')}
         </Animated.Text>
 
@@ -111,9 +113,9 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
         {/* Hint */}
         <Animated.View
           entering={FadeIn.delay(350).duration(DURATIONS.normal)}
-          style={styles.hintContainer}>
+          style={[styles.hintContainer, { backgroundColor: themeColors.primarySubtle }]}>
           <Text style={styles.hintIcon}>💡</Text>
-          <Text style={styles.hintText}>{t('onboarding.visitType.hint')}</Text>
+          <Text style={[styles.hintText, { color: themeColors.textSecondary }]}>{t('onboarding.visitType.hint')}</Text>
         </Animated.View>
 
         {/* Progress dots */}
@@ -132,10 +134,14 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
         entering={FadeInDown.delay(500).duration(DURATIONS.normal)}
         style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.ctaButton}
+          style={[
+            styles.ctaButton,
+            { backgroundColor: themeColors.primary },
+            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow,
+          ]}
           onPress={onContinue}
           activeOpacity={0.9}>
-          <Text style={styles.ctaText}>{t('onboarding.next')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.next')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -145,7 +151,6 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ONBOARDING_COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -160,14 +165,12 @@ const styles = StyleSheet.create({
   },
   backText: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textSecondary,
   },
   skipButton: {
     padding: ONBOARDING_SPACING.xs,
   },
   skipText: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textTertiary,
   },
   scrollView: {
     flex: 1,
@@ -184,7 +187,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textSecondary,
     textAlign: 'center',
     marginTop: ONBOARDING_SPACING.sm,
   },
@@ -199,7 +201,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: ONBOARDING_COLORS.primarySubtle,
     borderRadius: ONBOARDING_RADIUS.md,
     padding: ONBOARDING_SPACING.md,
     marginTop: ONBOARDING_SPACING.lg,
@@ -210,7 +211,6 @@ const styles = StyleSheet.create({
   },
   hintText: {
     ...ONBOARDING_TYPOGRAPHY.caption,
-    color: ONBOARDING_COLORS.textSecondary,
     flex: 1,
   },
   dotsContainer: {
@@ -223,16 +223,13 @@ const styles = StyleSheet.create({
     paddingTop: ONBOARDING_SPACING.md,
   },
   ctaButton: {
-    backgroundColor: ONBOARDING_COLORS.primary,
     height: 56,
     borderRadius: ONBOARDING_RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    ...ONBOARDING_SHADOWS.glow,
   },
   ctaText: {
     ...ONBOARDING_TYPOGRAPHY.title,
-    color: ONBOARDING_COLORS.pureWhite,
   },
 });
 

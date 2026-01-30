@@ -17,10 +17,11 @@ import Animated, {
 import RemedyLogoAnimated from '../../../components/RemedyLogoAnimated';
 import OnboardingProgressDots from '../../../components/OnboardingProgressDots';
 import {
-  ONBOARDING_COLORS,
+  useOnboardingTheme,
+  ONBOARDING_SHADOWS,
+  ONBOARDING_SHADOWS_DARK,
   ONBOARDING_SPACING,
   ONBOARDING_TYPOGRAPHY,
-  ONBOARDING_SHADOWS,
   ONBOARDING_RADIUS,
   DURATIONS,
 } from '../../../constants/onboardingTheme';
@@ -41,6 +42,7 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
   totalSteps,
 }) => {
   const { t } = useTranslation();
+  const { colors: themeColors, isDark } = useOnboardingTheme();
 
   // Staggered animation values
   const headlineOpacity = useSharedValue(0);
@@ -133,10 +135,10 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Skip button */}
       <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-        <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
+        <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>{t('onboarding.skip')}</Text>
       </TouchableOpacity>
 
       {/* Content */}
@@ -145,12 +147,12 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
         <RemedyLogoAnimated size={100} animated delay={0} />
 
         {/* Headline */}
-        <Animated.Text style={[styles.headline, headlineStyle]}>
+        <Animated.Text style={[styles.headline, headlineStyle, { color: themeColors.textPrimary }]}>
           {t('onboarding.welcome.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text style={[styles.subtitle, subtitleStyle]}>
+        <Animated.Text style={[styles.subtitle, subtitleStyle, { color: themeColors.textSecondary }]}>
           {t('onboarding.welcome.subtitle')}
         </Animated.Text>
 
@@ -166,10 +168,14 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
       {/* CTA Button */}
       <Animated.View style={[styles.buttonContainer, buttonStyle]}>
         <TouchableOpacity
-          style={styles.ctaButton}
+          style={[
+            styles.ctaButton,
+            { backgroundColor: themeColors.primary },
+            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow,
+          ]}
           onPress={onContinue}
           activeOpacity={0.9}>
-          <Text style={styles.ctaText}>{t('onboarding.welcome.cta')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.welcome.cta')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -179,7 +185,6 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ONBOARDING_COLORS.background,
     paddingHorizontal: ONBOARDING_SPACING.lg,
     paddingTop: ONBOARDING_SPACING.xxl,
     paddingBottom: ONBOARDING_SPACING.xl,
@@ -193,7 +198,6 @@ const styles = StyleSheet.create({
   },
   skipText: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textTertiary,
   },
   content: {
     flex: 1,
@@ -208,7 +212,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textSecondary,
     textAlign: 'center',
     marginTop: ONBOARDING_SPACING.sm,
     lineHeight: 22,
@@ -220,16 +223,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: ONBOARDING_SPACING.md,
   },
   ctaButton: {
-    backgroundColor: ONBOARDING_COLORS.primary,
     height: 56,
     borderRadius: ONBOARDING_RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    ...ONBOARDING_SHADOWS.glow,
   },
   ctaText: {
     ...ONBOARDING_TYPOGRAPHY.title,
-    color: ONBOARDING_COLORS.pureWhite,
   },
 });
 

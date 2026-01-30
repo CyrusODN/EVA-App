@@ -23,13 +23,22 @@ import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import { forgetPassword } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
+import { useTheme } from '../../constants/theme';
+import useThemeStore from '../../store/themeStore';
+import RemedyLogo from '../../components/RemedyLogo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Sun, Moon, Check } from 'lucide-react-native';
+import LanguageSelector from '../../components/languageSelector';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const { colors: themeColors, isDark } = useTheme();
+  const { toggleTheme } = useThemeStore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -58,32 +67,48 @@ const ForgotPassword = () => {
   };
 
   return (
-    <View style={styles.mainContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor={themeColors.canvas} 
+      />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent,{paddingBottom: insets.bottom + hp(2)}]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
-                <Image
-                  source={images.logo}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
+                
+                <RemedyLogo width={wp(25.5)} height={wp(25.5)} />
+                <View style={styles.productNameContainer}>
+                  <Text style={[
+                    styles.mioText, 
+                    { 
+                      color: isDark ? '#FAFAFA' : '#1A202C',
+                      textShadowColor: isDark ? 'rgba(70, 183, 198, 0.5)' : 'transparent',
+                      textShadowOffset: { width: 0, height: 0 },
+                      textShadowRadius: 20
+                    }
+                  ]}>
+                    EVA
+                  </Text>
+                  <Text style={[styles.mioSubText, { color: themeColors.accentPrimary }]}>
+                    {t('login.productSubtitle')}
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.textWrapper}>
-                <Text variant="displayMedium" style={styles.welcomeTitle}>
+                <Text variant="displayMedium" style={[styles.welcomeTitle,{color:themeColors.textPrimary}]}>
                   {t('login.resetPassword')}
                 </Text>
-                <Text variant="bodyLarge" style={styles.welcomeSubtitle}>
+                <Text variant="bodyLarge" style={[styles.welcomeSubtitle,{color:isDark ? themeColors.textSecondary : '#86868b'}]}>
                   {t('login.resetInstructions')}
                 </Text>
               </View>
@@ -99,8 +124,10 @@ const ForgotPassword = () => {
                       value={email}
                       setValue={setEmail}
                       mode="email"
-                      backgroundColor="#FAFAFA"
-                      borderColor="transparent"
+                      backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
+                      borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                      textColor={themeColors.textPrimary}
+                      placeholderTextColor={isDark ? themeColors.textMuted : undefined}
                       borderRadius={14}
                       width="100%"
                       height={hp(6.2)}
@@ -111,7 +138,7 @@ const ForgotPassword = () => {
                   </View>
 
                   {/* Send Reset Link Button */}
-                  <View style={styles.primaryButtonWrapper}>
+                  <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
                     <PrimaryButton
                       text={t('login.sendResetLink')}
                       onPress={handleResetPassword}
@@ -119,7 +146,7 @@ const ForgotPassword = () => {
                       disabled={loading}
                       width="100%"
                       borderRadius={16}
-                      backgroundColor="#46B7C6"
+                      backgroundColor={themeColors.accentPrimary}
                       useGradient={false}
                       accessibilityLabel={t('login.sendResetLink')}
                     />
@@ -127,16 +154,21 @@ const ForgotPassword = () => {
                 </>
               ) : (
                 // Success State
-                <View style={styles.successContainer}>
-                  <View style={styles.successIcon}>
-                    <Text variant="displaySmall" style={styles.checkmark}>
-                      ✓
-                    </Text>
+                <View style={[styles.successContainer, { 
+                  backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.05)',
+                  paddingVertical: hp(4),
+                  paddingHorizontal: wp(5),
+                  borderRadius: 24,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.2)',
+                }]}>
+                  <View style={[styles.successIcon, { backgroundColor: isDark ? '#4CAF50' : '#4CAF50' }]}>
+                    <Check size={hp(5)} color="#FFFFFF" strokeWidth={3} />
                   </View>
-                  <Text variant="headlineMedium" style={styles.successTitle}>
+                  <Text variant="headlineMedium" style={[styles.successTitle, { color: themeColors.textPrimary }]}>
                     {t('login.resetLinkSent')}
                   </Text>
-                  <Text variant="bodyMedium" style={styles.successSubtitle}>
+                  <Text variant="bodyMedium" style={[styles.successSubtitle, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
                     {t('login.checkEmail')}
                   </Text>
                 </View>
@@ -147,7 +179,7 @@ const ForgotPassword = () => {
                 <TouchableOpacity
                   onPress={() => navigation.navigate('login' as never)}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                  <Text variant="bodyMedium" style={styles.signUpText}>
+                  <Text variant="bodyMedium" style={[styles.signUpText, { color: themeColors.accentPrimary }]}>
                     ← {t('login.backToLogin')}
                   </Text>
                 </TouchableOpacity>
@@ -156,9 +188,9 @@ const ForgotPassword = () => {
 
             {/* Footer - Pushed to bottom */}
             <View style={styles.footer}>
-              <Text variant="bodySmall" style={styles.footerText}>
+              <Text variant="bodySmall" style={[styles.footerText, { color: themeColors.textMuted }]}>
                 {t('login.protectedBy')}{' '}
-                <Text variant="bodySmall" style={styles.brandText}>
+                <Text variant="bodySmall" style={[styles.brandText,{ color: isDark ? themeColors.textSecondary : '#86868b' }]}>
                   Remedy AI
                 </Text>
               </Text>
@@ -185,22 +217,43 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: wp(8),
     paddingTop: hp(2),
-    paddingBottom: hp(2),
   },
 
   // Header Section
   headerSection: {
     alignItems: 'center',
-    marginTop: hp(4),
+    marginTop: hp(2),
     marginBottom: hp(5),
   },
   logoWrapper: {
+    marginTop: hp(2),
     marginBottom: hp(3),
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
+        alignItems: 'center',
+  },
+  productNameContainer: {
+    alignItems: 'center',
+    marginTop: hp(2),
+  },
+  mioText: {
+    fontSize: 40,
+    fontWeight: '300', // Light weight
+    letterSpacing: 12, // Very wide tracking
+    textTransform: 'uppercase',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    marginBottom: 2,
+  },
+  mioSubText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
+    opacity: 0.9,
   },
   logo: {
     width: wp(50),
@@ -261,20 +314,21 @@ const styles = StyleSheet.create({
   // Success State
   successContainer: {
     alignItems: 'center',
-    paddingVertical: hp(4),
-  },
-  successIcon: {
-    width: hp(8),
-    height: hp(8),
-    borderRadius: hp(4),
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '100%',
     marginBottom: hp(3),
   },
-  checkmark: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  successIcon: {
+    width: hp(10),
+    height: hp(10),
+    borderRadius: hp(5),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: hp(2),
+    shadowColor: "#4CAF50",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   successTitle: {
     color: '#000000',
@@ -305,6 +359,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#86868b',
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+  },
+  topRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    position: 'absolute',
+    top: hp(2),
+    right: 0,
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(128, 128, 128, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

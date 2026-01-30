@@ -29,16 +29,18 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
+import { useTheme } from '../../constants/theme';
+import RemedyLogoFull from '../../components/RemedyLogoFull';
 
 const AI_TOOLS = [
-  {
-    id: 'discharge',
-    title: 'aiTools.discharge.title',
-    description: 'aiTools.discharge.description',
-    icon: FileText,
-    screenName: 'discharge',
-  },
   // NOTE: Temporarily hidden from AI Tools Suite — do not remove.
+  // {
+  //   id: 'discharge',
+  //   title: 'aiTools.discharge.title',
+  //   description: 'aiTools.discharge.description',
+  //   icon: FileText,
+  //   screenName: 'discharge',
+  // },
   // {
   //   id: 'prescreening',
   //   title: 'aiTools.prescreening.title',
@@ -80,56 +82,59 @@ const AI_TOOLS = [
 const AITools = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const { colors: themeColors, isDark } = useTheme();
 
   const renderToolItem = ({ item }: { item: (typeof AI_TOOLS)[0] }) => {
     const Icon = item.icon;
     return (
       <TouchableOpacity
-        style={styles.toolItem}
+        style={[styles.toolItem, { 
+          backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+          borderColor: isDark ? themeColors.borderSubtle : 'rgba(226, 232, 240, 0.6)',
+          shadowColor: themeColors.shadowColor
+        }]}
         onPress={() => navigation.navigate(item.screenName as never)}
-        activeOpacity={0.7}>
+        activeOpacity={0.7}
+      >
         <View style={styles.toolRow}>
-          <View style={styles.iconContainer}>
-            <Icon size={24} color={colors.primary} strokeWidth={2} />
+          <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)' }]}>
+            <Icon size={24} color={themeColors.accentPrimary} strokeWidth={2} />
           </View>
-
+          
           <View style={styles.textContainer}>
-            <Text variant="titleMedium" style={styles.toolTitle}>
+            <Text variant="titleMedium" style={[styles.toolTitle, { color: themeColors.textPrimary }]}>
               {t(item.title)}
             </Text>
             <Text
               variant="bodySmall"
-              style={styles.toolDescription}
-              numberOfLines={1}>
+              style={[styles.toolDescription, { color: themeColors.textSecondary }]}
+              numberOfLines={1}
+            >
               {t(item.description)}
             </Text>
           </View>
 
-          <ChevronRight size={20} color="#C7C7CC" />
+          <ChevronRight size={20} color={isDark ? themeColors.textMuted : "#C7C7CC"} />
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={styles.mainContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <SafeAreaView style={styles.container}>
+    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.canvas} />
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.canvas }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: themeColors.canvas }]}>
           <View style={styles.headerLeft}>
-            <Image
-              source={images.logo}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <View style={styles.headerSeparator} />
-            <Text variant="headlineLarge" style={styles.aiToolsTitle}>
-              {t('aiTools.title')}
+            <RemedyLogoFull width={wp(40)} height={hp(4.5)} />
+            <View style={[styles.headerSeparator, { backgroundColor: isDark ? themeColors.borderNormal : '#D1D1D6' }]} />
+            <Text variant="headlineLarge" style={[styles.mioText, { color: themeColors.textPrimary }]}>
+              EVA
             </Text>
           </View>
         </View>
-        <View style={styles.headerDivider} />
+        <View style={[styles.headerDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#E2E8F0' }]} />
 
         {/* Tools List */}
         <FlatList
@@ -191,6 +196,14 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'System',
     fontWeight: '400',
     letterSpacing: -0.1,
+  },
+  mioText: {
+    color: '#3C3C43',
+    fontSize: 20,
+    lineHeight: 25,
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    fontWeight: '300',
+    letterSpacing: 6, // Proportional to smaller font size (20 vs 40 on login)
   },
   listContent: {
     paddingBottom: hp(12), // Increased padding for bottom tab bar

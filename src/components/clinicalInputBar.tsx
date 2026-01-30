@@ -1,6 +1,6 @@
 /**
  * ClinicalInputBar Component
- *
+ * 
  * Unified iMessage-style input bar for clinical screens (Consult, Pharmacopedia, Discharge).
  * Pattern: Plus button (left) + TextInput (center) + Send button (right, conditional)
  */
@@ -23,11 +23,11 @@ interface ClinicalInputBarProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
-
+  
   // Actions
   onSend: () => void;
   onPlusPress: () => void;
-
+  
   // Customization
   maxLength?: number;
   disabled?: boolean;
@@ -45,30 +45,27 @@ export const ClinicalInputBar: React.FC<ClinicalInputBarProps> = ({
   showSend,
 }) => {
   const insets = useSafeAreaInsets();
-
-  const shouldShowSend =
-    showSend !== undefined ? showSend : value.trim().length > 0;
-
+  
+  const shouldShowSend = showSend !== undefined ? showSend : value.trim().length > 0;
+  
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-      <View
-        style={[
-          styles.wrapper,
-          { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 20 },
-        ]}>
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <View style={[styles.wrapper, { paddingBottom: Platform.OS === 'ios' ? insets.bottom : 20 }]}>
         <View style={styles.container}>
           {/* Plus Button */}
           <TouchableOpacity
             style={styles.plusButton}
             onPress={onPlusPress}
             activeOpacity={0.7}
-            disabled={disabled}>
-            <Plus
-              size={22}
-              color={ClinicalTheme.inputBar.plusButton.icon}
-              strokeWidth={2}
+            disabled={disabled}
+          >
+            <Plus 
+              size={22} 
+              color={ClinicalTheme.inputBar.plusButton.icon} 
+              strokeWidth={2} 
             />
           </TouchableOpacity>
 
@@ -90,12 +87,9 @@ export const ClinicalInputBar: React.FC<ClinicalInputBarProps> = ({
               style={styles.sendButton}
               onPress={onSend}
               activeOpacity={0.7}
-              disabled={disabled}>
-              <ArrowUp
-                size={18}
-                color={ClinicalTheme.inputBar.sendButton.icon}
-                strokeWidth={2.5}
-              />
+              disabled={disabled}
+            >
+              <ArrowUp size={18} color={ClinicalTheme.inputBar.sendButton.icon} strokeWidth={2.5} />
             </TouchableOpacity>
           )}
         </View>

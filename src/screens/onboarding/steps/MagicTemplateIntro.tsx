@@ -15,12 +15,14 @@ import Animated, {
 import { Mic, Sparkles, CheckCircle2 } from 'lucide-react-native';
 import OnboardingProgressDots from '../../../components/OnboardingProgressDots';
 import {
-  ONBOARDING_COLORS,
+  useOnboardingTheme,
   ONBOARDING_SPACING,
   ONBOARDING_TYPOGRAPHY,
   ONBOARDING_SHADOWS,
+  ONBOARDING_SHADOWS_DARK,
   ONBOARDING_RADIUS,
   DURATIONS,
+  ONBOARDING_COLORS,
 } from '../../../constants/onboardingTheme';
 
 const { width } = Dimensions.get('window');
@@ -41,13 +43,14 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
   totalSteps,
 }) => {
   const { t } = useTranslation();
+  const { colors:themeColors, isDark} = useOnboardingTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: themeColors.background}]}>
       {/* Header with Back */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backText}>← {t('onboarding.back')}</Text>
+          <Text style={[styles.backText, {color: themeColors.textSecondary}]}>← {t('onboarding.back')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -57,42 +60,49 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
         <Animated.View
           entering={FadeIn.delay(100).duration(DURATIONS.slow)}
           style={styles.iconContainer}>
-          <View style={styles.iconCircle}>
-            <Sparkles size={40} color={ONBOARDING_COLORS.primary} />
+          <View style={[styles.iconCircle, {backgroundColor: themeColors.primarySubtle}]}>
+            <Sparkles size={40} color={themeColors.primary} />
           </View>
         </Animated.View>
 
         {/* Title */}
         <Animated.Text
           entering={FadeInDown.delay(200).duration(DURATIONS.normal)}
-          style={styles.title}>
+          style={[styles.title, {color: themeColors.textPrimary}]}>
           {t('onboarding.magicIntro.title')}
         </Animated.Text>
 
         {/* Subtitle */}
         <Animated.Text
           entering={FadeInDown.delay(250).duration(DURATIONS.normal)}
-          style={styles.subtitle}>
+          style={[styles.subtitle, {color: themeColors.textSecondary}]}>
           {t('onboarding.magicIntro.subtitle')}
         </Animated.Text>
 
         {/* Description */}
         <Animated.Text
           entering={FadeInDown.delay(300).duration(DURATIONS.normal)}
-          style={styles.description}>
+          style={[styles.description, {color: themeColors.textTertiary}]}>
           {t('onboarding.magicIntro.description')}
         </Animated.Text>
 
         {/* Description card */}
         <Animated.View
           entering={FadeInDown.delay(350).duration(DURATIONS.normal)}
-          style={styles.descriptionCard}>
+          style={[
+            styles.descriptionCard,
+            {
+              backgroundColor: isDark ? themeColors.surface : themeColors.pureWhite,
+              borderColor: isDark ? themeColors.border : themeColors.borderLight,
+              ...(isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm),
+            },
+          ]}>
           <View style={styles.flowStep}>
-            <View style={styles.flowStepIcon}>
-              <Mic size={20} color={ONBOARDING_COLORS.primary} />
+            <View style={[styles.flowStepIcon, {backgroundColor: themeColors.primarySubtle}]}>
+              <Mic size={20} color={themeColors.primary} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={styles.flowStepLabel}>
+              <Text style={[styles.flowStepLabel, {color: themeColors.textPrimary}]}>
                 {t('onboarding.magicIntro.step1')}
               </Text>
             </View>
@@ -100,30 +110,30 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
 
           {/* Flow indicator */}
           <View style={styles.flowArrow}>
-            <Text style={styles.flowArrowText}>↓</Text>
+            <Text style={[styles.flowArrowText, {color: themeColors.border}]}>↓</Text>
           </View>
 
           <View style={styles.flowStep}>
-            <View style={styles.flowStepIcon}>
-              <Sparkles size={20} color={ONBOARDING_COLORS.primary} />
+            <View style={[styles.flowStepIcon, {backgroundColor: themeColors.primarySubtle}]}>
+              <Sparkles size={20} color={themeColors.primary} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={styles.flowStepLabelSmall}>
+              <Text style={[styles.flowStepLabelSmall, {color: themeColors.textSecondary}]}>
                 {t('onboarding.magicIntro.step2')}
               </Text>
             </View>
           </View>
 
           <View style={styles.flowArrow}>
-            <Text style={styles.flowArrowText}>↓</Text>
+            <Text style={[styles.flowArrowText, {color: themeColors.border}]}>↓</Text>
           </View>
 
           <View style={styles.flowStep}>
-            <View style={styles.flowStepIconSuccess}>
-              <CheckCircle2 size={20} color={ONBOARDING_COLORS.pureWhite} />
+            <View style={[styles.flowStepIconSuccess, {backgroundColor: themeColors.primary}]}>
+              <CheckCircle2 size={20} color={themeColors.pureWhite} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={styles.flowStepLabelSuccess}>
+              <Text style={[styles.flowStepLabelSuccess, {color: themeColors.primary}]}>
                 {t('onboarding.magicIntro.step3')}
               </Text>
             </View>
@@ -146,10 +156,14 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
         entering={FadeInUp.delay(500).duration(DURATIONS.normal)}
         style={styles.buttonContainer}>
         <TouchableOpacity
-          style={styles.ctaButton}
+         style={[
+            styles.ctaButton, 
+            { backgroundColor: themeColors.primary },
+            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow
+          ]}
           onPress={onCreateTemplate}
           activeOpacity={0.9}>
-          <Text style={styles.ctaText}>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>
             {t('onboarding.magicIntro.createFirst')}
           </Text>
         </TouchableOpacity>
@@ -158,7 +172,7 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
           style={styles.skipTemplateButton}
           onPress={onSkip}
           activeOpacity={0.8}>
-          <Text style={styles.skipTemplateText}>
+          <Text style={[styles.skipTemplateText, { color: themeColors.textTertiary }]}>
             {t('onboarding.magicIntro.skipForNow')}
           </Text>
         </TouchableOpacity>
@@ -170,7 +184,6 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ONBOARDING_COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -185,7 +198,6 @@ const styles = StyleSheet.create({
   },
   backText: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textSecondary,
   },
   content: {
     flex: 1,
@@ -200,7 +212,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: ONBOARDING_COLORS.primarySubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -210,27 +221,22 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textSecondary,
     textAlign: 'center',
     marginTop: ONBOARDING_SPACING.sm,
   },
   description: {
     ...ONBOARDING_TYPOGRAPHY.caption,
-    color: ONBOARDING_COLORS.textTertiary,
     textAlign: 'center',
     marginTop: ONBOARDING_SPACING.md,
     lineHeight: 20,
     paddingHorizontal: ONBOARDING_SPACING.md,
   },
   descriptionCard: {
-    backgroundColor: ONBOARDING_COLORS.pureWhite,
     borderRadius: ONBOARDING_RADIUS.lg,
     padding: ONBOARDING_SPACING.lg,
     marginTop: ONBOARDING_SPACING.xl,
     width: '100%',
     borderWidth: 1,
-    borderColor: ONBOARDING_COLORS.borderLight,
-    ...ONBOARDING_SHADOWS.sm,
   },
   flowStep: {
     flexDirection: 'row',
@@ -240,7 +246,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: ONBOARDING_COLORS.primarySubtle,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: ONBOARDING_SPACING.md,
@@ -249,7 +254,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: ONBOARDING_COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: ONBOARDING_SPACING.md,
@@ -262,16 +266,13 @@ const styles = StyleSheet.create({
   },
   flowStepLabel: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textPrimary,
   },
   flowStepLabelSmall: {
     ...ONBOARDING_TYPOGRAPHY.caption,
-    color: ONBOARDING_COLORS.textSecondary,
     fontStyle: 'italic',
   },
   flowStepLabelSuccess: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.primary,
     fontWeight: '600',
   },
   flowArrow: {
@@ -279,7 +280,6 @@ const styles = StyleSheet.create({
     marginVertical: ONBOARDING_SPACING.xs,
   },
   flowArrowText: {
-    color: ONBOARDING_COLORS.border,
     fontSize: 12,
   },
   dotsContainer: {
@@ -292,16 +292,13 @@ const styles = StyleSheet.create({
     paddingTop: ONBOARDING_SPACING.md,
   },
   ctaButton: {
-    backgroundColor: ONBOARDING_COLORS.primary,
     height: 56,
     borderRadius: ONBOARDING_RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    ...ONBOARDING_SHADOWS.glow,
   },
   ctaText: {
     ...ONBOARDING_TYPOGRAPHY.title,
-    color: ONBOARDING_COLORS.pureWhite,
   },
   skipTemplateButton: {
     marginTop: ONBOARDING_SPACING.md,
@@ -310,7 +307,6 @@ const styles = StyleSheet.create({
   },
   skipTemplateText: {
     ...ONBOARDING_TYPOGRAPHY.body,
-    color: ONBOARDING_COLORS.textTertiary,
   },
 });
 
