@@ -64,7 +64,7 @@ import {
 } from '../../services/authService';
 import {
   createNotesPrompt,
-  getNotesPrompts,
+  getNotesPrompts ,
   deleteNotesPrompt,
   type NotesPrompt,
 } from '../../services/promptsApi';
@@ -1470,6 +1470,8 @@ const TranscriptionComplete = () => {
               <CustomTemplateManager
                 selectedTemplateId={selectedTemplateId}
                 onSelectTemplate={handleSelectTemplate}
+                noteType={session.type as 'patient' | 'meeting' | 'lecture'}
+                savedPrompts={savedPrompts}
               />
             </View>
           )}

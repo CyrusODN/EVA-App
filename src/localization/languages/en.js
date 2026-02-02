@@ -110,6 +110,7 @@ export const en = {
 		"copyAll": "Copy All",
 		"use": "Use",
 		"generating": "Generating...",
+		"generatingNote": "Generating note...",
 		"loading": "Loading...",
 		"maxConcurrentReached": "Max concurrent generations reached",
 		"notSupportedYet": "This feature is not supported yet",

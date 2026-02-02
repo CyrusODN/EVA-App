@@ -33,6 +33,9 @@ target 'RemedyAI' do
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        # Fix for third-party libraries (like react-native-svg) causing build failures due to strict warnings
+        config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+        config.build_settings['GCC_WARN_64_TO_32_BIT_CONVERSION'] = 'NO'
       end
     end
 

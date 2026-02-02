@@ -111,6 +111,7 @@ export const pl = {
         "copyAll": "Kopiuj wszystko",
         "use": "Użyj",
         "generating": "Generowanie...",
+        "generatingNote": "Generowanie notatki...",
         "loading": "Ładowanie...",
         "maxConcurrentReached": "Osiągnięto maksymalną liczbę równoczesnych generacji",
         "notSupportedYet": "Ta funkcja nie jest jeszcze obsługiwana",

@@ -221,23 +221,22 @@ const styles = StyleSheet.create({
 
   // Header Section
   headerSection: {
-    alignItems: 'center',
-    marginTop: hp(2),
-    marginBottom: hp(5),
+    alignItems: 'center', // Center alignment for premium symmetry
+    marginBottom: hp(4),
   },
   logoWrapper: {
-    marginTop: hp(2),
-    marginBottom: hp(3),
+    marginTop: hp(4),
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
-        alignItems: 'center',
+    alignItems: 'center',
   },
   productNameContainer: {
     alignItems: 'center',
-    marginTop: hp(2),
+    marginBottom: hp(3),
+
   },
   mioText: {
     fontSize: 40,
@@ -256,8 +255,8 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   logo: {
-    width: wp(50),
-    height: wp(18),
+    width: wp(25),
+    height: wp(25),
   },
   textWrapper: {
     alignItems: 'center',
@@ -267,7 +266,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000000',
     letterSpacing: -0.8,
-    marginBottom: hp(1.5),
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'System',
     lineHeight: 40,

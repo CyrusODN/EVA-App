@@ -1,0 +1,49 @@
+diff --git a/node_modules/react-native-nitro-sound/NitroSound.podspec b/node_modules/react-native-nitro-sound/NitroSound.podspec
+index 11934e6..0262890 100644
+--- a/node_modules/react-native-nitro-sound/NitroSound.podspec
++++ b/node_modules/react-native-nitro-sound/NitroSound.podspec
+@@ -34,8 +34,8 @@ Pod::Spec.new do |s|
+     "DEFINES_MODULE" => "YES",
+     # Favor whole-module to avoid per-file IRGen edge-cases
+     "SWIFT_COMPILATION_MODE" => "wholemodule",
+-    "HEADER_SEARCH_PATHS" => "$(inherited) ${PODS_ROOT}/RCT-Folly",
+-    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) FOLLY_NO_CONFIG FOLLY_MOBILE=1 FOLLY_USE_LIBCPP=1 FOLLY_CFG_NO_COROUTINES",
++    "HEADER_SEARCH_PATHS" => "$(inherited) ${PODS_ROOT}/RCT-Folly $(PODS_TARGET_SRCROOT)/nitrogen/generated/shared/c++ $(PODS_TARGET_SRCROOT)/nitrogen/generated/ios",
++    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) FOLLY_NO_CONFIG FOLLY_MOBILE=1 FOLLY_USE_LIBCPP=1 FOLLY_CFG_NO_COROUTINES NITRO_SOUND_INCLUDE_PREFIX=\\\"../shared/c++/\\\"",
+     "OTHER_CPLUSPLUSFLAGS" => "$(inherited) #{folly_compiler_flags}",
+     "PRODUCT_MODULE_NAME" => "NitroSound",
+   }
+diff --git a/node_modules/react-native-nitro-sound/android/.project b/node_modules/react-native-nitro-sound/android/.project
+new file mode 100644
+index 0000000..cc0e3d8
+--- /dev/null
++++ b/node_modules/react-native-nitro-sound/android/.project
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>react-native-nitro-sound</name>
++	<comment>Project react-native-nitro-sound created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1768392304408</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>

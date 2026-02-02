@@ -35,6 +35,13 @@ import {
 } from 'react-native-responsive-screen';
 // @ts-ignore
 import * as Haptics from 'expo-haptics';
+import {
+  createNotesPrompt,
+  getNotesPrompts,
+  updateNotesPrompt,
+  deleteNotesPrompt,
+  type NotesPrompt,
+} from '../services/promptsApi';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import MagicTemplateCreatorInline from './MagicTemplateCreatorInline';
@@ -51,21 +58,20 @@ export type CustomTemplate = {
 type CustomTemplateManagerProps = {
   onSelectTemplate: (template: CustomTemplate | null) => void;
   selectedTemplateId: string | null;
+  noteType?: 'patient' | 'meeting' | 'lecture';
+  savedPrompts?: NotesPrompt[];
 };
 
 const INITIAL_TEMPLATES: CustomTemplate[] = [];
 
-const mergeTemplates = (stored: CustomTemplate[]) => {
-  const map = new Map<string, CustomTemplate>();
-  stored.forEach((template) => {
-    map.set(template.id, template);
-  });
-  INITIAL_TEMPLATES.forEach((template) => {
-    if (!map.has(template.id)) {
-      map.set(template.id, template);
-    }
-  });
-  return Array.from(map.values());
+// Helper to normalized prompts to templates
+const normalizePrompts = (prompts: NotesPrompt[]): CustomTemplate[] => {
+  return prompts.map(p => ({
+    id: p._id, // Use _id from backend
+    title: p.title,
+    content: p.content,
+    lastUsed: new Date(p.updatedAt || p.createdAt || Date.now()),
+  }));
 };
 
 // Default Theme for StyleSheet (Light Mode Fallback)
@@ -97,6 +103,8 @@ type ViewState = 'closed' | 'library' | 'editor' | 'options';
 const CustomTemplateManager = ({
   onSelectTemplate,
   selectedTemplateId,
+  noteType = 'patient',
+  savedPrompts = [],
 }: CustomTemplateManagerProps) => {
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
@@ -161,25 +169,49 @@ const CustomTemplateManager = ({
 
   const isModalVisible = viewState !== 'closed';
 
+  // Load and sync templates (Local + Backend)
   useEffect(() => {
     const loadTemplates = async () => {
+      // 1. Get Local Templates
       const stored = await templateStorage.getTemplates();
+      let localTemplates: CustomTemplate[] = [];
+      
       if (stored.length > 0) {
-        const normalized = stored.map((template) => ({
+        localTemplates = stored.map((template) => ({
           ...template,
           lastUsed: template.lastUsed ? new Date(template.lastUsed) : undefined,
         })) as CustomTemplate[];
-        setTemplates(normalized);
-      } else {
-        setTemplates(INITIAL_TEMPLATES);
-        await templateStorage.saveTemplates([]);
       }
+
+      // 2. Convert Backend Prompts to Templates
+      const backendTemplates = normalizePrompts(savedPrompts);
+
+      // 3. Merge: Prefer Backend IDs, keep Local ones if not in Backend
+      const templateMap = new Map<string, CustomTemplate>();
+      
+      // Add local templates first
+      localTemplates.forEach(t => templateMap.set(t.id, t));
+      
+      // Add/Overwrite with backend templates (assuming backend is truth)
+      backendTemplates.forEach(t => templateMap.set(t.id, t));
+      
+      const mergedTemplates = Array.from(templateMap.values());
+      
+      // Sort by lastUsed descending
+      mergedTemplates.sort((a, b) => {
+        const timeA = a.lastUsed?.getTime() || 0;
+        const timeB = b.lastUsed?.getTime() || 0;
+        return timeB - timeA;
+      });
+
+      setTemplates(mergedTemplates);
       hasLoadedTemplates.current = true;
     };
 
     loadTemplates();
-  }, []);
+  }, [savedPrompts]); // Re-run when savedPrompts changes
 
+  // Save local changes to storage
   useEffect(() => {
     if (!hasLoadedTemplates.current) return;
     const templatesToSave = templates.map(t => ({
@@ -197,7 +229,7 @@ const CustomTemplateManager = ({
 
   const openEditor = useCallback((template?: CustomTemplate) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    swipeableRefs.forEach((ref: any) => ref?.close());
+    swipeableRefs.forEach((ref: any) => ref?.close()); 
     
     if (template) {
       // Editing existing template - go straight to manual editor
@@ -234,7 +266,7 @@ const CustomTemplateManager = ({
     setOptionsTarget(null);
   }, []);
 
-  const handleSaveTemplate = useCallback(() => {
+  const handleSaveTemplate = useCallback(async () => {
     if (!titleInput.trim() || !contentInput.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(t('templates.errors.incompleteTitle'), t('templates.errors.incompleteMessage'));
@@ -244,26 +276,84 @@ const CustomTemplateManager = ({
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     if (editingTemplate) {
-      setTemplates(prev =>
-        prev.map(t =>
-          t.id === editingTemplate.id
-            ? { ...t, title: titleInput.trim(), content: contentInput.trim() }
-            : t,
-        ),
-      );
+      try {
+        console.log('[CustomTemplateManager] Updating prompt in backend...', {
+          id: editingTemplate.id,
+          title: titleInput.trim(),
+          content: contentInput.trim(),
+        });
+        
+        await updateNotesPrompt(editingTemplate.id, {
+          title: titleInput.trim(),
+          content: contentInput.trim(),
+        });
+        
+        console.log('[CustomTemplateManager] Prompt updated in backend successfully:', editingTemplate.id);
+
+        setTemplates(prev =>
+          prev.map(t =>
+            t.id === editingTemplate.id
+              ? { ...t, title: titleInput.trim(), content: contentInput.trim() }
+              : t,
+          ),
+        );
+      } catch (error) {
+        console.error('[CustomTemplateManager] Failed to update prompt in backend:', error);
+        
+        // Optimistic update fallback or alert?
+        // For now, we update locally but warn user
+        setTemplates(prev =>
+          prev.map(t =>
+            t.id === editingTemplate.id
+              ? { ...t, title: titleInput.trim(), content: contentInput.trim() }
+              : t,
+          ),
+        );
+        Alert.alert('Warning', 'Updated locally but failed to sync changes to cloud.');
+      }
     } else {
-      const newTemplate: CustomTemplate = {
-        id: Date.now().toString(),
-        title: titleInput.trim(),
-        content: contentInput.trim(),
-        lastUsed: new Date(),
-      };
-      setTemplates(prev => [newTemplate, ...prev]);
+      try {
+        console.log('[CustomTemplateManager] Creating prompt in backend...', {
+          title: titleInput.trim(),
+          content: contentInput.trim(),
+          noteType: noteType,
+        });
+
+        // @ts-ignore
+        const savedPrompt = await createNotesPrompt({
+          title: titleInput.trim(),
+          content: contentInput.trim(),
+          noteType: noteType as any,
+        });
+
+        console.log('[CustomTemplateManager] Prompt saved to backend successfully:', savedPrompt);
+        
+        const newTemplate: CustomTemplate = {
+          id: savedPrompt._id || Date.now().toString(),
+          title: savedPrompt.title || titleInput.trim(),
+          content: savedPrompt.content || contentInput.trim(),
+          lastUsed: new Date(),
+        };
+        setTemplates(prev => [newTemplate, ...prev]);
+
+      } catch (error) {
+        console.error('[CustomTemplateManager] Failed to save prompt to backend:', error);
+        const newTemplate: CustomTemplate = {
+          id: Date.now().toString(),
+          title: titleInput.trim(),
+          content: contentInput.trim(),
+          lastUsed: new Date(),
+        };
+        setTemplates(prev => [newTemplate, ...prev]);
+        Alert.alert('Warning', 'Saved locally but failed to sync with cloud.');
+      }
     }
 
     goBackToLibrary();
-  }, [titleInput, contentInput, editingTemplate, goBackToLibrary]);
+  }, [titleInput, contentInput, editingTemplate, goBackToLibrary, noteType]);
 
+
+  // Delete Template function
   const handleDeleteTemplate = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
@@ -275,7 +365,15 @@ const CustomTemplateManager = ({
       {
         text: t('common.delete'),
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
+          try {
+             console.log('[CustomTemplateManager] Attempting to delete prompt from backend:', id);
+             await deleteNotesPrompt(id);
+             console.log('[CustomTemplateManager] Prompt deleted from backend successfully:', id);
+          } catch (error) {
+             console.error('[CustomTemplateManager] Failed to delete from backend (might be local-only or network error):', error);
+          }
+
           setTemplates(prev => prev.filter(t => t.id !== id));
           if (selectedTemplateId === id) onSelectTemplate(null);
           goBackToLibrary();

@@ -412,7 +412,7 @@ const OtpVerification = () => {
                                     key={index}
                     ref={index === 0 ? d0 : index === 1 ? d1 : index === 2 ? d2 : index === 3 ? d3 : index === 4 ? d4 : d5}
                     style={[
-                      styles.otpBox, 
+                      styles.otpBox,
                       { 
                         backgroundColor: isDark ? themeColors.inputBackground : '#FAFAFA',
                         borderColor: isDark ? themeColors.inputBorder : '#E5E5EA',
