@@ -24,6 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import {signup, googleMobileLogin, setAuthToken } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
+import { validateInput } from '../../utils/inputValidations';
 import userStore from '../../store/user';
 import { useTheme } from '../../constants/theme';
 import useThemeStore from '../../store/themeStore';
@@ -50,6 +51,14 @@ const SignUp = () => {
       customToast('error', t('common.error'), 'Please fill in all fields');
       return;
     }
+
+    // Validate email using the utility
+    const emailErrors = validateInput(email, 'email');
+    if (emailErrors.length > 0) {
+      customToast('error', t('common.error'), emailErrors[0]);
+      return;
+    }
+
     if (password !== confirmPassword) {
       customToast('error', t('common.error'), 'Passwords do not match');
       return;

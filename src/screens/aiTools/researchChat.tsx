@@ -1047,7 +1047,11 @@ const ResearchChatScreen: React.FC = () => {
         <View style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
           {isEmptyState ? (
             /* Empty State - przekażę DYNAMIC_THEME jako context */
-            <View style={styles.emptyState}>
+            <ScrollView
+              contentContainerStyle={styles.emptyState}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               <PulsingAILogo />
               
               <Text style={[styles.emptyStateGreeting, { color: DYNAMIC_THEME.navy }]}>
@@ -1074,7 +1078,7 @@ const ResearchChatScreen: React.FC = () => {
                   />
                 ))}
               </View>
-            </View>
+            </ScrollView>
           ) : (
             /* Chat Stream */
             <ScrollView
@@ -1193,7 +1197,7 @@ const styles = StyleSheet.create({
 
   // Empty State
   emptyState: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: wp(8),

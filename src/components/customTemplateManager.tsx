@@ -174,7 +174,7 @@ const CustomTemplateManager = ({
     const loadTemplates = async () => {
       // 1. Get Local Templates
       const stored = await templateStorage.getTemplates();
-      let localTemplates: CustomTemplate[] = [];
+      let localTemplates: CustomTemplate[] = []; 
       
       if (stored.length > 0) {
         localTemplates = stored.map((template) => ({

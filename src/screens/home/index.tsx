@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -90,7 +91,9 @@ const Home = () => {
   const [events, setEvents] = useState<Session[]>([]);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const swipeableRefs = useRef(new Map<string, any>()).current;
 
   useEffect(() => {
     (async () => {
@@ -260,14 +263,25 @@ const Home = () => {
   };
 
   const handleCreateVisit = async (visitName: string) => {
-    await sessionStorage.createSession(visitName, visitDialogType);
-    setShowVisitDialog(false);
+    setIsCreatingSession(true);
+    // Don't close dialog yet - let it close after creation starts or finishes
+    // Actually, VisitDialogModal closes itself, so we just show loader overlay
+    setShowVisitDialog(false); 
+    
+    try {
+        await sessionStorage.createSession(visitName, visitDialogType);
+        
+        // Refresh events list to show the new session
+        await loadEvents();
 
-    // Refresh events list to show the new session
-    await loadEvents();
-
-    // Show toast notification
-    customToast('success', t('common.success'), `${visitName} created`);
+        // Show toast notification
+        customToast('success', t('common.success'), `${visitName} created`);
+    } catch (error) {
+        console.error('Failed to create session:', error);
+        customToast('error', t('common.error'), 'Failed to create session');
+    } finally {
+        setIsCreatingSession(false);
+    }
   };
 
   const toggleSelectionMode = () => {
@@ -326,14 +340,18 @@ const Home = () => {
             const idsToDelete = Array.from(selectedItems);
 
             try {
-              // Clear selection mode immediately for better UX
+              // Clear selection mode immediately
               setSelectionMode(false);
               setSelectedItems(new Set());
 
-              // Delete all selected sessions in one operation (avoids race conditions)
+              // Optimistically remove items from UI immediately
+              const idsSet = new Set(idsToDelete);
+              setEvents(prev => prev.filter(e => !idsSet.has(e.id)));
+
+              // Delete all selected sessions from backend and storage
               await sessionStorage.deleteSessions(idsToDelete);
 
-              // Reload events to update UI
+              // Reload events to ensure consistency
               await loadEvents();
 
               // Show success message
@@ -486,16 +504,16 @@ const Home = () => {
     
     return (
       <Swipeable
+        ref={ref => { if (ref) swipeableRefs.set(item.id, ref); }}
         renderRightActions={() => selectionMode ? null : renderRightActions(item.id)}
         renderLeftActions={() => selectionMode ? null : renderLeftActions(item.title)}
-        overshootRight={false}
-        overshootLeft={false}
-        friction={4}
-        leftThreshold={80}
-        rightThreshold={80}
+        onSwipeableWillOpen={() => {
+            [...swipeableRefs.entries()].forEach(([key, ref]) => {
+                if (key !== item.id) ref.close();
+            });
+        }}
         enabled={!selectionMode}
         enableTrackpadTwoFingerGesture={false}
-        hitSlop={{ top: 0, bottom: 0, left: -50, right: -50 }}
       >
         <TouchableOpacity
           style={[
@@ -512,7 +530,7 @@ const Home = () => {
           }}
           onLongPress={() => handleLongPress(item.id)}
           delayLongPress={400}
-          activeOpacity={0.7}
+          activeOpacity={0.9}
         >
         <View style={styles.eventRow}>
           {/* Checkbox in selection mode */}
@@ -831,6 +849,44 @@ const Home = () => {
     );
   };
 
+  const renderLoaderOverlay = () => {
+    if (!isCreatingSession) return null;
+    return (
+      <View style={[
+        StyleSheet.absoluteFill, 
+        { 
+          backgroundColor: 'rgba(0,0,0,0.5)', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          zIndex: 9999 
+        }
+      ]}>
+        <View style={{
+          padding: 24,
+          backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+          borderRadius: 16,
+          alignItems: 'center',
+          ...(!isDark && {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+          })
+        }}>
+          <ActivityIndicator size="large" color={themeColors.accentPrimary} />
+          <Text style={{ 
+            marginTop: 16, 
+            color: themeColors.textPrimary,
+            fontWeight: '500' 
+          }}>
+            {t('common.creatingSession') || 'Creating session...'}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
@@ -997,6 +1053,9 @@ const Home = () => {
             visitType={visitDialogType}
             onCreateVisit={handleCreateVisit}
           />
+
+          {/* Loader Overlay */}
+          {renderLoaderOverlay()}
         </SafeAreaView>
       </View>
     </GestureHandlerRootView>

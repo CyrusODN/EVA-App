@@ -28,9 +28,10 @@ import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 //@ts-ignore
 import CheckBox from 'react-native-check-box';
-import { login, setAuthToken, ssoRequest, googleMobileLogin } from '../../services/authService';
+import { login, setAuthToken, googleMobileLogin, getAuthContext } from '../../services/authService';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { customToast } from '../../utils/toastMessage';
+import { validateInput } from '../../utils/inputValidations';
 import userStore from '../../store/user';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../constants/theme';
@@ -58,6 +59,14 @@ const Login = () => {
       customToast('error', 'Error', 'Please enter email and password');
       return;
     }
+
+    // Validate email using the utility
+    const emailErrors = validateInput(email, 'email');
+    if (emailErrors.length > 0) {
+      customToast('error', 'Error', emailErrors[0]);
+      return;
+    }
+
     setLoading(true);
     try {
       const resp = await login({ email, password });
@@ -78,6 +87,34 @@ const Login = () => {
       if (token) {
         setAuthToken(token);
         userStore.getState().setToken(token);
+
+        // Persist session for 24h (Standard Login)
+        await AsyncStorage.setItem('auth_token', token);
+        await AsyncStorage.setItem(
+          'auth_session_expires_at',
+          String(Date.now() + 24 * 60 * 60 * 1000),
+        );
+        try {
+            const authCtx = await getAuthContext();
+            const ctx = authCtx?.data?.data;
+            if (ctx) {
+              const userObj: any = {
+                id: ctx._id || ctx.id || ctx.userId,
+                email: ctx.email || '',
+                name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
+                profilePicture: ctx.profileImage || '',
+                role: ctx.role,
+                settings: ctx.settings,
+                whitelist: ctx.whitelist,
+                token: token,
+              };
+              userStore.getState().setAuth(userObj);
+              await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
+            }
+        } catch (e) {
+            console.log('Failed to fetch auth context', e);
+        }
+
         customToast('success', 'Success', 'Logged in successfully');
         navigation.replace('tabs');
       } else if (payload?.loginToken || payload?.requires2FA) {
@@ -247,6 +284,35 @@ const Login = () => {
       if (token) {
         setAuthToken(token);
         userStore.getState().setToken(token);
+
+        // Persist session for 24h (Google Login)
+        await AsyncStorage.setItem('auth_token', token);
+        await AsyncStorage.setItem(
+          'auth_session_expires_at',
+          String(Date.now() + 24 * 60 * 60 * 1000),
+        );
+
+        try {
+            const authCtx = await getAuthContext();
+            const ctx = authCtx?.data?.data;
+            if (ctx) {
+              const userObj: any = {
+                id: ctx._id || ctx.id || ctx.userId,
+                email: ctx.email || '',
+                name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
+                profilePicture: ctx.profileImage || '',
+                role: ctx.role,
+                settings: ctx.settings,
+                whitelist: ctx.whitelist,
+                token: token,
+              };
+              userStore.getState().setAuth(userObj);
+              await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
+            }
+        } catch (e) {
+            console.log('Failed to fetch auth context', e);
+        }
+
         customToast('success', 'Success', 'Logged in successfully');
         navigation.replace('tabs');
         return;
@@ -441,6 +507,7 @@ const Login = () => {
                   borderRadius={16}
                   backgroundColor={themeColors.accentPrimary}
                   useGradient={false}
+                  loaderColor={themeColors.accentPrimary}
                   accessibilityLabel={t('login.signIn')}
                 />
               </View>

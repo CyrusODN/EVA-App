@@ -122,7 +122,8 @@ export const en = {
 		"success": "Success",
 		"error": "Error",
 		"comingSoon": "Coming Soon",
-		"back": "Back"
+		"back": "Back",
+		"creatingSession": "Creating session..."
 	},
 	"templates": {
 		"title": "Templates",
@@ -860,6 +861,7 @@ export const en = {
 				"psychiatry": "Psychiatry",
 				"childPsychiatry": "Child Psychiatry",
 				"surgery": "Surgery",
+				"familyMedicine": "Family Medicine",
 				"smartSelect": "Smart Select"
 			},
 			"visitType": {
@@ -929,7 +931,8 @@ export const en = {
 			"tapToEdit": "Tap to edit",
 			"noNote": "No note yet",
 			"generateToSee": "Generate a note to see it here.",
-			"generateNote": "Generate Note"
+			"generateNote": "Generate Note",
+			"notesGeneratedSuccess": "Notes generated successfully!"
 		},
 		"patientQualificationAnalysis": "Patient Qualification Analysis",
 		"model": "Model",
@@ -1470,7 +1473,7 @@ export const en = {
 			"incompleteTitle": "Incomplete",
 			"incompleteMessage": "Please provide both title and content."
 		},
-		"headerTitle": "Remedius Report",
+		"headerTitle": "Hospital Discharge",
 		"headerSubtitle": "Generate hospital discharges and medical certificates",
 		"exitButtonText": "Exit",
 		"welcomeModal": {

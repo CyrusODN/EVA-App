@@ -13,6 +13,7 @@ import { Text } from 'react-native-paper';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Copy, Save, Share } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
+import { useTheme } from '../../constants/theme';
 
 interface SummaryViewProps {
   visible: boolean;
@@ -37,6 +38,20 @@ const SummaryView: React.FC<SummaryViewProps> = ({
   primaryColor,
   saveLabel,
 }) => {
+  const { colors: themeColors, isDark } = useTheme();
+
+  // Dynamic theme
+  const DYNAMIC_THEME = {
+    background: isDark ? themeColors.canvas : '#F5F5F7',
+    headerBg: isDark ? themeColors.layer1 : '#FFFFFF',
+    text: isDark ? themeColors.textPrimary : colors.onSurface,
+    textSecondary: isDark ? themeColors.textSecondary : '#6B7280',
+    border: isDark ? themeColors.borderSubtle : '#E5E5EA',
+    card: isDark ? themeColors.layer2 : '#FFFFFF',
+    docText: isDark ? '#E5E5E5' : '#333333',
+    actionIcon: isDark ? themeColors.textPrimary : colors.onSurface,
+  };
+
   return (
     <Modal
       visible={visible}
@@ -44,10 +59,10 @@ const SummaryView: React.FC<SummaryViewProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.resultContainer}>
-        <View style={styles.resultHeader}>
+      <SafeAreaView style={[styles.resultContainer, { backgroundColor: DYNAMIC_THEME.background }]}>
+        <View style={[styles.resultHeader, { backgroundColor: DYNAMIC_THEME.headerBg, borderBottomColor: DYNAMIC_THEME.border }]}>
           <View style={{ width: 24 }} />
-          <Text style={styles.resultTitle}>{title}</Text>
+          <Text style={[styles.resultTitle, { color: DYNAMIC_THEME.text }]}>{title}</Text>
           <TouchableOpacity
             style={styles.saveButton}
             onPress={onClose}
@@ -57,25 +72,25 @@ const SummaryView: React.FC<SummaryViewProps> = ({
         </View>
 
         <ScrollView style={styles.resultContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.documentCard}>
-            <Text style={styles.documentText}>{summary}</Text>
+          <View style={[styles.documentCard, { backgroundColor: DYNAMIC_THEME.card }]}>
+            <Text style={[styles.documentText, { color: DYNAMIC_THEME.docText }]}>{summary}</Text>
           </View>
           <View style={{ height: hp(5) }} />
         </ScrollView>
 
         {/* Action Bar */}
-        <View style={styles.resultActions}>
+        <View style={[styles.resultActions, { backgroundColor: DYNAMIC_THEME.headerBg, borderTopColor: DYNAMIC_THEME.border }]}>
           <TouchableOpacity style={styles.resultActionBtn} onPress={onSave}>
-            <Save size={20} color={colors.onSurface} />
-            <Text style={styles.resultActionLabel}>{saveLabel}</Text>
+            <Save size={20} color={DYNAMIC_THEME.actionIcon} />
+            <Text style={[styles.resultActionLabel, { color: DYNAMIC_THEME.actionIcon }]}>{saveLabel}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.resultActionBtn} onPress={onCopy}>
-            <Copy size={20} color={colors.onSurface} />
-            <Text style={styles.resultActionLabel}>Copy</Text>
+            <Copy size={20} color={DYNAMIC_THEME.actionIcon} />
+            <Text style={[styles.resultActionLabel, { color: DYNAMIC_THEME.actionIcon }]}>Copy</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.resultActionBtn} onPress={onExport}>
-            <Share size={20} color={colors.onSurface} />
-            <Text style={styles.resultActionLabel}>Export</Text>
+            <Share size={20} color={DYNAMIC_THEME.actionIcon} />
+            <Text style={[styles.resultActionLabel, { color: DYNAMIC_THEME.actionIcon }]}>Export</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -88,7 +103,6 @@ export default SummaryView;
 const styles = StyleSheet.create({
   resultContainer: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
   },
   resultHeader: {
     flexDirection: 'row',
@@ -96,14 +110,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
   },
   resultTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.onSurface,
   },
   saveButton: {
     padding: 8,
@@ -117,7 +128,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   documentCard: {
-    backgroundColor: 'white',
     borderRadius: 4, // A4 style
     padding: 32,
     shadowColor: '#000',
@@ -130,14 +140,11 @@ const styles = StyleSheet.create({
   documentText: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#333',
     fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
   },
   resultActions: {
     flexDirection: 'row',
-    backgroundColor: 'white',
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
     paddingVertical: 12,
     justifyContent: 'space-around',
   },
@@ -147,6 +154,5 @@ const styles = StyleSheet.create({
   },
   resultActionLabel: {
     fontSize: 12,
-    color: colors.onSurface,
   },
 });

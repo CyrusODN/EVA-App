@@ -123,7 +123,8 @@ export const pl = {
         "success": "Sukces",
         "error": "Błąd",
         "comingSoon": "Wkrótce",
-        "back": "Wstecz"
+        "back": "Wstecz",
+        "creatingSession": "Tworzenie sesji..."
     },
     "templates": {
         "title": "Szablony",
@@ -442,7 +443,7 @@ export const pl = {
     },
     "remediusReport": {
         "main": {
-            "title": "Remedius Report",
+            "title": "Remedius Raporty",
             "subtitle": "Generowanie wypisów szpitalnych i zaświadczeń lekarskich",
             "modules": {
                 "discharge": {
@@ -536,7 +537,7 @@ export const pl = {
     },
     "remediusResearch": {
         "main": {
-            "title": "Remedius Research",
+            "title": "Remedius Badania",
             "subtitle": "Zaawansowane narzędzia do badań medycznych i edukacji",
             "modules": {
                 "researchAssistant": {
@@ -854,9 +855,9 @@ export const pl = {
             "generationMode": "TRYB GENEROWANIA",
             "noteType": "Typ notatki",
             "modes": {
-                "standard": "Standardowy",
-                "custom": "Niestandardowy",
-                "standardSOAP": "Standardowy SOAP"
+                "standard": "Standardowa",
+                "custom": "Niestandardowa",
+                "standardSOAP": "Standardowa SOAP"
             },
             "noteOptions": {
                 "soap": "Notatka SOAP",
@@ -874,6 +875,7 @@ export const pl = {
                 "psychiatry": "Psychiatria",
                 "childPsychiatry": "Psychiatria DiM",
                 "surgery": "Chirurgia",
+                "familyMedicine": "Medycyna Rodzinna",
                 "smartSelect": "Inteligentny wybór"
             },
             "visitType": {
@@ -943,7 +945,8 @@ export const pl = {
             "tapToEdit": "Dotknij, aby edytować",
             "noNote": "Brak notatki",
             "generateToSee": "Wygeneruj notatkę, aby ją tutaj zobaczyć.",
-            "generateNote": "Wygeneruj notatkę"
+            "generateNote": "Wygeneruj notatkę",
+            "notesGeneratedSuccess": "Notatki wygenerowane pomyślnie!"
         },
         "patientQualificationAnalysis": "Analiza Kwalifikacji Pacjenta",
         "model": "Model",
@@ -1058,7 +1061,7 @@ export const pl = {
             }
         },
         "research": {
-            "title": "Remedius Research",
+            "title": "Remedius Badania",
             "description": "Kompleksowy pakiet badawczy",
             "features": {
                 "0": "Pełen dostęp do pakietu badawczego",
@@ -1094,7 +1097,7 @@ export const pl = {
             }
         },
         "report": {
-            "title": "Remedius Report",
+            "title": "Remedius Raporty",
             "description": "Generowanie wypisów szpitalnych i zaświadczeń lekarskich",
             "features": {
                 "0": "Generowanie wypisów szpitalnych",
@@ -1272,7 +1275,7 @@ export const pl = {
             "2": "Wsparcie w czasie rzeczywistym"
         },
         "pharmacopedia": {
-            "title": "Remedius Pharmacopedia",
+            "title": "Remedius Farmakopea",
             "description": "Asystent informacji o lekach. Pytaj o leki, interakcje, dawkowanie i przeciwwskazania.",
             "features": {
                 "0": "Sprawdzanie interakcji leków",
@@ -1281,7 +1284,7 @@ export const pl = {
             }
         },
         "consult": {
-            "title": "Remedius Consult",
+            "title": "Remedius Konsultacje",
             "description": "Uzyskaj wsparcie kliniczne oparte na AI. Importuj notatki z wizyt i omawiaj złożone przypadki z dowodami naukowymi.",
             "features": {
                 "0": "Ocena kliniczna oparta na AI",
@@ -1538,7 +1541,7 @@ export const pl = {
             "incompleteTitle": "Brak danych",
             "incompleteMessage": "Uzupełnij tytuł i treść."
         },
-        "headerTitle": "Remedius Report",
+        "headerTitle": "Remedius Raporty",
         "headerSubtitle": "Generowanie wypisów szpitalnych i zaświadczeń lekarskich",
         "exitButtonText": "Wyjdź",
         "welcomeModal": {
@@ -2366,7 +2369,7 @@ export const pl = {
         "find": "Znajdź"
     },
     "consultChat": {
-        "title": "Remedius Consult",
+        "title": "Remedius Konsultacje",
         "greeting": "Wsparcie Decyzji Klinicznych",
         "subtitle": "Uzyskaj wskazówki oparte na dowodach dla złożonych przypadków",
         "placeholder": "Opisz scenariusz kliniczny...",
@@ -2393,7 +2396,7 @@ export const pl = {
         }
     },
     "pharmacopediaChat": {
-        "title": "Remedius Pharmacopedia",
+        "title": "Remedius Farmakopea",
         "greeting": "Asystent Informacji o Lekach",
         "subtitle": "Pytaj o leki i ich interakcje",
         "placeholder": "Zapytaj o lek...",
@@ -2434,8 +2437,8 @@ export const pl = {
             "childPsychiatry": "Psychiatria DiM",
             "childpsychiatry": "Psychiatria DiM",
             "surgery": "Chirurgia",
-            "smartSelect": "Smart Select",
-            "smartselect": "Smart Select",
+            "smartSelect": "Inteligentny Wybór",
+            "smartselect": "Inteligentny Wybór",
             "smartSelectHint": "AI dostosuje się automatycznie"
         },
         "noteLength": {
@@ -2460,13 +2463,13 @@ export const pl = {
             "hint": "Możesz to zmienić dla każdej wizyty"
         },
         "magicIntro": {
-            "title": "Magic Templates",
+            "title": "Magiczne Szablony",
             "subtitle": "Twórz własne szablony głosem (Opcjonalne)",
             "description": "Masz już świetne domyślne ustawienia, ale chcesz więcej? Opisz swój idealny format notatki własnymi słowami, a AI natychmiast stworzy profesjonalny szablon.",
             "step1": "Mów naturalnie",
             "step2": "AI przetwarza...",
             "step3": "Szablon gotowy!",
-            "createFirst": "Wypróbuj Magic Template Creator",
+            "createFirst": "Wypróbuj Kreator Magicznych Szablonów",
             "skipForNow": "Pomiń - użyję domyślnych"
         },
         "tutorial": {
@@ -2489,7 +2492,7 @@ export const pl = {
         }
     },
     "magicCreator": {
-        "title": "Magic Template Creator",
+        "title": "Kreator Magicznych Szablonów",
         "voicePrompt": "Opisz swój idealny format notatki",
         "voiceHint": "Dotknij, aby mówić",
         "recording": "Nagrywanie...",

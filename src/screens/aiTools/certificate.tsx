@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   ActionSheetIOS,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -446,6 +447,10 @@ Stamp: [Medical Stamp]
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.background }]} edges={['top']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.headerWrapper}>
@@ -631,6 +636,7 @@ Stamp: [Medical Stamp]
           </View>
         </View>
       )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -641,6 +647,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboardView: {
+  flex: 1,
+},
   mainContainer: {
     flex: 1,
     display: 'flex',

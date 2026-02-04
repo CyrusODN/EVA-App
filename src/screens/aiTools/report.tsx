@@ -6,6 +6,7 @@ import {
   Pressable,
   Platform,
   Vibration,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -157,6 +158,11 @@ const Report = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]} edges={['top']}>
+            <KeyboardAvoidingView
+              style={styles.keyboardView}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              keyboardVerticalOffset={0}
+            >
       <View style={[styles.contentWrapper, { backgroundColor: DYNAMIC_THEME.pure }]}>
         <Header
           title={t('remediusReport.main.title')}
@@ -203,6 +209,7 @@ const Report = () => {
           </View>
         </ScrollView>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -211,6 +218,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboardView: {
+  flex: 1,
+},
   contentWrapper: {
     flex: 1,
   },

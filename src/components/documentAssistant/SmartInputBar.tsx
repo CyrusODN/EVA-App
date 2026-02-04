@@ -4,8 +4,8 @@ import {
   View,
   TouchableOpacity,
   TextInput,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { ArrowUp, Plus } from 'lucide-react-native';
@@ -33,6 +33,16 @@ const SmartInputBar: React.FC<SmartInputBarProps> = ({
   primaryColor,
 }) => {
   const { colors: themeColors, isDark } = useTheme();
+  const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Dynamic theme
   const DYNAMIC_THEME = {
@@ -47,68 +57,63 @@ const SmartInputBar: React.FC<SmartInputBarProps> = ({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    <View
+      style={[
+        styles.inputWrapper,
+        {
+          paddingBottom: Platform.OS === 'ios' ? (keyboardVisible ? 1 : insets.bottom) : 10,
+          backgroundColor: DYNAMIC_THEME.wrapper,
+          borderTopColor: DYNAMIC_THEME.border,
+        }
+      ]}
     >
       <View
         style={[
-          styles.inputWrapper,
+          styles.inputBarContainer,
           {
-            paddingBottom: Platform.OS === 'ios' ? insets.bottom : 20,
-            backgroundColor: DYNAMIC_THEME.wrapper,
-            borderTopColor: DYNAMIC_THEME.border,
+            backgroundColor: DYNAMIC_THEME.container,
+            borderColor: DYNAMIC_THEME.containerBorder,
+            ...(isDark ? {
+              shadowColor: primaryColor,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.15,
+              shadowRadius: 10,
+            } : {})
           }
         ]}
       >
-        <View
-          style={[
-            styles.inputBarContainer,
-            {
-              backgroundColor: DYNAMIC_THEME.container,
-              borderColor: DYNAMIC_THEME.containerBorder,
-              ...(isDark ? {
-                shadowColor: primaryColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.15,
-                shadowRadius: 10,
-              } : {})
-            }
-          ]}
+        {/* Plus Button */}
+        <TouchableOpacity
+          style={[styles.plusButton, { backgroundColor: DYNAMIC_THEME.plusButton }]}
+          onPress={onPlusPress}
+          activeOpacity={0.7}
         >
-          {/* Plus Button */}
+          <Plus size={22} color={DYNAMIC_THEME.iconColor} strokeWidth={2} />
+        </TouchableOpacity>
+
+        {/* Text Input */}
+        <TextInput
+          style={[styles.messageInput, { color: DYNAMIC_THEME.text }]}
+          placeholder={placeholder}
+          placeholderTextColor={DYNAMIC_THEME.placeholder}
+          value={inputText}
+          onChangeText={onChangeText}
+          multiline
+          maxLength={1000}
+        />
+
+        {/* Send Button - only visible when there's text */}
+        {inputText.trim().length > 0 && (
           <TouchableOpacity
-            style={[styles.plusButton, { backgroundColor: DYNAMIC_THEME.plusButton }]}
-            onPress={onPlusPress}
+            style={[styles.sendButton, { backgroundColor: primaryColor }]}
+            onPress={onSendText}
             activeOpacity={0.7}
           >
-            <Plus size={22} color={DYNAMIC_THEME.iconColor} strokeWidth={2} />
+            <ArrowUp size={18} color="white" strokeWidth={2.5} />
           </TouchableOpacity>
-
-          {/* Text Input */}
-          <TextInput
-            style={[styles.messageInput, { color: DYNAMIC_THEME.text }]}
-            placeholder={placeholder}
-            placeholderTextColor={DYNAMIC_THEME.placeholder}
-            value={inputText}
-            onChangeText={onChangeText}
-            multiline
-            maxLength={1000}
-          />
-
-          {/* Send Button - only visible when there's text */}
-          {inputText.trim().length > 0 && (
-            <TouchableOpacity
-              style={[styles.sendButton, { backgroundColor: primaryColor }]}
-              onPress={onSendText}
-              activeOpacity={0.7}
-            >
-              <ArrowUp size={18} color="white" strokeWidth={2.5} />
-            </TouchableOpacity>
-          )}
-        </View>
+        )}
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 

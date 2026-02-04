@@ -15,6 +15,7 @@ import {
 } from 'react-native-responsive-screen';
 import { AlignJustify, Monitor, File } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
+import { useTheme } from '../../constants/theme';
 import type { Observation } from './types';
 
 const CHATBOT_AVATAR = 'https://i.imgur.com/rCPznko.jpeg';
@@ -22,6 +23,7 @@ const CHATBOT_AVATAR = 'https://i.imgur.com/rCPznko.jpeg';
 // Pulsing AI Logo for empty state
 const PulsingAILogo: React.FC = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const { colors: themeColors, isDark } = useTheme();
 
   useEffect(() => {
     const pulse = Animated.loop(
@@ -50,7 +52,17 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+      <Animated.View 
+        style={[
+          styles.aiLogoInner, 
+          { 
+            backgroundColor: isDark ? themeColors.layer1 : '#FFFFFF',
+            transform: [{ scale: pulseAnim }],
+            shadowColor: isDark ? themeColors.textPrimary : '#000', 
+            shadowOpacity: isDark ? 0.2 : 0.1
+          }
+        ]}
+      >
         <RNImage 
           source={{ uri: CHATBOT_AVATAR }} 
           style={styles.avatarImage}
@@ -81,6 +93,20 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
   scrollViewRef,
   statusTexts,
 }) => {
+  const { colors: themeColors, isDark } = useTheme();
+
+  // Dynamic Theme Colors
+  const DYNAMIC_THEME = {
+    text: isDark ? themeColors.textPrimary : '#333333',
+    textSecondary: isDark ? themeColors.textSecondary : '#8E8E93',
+    iconDefault: isDark ? themeColors.textSecondary : colors.onSurfaceVariant,
+    thumbnailBg: isDark ? themeColors.layer2 : '#F2F2F7',
+    thumbnailBorder: isDark ? themeColors.borderSubtle : '#E5E5EA',
+    fileCardBg: isDark ? themeColors.layer1 : '#F9FAFB',
+    fileCardBorder: isDark ? themeColors.borderSubtle : '#F0F0F0',
+    fileCardText: isDark ? themeColors.textPrimary : '#333',
+  };
+
   const renderTimelineItem = (item: Observation) => {
     const isImage = item.type === 'image';
     const isFile = item.type === 'file';
@@ -89,26 +115,26 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
       <View key={item.id} style={styles.streamItemContainer}>
         {/* Left Icon */}
         <View style={styles.streamIconContainer}>
-          {item.type === 'text' && <AlignJustify size={20} color={colors.onSurfaceVariant} />}
+          {item.type === 'text' && <AlignJustify size={20} color={DYNAMIC_THEME.iconDefault} />}
           {item.type === 'image' && <Monitor size={20} color={primaryColor} />}
-          {item.type === 'file' && <File size={20} color={colors.primary} />}
+          {item.type === 'file' && <File size={20} color={primaryColor} />}
         </View>
 
         {/* Content */}
         <View style={styles.streamContentContainer}>
           {item.type === 'text' && (
-            <Text style={styles.streamText} numberOfLines={3} ellipsizeMode="tail">
+            <Text style={[styles.streamText, { color: DYNAMIC_THEME.text }]} numberOfLines={3} ellipsizeMode="tail">
               {item.content}
             </Text>
           )}
 
           {isImage && (
             <View>
-              <View style={styles.thumbnailWrapper}>
+              <View style={[styles.thumbnailWrapper, { backgroundColor: DYNAMIC_THEME.thumbnailBg, borderColor: DYNAMIC_THEME.thumbnailBorder }]}>
                 {item.uri ? (
                   <RNImage source={{ uri: item.uri }} style={styles.thumbnailImage} resizeMode="cover" />
                 ) : (
-                  <View style={[styles.thumbnailImage, { backgroundColor: '#F0F0F0' }]} />
+                  <View style={[styles.thumbnailImage, { backgroundColor: DYNAMIC_THEME.thumbnailBg }]} />
                 )}
                 {item.status === 'processing' && (
                   <View style={styles.processingOverlay}>
@@ -116,7 +142,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
                   </View>
                 )}
               </View>
-              <Text style={styles.statusText}>
+              <Text style={[styles.statusText, { color: DYNAMIC_THEME.textSecondary }]}>
                 {item.status === 'processing'
                   ? statusTexts.analyzingPixelData
                   : 'Monitor Screen • Captured'}
@@ -126,11 +152,11 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
 
           {isFile && (
             <View>
-              <View style={styles.fileCard}>
-                <File size={16} color={colors.onSurfaceVariant} />
-                <Text style={styles.fileName} numberOfLines={1}>{item.fileName}</Text>
+              <View style={[styles.fileCard, { backgroundColor: DYNAMIC_THEME.fileCardBg, borderColor: DYNAMIC_THEME.fileCardBorder }]}>
+                <File size={16} color={DYNAMIC_THEME.iconDefault} />
+                <Text style={[styles.fileName, { color: DYNAMIC_THEME.fileCardText }]} numberOfLines={1}>{item.fileName}</Text>
               </View>
-              <Text style={styles.statusText}>
+              <Text style={[styles.statusText, { color: DYNAMIC_THEME.textSecondary }]}>
                 {item.status === 'processing'
                   ? statusTexts.analyzingDocument
                   : 'Document • Processed'}
@@ -140,7 +166,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
         </View>
 
         {/* Time */}
-        <Text style={styles.streamTime}>
+        <Text style={[styles.streamTime, { color: DYNAMIC_THEME.textSecondary }]}>
           {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Text>
       </View>
@@ -157,8 +183,8 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
       {items.length === 0 ? (
         <View style={styles.emptyState}>
           <PulsingAILogo />
-          <Text style={styles.emptyTitle}>{emptyState.title}</Text>
-          <Text style={styles.emptySubtitle}>{emptyState.subtitle}</Text>
+          <Text style={[styles.emptyTitle, { color: DYNAMIC_THEME.text }]}>{emptyState.title}</Text>
+          <Text style={[styles.emptySubtitle, { color: DYNAMIC_THEME.textSecondary }]}>{emptyState.subtitle}</Text>
         </View>
       ) : (
         items.map(renderTimelineItem)
@@ -180,7 +206,7 @@ const styles = StyleSheet.create({
     paddingBottom: hp(2),
   },
   emptyState: {
-    marginTop: hp(15),
+    marginTop: hp(4),
     alignItems: 'center',
     paddingHorizontal: wp(10),
   },
@@ -195,13 +221,10 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -213,12 +236,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.onSurface,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -242,12 +263,10 @@ const styles = StyleSheet.create({
   },
   streamText: {
     fontSize: 15,
-    color: '#333333',
     lineHeight: 22,
   },
   streamTime: {
     fontSize: 11,
-    color: '#8E8E93',
     marginTop: 4,
   },
   thumbnailWrapper: {
@@ -255,10 +274,8 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F2F2F7',
     marginBottom: 4,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   thumbnailImage: {
     width: '100%',
@@ -266,7 +283,6 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    color: '#8E8E93',
     fontWeight: '500',
   },
   processingOverlay: {
@@ -278,18 +294,15 @@ const styles = StyleSheet.create({
   fileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
     marginBottom: 4,
     alignSelf: 'flex-start',
     gap: 8,
   },
   fileName: {
     fontSize: 13,
-    color: '#333',
     maxWidth: wp(50),
   },
 });

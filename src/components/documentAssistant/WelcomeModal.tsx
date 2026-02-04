@@ -9,6 +9,7 @@ import {
 import { Text } from 'react-native-paper';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { Sparkles } from 'lucide-react-native';
+import { useTheme } from '../../constants/theme';
 
 interface WelcomeModalProps {
   visible: boolean;
@@ -27,27 +28,29 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({
   buttonText,
   iconColor,
 }) => {
+  const { colors: themeColors, isDark } = useTheme();
+
   return (
     <Modal
       visible={visible}
-      transparent={true}
+      transparent={false}
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.welcomeModalOverlay}>
-        <View style={styles.welcomeModalContainer}>
+      <View style={[styles.welcomeModalOverlay]}>
+        <View style={[styles.welcomeModalContainer, { backgroundColor: isDark ? themeColors.layer1 : '#FFFFFF' }]}>
           {/* Sparkles Icon */}
-          <View style={styles.welcomeIconContainer}>
+          <View style={[styles.welcomeIconContainer, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.08)' }]}>
             <View style={[styles.welcomeIconInner, { backgroundColor: `${iconColor}15` }]}>
               <Sparkles size={32} color={iconColor} strokeWidth={2} />
             </View>
           </View>
 
           {/* Title */}
-          <Text style={styles.welcomeModalTitle}>{title}</Text>
+          <Text style={[styles.welcomeModalTitle, { color: isDark ? themeColors.textPrimary : '#111827' }]}>{title}</Text>
 
           {/* Description */}
-          <Text style={styles.welcomeModalDescription}>{description}</Text>
+          <Text style={[styles.welcomeModalDescription, { color: isDark ? themeColors.textSecondary : '#6B7280' }]}>{description}</Text>
 
           {/* Button */}
           <TouchableOpacity

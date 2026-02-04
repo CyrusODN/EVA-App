@@ -10,6 +10,7 @@ import {
   Animated,
   ScrollView,
   Vibration,
+  Keyboard,
 } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 import {
@@ -217,29 +218,31 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        style={[styles.overlay, { paddingTop: insets.top }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      <Animated.View
+        style={[
+          styles.backdrop,
+          {
+            opacity: fadeAnim,
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
+          },
+        ]}
       >
-        <Animated.View
-          style={[
-            styles.backdrop,
-            {
-              opacity: fadeAnim,
-            },
-          ]}
+        <KeyboardAvoidingView
+          style={[styles.overlay, { paddingTop: insets.top, backgroundColor: 'transparent', justifyContent: 'flex-start' }]}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
               justifyContent: 'center',
               alignItems: 'center',
+              paddingBottom: 30,
             }}
             keyboardShouldPersistTaps="handled"
             bounces={false}
             showsVerticalScrollIndicator={false}
-            style={{ width: '100%' }}
+            style={{ width: '100%', flex: 1 }}
           >
           <TouchableOpacity
             style={styles.backdropTouchable}
@@ -248,7 +251,10 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
           >
             <TouchableOpacity
               activeOpacity={1}
-              onPress={e => e.stopPropagation()}
+              onPress={e => {
+                e.stopPropagation();
+                Keyboard.dismiss();
+              }}
               style={styles.modalTouchable}
             >
               <Animated.View
@@ -292,27 +298,28 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
 
                   {/* Checkbox Agreement */}
                   <View style={styles.checkboxSection}>
-                    <TouchableOpacity
-                      style={styles.checkboxRow}
-                      onPress={handleCheckboxToggle}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[
-                        styles.customCheckbox,
-                        agreedToTerms && styles.customCheckboxChecked,
-                        { 
-                          borderColor: agreedToTerms ? themeColors.accentPrimary : (isDark ? themeColors.borderNormal : '#E5E5EA'),
-                          backgroundColor: agreedToTerms ? themeColors.accentPrimary : (isDark ? 'transparent' : '#FFFFFF')
-                        }
-                      ]}>
-                        {agreedToTerms && (
-                          <Check size={16} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={3} />
-                        )}
-                      </View>
+                    <View style={styles.checkboxRow}>
+                      <TouchableOpacity
+                        onPress={handleCheckboxToggle}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[
+                          styles.customCheckbox,
+                          agreedToTerms && styles.customCheckboxChecked,
+                          { 
+                            borderColor: agreedToTerms ? themeColors.accentPrimary : (isDark ? themeColors.borderNormal : '#E5E5EA'),
+                            backgroundColor: agreedToTerms ? themeColors.accentPrimary : (isDark ? 'transparent' : '#FFFFFF')
+                          }
+                        ]}>
+                          {agreedToTerms && (
+                            <Check size={16} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={3} />
+                          )}
+                        </View>
+                      </TouchableOpacity>
                       <Text style={[styles.checkboxText, { color: isDark ? themeColors.textPrimary : '#0D0D0D' }]}>
                         {t('dialog.phi.agreement')}
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                   </View>
 
                   {/* Input Section - Shows when checkbox is checked */}
@@ -340,7 +347,7 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
                       </View>
                       <View style={[styles.inputWrapper, { 
                         borderColor: isDark ? themeColors.borderNormal : '#E5E5EA',
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FAFAFA' 
+                        backgroundColor: 'transparent'
                       }]}>
                         <TextInput
                           placeholder={getPlaceholder()}
@@ -354,6 +361,7 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
                           outlineColor="transparent"
                           autoFocus={true}
                           textColor={isDark ? '#FFFFFF' : '#000000'}
+                          keyboardAppearance={isDark ? 'dark' : 'light'}
                           theme={{ 
                             colors: { 
                               text: isDark ? '#FFFFFF' : '#000000',
@@ -390,8 +398,8 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
             </TouchableOpacity>
           </TouchableOpacity>
           </ScrollView>
-        </Animated.View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </Animated.View>
     </Modal>
   );
 };
@@ -445,18 +453,18 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    padding: 24,
+    padding: 22,
     alignItems: 'center',
   },
   // Shield Icon Section
   iconContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   shieldBackground: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
     backgroundColor: '#EAF8FA',
     justifyContent: 'center',
     alignItems: 'center',
@@ -494,12 +502,12 @@ const styles = StyleSheet.create({
   // Checkbox Section
   checkboxSection: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 6,
   },
   customCheckbox: {
     width: 24,
@@ -528,7 +536,7 @@ const styles = StyleSheet.create({
   // Input Section
   inputAnimatedSection: {
     width: '100%',
-    marginBottom: 13,
+    marginBottom: 8,
   },
   inputLabelContainer: {
     marginBottom: 5,
@@ -557,7 +565,7 @@ const styles = StyleSheet.create({
   tooltipText: {
     fontSize: 12,
     color: '#A6A6A6',
-    marginTop: 8,
+    marginTop: 4,
     fontStyle: 'italic',
     lineHeight: 16,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',

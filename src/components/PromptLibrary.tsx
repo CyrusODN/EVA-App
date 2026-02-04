@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   View,
   TextInput,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import {
   Check,
@@ -155,13 +155,14 @@ const PromptLibrary: React.FC<PromptLibraryProps> = ({
   }, []);
 
   const handleSaveFromMagic = useCallback((template: {
-    title: string;
-    prompt: string;
+    name: string;
+    instructions: string;
+    refinedPrompt: string;
   }) => {
     const magicTemplate = {
-      name: template.title,
-      instructions: '',
-      refinedPrompt: template.prompt,
+      name: template.name,
+      instructions: template.instructions,
+      refinedPrompt: template.refinedPrompt,
     };
     onSavePrompt(magicTemplate);
     setViewState('library');
@@ -341,8 +342,9 @@ const PromptLibrary: React.FC<PromptLibraryProps> = ({
       </View>
       
       <MagicTemplateCreatorInline
-        onSave={handleSaveFromMagic}
-        onCancel={handleCancelMagic}
+        visible={true}
+        onSaveTemplate={handleSaveFromMagic}
+        onClose={handleCancelMagic}
       />
     </View>
   );

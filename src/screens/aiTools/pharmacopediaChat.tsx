@@ -871,7 +871,11 @@ const PharmacopediaChat: React.FC = () => {
         {/* Content area */}
         <View style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
           {isEmptyState ? (
-            <View style={styles.emptyState}>
+            <ScrollView
+              contentContainerStyle={styles.emptyState}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               <PulsingAILogo />
               <Text style={[styles.emptyStateGreeting, { color: DYNAMIC_THEME.navy }]}>{t('pharmacopediaChat.greeting')}</Text>
               <Text style={[styles.emptyStateSubtext, { color: DYNAMIC_THEME.secondary }]}>{t('pharmacopediaChat.subtitle')}</Text>
@@ -890,7 +894,7 @@ const PharmacopediaChat: React.FC = () => {
                   ))}
                 </View>
               </View>
-            </View>
+            </ScrollView>
           ) : (
             <ScrollView
               ref={scrollViewRef}
@@ -1011,7 +1015,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emptyState: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: wp(8),

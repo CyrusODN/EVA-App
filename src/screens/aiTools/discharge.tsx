@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   ActionSheetIOS,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -423,6 +424,10 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.background }]} edges={['top']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.headerWrapper}>
@@ -520,6 +525,7 @@ Follow up with Dr. Smith in Pulmonology in 2 weeks.
           primaryColor={PRIMARY_COLOR}
         />
       </View>
+      </KeyboardAvoidingView>
 
       {/* Summary View Modal */}
       <SummaryView
@@ -618,6 +624,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboardView: {
+  flex: 1,
+},
   mainContainer: {
     flex: 1,
     display: 'flex',

@@ -23,12 +23,13 @@ import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
 import { forgetPassword } from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
+import { validateInput } from '../../utils/inputValidations';
 import { useTheme } from '../../constants/theme';
 import useThemeStore from '../../store/themeStore';
 import RemedyLogo from '../../components/RemedyLogo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Sun, Moon, Check } from 'lucide-react-native';
-import LanguageSelector from '../../components/languageSelector';
+import {Check } from 'lucide-react-native';
+
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -45,6 +46,14 @@ const ForgotPassword = () => {
       customToast('error', 'Error', 'Please enter your email');
       return;
     }
+    
+    // Validate email using the utility
+    const emailErrors = validateInput(email, 'email');
+    if (emailErrors.length > 0) {
+      customToast('error', 'Error', emailErrors[0]);
+      return;
+    }
+
     setLoading(true);
     try {
       const resp = await forgetPassword({ email });

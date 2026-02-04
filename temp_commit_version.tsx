@@ -1,11 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  connectSocket,
-  disconnectSocket,
-  getSocket,
-} from '../../services/socketService';
-import userStore from '../../store/user';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -42,33 +36,21 @@ import {
   MessageSquare,
   ChevronRight,
   ChevronLeft,
-  ChevronDown,
   Camera,
   Type,
   Clipboard as ClipboardIcon,
   PhoneCall,
 } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import PrimaryButton from '../../components/primaryButton';
 import Input from '../../components/input';
 import CustomTemplateManager, {
   CustomTemplate,
 } from '../../components/customTemplateManager';
+import { colors } from '../../constants/colors';
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';
-import {
-  generateNotes,
-  getAuthContext,
-} from '../../services/authService';
-import {
-  createNotesPrompt,
-  getNotesPrompts ,
-  deleteNotesPrompt,
-  type NotesPrompt,
-} from '../../services/promptsApi';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors } from '../../constants/colors';
-import { useTheme } from '../../constants/theme';
 
 // Enable LayoutAnimation for Android
 if (
@@ -81,7 +63,7 @@ if (
 Dimensions.get('window');
 
 // Design System Constants
-const DEFAULT_DESIGN_TOKENS = {
+const DESIGN_TOKENS = {
   fonts: {
     regular: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
     medium: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
@@ -132,58 +114,18 @@ const DEFAULT_DESIGN_TOKENS = {
     },
   },
 };
-const DESIGN_TOKENS = DEFAULT_DESIGN_TOKENS;
 
 const TranscriptionComplete = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
-  const { colors: themeColors, isDark } = useTheme();
-
-  const DESIGN_TOKENS = {
-    fonts: DEFAULT_DESIGN_TOKENS.fonts,
-    colors: {
-      primary: themeColors.accentPrimary,
-      text: isDark ? themeColors.textPrimary : '#000000',
-      textSecondary: isDark ? themeColors.textSecondary : '#A6A6A6',
-      textTertiary: isDark ? themeColors.textMuted : '#86868b',
-      border: isDark ? themeColors.borderNormal : '#E5E5E5',
-      borderLight: isDark ? themeColors.borderSubtle : '#F0F0F0',
-      background: isDark ? themeColors.canvas : '#FFFFFF',
-      backgroundSecondary: isDark ? themeColors.layer2 : '#FAFAFA',
-      backgroundTertiary: isDark ? 'rgba(255,255,255,0.05)' : '#F8F8F8',
-      success: themeColors.success,
-      error: themeColors.error,
-    },
-    borderRadius: DEFAULT_DESIGN_TOKENS.borderRadius,
-    shadows: isDark ? {
-      small: {
-        shadowColor: themeColors.accentPrimary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-      },
-      medium: {
-        shadowColor: themeColors.accentPrimary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 4,
-      },
-      large: {
-        shadowColor: themeColors.accentPrimary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
-        elevation: 10,
-      },
-    } : DEFAULT_DESIGN_TOKENS.shadows,
-  };
-
+  
   // Get onboarding defaults
-  const { defaultSpecialization, defaultNoteLength, defaultVisitType } =
-    useOnboardingStore();
+  const {
+    defaultSpecialization,
+    defaultNoteLength,
+    defaultVisitType,
+  } = useOnboardingStore();
 
   // Get session data from route params
   const { sessionData, sessionType } = ((route as any).params || {}) as {
@@ -192,15 +134,13 @@ const TranscriptionComplete = () => {
   };
 
   // --- NEW ARCHITECTURE STATE ---
-  const [generationMode, setGenerationMode] = useState<'standard' | 'custom'>(
-    'standard',
-  );
+  const [generationMode, setGenerationMode] = useState<'standard' | 'custom'>('standard');
   // ------------------------------
 
   // State management - initialized with onboarding defaults
-  const [noteType, setNoteType] = useState<string>('SOAP'); // Default to SOAP for standard mode
+  const [noteType, setNoteType] = useState<string | null>(null);
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
-    defaultSpecialization || '',
+    defaultSpecialization || ''
   );
   const [visitType, setVisitType] = useState<string>(defaultVisitType || '');
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -210,113 +150,60 @@ const TranscriptionComplete = () => {
   const [showVisitTypeModal, setShowVisitTypeModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [newSessionName, setNewSessionName] = useState<string>('');
-  const [selectedFollowUpVisits, setSelectedFollowUpVisits] = useState<
-    Set<string>
-  >(new Set<string>());
+  const [selectedFollowUpVisits, setSelectedFollowUpVisits] = useState<Set<string>>(
+    new Set<string>(),
+  );
   const [importedFollowUpVisits, setImportedFollowUpVisits] = useState<
     Array<{ _id: string; title: string; date: Date | string }>
   >([]);
   const [visitSearchQuery, setVisitSearchQuery] = useState<string>('');
   const [manualFollowUpText, setManualFollowUpText] = useState<string>('');
-  const [showManualTextModal, setShowManualTextModal] =
-    useState<boolean>(false);
+  const [showManualTextModal, setShowManualTextModal] = useState<boolean>(false);
   const [tempManualText, setTempManualText] = useState<string>('');
   // removed unused followUpPhoto state
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
-  const [generatedNotes, setGeneratedNotes] = useState<string>(
-    sessionData?.generatedNotes || '',
-  );
-  const generatedNotesRef = useRef<string>(sessionData?.generatedNotes || ''); // To track latest value inside socket callbacks
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedNote, setGeneratedNote] = useState<string>('');
   const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
   const [noteLength, setNoteLength] = useState<'Small' | 'Medium' | 'Large'>(
     defaultNoteLength || 'Medium',
   );
-
+  
   // Custom Template State
   const [customNote, setCustomNote] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null,
   );
-  const [selectedTemplateTitle, setSelectedTemplateTitle] =
-    useState<string>('');
-
-  const noteScrollViewRef = useRef<ScrollView>(null);
-
-  // Auto-scroll effect
-  useEffect(() => {
-    if (noteScrollViewRef.current) {
-      if (isGeneratingNotes) {
-        // While generating, auto-scroll to bottom to follow stream
-        noteScrollViewRef.current.scrollToEnd({ animated: true });
-      } else if (generatedNotes.length > 0) {
-        // When generation finishes (isGeneratingNotes becomes false), scroll to top
-        // Small timeout to ensure layout is ready after collapse animation
-        setTimeout(() => {
-          noteScrollViewRef.current?.scrollTo({ y: 0, animated: true });
-        }, 100);
-      }
-    }
-  }, [generatedNotes, isGeneratingNotes]);
+  const [selectedTemplateTitle, setSelectedTemplateTitle] = useState<string>('');
 
   const noteLengthOptions: Array<'Small' | 'Medium' | 'Large'> = [
     'Small',
     'Medium',
     'Large',
   ];
-  // Prompts states
-  const [customPromptTitle, setCustomPromptTitle] = useState<string>('');
-  const [savedPrompts, setSavedPrompts] = useState<NotesPrompt[]>([]); // Saved custom prompts
-  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null); // Currently selected prompt
   const specializationOptions = [
-    {
-      key: 'Psychiatry',
-      label: t('mainContent.transcriptionComplete.specialization.psychiatry'),
-    },
-    {
-      key: 'Child Psychiatry',
-      label: t(
-        'mainContent.transcriptionComplete.specialization.childPsychiatry',
-      ),
-    },
-    {
-      key: 'Surgery',
-      label: t('mainContent.transcriptionComplete.specialization.surgery'),
-    },
-    {
-      key: 'Family Medicine',
-      label: t(
-        'mainContent.transcriptionComplete.specialization.familyMedicine',
-      ),
-    },
-    {
-      key: 'Smart Select',
-      label: t('mainContent.transcriptionComplete.specialization.smartSelect'),
-    },
+    { key: 'Psychiatry', label: t('mainContent.transcriptionComplete.specialization.psychiatry') },
+    { key: 'Child Psychiatry', label: t('mainContent.transcriptionComplete.specialization.childPsychiatry') },
+    { key: 'Surgery', label: t('mainContent.transcriptionComplete.specialization.surgery') },
+    { key: 'Smart Select', label: t('mainContent.transcriptionComplete.specialization.smartSelect') },
   ];
   const visitTypeOptions = [
-    {
-      key: 'First Visit',
-      label: t('mainContent.transcriptionComplete.visitType.firstVisit'),
-    },
-    {
-      key: 'Follow-up',
-      label: t('mainContent.transcriptionComplete.visitType.followUp'),
-    },
+    { key: 'First Visit', label: t('mainContent.transcriptionComplete.visitType.firstVisit') },
+    { key: 'Follow-up', label: t('mainContent.transcriptionComplete.visitType.followUp') },
   ];
 
   // Helper to switch modes with animation
   const handleModeChange = (mode: 'standard' | 'custom') => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setGenerationMode(mode);
-
+    
     // Optional: Reset logic when switching if needed
     if (mode === 'standard') {
-      setNoteType('SOAP');
+        setNoteType('SOAP'); 
     } else {
-      setNoteType('custom');
+        setNoteType('custom');
     }
   };
 
@@ -324,35 +211,8 @@ const TranscriptionComplete = () => {
     setCustomNote('');
     setSelectedTemplateId(null);
     setSelectedTemplateTitle('');
-    setNoteType('SOAP'); // Reset to default SOAP
+    setNoteType(null);
     customToast('success', t('common.success'), 'Custom prompt cleared');
-  };
-
-  const handleDeletePrompt = async (promptId: string, promptTitle: string) => {
-    try {
-      await deleteNotesPrompt(promptId);
-
-      // Remove from local state
-      setSavedPrompts((prev) => prev.filter((p) => p._id !== promptId));
-
-      // Clear selection if deleted prompt was selected
-      if (selectedPromptId === promptId) {
-        setSelectedPromptId(null);
-        setCustomNote('');
-        setCustomPromptTitle('');
-        setNoteType('SOAP'); // Reset to default SOAP
-      }
-
-      customToast('success', 'Deleted', `"${promptTitle}" has been deleted`);
-      console.log('[TranscriptionComplete] Prompt deleted:', promptId);
-    } catch (error: any) {
-      console.error('[TranscriptionComplete] Failed to delete prompt:', error);
-      customToast(
-        'error',
-        'Error',
-        error?.message || 'Failed to delete prompt',
-      );
-    }
   };
 
   const handleSelectTemplate = (template: CustomTemplate | null) => {
@@ -378,127 +238,59 @@ const TranscriptionComplete = () => {
     status: 'transcribed',
   };
 
-  const isNoteReady = generatedNotes.trim().length > 0;
-  // State for available sessions to use as follow-up visits
-  const [availableSessions, setAvailableSessions] = useState<any[]>([]);
+  const isNoteReady = generatedNote.trim().length > 0;
 
-  // Load available sessions for follow-up visits
-  useEffect(() => {
-    const loadSessions = async () => {
-      try {
-        const allSessions = await sessionStorage.getAllSessions();
-        // Filter to only show sessions with transcriptions, same type, excluding current session
-        const filteredSessions = allSessions
-          .filter(
-            (s) =>
-              s.type === session.type &&
-              s.id !== session.id &&
-              s.hasTranscription === true,
-          )
-          .map((s) => ({
-            _id: s.id,
-            title: s.title,
-            date: new Date(s.date),
-          }));
-        setAvailableSessions(filteredSessions);
-        console.log(
-          '[TranscriptionComplete] Loaded available sessions for follow-up:',
-          filteredSessions.length,
-        );
-      } catch (error) {
-        console.error(
-          '[TranscriptionComplete] Failed to load sessions:',
-          error,
-        );
-      }
-    };
-    loadSessions();
-  }, [session.type, session.id]);
+  // Mock follow-up visits data
+  const mockFollowUpVisits = [
+    {
+      _id: '1',
+      title: 'Wizyta kontrolna - JS45',
+      date: new Date('2024-01-15'),
+      mode: 'standard',
+      label: 'Psychiatry • First Visit',
+    },
+    {
+      _id: '2',
+      title: 'Konsultacja - JS45',
+      date: new Date('2024-01-20'),
+      mode: 'custom',
+      label: 'Custom • Psychiatry - First Visit',
+    },
+    {
+      _id: '3',
+      title: 'Badania kontrolne - JS45',
+      date: new Date('2024-01-25'),
+      mode: 'standard',
+      label: 'Cardiology • Follow-up',
+    },
+  ];
 
-  // Load saved custom prompts for this session type
-  useEffect(() => {
-    const loadPrompts = async () => {
-      try {
-        const prompts = await getNotesPrompts(
-          session.type as 'patient' | 'meeting' | 'lecture',
-        );
-        setSavedPrompts(prompts);
-        console.log(
-          '[TranscriptionComplete] Loaded custom prompts:',
-          prompts.length,
-        );
-      } catch (error) {
-        console.error('[TranscriptionComplete] Failed to load prompts:', error);
-      }
-    };
-    loadPrompts();
-  }, [session.type]);
-
-  // Load saved notes from storage if session already has notes
-  // Load saved notes from storage if session already has notes
-  useEffect(() => {
-    const loadSavedNotes = async () => {
-      // Use session.id (which is reliable via the session variable) instead of sessionData?.id
-      if (session.id && session.id !== '1') {
-        try {
-          // Add a small delay to ensure storage write matches read (rare race condition)
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          const latestSession = await sessionStorage.getSessionById(
-            session.id,
-          );
-          if (latestSession?.generatedNotes) {
-            console.log(
-              '[TranscriptionComplete] Loaded saved notes from storage:',
-              latestSession.generatedNotes.length,
-              'characters',
-            );
-            setGeneratedNotes(latestSession.generatedNotes);
-            generatedNotesRef.current = latestSession.generatedNotes;
-          } else {
-            console.log(
-              '[TranscriptionComplete] No saved notes found for session:',
-              session.id,
-            );
-          }
-        } catch (error) {
-          console.error(
-            '[TranscriptionComplete] Failed to load saved notes:',
-            error,
-          );
-        }
-      }
-    };
-    loadSavedNotes();
-  }, [session.id]);
-
-  const filteredFollowUpVisits = availableSessions.filter((visit) =>
+  const filteredFollowUpVisits = mockFollowUpVisits.filter(visit =>
     visit.title.toLowerCase().includes(visitSearchQuery.toLowerCase()),
   );
 
+  useEffect(() => {
+    setNewSessionName(session.title);
+    if (session.type === 'patient') {
+        setNoteType('SOAP');
+    }
+  }, [session.title, session.type]);
+
   const getSessionIcon = () => {
     switch (session.type) {
-      case 'patient':
-        return Users;
-      case 'meeting':
-        return FileText;
-      case 'lecture':
-        return Brain;
-      default:
-        return FileText;
+      case 'patient': return Users;
+      case 'meeting': return FileText;
+      case 'lecture': return Brain;
+      default: return FileText; 
     }
   };
 
   const getSessionTypeText = () => {
     switch (session.type) {
-      case 'patient':
-        return t('tabs.patients');
-      case 'meeting':
-        return t('tabs.meetings');
-      case 'lecture':
-        return t('tabs.lectures');
-      default:
-        return t('tabs.patients');
+      case 'patient': return t('tabs.patients');
+      case 'meeting': return t('tabs.meetings');
+      case 'lecture': return t('tabs.lectures');
+      default: return t('tabs.patients');
     }
   };
 
@@ -516,16 +308,9 @@ const TranscriptionComplete = () => {
     if (!newSessionName.trim()) return;
     setIsRenaming(true);
     try {
-      // Update in local storage (handles backend sync internally)
-      await sessionStorage.updateSessionTitle(
-        session.id,
-        newSessionName.trim(),
-      );
+      await sessionStorage.updateSessionTitle(session.id, newSessionName.trim());
       setShowRenameModal(false);
       customToast('success', t('common.success'), t('success.sessionRenamed'));
-    } catch (error) {
-      console.error('[TranscriptionComplete] Rename error:', error);
-      customToast('error', t('common.error'), 'Failed to rename session');
     } finally {
       setIsRenaming(false);
     }
@@ -534,14 +319,10 @@ const TranscriptionComplete = () => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      // Delete from local storage (handles backend sync internally)
       await sessionStorage.deleteSession(session.id);
       setShowDeleteModal(false);
       customToast('success', t('common.success'), t('success.sessionDeleted'));
       (navigation as any).goBack();
-    } catch (error) {
-      console.error('[TranscriptionComplete] Delete error:', error);
-      customToast('error', t('common.error'), 'Failed to delete session');
     } finally {
       setIsDeleting(false);
     }
@@ -550,21 +331,20 @@ const TranscriptionComplete = () => {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      // Reset in local storage (handles backend sync internally)
       await sessionStorage.resetSession(session.id);
       setShowResetModal(false);
       customToast('success', t('common.success'), t('success.sessionReset'));
-      (navigation as any).goBack();
-    } catch (error) {
-      console.error('[TranscriptionComplete] Reset error:', error);
-      customToast('error', t('common.error'), 'Failed to reset session');
+      (navigation as any).replace('session', {
+        sessionData: session,
+        sessionType: session.type,
+      });
     } finally {
       setIsResetting(false);
     }
   };
 
   const handleFollowUpVisitSelect = (visitId: string) => {
-    setSelectedFollowUpVisits((prev) => {
+    setSelectedFollowUpVisits(prev => {
       const next = new Set(prev);
       next.has(visitId) ? next.delete(visitId) : next.add(visitId);
       return next;
@@ -572,9 +352,9 @@ const TranscriptionComplete = () => {
   };
 
   const handleImportFollowUpVisits = () => {
-    const selectedVisitData = availableSessions
-      .filter((visit) => selectedFollowUpVisits.has(visit._id))
-      .map((visit) => ({
+    const selectedVisitData = mockFollowUpVisits
+      .filter(visit => selectedFollowUpVisits.has(visit._id))
+      .map(visit => ({
         _id: visit._id,
         title: visit.title,
         date: visit.date,
@@ -589,41 +369,25 @@ const TranscriptionComplete = () => {
     if (session.type !== 'patient') return null;
     return (
       <View style={styles.modeSwitchContainer}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
-          {t('mainContent.transcriptionComplete.generationMode')}
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+             {t('mainContent.transcriptionComplete.generationMode')}
         </Text>
-        <View style={[styles.compactSegmentedControl, { backgroundColor: DESIGN_TOKENS.colors.border }]}>
-          <TouchableOpacity
-            style={[
-              styles.segmentBtn,
-              generationMode === 'standard' && [styles.segmentBtnActive, { backgroundColor: DESIGN_TOKENS.colors.primary }]
-            ]}
-            onPress={() => handleModeChange('standard')}>
-            <Text
-              style={[
-                generationMode === 'standard'
-                  ? styles.segmentTextActive
-                  : styles.segmentTextInactive,
-                generationMode === 'standard' ? { color: '#FFF' } : { color: isDark ? DESIGN_TOKENS.colors.textSecondary : '#666' }
-              ]}>
-              {t('mainContent.transcriptionComplete.modes.standard')}
+        <View style={styles.compactSegmentedControl}>
+          <TouchableOpacity 
+            style={[styles.segmentBtn, generationMode === 'standard' && styles.segmentBtnActive]}
+            onPress={() => handleModeChange('standard')}
+          >
+            <Text style={generationMode === 'standard' ? styles.segmentTextActive : styles.segmentTextInactive}>
+               {t('mainContent.transcriptionComplete.modes.standard')}
             </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.segmentBtn,
-              generationMode === 'custom' && [styles.segmentBtnActive, { backgroundColor: DESIGN_TOKENS.colors.primary }]
-            ]}
-            onPress={() => handleModeChange('custom')}>
-            <Text
-              style={[
-                generationMode === 'custom'
-                  ? styles.segmentTextActive
-                  : styles.segmentTextInactive,
-                generationMode === 'custom' ? { color: '#FFF' } : { color: isDark ? DESIGN_TOKENS.colors.textSecondary : '#666' }
-              ]}>
-              {t('mainContent.transcriptionComplete.modes.custom')}
+          
+          <TouchableOpacity 
+            style={[styles.segmentBtn, generationMode === 'custom' && styles.segmentBtnActive]}
+            onPress={() => handleModeChange('custom')}
+          >
+            <Text style={generationMode === 'custom' ? styles.segmentTextActive : styles.segmentTextInactive}>
+               {t('mainContent.transcriptionComplete.modes.custom')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -636,9 +400,9 @@ const TranscriptionComplete = () => {
       if (session.type === 'patient') return null;
       return (
           <View style={styles.noteTypeContainer}>
-             <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>{t('mainContent.transcriptionComplete.noteType')}</Text>
-             <View style={[styles.compactSegmentedControl, { backgroundColor: DESIGN_TOKENS.colors.border }]}>
-                <TouchableOpacity style={[styles.compactSegmentButton, styles.compactSegmentButtonSelected, { backgroundColor: DESIGN_TOKENS.colors.primary }]}><Text style={[styles.compactSegmentTextSelected, { color: '#FFF' }]}>{t('mainContent.transcriptionComplete.noteOptions.general')}</Text></TouchableOpacity>
+             <Text variant="labelMedium" style={styles.sectionLabel}>{t('mainContent.transcriptionComplete.noteType')}</Text>
+             <View style={styles.compactSegmentedControl}>
+                <TouchableOpacity style={[styles.compactSegmentButton, styles.compactSegmentButtonSelected]}><Text style={styles.compactSegmentTextSelected}>{t('mainContent.transcriptionComplete.noteOptions.general')}</Text></TouchableOpacity>
              </View>
           </View>
       );
@@ -647,20 +411,17 @@ const TranscriptionComplete = () => {
   const renderSpecializationSection = () => {
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
             {t('mainContent.transcriptionComplete.specialization.select')}
         </Text>
         <TouchableOpacity
-          style={[styles.compactDropdownField, { 
-            borderColor: DESIGN_TOKENS.colors.border,
-            backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary 
-          }]}
+          style={styles.compactDropdownField}
           onPress={() => setShowSpecializationModal(true)}
         >
-          <Text variant="bodySmall" style={selectedSpecialization ? [styles.compactDropdownValue, { color: DESIGN_TOKENS.colors.text }] : [styles.compactDropdownPlaceholder, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+          <Text variant="bodySmall" style={selectedSpecialization ? styles.compactDropdownValue : styles.compactDropdownPlaceholder}>
             {selectedSpecialization ? specializationOptions.find(s => s.key === selectedSpecialization)?.label : t('mainContent.transcriptionComplete.specialization.select')}
           </Text>
-          <ChevronRight size={18} color={DESIGN_TOKENS.colors.textSecondary} />
+          <ChevronRight size={18} color="#A6A6A6" />
         </TouchableOpacity>
       </View>
     );
@@ -669,20 +430,17 @@ const TranscriptionComplete = () => {
   const renderVisitTypeSection = () => {
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
             {t('mainContent.transcriptionComplete.visitType.select')}
         </Text>
         <TouchableOpacity
-          style={[styles.compactDropdownField, { 
-            borderColor: DESIGN_TOKENS.colors.border,
-            backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary 
-          }]}
+          style={styles.compactDropdownField}
           onPress={() => setShowVisitTypeModal(true)}
         >
-          <Text variant="bodySmall" style={visitType ? [styles.compactDropdownValue, { color: DESIGN_TOKENS.colors.text }] : [styles.compactDropdownPlaceholder, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+          <Text variant="bodySmall" style={visitType ? styles.compactDropdownValue : styles.compactDropdownPlaceholder}>
             {visitType ? visitTypeOptions.find(v => v.key === visitType)?.label : t('mainContent.transcriptionComplete.visitType.select')}
           </Text>
-          <ChevronRight size={18} color={DESIGN_TOKENS.colors.textSecondary} />
+          <ChevronRight size={18} color="#A6A6A6" />
         </TouchableOpacity>
       </View>
     );
@@ -697,16 +455,16 @@ const TranscriptionComplete = () => {
 
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+        <Text variant="labelMedium" style={styles.sectionLabel}>
           {t('mainContent.transcriptionComplete.noteLength.select')}
         </Text>
-        <View style={[styles.compactSegmentedControl, { backgroundColor: DESIGN_TOKENS.colors.border }]}>
+        <View style={styles.compactSegmentedControl}>
           {noteLengthOptions.map(length => (
             <TouchableOpacity
               key={length}
               style={[
                 styles.compactSegmentButton,
-                noteLength === length && [styles.compactSegmentButtonSelected, { backgroundColor: DESIGN_TOKENS.colors.primary, shadowColor: DESIGN_TOKENS.shadows.small.shadowColor }],
+                noteLength === length && styles.compactSegmentButtonSelected,
               ]}
               onPress={() => setNoteLength(length)}
             >
@@ -714,8 +472,7 @@ const TranscriptionComplete = () => {
                 variant="bodySmall"
                 style={[
                   styles.compactSegmentText,
-                  { color: isDark ? DESIGN_TOKENS.colors.textSecondary : '#666666' },
-                  noteLength === length && [styles.compactSegmentTextSelected, { color: '#FFF' }],
+                  noteLength === length && styles.compactSegmentTextSelected,
                 ]}
               >
                 {noteLengthLabels[length]}
@@ -732,61 +489,42 @@ const TranscriptionComplete = () => {
 
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
-          {t(
-            'mainContent.transcriptionComplete.followUpVisits.previousVisitContext',
-          )}
+        <Text variant="labelMedium" style={styles.sectionLabel}>
+          {t('mainContent.transcriptionComplete.followUpVisits.previousVisitContext')}
         </Text>
-
+        
         <View style={styles.followUpOptionsRow}>
           <TouchableOpacity
-            style={[styles.followUpOptionButton, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderColor: DESIGN_TOKENS.colors.borderLight,
-              shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-            }]}
-            onPress={() => setShowFollowUpModal(true)}>
+            style={styles.followUpOptionButton}
+            onPress={() => setShowFollowUpModal(true)}
+          >
             <Plus size={14} color={DESIGN_TOKENS.colors.primary} />
-            <Text variant="bodySmall" style={[styles.followUpOptionText, { color: DESIGN_TOKENS.colors.text }]}>
-              {t(
-                'mainContent.transcriptionComplete.followUpVisits.fromHistory',
-              )}
+            <Text variant="bodySmall" style={styles.followUpOptionText}>
+              {t('mainContent.transcriptionComplete.followUpVisits.fromHistory')}
             </Text>
           </TouchableOpacity>
-
+          
           <TouchableOpacity
-            style={[styles.followUpOptionButton, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderColor: DESIGN_TOKENS.colors.borderLight,
-              shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-            }]}
+            style={styles.followUpOptionButton}
             onPress={() => {
-              setTempManualText(manualFollowUpText);
-              setShowManualTextModal(true);
-            }}>
+                setTempManualText(manualFollowUpText);
+                setShowManualTextModal(true);
+            }}
+          >
             <Type size={14} color={DESIGN_TOKENS.colors.primary} />
-            <Text variant="bodySmall" style={[styles.followUpOptionText, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text variant="bodySmall" style={styles.followUpOptionText}>
               {t('mainContent.transcriptionComplete.followUpVisits.typeText')}
             </Text>
           </TouchableOpacity>
-
+          
           <TouchableOpacity
-            style={[styles.followUpOptionButton, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderColor: DESIGN_TOKENS.colors.borderLight,
-              shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-            }]}
+            style={styles.followUpOptionButton}
             onPress={() => {
-              customToast(
-                'info',
-                t('common.comingSoon'),
-                t(
-                  'mainContent.transcriptionComplete.followUpVisits.photoComingSoon',
-                ),
-              );
-            }}>
+                customToast('info', t('common.comingSoon'), t('mainContent.transcriptionComplete.followUpVisits.photoComingSoon'));
+            }}
+          >
             <Camera size={14} color={DESIGN_TOKENS.colors.primary} />
-            <Text variant="bodySmall" style={[styles.followUpOptionText, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text variant="bodySmall" style={styles.followUpOptionText}>
               {t('mainContent.transcriptionComplete.followUpVisits.takePhoto')}
             </Text>
           </TouchableOpacity>
@@ -794,81 +532,63 @@ const TranscriptionComplete = () => {
 
         {/* Manual Text Preview */}
         {manualFollowUpText.trim() && (
-          <View style={[styles.manualTextPreview, { 
-            backgroundColor: DESIGN_TOKENS.colors.backgroundTertiary,
-            borderLeftColor: DESIGN_TOKENS.colors.success,
-            shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-          }]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
+          <View style={styles.manualTextPreview}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
-                <Text variant="bodySmall" style={[styles.customNoteLabel, { color: DESIGN_TOKENS.colors.textSecondary }]}>
-                  {t(
-                    'mainContent.transcriptionComplete.followUpVisits.manualContext',
-                  )}
+                <Text variant="bodySmall" style={styles.customNoteLabel}>
+                  {t('mainContent.transcriptionComplete.followUpVisits.manualContext')}
                 </Text>
-                <Text
-                  variant="bodySmall"
-                  style={[styles.manualTextSnippet, { color: DESIGN_TOKENS.colors.textSecondary }]}
-                  numberOfLines={2}>
+                <Text variant="bodySmall" style={styles.manualTextSnippet} numberOfLines={2}>
                   {manualFollowUpText}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: wp(2) }}>
-                <TouchableOpacity
-                  style={[styles.customNoteActionButton, { backgroundColor: DESIGN_TOKENS.colors.background }]}
+                <TouchableOpacity 
+                  style={styles.customNoteActionButton}
                   onPress={() => {
                     setTempManualText(manualFollowUpText);
                     setShowManualTextModal(true);
-                  }}>
-                  <Edit3 size={16} color={DESIGN_TOKENS.colors.primary} />
+                  }}
+                >
+                  <Edit3 size={16} color="#46B7C6" />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.customNoteActionButton, { backgroundColor: DESIGN_TOKENS.colors.background }]}
-                  onPress={() => setManualFollowUpText('')}>
-                  <X size={16} color={DESIGN_TOKENS.colors.error} />
+                <TouchableOpacity 
+                  style={styles.customNoteActionButton}
+                  onPress={() => setManualFollowUpText('')}
+                >
+                  <X size={16} color="#ef4444" />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         )}
-
+        
         {/* Imported Visits from History */}
         {importedFollowUpVisits.length > 0 && (
           <View style={styles.importedVisitsContainer}>
-            <Text variant="bodySmall" style={[styles.importedVisitsCount, { color: DESIGN_TOKENS.colors.textTertiary }]}>
-              {t(
-                'mainContent.transcriptionComplete.followUpVisits.selectedVisits',
-                {
-                  count: importedFollowUpVisits.length,
-                },
-              )}
+            <Text variant="bodySmall" style={styles.importedVisitsCount}>
+              {t('mainContent.transcriptionComplete.followUpVisits.selectedVisits', {
+                count: importedFollowUpVisits.length,
+              })}
             </Text>
-            {importedFollowUpVisits.map((visit) => (
-              <View key={visit._id} style={[styles.importedVisitItem, { 
-                backgroundColor: DESIGN_TOKENS.colors.background, 
-                borderColor: DESIGN_TOKENS.colors.borderLight,
-                shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-              }]}>
+            {importedFollowUpVisits.map(visit => (
+              <View key={visit._id} style={styles.importedVisitItem}>
                 <View style={styles.importedVisitInfo}>
-                  <Text variant="bodyMedium" style={[styles.importedVisitTitle, { color: DESIGN_TOKENS.colors.text }]}>
+                  <Text variant="bodyMedium" style={styles.importedVisitTitle}>
                     {visit.title}
                   </Text>
-                  <Text variant="bodySmall" style={[styles.importedVisitDate, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+                  <Text variant="bodySmall" style={styles.importedVisitDate}>
                     {new Date(visit.date).toLocaleDateString()}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    setImportedFollowUpVisits((prev) =>
-                      prev.filter((v) => v._id !== visit._id),
+                    setImportedFollowUpVisits(prev =>
+                      prev.filter(v => v._id !== visit._id),
                     );
-                  }}>
-                  <X size={16} color={DESIGN_TOKENS.colors.textTertiary} />
+                  }}
+                >
+                  <X size={16} color="#86868b" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -879,14 +599,7 @@ const TranscriptionComplete = () => {
   };
 
   const generateMockNote = () => {
-    return `${t('mainContent.transcriptionComplete.noteGenerated', {
-      mode:
-        generationMode === 'standard'
-          ? t('mainContent.transcriptionComplete.modes.standardSOAP')
-          : t('mainContent.transcriptionComplete.modes.custom'),
-    })}...\n\n${t('mainContent.transcriptionComplete.noteSubjective')}:\n${t(
-      'mainContent.transcriptionComplete.patientPresents',
-    )}...`;
+    return `${t('mainContent.transcriptionComplete.noteGenerated', { mode: generationMode === 'standard' ? t('mainContent.transcriptionComplete.modes.standardSOAP') : t('mainContent.transcriptionComplete.modes.custom') })}...\n\n${t('mainContent.transcriptionComplete.noteSubjective')}:\n${t('mainContent.transcriptionComplete.patientPresents')}...`;
   };
 
   const getGeneratedSummary = () => {
@@ -895,504 +608,163 @@ const TranscriptionComplete = () => {
     }
     if (generationMode === 'standard') {
       const specializationLabel =
-        specializationOptions.find((s) => s.key === selectedSpecialization)
-          ?.label || t('mainContent.transcriptionComplete.modes.standard');
-      return t(
-        'mainContent.transcriptionComplete.generatedUsing.standardMode',
-        { specialization: specializationLabel },
-      );
+        specializationOptions.find(s => s.key === selectedSpecialization)?.label ||
+        t('mainContent.transcriptionComplete.modes.standard');
+      return t('mainContent.transcriptionComplete.generatedUsing.standardMode', { specialization: specializationLabel });
     }
-    return t('mainContent.transcriptionComplete.generatedUsing.customMode', {
-      template:
-        selectedTemplateTitle ||
-        t('mainContent.transcriptionComplete.customTemplate'),
-    });
+    return t('mainContent.transcriptionComplete.generatedUsing.customMode', { template: selectedTemplateTitle || t('mainContent.transcriptionComplete.customTemplate') });
   };
 
   const renderGenerateButton = () => {
-    const canGenerate =
-      noteType &&
-      (noteType === 'custom' ||
-        session.type !== 'patient' ||
-        (selectedSpecialization && visitType));
+    // LOGIC UPDATE: Validation depends on Mode
+    let canGenerate = false;
+
+    if (session.type !== 'patient') {
+        canGenerate = true;
+    } else {
+        if (generationMode === 'standard') {
+            // Standard Mode Requirements
+            canGenerate = !!selectedSpecialization && !!visitType;
+        } else {
+            // Custom Mode Requirements
+            canGenerate = !!selectedTemplateId; 
+        }
+    }
 
     return (
       <TouchableOpacity
         style={[
           styles.floatingGenerateButton,
-          { shadowColor: DESIGN_TOKENS.colors.primary },
-          (!canGenerate || isGeneratingNotes) && [
-            styles.floatingGenerateButtonDisabled,
-            { backgroundColor: DESIGN_TOKENS.colors.border }
-          ],
+          (!canGenerate || isGenerating) && styles.floatingGenerateButtonDisabled,
         ]}
         onPress={async () => {
-          if (!canGenerate) {
+          if (canGenerate) {
+            setIsGenerating(true);
+            setTimeout(() => {
+              const note = generateMockNote();
+              const specializationLabel =
+                specializationOptions.find(s => s.key === selectedSpecialization)?.label;
+              const visitTypeLabel =
+                visitTypeOptions.find(v => v.key === visitType)?.label;
+              setGeneratedNote(note);
+              setIsGenerating(false);
+              sessionStorage.updateSessionNoteMeta(session.id, {
+                generationMode,
+                specializationLabel: generationMode === 'standard' ? specializationLabel : undefined,
+                visitTypeLabel: generationMode === 'standard' ? visitTypeLabel : undefined,
+                customTemplateTitle: generationMode === 'custom' ? selectedTemplateTitle : undefined,
+              });
+              handleCollapseConfig();
+            }, 1500);
+          } else {
+             const errorMsg = generationMode === 'standard' 
+                ? 'Please select Specialization and Visit Type' 
+                : 'Please select a Custom Template';
             customToast(
               'error',
               t('common.error'),
-              t('errors.noteTypeRequired'),
-            );
-            return;
-          }
-          const loggedInUser = userStore.getState().loggedInUser;
-
-          // Check if we have sessionId
-          if (!session.sessionId) {
-            customToast(
-              'error',
-              t('common.error'),
-              'Session ID not found. Please create a new session.',
-            );
-            return;
-          }
-
-          // Check if we have userId for socket connection
-          let userId = loggedInUser?.id;
-          if (!userId) {
-            console.warn(
-              '[TranscriptionComplete] No logged in user ID for socket auth, attempting to fetch auth context...',
-            );
-            try {
-              const authCtx = await getAuthContext();
-              const ctx = authCtx?.data?.data;
-              if (ctx && (ctx._id || ctx.id || ctx.userId)) {
-                const userObj: any = {
-                  id: ctx._id || ctx.id || ctx.userId,
-                  email: ctx.email || '',
-                  name:
-                    ctx.fname ||
-                    ctx.name ||
-                    (ctx.email ? String(ctx.email).split('@')[0] : ''),
-                  profilePicture: ctx.profileImage || '',
-                  role: ctx.role,
-                  settings: ctx.settings,
-                  whitelist: ctx.whitelist,
-                  token: userStore.getState().token,
-                };
-                userStore.getState().setAuth(userObj);
-                await AsyncStorage.setItem(
-                  'auth_user',
-                  JSON.stringify(userObj),
-                );
-                console.log(
-                  '[TranscriptionComplete] Successfully fetched and stored user context',
-                );
-                userId = userObj.id;
-              } else {
-                console.error(
-                  '[TranscriptionComplete] Auth context fetch failed - no user ID found',
-                );
-                customToast(
-                  'error',
-                  t('common.error'),
-                  'User session error. Please log in again.',
-                );
-                return;
-              }
-            } catch (ctxError: any) {
-              console.error(
-                '[TranscriptionComplete] Failed to fetch auth context:',
-                ctxError,
-              );
-              customToast(
-                'error',
-                t('common.error'),
-                'User session error. Please log in again.',
-              );
-              return;
-            }
-          }
-
-          // Get socket instance from service
-          let socket = getSocket();
-
-          // Fallback: If socket is not initialized, try to connect now
-          if (!socket) {
-            console.log(
-              '[TranscriptionComplete] Socket not initialized, attempting connection now...',
-            );
-            socket = connectSocket(userId) || null;
-          }
-
-          // Check if socket is connected, wait a bit if not
-          if (!socket) {
-            customToast(
-              'error',
-              t('common.error'),
-              'Socket connection failed. Please try again.',
-            );
-            return;
-          }
-
-          // Wait for socket connection if not connected (max 5 seconds)
-          if (!socket.connected) {
-            console.log(
-              '[TranscriptionComplete] Socket not connected, waiting...',
-            );
-
-            let attempts = 0;
-            const maxAttempts = 10;
-
-            while (!socket.connected && attempts < maxAttempts) {
-              await new Promise((resolve) => setTimeout(resolve, 500));
-              attempts++;
-              console.log(
-                '[TranscriptionComplete] Waiting for connection, attempt:',
-                attempts,
-              );
-            }
-
-            if (!socket.connected) {
-              console.error(
-                '[TranscriptionComplete] Socket connection timeout',
-              );
-              customToast(
-                'error',
-                t('common.error'),
-                'Could not establish connection. Please check your internet and try again.',
-              );
-              return;
-            }
-
-            console.log(
-              '[TranscriptionComplete] Socket connected after waiting',
-            );
-          }
-
-          setIsGeneratingNotes(true);
-          setGeneratedNotes(''); // Clear previous notes
-
-          try {
-            console.log(
-              '[TranscriptionComplete] Generating notes via API + Socket...',
-            );
-            console.log(
-              '[TranscriptionComplete] Session ID:',
-              session.sessionId,
-            );
-
-            // Prepare payload matching backend expectations from guide
-            // Prepare payload matching backend expectations from guide
-            // Set appropriate default noteType based on session type
-            const defaultNoteType =
-              session.type === 'lecture'
-                ? 'medical'
-                : session.type === 'meeting'
-                ? 'general'
-                : 'SOAP';
-
-            let payload: any = {};
-
-            if (noteType === 'custom') {
-              payload = {
-                noteType: 'custom',
-                promptId: selectedTemplateId, // Use selectedTemplateId as it holds the custom prompt ID
-                llmModel: 'gpt-4.1',
-              };
-              console.log(
-                '[TranscriptionComplete] Using custom prompt ID:',
-                selectedTemplateId,
-              );
-            } else if (session.type === 'meeting') {
-              payload = {
-                llmModel: 'gpt-4o',
-                noteType: 'general',
-              };
-            } else if ( session.type === 'lecture') {
-              payload = {
-                llmModel: 'gpt-4o',
-                noteType: 'medical',
-              };
-            } else {
-              payload = {
-                noteType: noteType || defaultNoteType,
-                visitType:
-                  visitType.toLowerCase().replace(' ', '-') || 'first-visit',
-                specialization:
-                  selectedSpecialization === 'Child Psychiatry'
-                    ? 'childPsychiatry'
-                    : selectedSpecialization.toLowerCase() || 'psychiatry',
-                length: noteLength.toLowerCase(),
-                llmModel: 'gemini-3-pro-preview',
-              };
-            }
-
-            console.log('[TranscriptionComplete] Payload:', payload);
-
-            // Note: We don't remove listeners here because we want to catch the completion event
-            // Listeners will clean themselves up after firing
-
-            // Set up socket listeners for streaming (matching guide implementation)
-            socket.on('notes_generation_started', (event: any) => {
-              if (event.payload?.eventId === session.sessionId) {
-                console.log(
-                  '[TranscriptionComplete] ✅ Notes generation started:',
-                  event.payload.eventId,
-                );
-              }
-            });
-
-            socket.on('notes_generation_chunk', (event: any) => {
-              if (event.payload?.eventId === session.sessionId) {
-                console.log(
-                  '[TranscriptionComplete] 📝 Received chunk (accumulated)',
-                );
-                // The guide's example uses setNoteContent(event.payload.content) which replaces the content.
-                // This suggests the backend sends the full accumulated string.
-                if (event.payload?.content !== undefined) {
-                  setGeneratedNotes(event.payload.content);
-                  generatedNotesRef.current = event.payload.content; // Update ref for socket callbacks
-                }
-              }
-            });
-
-            socket.on('notes_generation_completed', (event: any) => {
-              console.log(
-                '[TranscriptionComplete] 🎯 Completion event received!',
-                event,
-              );
-              console.log(
-                '[TranscriptionComplete] 🔑 Event eventId:',
-                event.payload?.eventId,
-              );
-              console.log(
-                '[TranscriptionComplete] 🔑 Session sessionId:',
-                session.sessionId,
-              );
-              console.log(
-                '[TranscriptionComplete] 🔑 Match:',
-                event.payload?.eventId === session.sessionId,
-              );
-
-              if (event.payload?.eventId === session.sessionId) {
-                console.log(
-                  '[TranscriptionComplete] ✅ Notes generation complete - INSIDE IF',
-                );
-                console.log(
-                  '[TranscriptionComplete] 🔍 Event payload:',
-                  event.payload,
-                );
-
-                // Use ref to get the latest notes content (state might not be updated yet)
-                const contentToSave =
-                  event.payload?.content || generatedNotesRef.current;
-                console.log(
-                  '[TranscriptionComplete] 💾 Content to save length:',
-                  contentToSave?.length || 0,
-                );
-                console.log(
-                  '[TranscriptionComplete] 💾 Ref content length:',
-                  generatedNotesRef.current?.length || 0,
-                );
-
-                if (contentToSave && contentToSave.length > 0) {
-                  console.log(
-                    '[TranscriptionComplete] 💾 Saving notes and status from completion handler...',
-                  );
-                  // Use atomic update to prevent race conditions
-                  sessionStorage
-                    .updateSessionAfterGeneration(session.id, contentToSave, 'completed')
-                    .then(() => {
-                      console.log(
-                        '[TranscriptionComplete] ✅ Session updated (notes + status) successfully!',
-                      );
-                    })
-                    .catch((error) => {
-                      console.error(
-                        '[TranscriptionComplete] ❌ Failed to update session:',
-                        error,
-                      );
-                    });
-                } else {
-                  console.warn(
-                    '[TranscriptionComplete] ⚠️ No content to save in completion handler',
-                  );
-                  // Even if no notes, mark completed
-                  sessionStorage.updateSessionStatus(session.id, 'completed');
-                }
-
-                // Set isGeneratingNotes to false
-                setIsGeneratingNotes(false);
-
-                // Automatically hide configurations
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                setIsConfigCollapsed(true);
-
-                // Clean up listeners AFTER save logic
-                socket.off('notes_generation_started');
-                socket.off('notes_generation_chunk');
-                socket.off('notes_generation_completed');
-                socket.off('notes_generation_error');
-
-                customToast(
-                  'success',
-                  t('common.success'),
-                  t('mainContent.transcriptionComplete.notesGeneratedSuccess'),
-                );
-              } else {
-                console.warn(
-                  '[TranscriptionComplete] ⚠️ EventId mismatch - not processing',
-                );
-              }
-            });
-
-            socket.on('notes_generation_error', (event: any) => {
-              if (event.payload?.eventId === session.sessionId) {
-                console.error(
-                  '[TranscriptionComplete] ❌ Notes generation error:',
-                  event.payload,
-                );
-                setIsGeneratingNotes(false);
-
-                // Clean up listeners
-                socket.off('notes_generation_started');
-                socket.off('notes_generation_chunk');
-                socket.off('notes_generation_completed');
-                socket.off('notes_generation_error');
-
-                customToast(
-                  'error',
-                  t('common.error'),
-                  event.payload?.message ||
-                    event.payload?.error ||
-                    'Failed to generate notes. Please try again.',
-                );
-              }
-            });
-
-            // Trigger the note generation via HTTP API (as per guide Step 3)
-            await generateNotes(session.sessionId, payload);
-            console.log(
-              '[TranscriptionComplete] 🚀 Triggered generation via API',
-            );
-          } catch (error: any) {
-            console.error(
-              '[TranscriptionComplete] Generate notes error:',
-              error,
-            );
-            setIsGeneratingNotes(false);
-
-            customToast(
-              'error',
-              t('common.error'),
-              error?.response?.data?.message ||
-                error?.message ||
-                'Failed to trigger notes generation.',
+              errorMsg,
             );
           }
         }}
-        disabled={!canGenerate || isGeneratingNotes}
-        activeOpacity={0.85}>
-        <Text variant="bodyMedium" style={styles.floatingGenerateButtonText}>
-          {isGeneratingNotes
-            ? t('common.generating')
-            : t('mainContent.transcriptionComplete.generateNote')}
-        </Text>
-      </TouchableOpacity>
+        disabled={!canGenerate || isGenerating}
+        activeOpacity={0.85}
+        >
+          <Text variant="bodyMedium" style={styles.floatingGenerateButtonText}>
+            {isGenerating ? t('common.generating') : t('mainContent.transcriptionComplete.generateNote')}
+          </Text>
+        </TouchableOpacity>
     );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DESIGN_TOKENS.colors.background }]} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={DESIGN_TOKENS.colors.background} />
-
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
       {/* Compact Header */}
-      <View style={[styles.compactHeader, { 
-        backgroundColor: DESIGN_TOKENS.colors.background,
-        borderBottomColor: DESIGN_TOKENS.colors.borderLight
-      }]}>
+      <View style={styles.compactHeader}>
         <View style={styles.compactHeaderLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <ChevronLeft size={20} color={DESIGN_TOKENS.colors.text} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <ChevronLeft size={20} color="#000000" />
           </TouchableOpacity>
-
+          
           {(() => {
             const IconComponent = getSessionIcon();
             return (
-              <View style={[styles.compactIconContainer, { 
-                backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)'
-              }]}>
-                <IconComponent size={16} color={DESIGN_TOKENS.colors.primary} />
+              <View style={styles.compactIconContainer}>
+                <IconComponent size={16} color="white" />
               </View>
             );
           })()}
-
+          
           <View style={styles.compactTitleContainer}>
-            <Text variant="titleMedium" style={[styles.compactTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text variant="titleMedium" style={styles.compactTitle}>
               {session.title}
             </Text>
-            <Text variant="bodySmall" style={[styles.compactSubtitle, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+            <Text variant="bodySmall" style={styles.compactSubtitle}>
               {getSessionTypeText()}
             </Text>
           </View>
         </View>
 
         <View style={styles.compactHeaderRight}>
-          {session.type === 'patient' && (
+            {session.type === 'patient' && (
             <TouchableOpacity
-              style={styles.compactActionButton}
-              onPress={() => (navigation as any).navigate('consult')}>
-              <MessageSquare size={20} color={DESIGN_TOKENS.colors.textSecondary} />
+                style={styles.compactActionButton}
+                onPress={() => (navigation as any).navigate('consult')}
+            >
+                <MessageSquare size={20} color="#A6A6A6" />
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.compactActionButton}
-            onPress={() => {
-              setNewSessionName(session.title);
-              setShowRenameModal(true);
-            }}>
-            <Edit3 size={20} color={DESIGN_TOKENS.colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.compactActionButton}
-            onPress={() => setShowDeleteModal(true)}>
-            <Trash2 size={20} color={DESIGN_TOKENS.colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.compactActionButton}
-            onPress={() => setShowResetModal(true)}>
-            <RotateCcw size={20} color={DESIGN_TOKENS.colors.textSecondary} />
-          </TouchableOpacity>
+            )}
+            <TouchableOpacity
+                style={styles.compactActionButton}
+                onPress={() => setShowRenameModal(true)}
+            >
+                <Edit3 size={20} color="#A6A6A6" />
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.compactActionButton}
+                onPress={() => setShowDeleteModal(true)}
+            >
+                <Trash2 size={20} color="#A6A6A6" />
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.compactActionButton}
+                onPress={() => setShowResetModal(true)}
+            >
+                <RotateCcw size={20} color="#A6A6A6" />
+            </TouchableOpacity>
         </View>
       </View>
 
       {isNoteReady && isConfigCollapsed ? (
         <TouchableOpacity
-          style={[styles.generatedSummaryBar, { 
-            backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
-            borderColor: DESIGN_TOKENS.colors.borderLight 
-          }]}
+          style={styles.generatedSummaryBar}
           onPress={handleExpandConfig}
-          activeOpacity={0.85}>
+          activeOpacity={0.85}
+        >
           <View style={styles.generatedSummaryTextGroup}>
-            <Text variant="bodyMedium" style={[styles.generatedSummaryTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text variant="bodyMedium" style={styles.generatedSummaryTitle}>
               {getGeneratedSummary()}
             </Text>
-            <Text variant="bodySmall" style={[styles.generatedSummarySubtitle, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+            <Text variant="bodySmall" style={styles.generatedSummarySubtitle}>
               {t('mainContent.transcriptionComplete.tapToEdit')}
             </Text>
           </View>
-          <ChevronDown size={18} color={DESIGN_TOKENS.colors.textSecondary} />
+          <ChevronRight size={18} color={DESIGN_TOKENS.colors.textTertiary} />
         </TouchableOpacity>
       ) : (
         <View style={styles.settingsSection}>
           {isNoteReady && (
             <View style={styles.settingsHeaderRow}>
-              <Text variant="labelMedium" style={[styles.settingsHeaderTitle, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+              <Text variant="labelMedium" style={styles.settingsHeaderTitle}>
                 {t('mainContent.transcriptionComplete.configuration')}
               </Text>
               <TouchableOpacity
                 onPress={handleCollapseConfig}
-                style={[styles.settingsHeaderAction, { 
-                  backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
-                  borderColor: DESIGN_TOKENS.colors.border
-                }]}>
-                <Text
-                  variant="bodySmall"
-                  style={[styles.settingsHeaderActionText, { color: DESIGN_TOKENS.colors.primary }]}>
+                style={styles.settingsHeaderAction}
+              >
+                <Text variant="bodySmall" style={styles.settingsHeaderActionText}>
                   {t('mainContent.transcriptionComplete.hide')}
                 </Text>
               </TouchableOpacity>
@@ -1408,19 +780,13 @@ const TranscriptionComplete = () => {
             <View>
               <View style={{ height: hp(1) }} />
               <View style={styles.twoColumnGrid}>
-                <View style={styles.gridColumn}>
-                  {renderSpecializationSection()}
-                </View>
-                <View style={styles.gridColumn}>
-                  {renderVisitTypeSection()}
-                </View>
+                <View style={styles.gridColumn}>{renderSpecializationSection()}</View>
+                <View style={styles.gridColumn}>{renderVisitTypeSection()}</View>
               </View>
               <View style={{ height: hp(1) }} />
               {renderNoteLengthSection()}
 
-              {visitType === 'Follow-up' && (
-                <View style={{ height: hp(0.6) }} />
-              )}
+              {visitType === 'Follow-up' && <View style={{ height: hp(0.6) }} />}
               {renderFollowUpSection()}
             </View>
           )}
@@ -1431,114 +797,46 @@ const TranscriptionComplete = () => {
               <CustomTemplateManager
                 selectedTemplateId={selectedTemplateId}
                 onSelectTemplate={handleSelectTemplate}
-                noteType={session.type as 'patient' | 'meeting' | 'lecture'}
-                savedPrompts={savedPrompts}
               />
             </View>
           )}
         </View>
       )}
 
-      <View style={[styles.noteDocumentContainer, { 
-        backgroundColor: isDark ? themeColors.layer2 : DESIGN_TOKENS.colors.background,
-        borderColor: DESIGN_TOKENS.colors.borderLight,
-        shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-      }]}>
+      <View style={styles.noteDocumentContainer}>
         {isNoteReady ? (
           <>
             <ScrollView
-              ref={noteScrollViewRef}
-              style={[styles.noteDocumentContent, { backgroundColor: DESIGN_TOKENS.colors.background }]}
+              style={styles.noteDocumentContent}
               contentContainerStyle={styles.noteDocumentScrollContent}
-              showsVerticalScrollIndicator={true}>
-              <Text variant="bodyMedium" style={[styles.noteDocumentText, { color: DESIGN_TOKENS.colors.text }]}>
-                {(() => {
-                  return generatedNotes.split('\n').map((line, lineIndex) => {
-                    const cleanLine = line.trim();
-                    // Check if line is a heading: formatting is **...** OR content is UPPERCASE (min 4 chars to avoid tiny abbr)
-                    const isAllUppercase =
-                      cleanLine.length > 3 &&
-                      cleanLine === cleanLine.toUpperCase() &&
-                      /[A-Z]/.test(cleanLine);
-
-                    if (isAllUppercase) {
-                      return (
-                        <Text
-                          key={lineIndex}
-                          style={{
-                            fontWeight: '700',
-                            fontFamily: DESIGN_TOKENS.fonts.semibold,
-                            color: DESIGN_TOKENS.colors.primary,
-                          }}>
-                          {line}
-                          {'\n'}
-                        </Text>
-                      );
-                    }
-
-                    // Standard markdown parsing for lines that aren't full headings
-                    const parts = line.split(/(\*\*.*?\*\*)/g);
-                    return (
-                      <Text key={lineIndex} style={{ color: DESIGN_TOKENS.colors.text }}>
-                        {parts.map((part, partIndex) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            return (
-                              <Text
-                                key={partIndex}
-                                style={{
-                                  fontWeight: '700',
-                                  fontFamily: DESIGN_TOKENS.fonts.semibold,
-                                  color: DESIGN_TOKENS.colors.primary,
-                                }}>
-                                {part.slice(2, -2)}
-                              </Text>
-                            );
-                          }
-                          return <Text key={partIndex} style={{ color: DESIGN_TOKENS.colors.text }}>{part}</Text>;
-                        })}
-                        {'\n'}
-                      </Text>
-                    );
-                  });
-                })()}
+              showsVerticalScrollIndicator={true}
+            >
+              <Text variant="bodyMedium" style={styles.noteDocumentText}>
+                {generatedNote}
               </Text>
             </ScrollView>
-            <View style={[styles.noteDocumentFooter, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderTopColor: DESIGN_TOKENS.colors.border 
-            }]}>
+            <View style={styles.noteDocumentFooter}>
               <TouchableOpacity
-                style={[styles.noteCopyButton, { 
-                  backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
-                  borderColor: DESIGN_TOKENS.colors.border,
-                }]}
+                style={styles.noteCopyButton}
                 onPress={async () => {
-                  if (!generatedNotes.trim()) return;
-                  await Clipboard.setString(generatedNotes);
+                  if (!generatedNote.trim()) return;
+                  await Clipboard.setString(generatedNote);
                   customToast('success', 'Copied', 'Note copied to clipboard');
-                }}>
+                }}
+              >
                 <ClipboardIcon size={16} color={DESIGN_TOKENS.colors.primary} />
-                <Text variant="bodySmall" style={[styles.noteCopyButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+                <Text variant="bodySmall" style={styles.noteCopyButtonText}>
                   {t('common.copy')}
                 </Text>
               </TouchableOpacity>
             </View>
           </>
-        ) : isGeneratingNotes ? (
-          <View style={styles.noteEmptyState}>
-            <ActivityIndicator size="large" color={DESIGN_TOKENS.colors.primary} />
-            <Text
-              variant="bodySmall"
-              style={[styles.noteEmptySubtitle, { marginTop: 12 }]}>
-              {t('common.generatingNote')}...
-            </Text>
-          </View>
         ) : (
           <View style={styles.noteEmptyState}>
-            <Text variant="titleSmall" style={[styles.noteEmptyTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text variant="titleSmall" style={styles.noteEmptyTitle}>
               {t('mainContent.transcriptionComplete.noNote')}
             </Text>
-            <Text variant="bodySmall" style={[styles.noteEmptySubtitle, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+            <Text variant="bodySmall" style={styles.noteEmptySubtitle}>
               {t('mainContent.transcriptionComplete.generateToSee')}
             </Text>
           </View>
@@ -1546,7 +844,7 @@ const TranscriptionComplete = () => {
       </View>
 
       {!isNoteReady || !isConfigCollapsed ? (
-        <View style={[styles.stickyFooter, { backgroundColor: DESIGN_TOKENS.colors.background }]}>{renderGenerateButton()}</View>
+        <View style={styles.stickyFooter}>{renderGenerateButton()}</View>
       ) : null}
 
       {/* --- ALL MODALS RESTORED BELOW --- */}
@@ -1556,10 +854,11 @@ const TranscriptionComplete = () => {
         visible={showRenameModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowRenameModal(false)}>
+        onRequestClose={() => setShowRenameModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.recording.renameSession')}
             </Text>
             <Input
@@ -1567,14 +866,13 @@ const TranscriptionComplete = () => {
               value={newSessionName}
               setValue={setNewSessionName}
               width={wp(80)}
-              style={{ color: DESIGN_TOKENS.colors.text, borderColor: DESIGN_TOKENS.colors.border }}
-              placeholderTextColor={DESIGN_TOKENS.colors.textTertiary}
             />
             <View style={styles.renameButtonsRow}>
               <TouchableOpacity
-                style={[styles.renameButton, styles.renameCancelButton, { borderColor: DESIGN_TOKENS.colors.border, backgroundColor: DESIGN_TOKENS.colors.background }]}
-                onPress={() => setShowRenameModal(false)}>
-                <Text variant="bodyMedium" style={[styles.renameCancelText, { color: DESIGN_TOKENS.colors.text }]}>
+                style={[styles.renameButton, styles.renameCancelButton]}
+                onPress={() => setShowRenameModal(false)}
+              >
+                <Text variant="bodyMedium" style={styles.renameCancelText}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
@@ -1583,17 +881,17 @@ const TranscriptionComplete = () => {
                   styles.renameButton,
                   styles.renameSaveButton,
                   isRenaming && styles.renameSaveButtonDisabled,
-                  { backgroundColor: DESIGN_TOKENS.colors.primary }
                 ]}
                 onPress={handleRename}
-                disabled={isRenaming}>
+                disabled={isRenaming}
+              >
                 {isRenaming ? (
                   <ActivityIndicator
                     size="small"
                     color={DESIGN_TOKENS.colors.background}
                   />
                 ) : (
-                  <Text variant="bodyMedium" style={[styles.renameSaveText, { color: DESIGN_TOKENS.colors.background }]}>
+                  <Text variant="bodyMedium" style={styles.renameSaveText}>
                     {t('common.save')}
                   </Text>
                 )}
@@ -1608,28 +906,31 @@ const TranscriptionComplete = () => {
         visible={showDeleteModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowDeleteModal(false)}>
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.recording.deleteSession')}
             </Text>
-            <Text variant="bodyMedium" style={[styles.modalDescription, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+            <Text variant="bodyMedium" style={styles.modalDescription}>
               {t('common.confirmDelete')}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: DESIGN_TOKENS.colors.border, backgroundColor: DESIGN_TOKENS.colors.background }]}
-                onPress={() => setShowDeleteModal(false)}>
-                <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text variant="bodyMedium" style={styles.cancelButtonText}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton, { borderColor: DESIGN_TOKENS.colors.error, backgroundColor: DESIGN_TOKENS.colors.error }]}
+                style={[styles.modalButton, styles.deleteButton]}
                 onPress={handleDelete}
-                disabled={isDeleting}>
-                <Text variant="bodyMedium" style={[styles.deleteButtonText, { color: DESIGN_TOKENS.colors.background }]}>
+                disabled={isDeleting}
+              >
+                <Text variant="bodyMedium" style={styles.deleteButtonText}>
                   {isDeleting ? t('common.deleting') : t('common.delete')}
                 </Text>
               </TouchableOpacity>
@@ -1643,28 +944,31 @@ const TranscriptionComplete = () => {
         visible={showResetModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowResetModal(false)}>
+        onRequestClose={() => setShowResetModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.recording.resetSession')}
             </Text>
-            <Text variant="bodyMedium" style={[styles.modalDescription, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+            <Text variant="bodyMedium" style={styles.modalDescription}>
               {t('common.confirmReset')}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: DESIGN_TOKENS.colors.borderLight, backgroundColor: DESIGN_TOKENS.colors.background }]}
-                onPress={() => setShowResetModal(false)}>
-                <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowResetModal(false)}
+              >
+                <Text variant="bodyMedium" style={styles.cancelButtonText}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton, { borderColor: DESIGN_TOKENS.colors.error, backgroundColor: DESIGN_TOKENS.colors.error }]}
+                style={[styles.modalButton, styles.deleteButton]}
                 onPress={handleReset}
-                disabled={isResetting}>
-                <Text variant="bodyMedium" style={[styles.deleteButtonText, { color: DESIGN_TOKENS.colors.background }]}>
+                disabled={isResetting}
+              >
+                <Text variant="bodyMedium" style={styles.deleteButtonText}>
                   {isResetting ? t('common.resetting') : t('common.reset')}
                 </Text>
               </TouchableOpacity>
@@ -1678,35 +982,33 @@ const TranscriptionComplete = () => {
         visible={showSpecializationModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowSpecializationModal(false)}>
+        onRequestClose={() => setShowSpecializationModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.transcriptionComplete.specialization.select')}
             </Text>
             <View style={styles.optionsList}>
-              {specializationOptions.map((option) => (
+              {specializationOptions.map(option => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
                     styles.optionItem,
-                    { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary },
-                    selectedSpecialization === option.key && {
-                      backgroundColor: DESIGN_TOKENS.colors.primary,
-                      borderColor: DESIGN_TOKENS.colors.primary
-                    },
+                    selectedSpecialization === option.key && styles.selectedOptionItem,
                   ]}
                   onPress={() => {
                     setSelectedSpecialization(option.key);
                     setShowSpecializationModal(false);
-                  }}>
+                  }}
+                >
                   <Text
                     variant="bodyMedium"
                     style={[
                       styles.optionText,
-                      { color: DESIGN_TOKENS.colors.text },
-                      selectedSpecialization === option.key && { color: '#FFF' },
-                    ]}>
+                      selectedSpecialization === option.key && styles.selectedOptionText,
+                    ]}
+                  >
                     {option.label}
                   </Text>
                   {selectedSpecialization === option.key && (
@@ -1716,13 +1018,10 @@ const TranscriptionComplete = () => {
               ))}
             </View>
             <TouchableOpacity
-              style={[
-                styles.modalButton,
-                styles.cancelButton,
-                { width: '100%', backgroundColor: DESIGN_TOKENS.colors.background, borderColor: DESIGN_TOKENS.colors.border },
-              ]}
-              onPress={() => setShowSpecializationModal(false)}>
-              <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+              style={[styles.modalButton, styles.cancelButton, { width: '100%' }]}
+                onPress={() => setShowSpecializationModal(false)}
+            >
+              <Text variant="bodyMedium" style={styles.cancelButtonText}>
                 {t('common.cancel')}
               </Text>
             </TouchableOpacity>
@@ -1735,35 +1034,33 @@ const TranscriptionComplete = () => {
         visible={showVisitTypeModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowVisitTypeModal(false)}>
+        onRequestClose={() => setShowVisitTypeModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.modalTitle}>
               {t('mainContent.transcriptionComplete.visitType.select')}
             </Text>
             <View style={styles.optionsList}>
-              {visitTypeOptions.map((option) => (
+              {visitTypeOptions.map(option => (
                 <TouchableOpacity
                   key={option.key}
                   style={[
                     styles.optionItem,
-                    { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary, borderColor: DESIGN_TOKENS.colors.borderLight },
-                    visitType === option.key && {
-                      backgroundColor: DESIGN_TOKENS.colors.primary,
-                      borderColor: DESIGN_TOKENS.colors.primary
-                    },
+                    visitType === option.key && styles.selectedOptionItem,
                   ]}
                   onPress={() => {
                     setVisitType(option.key);
                     setShowVisitTypeModal(false);
-                  }}>
+                  }}
+                >
                   <Text
                     variant="bodyMedium"
                     style={[
                       styles.optionText,
-                      { color: DESIGN_TOKENS.colors.text },
-                      visitType === option.key && [styles.selectedOptionText, { color:DESIGN_TOKENS.colors.background },
-                    ]]}>
+                      visitType === option.key && styles.selectedOptionText,
+                    ]}
+                  >
                     {option.label}
                   </Text>
                   {visitType === option.key && (
@@ -1773,13 +1070,10 @@ const TranscriptionComplete = () => {
               ))}
             </View>
             <TouchableOpacity
-              style={[
-                styles.modalButton,
-                styles.cancelButton,
-                { width: '100%', backgroundColor: DESIGN_TOKENS.colors.background, borderColor: DESIGN_TOKENS.colors.border },
-              ]}
-              onPress={() => setShowVisitTypeModal(false)}>
-              <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+              style={[styles.modalButton, styles.cancelButton, { width: '100%' }]}
+                onPress={() => setShowVisitTypeModal(false)}
+            >
+              <Text variant="bodyMedium" style={styles.cancelButtonText}>
                 {t('common.cancel')}
               </Text>
             </TouchableOpacity>
@@ -1792,32 +1086,30 @@ const TranscriptionComplete = () => {
         visible={showFollowUpModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowFollowUpModal(false)}>
+        onRequestClose={() => setShowFollowUpModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.followUpModalCard, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <View style={[styles.followUpModalHeader]}>
-              <Text variant="titleLarge" style={[styles.followUpModalTitle, { color: DESIGN_TOKENS.colors.text }]}>
-                {t(
-                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.title',
-                )}
+          <View style={styles.followUpModalCard}>
+            <View style={styles.followUpModalHeader}>
+              <Text variant="titleLarge" style={styles.followUpModalTitle}>
+                {t('mainContent.transcriptionComplete.followUpVisits.selectDialog.title')}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowFollowUpModal(false)}
-                style={styles.followUpCloseButton}>
-                <X size={18} color={DESIGN_TOKENS.colors.textSecondary} />
+                style={styles.followUpCloseButton}
+              >
+                <X size={18} color="#A6A6A6" />
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.followUpSearchBar, { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary, shadowColor: DESIGN_TOKENS.shadows.small.shadowColor }]}>
+            <View style={styles.followUpSearchBar}>
               <Search size={18} color={DESIGN_TOKENS.colors.textSecondary} />
               <TextInput
-                placeholder={t(
-                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.searchPlaceholder',
-                )}
+                placeholder={t('mainContent.transcriptionComplete.followUpVisits.selectDialog.searchPlaceholder')}
                 placeholderTextColor={DESIGN_TOKENS.colors.textSecondary}
                 value={visitSearchQuery}
                 onChangeText={setVisitSearchQuery}
-                style={[styles.followUpSearchInput, { color: DESIGN_TOKENS.colors.text }]}
+                style={styles.followUpSearchInput}
                 returnKeyType="search"
               />
             </View>
@@ -1825,16 +1117,12 @@ const TranscriptionComplete = () => {
             <View style={styles.visitsList}>
               {filteredFollowUpVisits.length === 0 ? (
                 <Text variant="bodyMedium" style={styles.noVisitsText}>
-                  {availableSessions.length === 0
-                    ? t(
-                        'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable',
-                      )
-                    : t(
-                        'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsFound',
-                      )}
+                  {mockFollowUpVisits.length === 0
+                    ? t('mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable')
+                    : t('mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsFound')}
                 </Text>
               ) : (
-                filteredFollowUpVisits.map((visit) => {
+                filteredFollowUpVisits.map(visit => {
                   const isSelected = selectedFollowUpVisits.has(visit._id);
                   return (
                     <TouchableOpacity
@@ -1844,25 +1132,25 @@ const TranscriptionComplete = () => {
                         isSelected && styles.visitCardSelected,
                       ]}
                       onPress={() => handleFollowUpVisitSelect(visit._id)}
-                      activeOpacity={0.9}>
+                      activeOpacity={0.9}
+                    >
                       <View style={styles.visitCardLeft}>
                         <View style={styles.visitIconCircle}>
-                          <PhoneCall
-                            size={15}
-                            color={DESIGN_TOKENS.colors.primary}
-                          />
+                          <PhoneCall size={15} color={DESIGN_TOKENS.colors.primary} />
                         </View>
                         <View style={styles.visitInfo}>
                           <Text
                             variant="bodyMedium"
                             style={styles.visitTitle}
-                            numberOfLines={1}>
+                            numberOfLines={1}
+                          >
                             {visit.title}
                           </Text>
                           <Text
                             variant="bodySmall"
                             style={styles.visitSubtitle}
-                            numberOfLines={1}>
+                            numberOfLines={1}
+                          >
                             {visit.label}
                           </Text>
                         </View>
@@ -1880,12 +1168,10 @@ const TranscriptionComplete = () => {
                           style={[
                             styles.visitCheckbox,
                             isSelected && styles.visitCheckboxSelected,
-                          ]}>
+                          ]}
+                        >
                           {isSelected && (
-                            <Check
-                              size={14}
-                              color={DESIGN_TOKENS.colors.background}
-                            />
+                            <Check size={14} color={DESIGN_TOKENS.colors.background} />
                           )}
                         </View>
                       </View>
@@ -1898,17 +1184,14 @@ const TranscriptionComplete = () => {
             <TouchableOpacity
               style={[
                 styles.followUpImportButton,
-                selectedFollowUpVisits.size === 0 && [styles.followUpImportButtonDisabled, { backgroundColor: DESIGN_TOKENS.colors.border }],
-                selectedFollowUpVisits.size > 0 && { backgroundColor: DESIGN_TOKENS.colors.primary }
+                selectedFollowUpVisits.size === 0 && styles.followUpImportButtonDisabled,
               ]}
               onPress={handleImportFollowUpVisits}
               disabled={selectedFollowUpVisits.size === 0}
-              activeOpacity={0.85}>
+              activeOpacity={0.85}
+            >
               <Text style={styles.followUpImportButtonText}>
-                {t(
-                  'mainContent.transcriptionComplete.followUpVisits.selectDialog.importButton',
-                  { count: selectedFollowUpVisits.size },
-                )}
+                {t('mainContent.transcriptionComplete.followUpVisits.selectDialog.importButton', { count: selectedFollowUpVisits.size })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1920,98 +1203,72 @@ const TranscriptionComplete = () => {
         visible={showManualTextModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowManualTextModal(false)}>
+        onRequestClose={() => setShowManualTextModal(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.slimModalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
+          <View style={styles.slimModalContent}>
             <TouchableOpacity
               onPress={() => setShowManualTextModal(false)}
-              style={styles.slimModalClose}>
-              <X size={18} color={DESIGN_TOKENS.colors.textSecondary} />
+              style={styles.slimModalClose}
+            >
+              <X size={18} color="#A6A6A6" />
             </TouchableOpacity>
-
-            <Text variant="titleMedium" style={[styles.slimModalTitle, { color: DESIGN_TOKENS.colors.text }]}>
-              {t(
-                'mainContent.transcriptionComplete.followUpVisits.manualContextTitle',
-              )}
+            
+            <Text variant="titleMedium" style={styles.slimModalTitle}>
+              {t('mainContent.transcriptionComplete.followUpVisits.manualContextTitle')}
             </Text>
 
             <TouchableOpacity
-              style={[styles.slimPasteButton, { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,borderColor: DESIGN_TOKENS.colors.border }]}
+              style={styles.slimPasteButton}
               onPress={async () => {
                 try {
                   const text = await Clipboard.getString();
                   if (text) {
                     setTempManualText(text);
-                    customToast(
-                      'success',
-                      t(
-                        'mainContent.transcriptionComplete.followUpVisits.pastedTitle',
-                      ),
-                      t(
-                        'mainContent.transcriptionComplete.followUpVisits.pastedMessage',
-                      ),
-                    );
+                    customToast('success', t('mainContent.transcriptionComplete.followUpVisits.pastedTitle'), t('mainContent.transcriptionComplete.followUpVisits.pastedMessage'));
                   }
                 } catch (error) {
-                  customToast(
-                    'error',
-                    t('common.error'),
-                    t(
-                      'mainContent.transcriptionComplete.followUpVisits.pasteFailed',
-                    ),
-                  );
+                  customToast('error', t('common.error'), t('mainContent.transcriptionComplete.followUpVisits.pasteFailed'));
                 }
-              }}>
-              <ClipboardIcon size={14} color={DESIGN_TOKENS.colors.primary} />
-              <Text variant="bodySmall" style={[styles.slimPasteButtonText, { color: DESIGN_TOKENS.colors.primary }]}>
+              }}
+            >
+              <ClipboardIcon size={14} color="#46B7C6" />
+              <Text variant="bodySmall" style={styles.slimPasteButtonText}>
                 {t('mainContent.transcriptionComplete.followUpVisits.paste')}
               </Text>
             </TouchableOpacity>
 
             <Input
-              placeholder={t(
-                'mainContent.transcriptionComplete.followUpVisits.typePlaceholder',
-              )}
+              placeholder={t('mainContent.transcriptionComplete.followUpVisits.typePlaceholder')}
               value={tempManualText}
               setValue={setTempManualText}
               width={wp(80)}
               multiline={true}
               height={hp(20)}
               numberOfLines={8}
-              style={{ color: DESIGN_TOKENS.colors.text }}
-              placeholderTextColor={DESIGN_TOKENS.colors.textTertiary}
             />
-
+            
             <View style={styles.slimModalActions}>
               <TouchableOpacity
-                style={[styles.slimCancelButton, { 
-                  backgroundColor: DESIGN_TOKENS.colors.background, 
-                  borderColor: DESIGN_TOKENS.colors.border 
-                }]}
-                onPress={() => setShowManualTextModal(false)}>
-                <Text variant="bodySmall" style={[styles.slimCancelText, { color: DESIGN_TOKENS.colors.text }]}>
+                style={styles.slimCancelButton}
+                onPress={() => setShowManualTextModal(false)}
+              >
+                <Text variant="bodySmall" style={styles.slimCancelText}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.slimSaveButton, { backgroundColor: DESIGN_TOKENS.colors.primary }]}
+                style={styles.slimSaveButton}
                 onPress={() => {
                   setManualFollowUpText(tempManualText);
                   setShowManualTextModal(false);
                   if (tempManualText.trim()) {
-                    customToast(
-                      'success',
-                      t(
-                        'mainContent.transcriptionComplete.followUpVisits.savedTitle',
-                      ),
-                      t(
-                        'mainContent.transcriptionComplete.followUpVisits.savedMessage',
-                      ),
-                    );
+                    customToast('success', t('mainContent.transcriptionComplete.followUpVisits.savedTitle'), t('mainContent.transcriptionComplete.followUpVisits.savedMessage'));
                   }
-                }}>
-                <Text variant="bodySmall" style={[styles.slimSaveText, {color: DESIGN_TOKENS.colors.background }]}>
+                }}
+              >
+                <Text variant="bodySmall" style={styles.slimSaveText}>
                   {t('common.save')}
                 </Text>
               </TouchableOpacity>
@@ -2019,6 +1276,7 @@ const TranscriptionComplete = () => {
           </View>
         </View>
       </Modal>
+
     </SafeAreaView>
   );
 };
@@ -2080,8 +1338,6 @@ const styles = StyleSheet.create({
   },
   compactActionButton: {
     padding: 6,
-    fontWeight: '600',
-
   },
   settingsSection: {
     flexShrink: 0,
