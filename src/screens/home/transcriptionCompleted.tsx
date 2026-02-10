@@ -15,12 +15,12 @@ import {
   Modal,
   Platform,
   StatusBar,
-  Clipboard,
   LayoutAnimation,
   UIManager,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import {
@@ -1063,6 +1063,10 @@ const TranscriptionComplete = () => {
           setIsGeneratingNotes(true);
           setGeneratedNotes(''); // Clear previous notes
 
+          // Automatically hide configurations as soon as generation starts
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setIsConfigCollapsed(true);
+
           try {
             console.log(
               '[TranscriptionComplete] Generating notes via API + Socket...',
@@ -1215,10 +1219,6 @@ const TranscriptionComplete = () => {
                 // Set isGeneratingNotes to false
                 setIsGeneratingNotes(false);
 
-                // Automatically hide configurations
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                setIsConfigCollapsed(true);
-
                 // Clean up listeners AFTER save logic
                 socket.off('notes_generation_started');
                 socket.off('notes_generation_chunk');
@@ -1334,7 +1334,7 @@ const TranscriptionComplete = () => {
           {session.type === 'patient' && (
             <TouchableOpacity
               style={styles.compactActionButton}
-              onPress={() => (navigation as any).navigate('consult')}>
+              onPress={() => (navigation as any).navigate('consult', { transcription: session.transcriptText })}>
               <MessageSquare size={20} color={DESIGN_TOKENS.colors.textSecondary} />
             </TouchableOpacity>
           )}
@@ -1822,9 +1822,9 @@ const TranscriptionComplete = () => {
               />
             </View>
 
-            <View style={styles.visitsList}>
+            <ScrollView style={styles.visitsList} showsVerticalScrollIndicator={true}>
               {filteredFollowUpVisits.length === 0 ? (
-                <Text variant="bodyMedium" style={styles.noVisitsText}>
+                <Text variant="bodyMedium" style={[styles.noVisitsText, { color: DESIGN_TOKENS.colors.textTertiary }]}>
                   {availableSessions.length === 0
                     ? t(
                         'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable',
@@ -1841,12 +1841,21 @@ const TranscriptionComplete = () => {
                       key={visit._id}
                       style={[
                         styles.visitCard,
-                        isSelected && styles.visitCardSelected,
+                        { 
+                          backgroundColor: DESIGN_TOKENS.colors.background,
+                          borderColor: DESIGN_TOKENS.colors.borderLight 
+                        },
+                        isSelected && [styles.visitCardSelected, { 
+                          backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : '#F5FBFC',
+                          borderColor: DESIGN_TOKENS.colors.primary 
+                        }],
                       ]}
                       onPress={() => handleFollowUpVisitSelect(visit._id)}
                       activeOpacity={0.9}>
                       <View style={styles.visitCardLeft}>
-                        <View style={styles.visitIconCircle}>
+                        <View style={[styles.visitIconCircle, { 
+                          backgroundColor: isDark ? 'rgba(70, 183, 198, 0.2)' : '#EAF6F8' 
+                        }]}>
                           <PhoneCall
                             size={15}
                             color={DESIGN_TOKENS.colors.primary}
@@ -1855,21 +1864,21 @@ const TranscriptionComplete = () => {
                         <View style={styles.visitInfo}>
                           <Text
                             variant="bodyMedium"
-                            style={styles.visitTitle}
+                            style={[styles.visitTitle, { color: DESIGN_TOKENS.colors.text }]}
                             numberOfLines={1}>
                             {visit.title}
                           </Text>
                           <Text
                             variant="bodySmall"
-                            style={styles.visitSubtitle}
+                            style={[styles.visitSubtitle, { color: DESIGN_TOKENS.colors.textSecondary }]}
                             numberOfLines={1}>
                             {visit.label}
                           </Text>
                         </View>
                       </View>
                       <View style={styles.visitCardRight}>
-                        <View style={styles.visitDateTag}>
-                          <Text style={styles.visitDateTagText}>
+                        <View style={[styles.visitDateTag, { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary }]}>
+                          <Text style={[styles.visitDateTagText, { color: DESIGN_TOKENS.colors.textSecondary }]}>
                             {new Date(visit.date).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -1879,12 +1888,19 @@ const TranscriptionComplete = () => {
                         <View
                           style={[
                             styles.visitCheckbox,
-                            isSelected && styles.visitCheckboxSelected,
+                            { 
+                              borderColor: DESIGN_TOKENS.colors.border,
+                              backgroundColor: DESIGN_TOKENS.colors.background
+                            },
+                            isSelected && [styles.visitCheckboxSelected, { 
+                              backgroundColor: DESIGN_TOKENS.colors.primary,
+                              borderColor: DESIGN_TOKENS.colors.primary 
+                            }],
                           ]}>
                           {isSelected && (
                             <Check
                               size={14}
-                              color={DESIGN_TOKENS.colors.background}
+                              color={isSelected ? (isDark ? '#000' : '#FFF') : DESIGN_TOKENS.colors.background}
                             />
                           )}
                         </View>
@@ -1893,7 +1909,7 @@ const TranscriptionComplete = () => {
                   );
                 })
               )}
-            </View>
+            </ScrollView>
 
             <TouchableOpacity
               style={[

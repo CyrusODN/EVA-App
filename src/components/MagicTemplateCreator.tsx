@@ -43,6 +43,8 @@ import {
 } from '../services/templateRefinement';
 import useOnboardingStore from '../store/onboarding';
 import { useTheme } from '../constants/theme';
+import dischargeService from '../services/dischargeService';
+import { customToast } from '../utils/toastMessage';
 
 interface MagicTemplateCreatorProps {
   visible: boolean;
@@ -271,7 +273,7 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
     }
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     // Use edited prompt if user modified it, otherwise use original refined prompt
     const finalPrompt = editedPrompt.trim() || refinedPrompt;
 
@@ -285,6 +287,24 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     setTemplateNameError('');
+
+    try {
+      console.log('Creating prompt template with title:', templateName.trim());
+      
+      const response = await dischargeService.savePrompt({
+        title: templateName.trim(),
+        content: finalPrompt,
+        toolType: 'discharge',
+      });
+
+      console.log('Prompt template creation response:', response.data);
+
+      if (response.data.success) {
+        customToast('success', `${templateName.trim()} template created successfully`);
+      }
+    } catch (error) {
+      console.error('Error creating prompt template:', error);
+    }
     
     onSaveTemplate({
       name: templateName.trim(),
@@ -373,6 +393,34 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
+      {/* Template Title */}
+      <Animated.View
+        entering={FadeInDown.delay(320).duration(DURATIONS.normal)}
+        style={[styles.templateNameContainer, { width: '100%', marginBottom: ONBOARDING_SPACING.md }]}
+      >
+        <Text style={[styles.templateNameLabel, { color: themeColors.textSecondary }]}>
+          {t('templates.nameLabel')}
+        </Text>
+        <TextInput
+          style={[
+            styles.templateNameInput,
+            {
+              color: themeColors.textPrimary,
+              backgroundColor: isDark ? themeColors.layer2 : ONBOARDING_COLORS.pureWhite,
+              borderColor: isDark ? themeColors.borderSubtle : ONBOARDING_COLORS.borderLight,
+              height: 48,
+            },
+          ]}
+          placeholder={t('templates.titlePlaceholder')}
+          placeholderTextColor={themeColors.textMuted}
+          value={templateName}
+          onChangeText={(value) => {
+            setTemplateName(value);
+            if (templateNameError) setTemplateNameError('');
+          }}
+        />
+      </Animated.View>
+
       {/* Title */}
       <Animated.Text
         entering={FadeInDown.delay(100).duration(DURATIONS.normal)}
@@ -431,17 +479,17 @@ const MagicTemplateCreator: React.FC<MagicTemplateCreatorProps> = ({
           style={[
             styles.createButton,
             { backgroundColor: themeColors.accentPrimary },
-            !textInput.trim() && [styles.createButtonDisabled, { backgroundColor: isDark ? themeColors.borderNormal : ONBOARDING_COLORS.border }],
+            (!textInput.trim() || !templateName.trim()) && [styles.createButtonDisabled, { backgroundColor: isDark ? themeColors.borderNormal : ONBOARDING_COLORS.border }],
           ]}
           onPress={handleCreateTemplate}
-          disabled={!textInput.trim()}
+          disabled={!textInput.trim() || !templateName.trim()}
           activeOpacity={0.9}
         >
           <Text
             style={[
               styles.createButtonText,
               { color: '#FFF' },
-              !textInput.trim() && [styles.createButtonTextDisabled, { color: themeColors.textMuted }],
+              (!textInput.trim() || !templateName.trim()) && [styles.createButtonTextDisabled, { color: themeColors.textMuted }],
             ]}
           >
             {t('magicCreator.createButton')}

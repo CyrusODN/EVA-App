@@ -52,8 +52,8 @@ import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 import EmptyState from '../../components/emptyState';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getChatbotServiceToken } from '../../services/authService';
-import { sessionStorage, Session } from '../../utils/sessionStorage';
+import { getChatbotServiceToken, getEvents } from '../../services/authService';
+import { sessionStorage, Session, SessionStatus, SessionType } from '../../utils/sessionStorage';
 import { customToast } from '../../utils/toastMessage';
 import { useTheme } from '../../constants/theme';
 import RemedyLogoFull from '../../components/RemedyLogoFull';
@@ -69,6 +69,7 @@ type EventItem = {
   hasRecording: boolean;
   hasTranscription: boolean;
   status: EventStatus;
+  transcriptText?: string | null;
   generationMode?: 'standard' | 'custom';
   specializationLabel?: string;
   visitTypeLabel?: string;
@@ -120,17 +121,72 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       loadEvents();
-      // Scroll to hide search bar on mount/focus if user hasn't interacted
-      // Using a small timeout to ensure layout is ready
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ y: hp(7.5), animated: false });
-      }, 100);
     }, []),
   );
 
   const loadEvents = async () => {
-    const allSessions = await sessionStorage.getAllSessions();
-    setEvents(allSessions);
+    try {
+      const response = await getEvents();
+      if (response.data?.success) {
+        const docs = response.data.data.docs || [];
+        const mappedSessions: Session[] = docs.map((doc: any) => {
+          const isTranscribed = !!doc.isTranscribed;
+          const hasRecording = !!doc.recordingUrl;
+          const hasNotes = doc.notes && doc.notes.length > 0;
+          
+          let status: SessionStatus = 'new';
+          if (isTranscribed && hasNotes) {
+            status = 'completed';
+          } else if (isTranscribed) {
+            status = 'transcribed';
+          } else if (hasRecording) {
+            status = 'recorded';
+          }
+
+          const latestNote = hasNotes ? doc.notes[doc.notes.length - 1] : null;
+
+          return {
+            id: doc._id || doc.id,
+            sessionId: doc._id || doc.id,
+            title: doc.title || 'Untitled',
+            type: (doc.type as SessionType) || 'patient',
+            date: doc.date || doc.createdAt,
+            duration: doc.transcription?.duration ? 
+               `${Math.floor(doc.transcription.duration / 60)}:${String(doc.transcription.duration % 60).padStart(2, '0')}` : null,
+            hasRecording,
+            hasTranscription: isTranscribed,
+            status,
+            transcriptText: doc.transcription?.text || null,
+            utterances: doc.transcription?.utterances || null,
+            generatedNotes: latestNote?.content || null,
+            // Fields for EventItem compatibility in Home screen
+            generationMode: latestNote ? (latestNote.type === 'custom' ? 'custom' : 'standard') : undefined,
+            specializationLabel: latestNote?.specialization,
+            visitTypeLabel: latestNote?.visitType,
+            customTemplateTitle: latestNote?.type === 'custom' ? 'Custom Note' : undefined
+          } as Session;
+        });
+
+        // Update state with sessions from backend
+        setEvents(mappedSessions);
+        
+        // Update local storage to keep it in sync for offline use
+        try {
+          await AsyncStorage.setItem('remedy_ai_sessions', JSON.stringify(mappedSessions));
+        } catch (storageError) {
+          console.error('[Home] Failed to sync sessions to local storage:', storageError);
+        }
+      } else {
+        // Fallback to local storage if API success is false
+        const allSessions = await sessionStorage.getAllSessions();
+        setEvents(allSessions);
+      }
+    } catch (error) {
+      console.error('[Home] Error loading events from API:', error);
+      // Fallback to local storage if API fails entirely
+      const allSessions = await sessionStorage.getAllSessions();
+      setEvents(allSessions);
+    }
   };
 
   const filteredEvents: EventItem[] = events.filter((event: EventItem) => {
@@ -976,6 +1032,31 @@ const Home = () => {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.keyboardAvoidingView}
           >
+            {!showCalendar && (
+              <>
+                {/* Search Section */}
+                <View style={[styles.searchSection, { 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
+                  borderColor: isDark ? themeColors.borderSubtle : '#E2E8F0'
+                }]}>
+                  <Search size={18} color={themeColors.textMuted} />
+                  <TextInput
+                    placeholder={t('common.search')}
+                    style={[styles.searchInput, { color: themeColors.textPrimary }]}
+                    placeholderTextColor={themeColors.textMuted}
+                    onChangeText={setSearchText}
+                    value={searchText}
+                    returnKeyType="search"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+
+                {/* Selection Bar - appears in selection mode */}
+                {renderSelectionBar()}
+              </>
+            )}
+
             <ScrollView
               ref={scrollViewRef}
               style={styles.scrollContainer}
@@ -983,33 +1064,11 @@ const Home = () => {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
-              contentOffset={{ x: 0, y: hp(7.5) }} // Hide search bar by default (Search Height + Margins)
             >
-          {/* Search Section */}
-          <View style={[styles.searchSection, { 
-            backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
-            borderColor: isDark ? themeColors.borderSubtle : '#E2E8F0'
-          }]}>
-            <Search size={18} color={themeColors.textMuted} />
-            <TextInput
-              placeholder={t('common.search')}
-              style={[styles.searchInput, { color: themeColors.textPrimary }]}
-              placeholderTextColor={themeColors.textMuted}
-              onChangeText={setSearchText}
-              value={searchText}
-              returnKeyType="search"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          {/* Selection Bar - appears in selection mode */}
-          {renderSelectionBar()}
-
-          {/* Calendar or Content Section */}
-          {showCalendar ? (
-            renderCalendarView()
-          ) : (
+              {/* Calendar or Content Section */}
+              {showCalendar ? (
+                renderCalendarView()
+              ) : (
             <View style={styles.contentSection}>
               {filteredEvents.length > 0 ? (
                 <FlatList

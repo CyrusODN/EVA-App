@@ -140,7 +140,7 @@ export const pl = {
         "manualDescription": "Stwórz szablon od podstaw z pełną kontrolą",
         "aiMethod": "Asystent AI",
         "aiDescription": "Opisz co chcesz, a AI stworzy to za Ciebie",
-        "nameLabel": "Nazwa szablonu",
+        "nameLabel": "Stwórz swój szablon",
         "titlePlaceholder": "Tytuł szablonu",
         "contentPlaceholder": "Wpisz tutaj swoje instrukcje...\n\nPrzykład: Skup się na obecnych objawach, przestrzeganiu leczenia i stabilności nastroju.",
         "edit": "Edytuj szablon",
@@ -1419,17 +1419,38 @@ export const pl = {
     },
     "certificateAssistant": {
         "inputBar": {
-            "placeholder": "Dodaj notatkę kliniczną..."
+            "placeholder": "Wprowadź obserwacje medyczne..."
+        },
+        "typeSelector": {
+            "title": "Typ zaświadczenia",
+            "ol9": {
+                "title": "OL-9",
+                "subtitle": "Standardowe zaświadczenie medyczne"
+            },
+            "sickLeave": {
+                "title": "Zwolnienie lekarskie",
+                "subtitle": "Zaświadczenie o niezdolności do pracy"
+            },
+            "medicalReport": {
+                "title": "Raport medyczny",
+                "subtitle": "Szczegółowy raport medyczny"
+            },
+            "specialistReport": {
+                "title": "Raport specjalistyczny",
+                "subtitle": "Raport z konsultacji specjalistycznej"
+            }
         },
         "actions": {
             "scanDocuments": "Skanuj Dokumenty",
             "gallery": "Galeria Zdjęć",
             "files": "Wybierz Pliki",
+            "generate": "Generuj zaświadczenie",
             "cancel": "Anuluj"
         },
         "status": {
             "analyzingPixelData": "Analiza danych obrazu...",
-            "analyzingDocument": "Analiza treści dokumentu..."
+            "analyzingDocument": "Analiza treści dokumentu...",
+            "generating": "Generowanie zaświadczenia lekarskiego..."
         },
         "emptyState": {
             "title": "Notatki Medyczne",
@@ -1437,6 +1458,7 @@ export const pl = {
         },
         "savedSummaries": {
             "title": "Historia",
+            "certificateTitle": "Zaświadczenie lekarskie",
             "empty": "Brak zapisanych zaświadczeń.",
             "save": "Zapisz",
             "savedSuccess": "Zaświadczenie zostało zapisane.",
@@ -1685,6 +1707,10 @@ export const pl = {
             "noSummarySelected": "Nie wybrano podsumowania do aktualizacji.",
             "summaryGenerationFailed": "Nie udało się wygenerować podsumowania. Spróbuj ponownie.",
             "summaryUpdateFailed": "Nie udało się zaktualizować podsumowania. Spróbuj ponownie."
+        },
+        "promptRequired": {
+            "title": "Wymagany Szablon",
+            "message": "Wybierz szablon promptu z biblioteki przed wygenerowaniem podsumowania."
         }
     },
     "documentViewer": {
@@ -2350,10 +2376,12 @@ export const pl = {
         "promptSavedMessage": "Twój niestandardowy prompt został zapisany i jest teraz aktywny",
         "attachOptions": {
             "cancel": "Anuluj",
-            "uploadPdf": "Prześlij PDF",
-            "scan": "Zeskanuj Dokument",
-            "gallery": "Galeria Zdjęć"
-        }
+            "uploadPdf": "Prześlij Plik",
+            "scan": "Skanuj Dokument",
+            "gallery": "Biblioteka Zdjęć"
+        },
+        "uploadRequired": "Wymagany Dokument",
+        "uploadToProceed": "Proszę najpierw przesłać dokument, aby zacząć korzystać z asystenta badań."
     },
     "home": {
         "meetingNamePlaceholder": "Wprowadź nazwę spotkania...",
@@ -2379,6 +2407,7 @@ export const pl = {
         "importVisit": "Importuj z Wizyty",
         "importVisitPrompt": "Zaimportuj notatkę z wizyty, aby rozpocząć",
         "history": "Historia Czatu",
+        "pastConversations": "Poprzednie Rozmowy",
         "promptSaved": "Prompt Zapisany",
         "promptSavedMessage": "Twój niestandardowy prompt został zapisany i jest teraz aktywny",
         "attachOptions": {

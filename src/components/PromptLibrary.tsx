@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -47,6 +48,7 @@ type PromptLibraryProps = {
   onSelectPrompt: (prompt: CustomPrompt) => void;
   onDeletePrompt: (id: string) => void;
   onSavePrompt: (prompt: { name: string; instructions: string; refinedPrompt: string }) => void;
+  isLoading?: boolean;
 };
 
 // View states (single modal architecture like customTemplateManager)
@@ -60,6 +62,7 @@ const PromptLibrary: React.FC<PromptLibraryProps> = ({
   onSelectPrompt,
   onDeletePrompt,
   onSavePrompt,
+  isLoading = false,
 }) => {
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
@@ -227,7 +230,13 @@ const PromptLibrary: React.FC<PromptLibraryProps> = ({
       </View>
 
       {/* List */}
-      <FlatList
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={THEME.primary} />
+          <Text style={[styles.loaderText, { color: THEME.textSecondary }]}>{t('common.loading') || 'Loading...'}</Text>
+        </View>
+      ) : (
+        <FlatList
         data={filteredPrompts}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
@@ -295,6 +304,7 @@ const PromptLibrary: React.FC<PromptLibraryProps> = ({
           </View>
         }
       />
+      )}
 
       {/* Options Modal */}
       {optionsTarget && (
@@ -530,6 +540,16 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     fontSize: 16,
+    fontWeight: '500',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loaderText: {
+    fontSize: 14,
     fontWeight: '500',
   },
 });

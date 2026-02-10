@@ -5,6 +5,7 @@ import {
   ScrollView,
   Image as RNImage,
   ActivityIndicator,
+  TouchableOpacity,
   Animated,
   Easing,
 } from 'react-native';
@@ -13,7 +14,7 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import { AlignJustify, Monitor, File } from 'lucide-react-native';
+import { AlignJustify, Monitor, File, Trash2 } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import { useTheme } from '../../constants/theme';
 import type { Observation } from './types';
@@ -84,6 +85,9 @@ interface ObservationTimelineProps {
     analyzingPixelData: string;
     analyzingDocument: string;
   };
+  onDelete?: (id: string) => void;
+  HeaderComponent?: React.ReactNode;
+  FooterComponent?: React.ReactNode;
 }
 
 const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
@@ -92,6 +96,9 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
   primaryColor,
   scrollViewRef,
   statusTexts,
+  onDelete,
+  HeaderComponent,
+  FooterComponent,
 }) => {
   const { colors: themeColors, isDark } = useTheme();
 
@@ -165,10 +172,21 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
           )}
         </View>
 
-        {/* Time */}
-        <Text style={[styles.streamTime, { color: DYNAMIC_THEME.textSecondary }]}>
-          {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </Text>
+        {/* Time & Delete */}
+        <View style={styles.rightContainer}>
+          <Text style={[styles.streamTime, { color: DYNAMIC_THEME.textSecondary }]}>
+            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+          {onDelete && (
+            <TouchableOpacity 
+              onPress={() => onDelete(item.id)}
+              style={styles.deleteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Trash2 size={16} color={isDark ? themeColors.error : '#FF3B30'} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     );
   };
@@ -180,6 +198,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
       contentContainerStyle={styles.streamContent}
       showsVerticalScrollIndicator={false}
     >
+      {HeaderComponent}
       {items.length === 0 ? (
         <View style={styles.emptyState}>
           <PulsingAILogo />
@@ -189,6 +208,7 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
       ) : (
         items.map(renderTimelineItem)
       )}
+      {FooterComponent}
       <View style={{ height: hp(10) }} />
     </ScrollView>
   );
@@ -267,7 +287,13 @@ const styles = StyleSheet.create({
   },
   streamTime: {
     fontSize: 11,
-    marginTop: 4,
+  },
+  rightContainer: {
+    alignItems: 'flex-end',
+    minHeight: 40,
+  },
+  deleteButton: {
+    marginTop: 8,
   },
   thumbnailWrapper: {
     width: 120,

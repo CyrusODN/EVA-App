@@ -218,37 +218,41 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <Animated.View
-        style={[
-          styles.backdrop,
-          {
-            opacity: fadeAnim,
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
-          },
-        ]}
-      >
+      <View style={StyleSheet.absoluteFill}>
+        {/* Separate backdrop for background only */}
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              opacity: fadeAnim,
+              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
+            },
+          ]}
+        />
+
         <KeyboardAvoidingView
-          style={[styles.overlay, { paddingTop: insets.top, backgroundColor: 'transparent', justifyContent: 'flex-start' }]}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          style={{ flex: 1, backgroundColor: 'transparent' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
               justifyContent: 'center',
               alignItems: 'center',
-              paddingBottom: 30,
+              paddingTop: insets.top,
+              paddingBottom: 40,
             }}
             keyboardShouldPersistTaps="handled"
             bounces={false}
             showsVerticalScrollIndicator={false}
-            style={{ width: '100%', flex: 1 }}
+            style={{ width: '100%', backgroundColor: 'transparent' }}
           >
-          <TouchableOpacity
-            style={styles.backdropTouchable}
-            activeOpacity={1}
-            onPress={onClose}
-          >
+            <TouchableOpacity
+              style={styles.backdropTouchable}
+              activeOpacity={1}
+              onPress={onClose}
+            >
             <TouchableOpacity
               activeOpacity={1}
               onPress={e => {
@@ -399,7 +403,7 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
           </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
-      </Animated.View>
+      </View>
     </Modal>
   );
 };

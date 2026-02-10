@@ -16,8 +16,9 @@ import {
   Easing,
   Modal,
   Image,
-  Clipboard,
+  ActivityIndicator,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import {
@@ -43,14 +44,18 @@ import {
   Camera,
   FolderOpen,
   Sparkles,
+  ChevronRight,
 } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { pick, types } from '@react-native-documents/picker';
 import Markdown from 'react-native-markdown-display';
 import userStore from '../../store/user';
 import PromptLibrary from '../../components/PromptLibrary';
 import { useTheme } from '../../constants/theme';
+import { customToast } from '../../utils/toastMessage';
+import { getChatbotServiceToken } from '../../services/authService';
+import { getPastPharmaSessions, createPharmaSession, sendPharmaMessage, deletePharmaSession, ConsultSession } from '../../services/clinicalToolService';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -143,62 +148,8 @@ const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'medium') => {
 };
 
 // ============================================================================
-// MOCK RESPONSE
+// MOCK RESPONSE (Removed - Using Real API)
 // ============================================================================
-const getMockDrugResponse = (query: string): { content: string; citations: Citation[] } => {
-  return {
-    content: `Based on current pharmaceutical guidelines, here's the information:
-
-**Drug Information:**
-
-**Generic Name**: [Medication Name]
-**Brand Names**: [Common brands]
-**Drug Class**: [Pharmacological class]
-
-**Indications:**
-- Primary indication: [Approved use]
-- Off-label uses: [Common off-label applications]
-
-**Dosing:**
-- **Adult Dose**: [Standard dosing regimen]
-- **Pediatric Dose**: [If applicable]
-- **Renal Adjustment**: Required for CrCl <30 mL/min
-- **Hepatic Adjustment**: Use caution in severe impairment
-
-**Mechanism of Action:**
-Acts primarily through [mechanism], resulting in [therapeutic effect].
-
-**Drug Interactions:**
-⚠️ **Major Interactions**:
-- CYP3A4 inhibitors (increase levels)
-- Warfarin (monitor INR closely)
-- Other QT-prolonging agents (additive risk)
-
-**Contraindications:**
-- Known hypersensitivity
-- Severe hepatic impairment
-- Concurrent use with [specific drug]
-
-**Adverse Effects:**
-- Common (>10%): Nausea, headache, dizziness
-- Serious (<1%): Hepatotoxicity, QT prolongation, severe allergic reactions
-
-**Monitoring:**
-- Baseline: LFTs, ECG (if cardiac risk factors)
-- Ongoing: Clinical response, adverse effects
-- Consider therapeutic drug monitoring if available
-
-**Clinical Pearls:**
-- Take with food to improve absorption
-- Avoid grapefruit juice (CYP3A4 interaction)
-- Patient counseling on expected timeline for efficacy`,
-    citations: [
-      { id: '1', title: 'Drug Prescribing Information', source: 'FDA Package Insert', page: 'Latest Revision' },
-      { id: '2', title: 'Drug Interactions Reference', source: 'Lexicomp', page: '2024 Update' },
-      { id: '3', title: 'Clinical Pharmacology', source: 'Micromedex', page: 'Monograph' },
-    ],
-  };
-};
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -303,7 +254,7 @@ const MessageBubble: React.FC<{
   const handleCopy = () => {
     Clipboard.setString(message.content);
     triggerHaptic('light');
-    Alert.alert('Copied', 'Message copied to clipboard');
+    customToast('success', 'Copied', 'Message copied to clipboard');
   };
   
   const isUser = message.role === 'user';
@@ -466,8 +417,8 @@ const AttachmentModal: React.FC<{
 
   const options = [
     { icon: FileText, label: t('pharmacopediaChat.attachOptions.uploadPdf'), onPress: onUploadPdf, color: '#8B5CF6' },
-    { icon: Camera, label: t('pharmacopediaChat.attachOptions.scan'), onPress: onScan, color: '#10B981' },
-    { icon: FolderOpen, label: t('pharmacopediaChat.attachOptions.gallery'), onPress: onGallery, color: '#F59E0B' },
+    { icon: Camera, label: t('pharmacopediaChat.attachOptions.scan'), onPress: onScan, color: '#10B981', disabled: true },
+    { icon: FolderOpen, label: t('pharmacopediaChat.attachOptions.gallery'), onPress: onGallery, color: '#F59E0B', disabled: true },
   ];
 
   return (
@@ -481,20 +432,40 @@ const AttachmentModal: React.FC<{
           <View style={styles.attachmentOptionsContainer}>
             {options.map((option, index) => {
               const Icon = option.icon;
+              const isDisabled = (option as any).disabled;
               return (
                 <TouchableOpacity
                   key={index}
-                  style={[styles.attachmentOption, { backgroundColor: dynamicTheme.surface }]}
+                  style={[
+                    styles.attachmentOption, 
+                    { backgroundColor: dynamicTheme.surface },
+                    isDisabled && { opacity: 0.7 }
+                  ]}
                   onPress={() => {
+                    if (isDisabled) return;
                     option.onPress();
                     onClose();
                   }}
-                  activeOpacity={0.7}
+                  activeOpacity={isDisabled ? 1 : 0.7}
+                  disabled={isDisabled}
                 >
-                  <View style={[styles.attachmentOptionIcon, { backgroundColor: `${option.color}15` }]}>
-                    <Icon size={24} color={option.color} strokeWidth={2} />
+                  <View style={[
+                    styles.attachmentOptionIcon, 
+                    { backgroundColor: isDisabled ? (dynamicTheme.borderLight || '#E5E7EB') : `${option.color}15` }
+                  ]}>
+                    <Icon size={24} color={isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : option.color} strokeWidth={2} />
                   </View>
-                  <Text style={[styles.attachmentOptionLabel, { color: dynamicTheme.navy }]}>{option.label}</Text>
+                  <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[
+                      styles.attachmentOptionLabel, 
+                      { color: isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : dynamicTheme.navy }
+                    ]}>
+                      {option.label}
+                    </Text>
+                    {isDisabled && (
+                      <Text style={{ fontSize: 12, color: dynamicTheme.brand, fontWeight: '600' }}>Coming soon</Text>
+                    )}
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -503,6 +474,90 @@ const AttachmentModal: React.FC<{
           <TouchableOpacity style={[styles.attachmentCancelButton, { backgroundColor: dynamicTheme.surfaceAlt }]} onPress={onClose}>
             <Text style={[styles.attachmentCancelText, { color: dynamicTheme.secondary }]}>{t('pharmacopediaChat.attachOptions.cancel')}</Text>
           </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
+const PastSessionsModal: React.FC<{
+  visible: boolean;
+  sessions: ConsultSession[];
+  onClose: () => void;
+  onSelectSession: (session: ConsultSession) => void;
+  onDeleteSession: (sessionId: string) => void;
+  isLoading: boolean;
+  dynamicTheme: any;
+}> = ({ visible, sessions, onClose, onSelectSession, onDeleteSession, isLoading, dynamicTheme }) => {
+  const { t } = useTranslation();
+  
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose}>
+        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
+          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
+            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>{t('consultChat.pastConversations') || 'Past Conversations'}</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <X size={24} color={dynamicTheme.navy} />
+            </TouchableOpacity>
+          </View>
+
+          {isLoading ? (
+            <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator color={dynamicTheme.brand} size="large" />
+            </View>
+          ) : (
+            <ScrollView style={styles.modalFilesList}>
+              {sessions.length > 0 ? (
+                sessions.map((session) => (
+                  <TouchableOpacity 
+                    key={session._id} 
+                    style={[styles.modalFileItem, { 
+                      borderBottomWidth: 1, 
+                      borderBottomColor: dynamicTheme.borderLight,
+                      paddingVertical: 12,
+                      paddingHorizontal: 4,
+                      flexDirection: 'row',
+                      alignItems: 'center'
+                    }]}
+                    onPress={() => onSelectSession(session)}
+                  >
+                    <View style={{ 
+                      width: 40, 
+                      height: 40, 
+                      borderRadius: 20, 
+                      backgroundColor: dynamicTheme.brandLight, 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }}>
+                      <History size={18} color={dynamicTheme.brand} />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={[styles.modalFileName, { color: dynamicTheme.navy, fontWeight: '600' }]} numberOfLines={1}>
+                        {session.title || 'Untitled Conversation'}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: dynamicTheme.tertiary, marginTop: 2 }}>
+                        {new Date(session.createdAt).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      onPress={(e) => { e.stopPropagation(); onDeleteSession(session._id); }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={{ padding: 8 }}
+                    >
+                      <X size={18} color={dynamicTheme.error} />
+                    </TouchableOpacity>
+                    <ChevronRight size={18} color={dynamicTheme.tertiary} />
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <View style={[styles.modalEmptyState, { padding: 40 }]}>
+                  <History size={32} color={dynamicTheme.tertiary} />
+                  <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary, marginTop: 12, textAlign: 'center' }]}>No past conversations found</Text>
+                </View>
+              )}
+            </ScrollView>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -626,6 +681,7 @@ const InputBar: React.FC<{
 // ============================================================================
 const PharmacopediaChat: React.FC = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -653,7 +709,7 @@ const PharmacopediaChat: React.FC = () => {
   };
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState(route.params?.transcription || '');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [contextFiles, setContextFiles] = useState<AttachedFile[]>([]);
@@ -662,6 +718,36 @@ const PharmacopediaChat: React.FC = () => {
   const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(DEFAULT_PHARMA_PROMPTS);
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [chatbotToken, setChatbotToken] = useState<string | null>(null);
+  const [pastSessions, setPastSessions] = useState<ConsultSession[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [showSessionsModal, setShowSessionsModal] = useState(false);
+
+  // New session state
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  // Fetch chatbot service token on mount
+  useEffect(() => {
+    const fetchChatbotToken = async () => {
+      try {
+        console.log('[PharmacopediaChat] Fetching chatbot service token...');
+        const response = await getChatbotServiceToken();
+        
+        if (response.data?.success && response.data?.data?.serviceToken) {
+          setChatbotToken(response.data.data.serviceToken);
+          console.log('[PharmacopediaChat] Chatbot token fetched successfully');
+        } else {
+          console.error('[PharmacopediaChat] Invalid token response:', response.data);
+        }
+      } catch (error: any) {
+        console.error('[PharmacopediaChat] Error fetching chatbot token:', error);
+      }
+    };
+
+    fetchChatbotToken();
+  }, []);
+
 
   const isEmptyState = messages.length === 0;
 
@@ -679,6 +765,47 @@ const PharmacopediaChat: React.FC = () => {
     setShowContextModal(true);
   };
 
+  const handleNewSession = async () => {
+    triggerHaptic('light');
+    
+    if (!loggedInUser || !chatbotToken) {
+      customToast('error', 'Authentication Error', 'Please login again to create a session.');
+      return;
+    }
+
+    setIsCreatingSession(true);
+    try {
+      const userId = loggedInUser.id || loggedInUser._id;
+      console.log('[PharmacopediaChat] Creating new session for user:', userId);
+      
+      const response = await createPharmaSession(userId, chatbotToken);
+      
+      if (response.data?.success && response.data?.data?.sessionId) {
+        setCurrentSessionId(response.data.data.sessionId);
+        
+        // Start the chat with a greeting
+        setMessages([
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `Hello! I'm your **Pharmacopedia** assistant. I can help you with drug information, interactions, dosing guidelines, and more. What would you like to know?`,
+            timestamp: new Date(),
+          }
+        ]);
+        
+        customToast('success', 'Session Created', 'New pharmacopedia session started');
+        console.log('[PharmacopediaChat] Session created:', response.data.data.sessionId);
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error: any) {
+      console.error('[PharmacopediaChat] Error creating session:', error);
+      customToast('error', 'Error', 'Failed to create pharmacopedia session');
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
   const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -692,9 +819,93 @@ const PharmacopediaChat: React.FC = () => {
     return newMessage.id;
   }, []);
 
+  const handleSelectSession = (session: ConsultSession) => {
+    if (session.messages && Array.isArray(session.messages)) {
+      const formattedMessages: Message[] = session.messages.map((msg: any) => ({
+        id: msg._id || Math.random().toString(),
+        role: msg.role as MessageRole,
+        content: msg.content,
+        timestamp: new Date(msg.createdAt || Date.now()),
+      }));
+      setMessages(formattedMessages);
+      setCurrentSessionId(session._id); // Store the session ID for messaging
+      setShowSessionsModal(false);
+      customToast('success', 'Conversation Loaded', 'History has been successfully loaded');
+    }
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    Alert.alert(
+      'Delete Conversation',
+      'Are you sure you want to delete this conversation? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!chatbotToken) {
+              customToast('error', 'Authentication Error', 'Session token not found.');
+              return;
+            }
+            try {
+              await deletePharmaSession(sessionId, chatbotToken);
+              setPastSessions((prev) => prev.filter((s) => s._id !== sessionId));
+              customToast('success', 'Deleted', 'Conversation has been deleted');
+              triggerHaptic('light');
+            } catch (error: any) {
+              console.error('[PharmacopediaChat] Error deleting session:', error);
+              customToast('error', 'Error', 'Failed to delete conversation');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleViewHistory = async () => {
+    triggerHaptic('light');
+    if (!loggedInUser || !chatbotToken) {
+      customToast('error', 'Authentication Error', 'Session token not found. Please try again.');
+      return;
+    }
+
+    setShowSessionsModal(true);
+    setIsLoadingSessions(true);
+    
+    try {
+      const userId = loggedInUser.id || loggedInUser._id;
+      console.log('[PharmacopediaChat] Fetching past sessions for user:', userId);
+      const response = await getPastPharmaSessions(userId, chatbotToken);
+      
+      if (response.data?.success) {
+        setPastSessions(response.data.data);
+        console.log('[PharmacopediaChat] Fetched sessions count:', response.data.data.length);
+      } else {
+        console.error('[PharmacopediaChat] Failed to fetch sessions:', response.data);
+      }
+    } catch (error: any) {
+      console.error('[PharmacopediaChat] Error fetching history:', error);
+      customToast('error', 'Connection Error', 'Failed to load past conversations');
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
   const handleSend = async () => {
     const query = inputText.trim();
     if (!query && attachedFiles.length === 0) return;
+
+    if (!currentSessionId) {
+      customToast('info', 'New Session', 'Creating a new pharmacopedia session...');
+      await handleNewSession();
+      if (!currentSessionId) return; // Session creation might have failed
+    }
+
+    if (!chatbotToken) {
+      customToast('error', 'Authentication Error', 'Session token not found.');
+      return;
+    }
 
     const userContent = attachedFiles.length > 0
       ? `${query}\n\n[Attached: ${attachedFiles.map(f => f.name).join(', ')}]`
@@ -716,12 +927,34 @@ const PharmacopediaChat: React.FC = () => {
       { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
     ]);
 
-    setTimeout(() => {
-      const { content, citations } = getMockDrugResponse(query);
+    try {
+      // Map existing messages to history format
+      const history = messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      const response = await sendPharmaMessage(
+        currentSessionId,
+        query || '[Attached Files]',
+        chatbotToken,
+        { history }
+      );
+
       setMessages((prev) => prev.filter((m) => m.id !== loadingId));
-      addMessage('assistant', content, citations);
+
+      if (response.data?.success) {
+        addMessage('assistant', response.data.data.message, response.data.data.sources);
+      } else {
+        throw new Error('Failed to get response');
+      }
+    } catch (error) {
+      console.error('[PharmacopediaChat] Error sending message:', error);
+      setMessages((prev) => prev.filter((m) => m.id !== loadingId));
+      customToast('error', 'Error', 'Failed to get response from assistant');
+    } finally {
       setIsLoading(false);
-    }, 2000 + Math.random() * 1500);
+    }
   };
 
   const handleDrugCombinationPress = (combination: string) => {
@@ -859,10 +1092,17 @@ const PharmacopediaChat: React.FC = () => {
           </View>
 
           <View style={styles.headerRightButtons}>
+            <TouchableOpacity onPress={handleNewSession} style={styles.headerButton} disabled={isCreatingSession}>
+              {isCreatingSession ? (
+                <ActivityIndicator size="small" color={DYNAMIC_THEME.brand} />
+              ) : (
+                <Plus size={22} color={DYNAMIC_THEME.navy} />
+              )}
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowPromptLibrary(true)} style={styles.headerButton}>
               <Sparkles size={20} color={DYNAMIC_THEME.brand} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleViewFiles} style={styles.headerButton}>
+            <TouchableOpacity onPress={handleViewHistory} style={styles.headerButton}>
               <History size={22} color={DYNAMIC_THEME.navy} />
             </TouchableOpacity>
           </View>
@@ -936,6 +1176,16 @@ const PharmacopediaChat: React.FC = () => {
         onUploadPdf={handleFilePick}
         onScan={handleScan}
         onGallery={handleGallery}
+        dynamicTheme={DYNAMIC_THEME}
+      />
+
+      <PastSessionsModal
+        visible={showSessionsModal}
+        sessions={pastSessions}
+        onClose={() => setShowSessionsModal(false)}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+        isLoading={isLoadingSessions}
         dynamicTheme={DYNAMIC_THEME}
       />
 

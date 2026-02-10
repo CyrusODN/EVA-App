@@ -139,7 +139,7 @@ export const en = {
 		"manualDescription": "Create your template from scratch with full control",
 		"aiMethod": "AI Assistant",
 		"aiDescription": "Describe what you want and AI creates it for you",
-		"nameLabel": "Template name",
+		"nameLabel": "Make your template",
 		"titlePlaceholder": "Template Title",
 		"contentPlaceholder": "Write your instructions here...\n\nExample: Focus on current symptoms, medication adherence, and mood stability.",
 		"edit": "Edit Template",
@@ -1349,19 +1349,40 @@ export const en = {
 			"title": "Create New Project"
 		}
 	},
-		"certificateAssistant": {
+	"certificateAssistant": {
 		"inputBar": {
-			"placeholder": "Add clinical notes..."
+			"placeholder": "Enter medical observations..."
+		},
+		"typeSelector": {
+			"title": "Certificate Type",
+			"ol9": {
+				"title": "OL-9",
+				"subtitle": "Standard medical certificate"
+			},
+			"sickLeave": {
+				"title": "Sick Leave",
+				"subtitle": "Work absence certificate"
+			},
+			"medicalReport": {
+				"title": "Medical Report",
+				"subtitle": "Detailed medical report"
+			},
+			"specialistReport": {
+				"title": "Specialist Report",
+				"subtitle": "Specialist consultation report"
+			}
 		},
 		"actions": {
 			"scanDocuments": "Scan Documents",
 			"gallery": "Photo Gallery",
 			"files": "Choose Files",
+			"generate": "Generate Certificate",
 			"cancel": "Cancel"
 		},
 		"status": {
 			"analyzingPixelData": "Analyzing pixel data...",
-			"analyzingDocument": "Analyzing document content..."
+			"analyzingDocument": "Analyzing document content...",
+			"generating": "Generating medical certificate..."
 		},
 		"emptyState": {
 			"title": "Medical Notes",
@@ -1369,6 +1390,7 @@ export const en = {
 		},
 		"savedSummaries": {
 			"title": "Saved Certificates",
+			"certificateTitle": "Medical Certificate",
 			"empty": "No saved certificates yet.",
 			"save": "Save",
 			"savedSuccess": "Certificate saved.",
@@ -1617,6 +1639,10 @@ export const en = {
 			"noSummarySelected": "No summary selected for update.",
 			"summaryGenerationFailed": "Failed to generate summary. Please try again.",
 			"summaryUpdateFailed": "Failed to update summary. Please try again."
+		},
+		"promptRequired": {
+			"title": "Prompt Required",
+			"message": "Please select a prompt template from the library before generating a summary."
 		}
 	},
 	"login": {
@@ -2322,10 +2348,12 @@ export const en = {
 		"promptSavedMessage": "Your custom prompt has been saved and is now active",
 		"attachOptions": {
 			"cancel": "Cancel",
-			"uploadPdf": "Upload PDF",
+			"uploadPdf": "Upload File",
 			"scan": "Scan Document",
 			"gallery": "Photo Library"
-		}
+		},
+		"uploadRequired": "Document Required",
+		"uploadToProceed": "Please upload a document first to start using the research assistant."
 	},
 	"home": {
 		"meetingNamePlaceholder": "Enter meeting name...",
@@ -2364,6 +2392,7 @@ export const en = {
 		"importVisit": "Import from Visit",
 		"importVisitPrompt": "Import a visit note to get started",
 		"history": "Chat History",
+		"pastConversations": "Past Conversations",
 		"promptSaved": "Prompt Saved",
 		"promptSavedMessage": "Your custom prompt has been saved and is now active",
 		"attachOptions": {
@@ -2513,13 +2542,14 @@ export const en = {
 			"titleLabel": "Template Name (editable)",
 			"promptEditLabel": "System Instructions (Advanced)",
 			"promptEditPlaceholder": "Edit the AI instructions here...",
-			"regenerateButton": "Regenerate with Edits"
+			"regenerateButton": "Regenerate with Edits",
+			"regenerateWithEdits": "Regenerate with Edits"
 		},
 		"refine": {
 			"title": "What would you like to change?",
 			"subtitle": "Tell me what doesn't fit and what you'd like to adjust",
 			"viewTechnicalPrompt": "View technical instructions (Advanced)",
-			"currentInstructions": "Zobacz instrukcje techniczne (Dla zaawansowanych)",
+			"currentInstructions": "View current technical instructions",
 			"placeholder": "E.g., 'Add more details about medications' or 'Make it shorter'...",
 			"applyButton": "Apply Changes"
 		}

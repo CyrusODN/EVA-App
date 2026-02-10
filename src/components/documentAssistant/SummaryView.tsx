@@ -27,6 +27,79 @@ interface SummaryViewProps {
   saveLabel: string;
 }
 
+/**
+ * Renders markdown text with bold sections and headers in blue color
+ */
+const renderMarkdown = (text: string, textColor: string, primaryColor: string) => {
+  const lines = text.split('\n');
+  
+  return (
+    <View>
+      {lines.map((line, lineIndex) => {
+        // Skip completely empty lines
+        if (line.trim() === '') {
+          return null;
+        }
+        
+        // Check if line starts with # (markdown header)
+        const headerMatch = line.match(/^(#+)\s*(.+)$/);
+        
+        if (headerMatch) {
+          // Render header without # symbols in blue
+          const headerText = headerMatch[2];
+          return (
+            <Text 
+              key={lineIndex} 
+              style={[
+                styles.documentText,
+                { 
+                  fontWeight: '700',
+                  color: primaryColor,
+                  marginTop: 8,
+                }
+              ]}
+            >
+              {headerText}{'\n'}
+            </Text>
+          );
+        }
+        
+        // Parse bold text wrapped in **
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+        
+        return (
+          <Text 
+            key={lineIndex} 
+            style={[
+              styles.documentText,
+              { color: textColor }
+            ]}
+          >
+            {parts.map((part, partIndex) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                // Render bold text in blue without ** symbols
+                return (
+                  <Text
+                    key={partIndex}
+                    style={{
+                      fontWeight: '700',
+                      color: primaryColor,
+                    }}>
+                    {part.slice(2, -2)}
+                  </Text>
+                );
+              }
+              return <Text key={partIndex}>{part}</Text>;
+            })}
+            {'\n'}
+          </Text>
+        );
+      })}
+    </View>
+  );
+};
+
+
 const SummaryView: React.FC<SummaryViewProps> = ({
   visible,
   onClose,
@@ -40,16 +113,16 @@ const SummaryView: React.FC<SummaryViewProps> = ({
 }) => {
   const { colors: themeColors, isDark } = useTheme();
 
-  // Dynamic theme
+  // Dynamic theme with improved contrast
   const DYNAMIC_THEME = {
-    background: isDark ? themeColors.canvas : '#F5F5F7',
-    headerBg: isDark ? themeColors.layer1 : '#FFFFFF',
-    text: isDark ? themeColors.textPrimary : colors.onSurface,
-    textSecondary: isDark ? themeColors.textSecondary : '#6B7280',
-    border: isDark ? themeColors.borderSubtle : '#E5E5EA',
-    card: isDark ? themeColors.layer2 : '#FFFFFF',
-    docText: isDark ? '#E5E5E5' : '#333333',
-    actionIcon: isDark ? themeColors.textPrimary : colors.onSurface,
+    background: isDark ? '#1a1919ff' : '#F5F5F7',
+    headerBg: isDark ? '#1C1C1E' : '#FFFFFF',
+    text: isDark ? '#FFFFFF' : '#1C1C1E',
+    textSecondary: isDark ? '#8E8E93' : '#6B7280',
+    border: isDark ? '#2C2C2E' : '#E5E5EA',
+    card: isDark ? '#fdfdfeff' : '#FFFFFF',
+    docText: isDark ? '#E5E5EA' : '#1C1C1E',
+    actionIcon: isDark ? '#FFFFFF' : '#1C1C1E',
   };
 
   return (
@@ -73,7 +146,7 @@ const SummaryView: React.FC<SummaryViewProps> = ({
 
         <ScrollView style={styles.resultContent} showsVerticalScrollIndicator={false}>
           <View style={[styles.documentCard, { backgroundColor: DYNAMIC_THEME.card }]}>
-            <Text style={[styles.documentText, { color: DYNAMIC_THEME.docText }]}>{summary}</Text>
+            {renderMarkdown(summary, DYNAMIC_THEME.docText, primaryColor)}
           </View>
           <View style={{ height: hp(5) }} />
         </ScrollView>
@@ -128,19 +201,19 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   documentCard: {
-    borderRadius: 4, // A4 style
-    padding: 32,
+    borderRadius: 12,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
     minHeight: hp(60),
   },
   documentText: {
-    fontSize: 14,
-    lineHeight: 22,
-    fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'serif',
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   resultActions: {
     flexDirection: 'row',

@@ -8,8 +8,9 @@ let socket: Socket | null = null;
 /**
  * Initialize and connect socket with user authentication
  * @param userId - The logged-in user's ID
+ * @param token - Optional JWT token for authentication
  */
-export const connectSocket = (userId: string) => {
+export const connectSocket = (userId: string, token?: string) => {
   if (!userId) {
     console.error('[Socket] UserId is required for socket connection');
     return;
@@ -27,6 +28,7 @@ export const connectSocket = (userId: string) => {
     path: '/socket.io/',
     auth: {
       userId,
+      token,
     },
     transports: ['websocket', 'polling'],
     reconnection: true,

@@ -20,7 +20,7 @@ import {
   Pill,
   ArrowRight,
 } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../../components/header';
 import { useTheme } from '../../constants/theme';
 
@@ -128,6 +128,7 @@ const ClinicalWorkspace = () => {
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   // Dynamic theme tokens
   const DYNAMIC_THEME = {
@@ -149,10 +150,11 @@ const ClinicalWorkspace = () => {
   };
 
   const handleModulePress = (mode: 'consult' | 'pharmacopedia') => {
+    const transcription = route.params?.transcription;
     if (mode === 'consult') {
-      navigation.navigate('consultChat');
+      navigation.navigate('consultChat', { transcription });
     } else {
-      navigation.navigate('pharmacopediaChat');
+      navigation.navigate('pharmacopediaChat', { transcription });
     }
   };
 
