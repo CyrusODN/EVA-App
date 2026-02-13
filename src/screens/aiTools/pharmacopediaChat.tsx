@@ -55,7 +55,13 @@ import PromptLibrary from '../../components/PromptLibrary';
 import { useTheme } from '../../constants/theme';
 import { customToast } from '../../utils/toastMessage';
 import { getChatbotServiceToken } from '../../services/authService';
-import { getPastPharmaSessions, createPharmaSession, sendPharmaMessage, deletePharmaSession, ConsultSession } from '../../services/clinicalToolService';
+import {
+  getPastPharmaSessions,
+  createPharmaSession,
+  sendPharmaMessage,
+  deletePharmaSession,
+  ConsultSession,
+} from '../../services/clinicalToolService';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -122,7 +128,8 @@ const DEFAULT_PHARMA_PROMPTS: CustomPrompt[] = [
   {
     id: 'p1',
     title: 'Drug Information',
-    content: 'Provide comprehensive drug information including dosing, interactions, and monitoring.',
+    content:
+      'Provide comprehensive drug information including dosing, interactions, and monitoring.',
     createdAt: new Date().toISOString(),
   },
   {
@@ -134,7 +141,8 @@ const DEFAULT_PHARMA_PROMPTS: CustomPrompt[] = [
   {
     id: 'p3',
     title: 'Patient Counseling',
-    content: 'Focus on patient education points and practical administration guidance.',
+    content:
+      'Focus on patient education points and practical administration guidance.',
     createdAt: new Date().toISOString(),
   },
 ];
@@ -173,7 +181,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -182,7 +190,8 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+      <Animated.View
+        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
         <Image source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
@@ -195,16 +204,20 @@ const DrugCombinationChip: React.FC<{
   onPress: () => void;
   dynamicTheme: any;
 }> = ({ text, onPress, dynamicTheme }) => (
-  <TouchableOpacity 
-    style={[styles.drugCombinationChip, { 
-      backgroundColor: dynamicTheme.pure,
-      borderColor: dynamicTheme.borderLight
-    }]} 
-    onPress={onPress} 
-    activeOpacity={0.7}
-  >
+  <TouchableOpacity
+    style={[
+      styles.drugCombinationChip,
+      {
+        backgroundColor: dynamicTheme.pure,
+        borderColor: dynamicTheme.borderLight,
+      },
+    ]}
+    onPress={onPress}
+    activeOpacity={0.7}>
     <Pill size={14} color={dynamicTheme.brand} strokeWidth={2} />
-    <Text style={[styles.drugCombinationText, { color: dynamicTheme.navy }]}>{text}</Text>
+    <Text style={[styles.drugCombinationText, { color: dynamicTheme.navy }]}>
+      {text}
+    </Text>
   </TouchableOpacity>
 );
 
@@ -256,23 +269,38 @@ const MessageBubble: React.FC<{
     triggerHaptic('light');
     customToast('success', 'Copied', 'Message copied to clipboard');
   };
-  
+
   const isUser = message.role === 'user';
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(isUser ? 20 : -20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
   if (message.isLoading) {
     return (
-      <Animated.View style={[styles.messageBubbleWrapper, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
+      <Animated.View
+        style={[
+          styles.messageBubbleWrapper,
+          { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
+        ]}>
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
         <View style={styles.bubbleContent}>
           <ThinkingIndicator />
@@ -287,58 +315,102 @@ const MessageBubble: React.FC<{
         styles.messageBubbleWrapper,
         isUser && styles.userBubbleWrapper,
         { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-      ]}
-    >
+      ]}>
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
       )}
-      
-      <View style={[
-        styles.messageBubble, 
-        isUser ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }] : [
-          styles.assistantBubble,
-          { 
-            backgroundColor: dynamicTheme.pure,
-            borderColor: dynamicTheme.borderLight,
-            shadowColor: '#000'
-          }
-        ]
-      ]}>
+
+      <View
+        style={[
+          styles.messageBubble,
+          isUser
+            ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }]
+            : [
+                styles.assistantBubble,
+                {
+                  backgroundColor: dynamicTheme.pure,
+                  borderColor: dynamicTheme.borderLight,
+                  shadowColor: '#000',
+                },
+              ],
+        ]}>
         {!isUser && (
-          <TouchableOpacity 
-            style={[styles.copyButton, { backgroundColor: dynamicTheme.brandMedium }]} 
-            onPress={handleCopy} 
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} 
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity
+            style={[
+              styles.copyButton,
+              { backgroundColor: dynamicTheme.brandMedium },
+            ]}
+            onPress={handleCopy}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}>
             <Copy size={14} color={dynamicTheme.brand} strokeWidth={2} />
           </TouchableOpacity>
         )}
 
         {isUser ? (
-          <Text style={[styles.messageText, styles.userMessageText, { color: dynamicTheme.navy }]}>{message.content}</Text>
+          <Text
+            style={[
+              styles.messageText,
+              styles.userMessageText,
+              { color: dynamicTheme.navy },
+            ]}>
+            {message.content}
+          </Text>
         ) : (
-          <Markdown style={markdownStyles(dynamicTheme)}>{message.content}</Markdown>
+          <Markdown style={markdownStyles(dynamicTheme)}>
+            {message.content}
+          </Markdown>
         )}
 
         {message.citations && message.citations.length > 0 && (
-          <View style={[styles.citationsContainer, { borderTopColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>Sources</Text>
+          <View
+            style={[
+              styles.citationsContainer,
+              { borderTopColor: dynamicTheme.borderLight },
+            ]}>
+            <Text
+              style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>
+              Sources
+            </Text>
             {message.citations.map((citation, index) => (
               <TouchableOpacity
                 key={citation.id}
-                style={[styles.citationChip, { backgroundColor: dynamicTheme.surfaceAlt }]}
+                style={[
+                  styles.citationChip,
+                  { backgroundColor: dynamicTheme.surfaceAlt },
+                ]}
                 onPress={() => onCitationPress?.(citation)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.citationNumber, { backgroundColor: dynamicTheme.brandMedium }]}>
-                  <Text style={[styles.citationNumberText, { color: dynamicTheme.brand }]}>{index + 1}</Text>
+                activeOpacity={0.7}>
+                <View
+                  style={[
+                    styles.citationNumber,
+                    { backgroundColor: dynamicTheme.brandMedium },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.citationNumberText,
+                      { color: dynamicTheme.brand },
+                    ]}>
+                    {index + 1}
+                  </Text>
                 </View>
                 <View style={styles.citationContent}>
-                  <Text style={[styles.citationTitle, { color: dynamicTheme.navy }]} numberOfLines={1}>{citation.title}</Text>
-                  <Text style={[styles.citationSource, { color: dynamicTheme.tertiary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.citationTitle, { color: dynamicTheme.navy }]}
+                    numberOfLines={1}>
+                    {citation.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.citationSource,
+                      { color: dynamicTheme.tertiary },
+                    ]}
+                    numberOfLines={1}>
                     {citation.source} {citation.page && `• ${citation.page}`}
                   </Text>
                 </View>
@@ -362,9 +434,17 @@ const ThinkingIndicator: React.FC = () => {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
-        ])
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0.3,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]),
       );
 
     animateDot(dot1, 0).start();
@@ -383,21 +463,35 @@ const ThinkingIndicator: React.FC = () => {
   );
 };
 
-const FileChip: React.FC<{ file: AttachedFile; onRemove: () => void; dynamicTheme: any }> = ({ file, onRemove, dynamicTheme }) => {
+const FileChip: React.FC<{
+  file: AttachedFile;
+  onRemove: () => void;
+  dynamicTheme: any;
+}> = ({ file, onRemove, dynamicTheme }) => {
   const getIcon = () => {
     switch (file.type) {
-      case 'pdf': return FileText;
-      case 'image': return ImageIcon;
-      default: return File;
+      case 'pdf':
+        return FileText;
+      case 'image':
+        return ImageIcon;
+      default:
+        return File;
     }
   };
   const Icon = getIcon();
 
   return (
-    <View style={[styles.fileChip, { backgroundColor: dynamicTheme.brandLight }]}>
+    <View
+      style={[styles.fileChip, { backgroundColor: dynamicTheme.brandLight }]}>
       <Icon size={14} color={dynamicTheme.brand} />
-      <Text style={[styles.fileChipName, { color: dynamicTheme.navy }]} numberOfLines={1}>{file.name}</Text>
-      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <Text
+        style={[styles.fileChipName, { color: dynamicTheme.navy }]}
+        numberOfLines={1}>
+        {file.name}
+      </Text>
+      <TouchableOpacity
+        onPress={onRemove}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <X size={14} color={dynamicTheme.secondary} />
       </TouchableOpacity>
     </View>
@@ -416,19 +510,50 @@ const AttachmentModal: React.FC<{
   const { t } = useTranslation();
 
   const options = [
-    { icon: FileText, label: t('pharmacopediaChat.attachOptions.uploadPdf'), onPress: onUploadPdf, color: '#8B5CF6' },
-    { icon: Camera, label: t('pharmacopediaChat.attachOptions.scan'), onPress: onScan, color: '#10B981', disabled: true },
-    { icon: FolderOpen, label: t('pharmacopediaChat.attachOptions.gallery'), onPress: onGallery, color: '#F59E0B', disabled: true },
+    {
+      icon: FileText,
+      label: t('pharmacopediaChat.attachOptions.uploadPdf'),
+      onPress: onUploadPdf,
+      color: '#8B5CF6',
+    },
+    {
+      icon: Camera,
+      label: t('pharmacopediaChat.attachOptions.scan'),
+      onPress: onScan,
+      color: '#10B981',
+      disabled: true,
+    },
+    {
+      icon: FolderOpen,
+      label: t('pharmacopediaChat.attachOptions.gallery'),
+      onPress: onGallery,
+      color: '#F59E0B',
+      disabled: true,
+    },
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.attachmentModalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={[
+            styles.attachmentModalContent,
+            { backgroundColor: dynamicTheme.pure },
+          ]}
+          onPress={(e) => e.stopPropagation()}>
           <View style={styles.attachmentModalHeader}>
-            <View style={[styles.attachmentModalHandle, { backgroundColor: dynamicTheme.inactive }]} />
+            <View
+              style={[
+                styles.attachmentModalHandle,
+                { backgroundColor: dynamicTheme.inactive },
+              ]}
+            />
           </View>
-          
+
           <View style={styles.attachmentOptionsContainer}>
             {options.map((option, index) => {
               const Icon = option.icon;
@@ -437,9 +562,9 @@ const AttachmentModal: React.FC<{
                 <TouchableOpacity
                   key={index}
                   style={[
-                    styles.attachmentOption, 
+                    styles.attachmentOption,
                     { backgroundColor: dynamicTheme.surface },
-                    isDisabled && { opacity: 0.7 }
+                    isDisabled && { opacity: 0.7 },
                   ]}
                   onPress={() => {
                     if (isDisabled) return;
@@ -447,23 +572,53 @@ const AttachmentModal: React.FC<{
                     onClose();
                   }}
                   activeOpacity={isDisabled ? 1 : 0.7}
-                  disabled={isDisabled}
-                >
-                  <View style={[
-                    styles.attachmentOptionIcon, 
-                    { backgroundColor: isDisabled ? (dynamicTheme.borderLight || '#E5E7EB') : `${option.color}15` }
-                  ]}>
-                    <Icon size={24} color={isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : option.color} strokeWidth={2} />
-                  </View>
-                  <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={[
-                      styles.attachmentOptionLabel, 
-                      { color: isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : dynamicTheme.navy }
+                  disabled={isDisabled}>
+                  <View
+                    style={[
+                      styles.attachmentOptionIcon,
+                      {
+                        backgroundColor: isDisabled
+                          ? dynamicTheme.borderLight || '#E5E7EB'
+                          : `${option.color}15`,
+                      },
                     ]}>
+                    <Icon
+                      size={24}
+                      color={
+                        isDisabled
+                          ? dynamicTheme.inactive || '#9CA3AF'
+                          : option.color
+                      }
+                      strokeWidth={2}
+                    />
+                  </View>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                    <Text
+                      style={[
+                        styles.attachmentOptionLabel,
+                        {
+                          color: isDisabled
+                            ? dynamicTheme.inactive || '#9CA3AF'
+                            : dynamicTheme.navy,
+                        },
+                      ]}>
                       {option.label}
                     </Text>
                     {isDisabled && (
-                      <Text style={{ fontSize: 12, color: dynamicTheme.brand, fontWeight: '600' }}>Coming soon</Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: dynamicTheme.brand,
+                          fontWeight: '600',
+                        }}>
+                        Coming soon
+                      </Text>
                     )}
                   </View>
                 </TouchableOpacity>
@@ -471,8 +626,19 @@ const AttachmentModal: React.FC<{
             })}
           </View>
 
-          <TouchableOpacity style={[styles.attachmentCancelButton, { backgroundColor: dynamicTheme.surfaceAlt }]} onPress={onClose}>
-            <Text style={[styles.attachmentCancelText, { color: dynamicTheme.secondary }]}>{t('pharmacopediaChat.attachOptions.cancel')}</Text>
+          <TouchableOpacity
+            style={[
+              styles.attachmentCancelButton,
+              { backgroundColor: dynamicTheme.surfaceAlt },
+            ]}
+            onPress={onClose}>
+            <Text
+              style={[
+                styles.attachmentCancelText,
+                { color: dynamicTheme.secondary },
+              ]}>
+              {t('pharmacopediaChat.attachOptions.cancel')}
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -488,63 +654,105 @@ const PastSessionsModal: React.FC<{
   onDeleteSession: (sessionId: string) => void;
   isLoading: boolean;
   dynamicTheme: any;
-}> = ({ visible, sessions, onClose, onSelectSession, onDeleteSession, isLoading, dynamicTheme }) => {
+}> = ({
+  visible,
+  sessions,
+  onClose,
+  onSelectSession,
+  onDeleteSession,
+  isLoading,
+  dynamicTheme,
+}) => {
   const { t } = useTranslation();
-  
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>{t('consultChat.pastConversations') || 'Past Conversations'}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]}
+          onPress={(e) => e.stopPropagation()}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: dynamicTheme.borderLight },
+            ]}>
+            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>
+              {t('consultChat.pastConversations') || 'Past Conversations'}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={dynamicTheme.navy} />
             </TouchableOpacity>
           </View>
 
           {isLoading ? (
-            <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                padding: 40,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               <ActivityIndicator color={dynamicTheme.brand} size="large" />
             </View>
           ) : (
             <ScrollView style={styles.modalFilesList}>
               {sessions.length > 0 ? (
                 sessions.map((session) => (
-                  <TouchableOpacity 
-                    key={session._id} 
-                    style={[styles.modalFileItem, { 
-                      borderBottomWidth: 1, 
-                      borderBottomColor: dynamicTheme.borderLight,
-                      paddingVertical: 12,
-                      paddingHorizontal: 4,
-                      flexDirection: 'row',
-                      alignItems: 'center'
-                    }]}
-                    onPress={() => onSelectSession(session)}
-                  >
-                    <View style={{ 
-                      width: 40, 
-                      height: 40, 
-                      borderRadius: 20, 
-                      backgroundColor: dynamicTheme.brandLight, 
-                      alignItems: 'center', 
-                      justifyContent: 'center' 
-                    }}>
+                  <TouchableOpacity
+                    key={session._id}
+                    style={[
+                      styles.modalFileItem,
+                      {
+                        borderBottomWidth: 1,
+                        borderBottomColor: dynamicTheme.borderLight,
+                        paddingVertical: 12,
+                        paddingHorizontal: 4,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      },
+                    ]}
+                    onPress={() => onSelectSession(session)}>
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: dynamicTheme.brandLight,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
                       <History size={18} color={dynamicTheme.brand} />
                     </View>
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={[styles.modalFileName, { color: dynamicTheme.navy, fontWeight: '600' }]} numberOfLines={1}>
+                      <Text
+                        style={[
+                          styles.modalFileName,
+                          { color: dynamicTheme.navy, fontWeight: '600' },
+                        ]}
+                        numberOfLines={1}>
                         {session.title || 'Untitled Conversation'}
                       </Text>
-                      <Text style={{ fontSize: 12, color: dynamicTheme.tertiary, marginTop: 2 }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: dynamicTheme.tertiary,
+                          marginTop: 2,
+                        }}>
                         {new Date(session.createdAt).toLocaleDateString()}
                       </Text>
                     </View>
-                    <TouchableOpacity 
-                      onPress={(e) => { e.stopPropagation(); onDeleteSession(session._id); }}
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        onDeleteSession(session._id);
+                      }}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      style={{ padding: 8 }}
-                    >
+                      style={{ padding: 8 }}>
                       <X size={18} color={dynamicTheme.error} />
                     </TouchableOpacity>
                     <ChevronRight size={18} color={dynamicTheme.tertiary} />
@@ -553,7 +761,17 @@ const PastSessionsModal: React.FC<{
               ) : (
                 <View style={[styles.modalEmptyState, { padding: 40 }]}>
                   <History size={32} color={dynamicTheme.tertiary} />
-                  <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary, marginTop: 12, textAlign: 'center' }]}>No past conversations found</Text>
+                  <Text
+                    style={[
+                      styles.modalEmptyText,
+                      {
+                        color: dynamicTheme.tertiary,
+                        marginTop: 12,
+                        textAlign: 'center',
+                      },
+                    ]}>
+                    No past conversations found
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -571,14 +789,28 @@ const ContextFilesModal: React.FC<{
   dynamicTheme: any;
 }> = ({ visible, files, onClose, dynamicTheme }) => {
   const { t } = useTranslation();
-  
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>{t('pharmacopediaChat.contextFiles')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]}
+          onPress={(e) => e.stopPropagation()}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: dynamicTheme.borderLight },
+            ]}>
+            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>
+              {t('pharmacopediaChat.contextFiles')}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={dynamicTheme.navy} />
             </TouchableOpacity>
           </View>
@@ -586,18 +818,35 @@ const ContextFilesModal: React.FC<{
           <ScrollView style={styles.modalFilesList}>
             {files.length > 0 ? (
               files.map((file) => {
-                const Icon = file.type === 'pdf' ? FileText : file.type === 'image' ? ImageIcon : File;
+                const Icon =
+                  file.type === 'pdf'
+                    ? FileText
+                    : file.type === 'image'
+                    ? ImageIcon
+                    : File;
                 return (
                   <View key={file.id} style={styles.modalFileItem}>
                     <Icon size={18} color={dynamicTheme.brand} />
-                    <Text style={[styles.modalFileName, { color: dynamicTheme.navy }]}>{file.name}</Text>
+                    <Text
+                      style={[
+                        styles.modalFileName,
+                        { color: dynamicTheme.navy },
+                      ]}>
+                      {file.name}
+                    </Text>
                   </View>
                 );
               })
             ) : (
               <View style={styles.modalEmptyState}>
                 <FolderOpen size={32} color={dynamicTheme.tertiary} />
-                <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary }]}>No reference materials uploaded</Text>
+                <Text
+                  style={[
+                    styles.modalEmptyText,
+                    { color: dynamicTheme.tertiary },
+                  ]}>
+                  No reference materials uploaded
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -617,40 +866,71 @@ const InputBar: React.FC<{
   placeholder: string;
   isLoading: boolean;
   dynamicTheme: any;
-}> = ({ value, onChangeText, onSend, onAttach, attachedFiles, onRemoveFile, placeholder, isLoading, dynamicTheme }) => {
-  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
+}> = ({
+  value,
+  onChangeText,
+  onSend,
+  onAttach,
+  attachedFiles,
+  onRemoveFile,
+  placeholder,
+  isLoading,
+  dynamicTheme,
+}) => {
+  const inputRef = useRef<TextInput>(null);
+  const canSend =
+    (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
 
   const handleSend = () => {
     if (canSend) {
       triggerHaptic('medium');
       onSend();
+      // Re-focus input to keep keyboard open
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
   return (
-    <View style={[styles.inputBarWrapper, { 
-      backgroundColor: dynamicTheme.pure,
-      borderTopColor: dynamicTheme.borderLight
-    }]}>
+    <View
+      style={[
+        styles.inputBarWrapper,
+        {
+          backgroundColor: dynamicTheme.pure,
+          borderTopColor: dynamicTheme.borderLight,
+        },
+      ]}>
       {attachedFiles.length > 0 && (
         <View style={styles.attachedFilesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {attachedFiles.map((file) => (
-              <FileChip key={file.id} file={file} onRemove={() => onRemoveFile(file.id)} dynamicTheme={dynamicTheme} />
+              <FileChip
+                key={file.id}
+                file={file}
+                onRemove={() => onRemoveFile(file.id)}
+                dynamicTheme={dynamicTheme}
+              />
             ))}
           </ScrollView>
         </View>
       )}
 
-      <View style={[styles.inputBarContainer, { 
-        backgroundColor: dynamicTheme.surfaceAlt,
-        borderColor: dynamicTheme.borderLight
-      }]}>
-        <TouchableOpacity style={[styles.attachButton, { backgroundColor: dynamicTheme.pure }]} onPress={onAttach} activeOpacity={0.7}>
+      <View
+        style={[
+          styles.inputBarContainer,
+          {
+            backgroundColor: dynamicTheme.surfaceAlt,
+            borderColor: dynamicTheme.borderLight,
+          },
+        ]}>
+        <TouchableOpacity
+          style={[styles.attachButton, { backgroundColor: dynamicTheme.pure }]}
+          onPress={onAttach}
+          activeOpacity={0.7}>
           <Plus size={22} color={dynamicTheme.secondary} strokeWidth={2} />
         </TouchableOpacity>
 
         <TextInput
+          ref={inputRef}
           style={[styles.textInput, { color: dynamicTheme.navy }]}
           value={value}
           onChangeText={onChangeText}
@@ -663,11 +943,18 @@ const InputBar: React.FC<{
 
         {value.trim().length > 0 && (
           <TouchableOpacity
-            style={[styles.sendButton, styles.sendButtonActive, { backgroundColor: dynamicTheme.brand }]}
+            style={[
+              styles.sendButton,
+              styles.sendButtonActive,
+              {
+                backgroundColor: canSend
+                  ? dynamicTheme.brand
+                  : dynamicTheme.inactive,
+              },
+            ]}
             onPress={handleSend}
             disabled={!canSend}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <ArrowUp size={18} color={dynamicTheme.pure} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
@@ -715,7 +1002,9 @@ const PharmacopediaChat: React.FC = () => {
   const [contextFiles, setContextFiles] = useState<AttachedFile[]>([]);
   const [showContextModal, setShowContextModal] = useState(false);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
-  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(DEFAULT_PHARMA_PROMPTS);
+  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(
+    DEFAULT_PHARMA_PROMPTS,
+  );
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [chatbotToken, setChatbotToken] = useState<string | null>(null);
@@ -733,21 +1022,38 @@ const PharmacopediaChat: React.FC = () => {
       try {
         console.log('[PharmacopediaChat] Fetching chatbot service token...');
         const response = await getChatbotServiceToken();
-        
+
         if (response.data?.success && response.data?.data?.serviceToken) {
           setChatbotToken(response.data.data.serviceToken);
           console.log('[PharmacopediaChat] Chatbot token fetched successfully');
         } else {
-          console.error('[PharmacopediaChat] Invalid token response:', response.data);
+          console.error(
+            '[PharmacopediaChat] Invalid token response:',
+            response.data,
+          );
         }
       } catch (error: any) {
-        console.error('[PharmacopediaChat] Error fetching chatbot token:', error);
+        console.error(
+          '[PharmacopediaChat] Error fetching chatbot token:',
+          error,
+        );
       }
     };
 
     fetchChatbotToken();
   }, []);
 
+  // Automatically start a new session when the screen loads
+  useEffect(() => {
+    if (
+      chatbotToken &&
+      loggedInUser &&
+      !currentSessionId &&
+      messages.length === 0
+    ) {
+      handleNewSession();
+    }
+  }, [chatbotToken, loggedInUser, currentSessionId]);
 
   const isEmptyState = messages.length === 0;
 
@@ -767,9 +1073,13 @@ const PharmacopediaChat: React.FC = () => {
 
   const handleNewSession = async () => {
     triggerHaptic('light');
-    
+
     if (!loggedInUser || !chatbotToken) {
-      customToast('error', 'Authentication Error', 'Please login again to create a session.');
+      customToast(
+        'error',
+        'Authentication Error',
+        'Please login again to create a session.',
+      );
       return;
     }
 
@@ -777,47 +1087,64 @@ const PharmacopediaChat: React.FC = () => {
     try {
       const userId = loggedInUser.id || loggedInUser._id;
       console.log('[PharmacopediaChat] Creating new session for user:', userId);
-      
+
       const response = await createPharmaSession(userId, chatbotToken);
-      
+
       if (response.data?.success && response.data?.data?.sessionId) {
         setCurrentSessionId(response.data.data.sessionId);
-        
+
         // Start the chat with a greeting
         setMessages([
           {
             id: Date.now().toString(),
             role: 'assistant',
-            content: `Hello! I'm your **Pharmacopedia** assistant. I can help you with drug information, interactions, dosing guidelines, and more. What would you like to know?`,
+            content: t('pharmacopediaChat.defaultMessage'),
             timestamp: new Date(),
-          }
+          },
         ]);
-        
-        customToast('success', 'Session Created', 'New pharmacopedia session started');
-        console.log('[PharmacopediaChat] Session created:', response.data.data.sessionId);
+
+        customToast(
+          'success',
+          t('pharmacopediaChat.toast.sessionCreated'),
+          t('pharmacopediaChat.toast.startedPharmacopedia'),
+        );
+        console.log(
+          '[PharmacopediaChat] Session created:',
+          response.data.data.sessionId,
+        );
       } else {
         throw new Error('Invalid response from server');
       }
     } catch (error: any) {
       console.error('[PharmacopediaChat] Error creating session:', error);
-      customToast('error', 'Error', 'Failed to create pharmacopedia session');
+      customToast(
+        'error',
+        t('common.error'),
+        t('pharmacopediaChat.toast.createError'),
+      );
     } finally {
       setIsCreatingSession(false);
     }
   };
 
-  const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role,
-      content,
-      citations,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
-    return newMessage.id;
-  }, []);
+  const addMessage = useCallback(
+    (role: MessageRole, content: string, citations?: Citation[]) => {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role,
+        content,
+        citations,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
+      return newMessage.id;
+    },
+    [],
+  );
 
   const handleSelectSession = (session: ConsultSession) => {
     if (session.messages && Array.isArray(session.messages)) {
@@ -830,7 +1157,11 @@ const PharmacopediaChat: React.FC = () => {
       setMessages(formattedMessages);
       setCurrentSessionId(session._id); // Store the session ID for messaging
       setShowSessionsModal(false);
-      customToast('success', 'Conversation Loaded', 'History has been successfully loaded');
+      customToast(
+        'success',
+        'Conversation Loaded',
+        'History has been successfully loaded',
+      );
     }
   };
 
@@ -845,48 +1176,78 @@ const PharmacopediaChat: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             if (!chatbotToken) {
-              customToast('error', 'Authentication Error', 'Session token not found.');
+              customToast(
+                'error',
+                'Authentication Error',
+                'Session token not found.',
+              );
               return;
             }
             try {
               await deletePharmaSession(sessionId, chatbotToken);
-              setPastSessions((prev) => prev.filter((s) => s._id !== sessionId));
-              customToast('success', 'Deleted', 'Conversation has been deleted');
+              setPastSessions((prev) =>
+                prev.filter((s) => s._id !== sessionId),
+              );
+              customToast(
+                'success',
+                'Deleted',
+                'Conversation has been deleted',
+              );
               triggerHaptic('light');
             } catch (error: any) {
-              console.error('[PharmacopediaChat] Error deleting session:', error);
+              console.error(
+                '[PharmacopediaChat] Error deleting session:',
+                error,
+              );
               customToast('error', 'Error', 'Failed to delete conversation');
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handleViewHistory = async () => {
     triggerHaptic('light');
     if (!loggedInUser || !chatbotToken) {
-      customToast('error', 'Authentication Error', 'Session token not found. Please try again.');
+      customToast(
+        'error',
+        'Authentication Error',
+        'Session token not found. Please try again.',
+      );
       return;
     }
 
     setShowSessionsModal(true);
     setIsLoadingSessions(true);
-    
+
     try {
       const userId = loggedInUser.id || loggedInUser._id;
-      console.log('[PharmacopediaChat] Fetching past sessions for user:', userId);
+      console.log(
+        '[PharmacopediaChat] Fetching past sessions for user:',
+        userId,
+      );
       const response = await getPastPharmaSessions(userId, chatbotToken);
-      
+
       if (response.data?.success) {
         setPastSessions(response.data.data);
-        console.log('[PharmacopediaChat] Fetched sessions count:', response.data.data.length);
+        console.log(
+          '[PharmacopediaChat] Fetched sessions count:',
+          response.data.data.length,
+        );
       } else {
-        console.error('[PharmacopediaChat] Failed to fetch sessions:', response.data);
+        console.error(
+          '[PharmacopediaChat] Failed to fetch sessions:',
+          response.data,
+        );
       }
     } catch (error: any) {
       console.error('[PharmacopediaChat] Error fetching history:', error);
-      customToast('error', 'Connection Error', 'Failed to load past conversations');
+      customToast(
+        'error',
+        'Connection Error',
+        'Failed to load past conversations',
+      );
     } finally {
       setIsLoadingSessions(false);
     }
@@ -897,7 +1258,11 @@ const PharmacopediaChat: React.FC = () => {
     if (!query && attachedFiles.length === 0) return;
 
     if (!currentSessionId) {
-      customToast('info', 'New Session', 'Creating a new pharmacopedia session...');
+      customToast(
+        'info',
+        'New Session',
+        'Creating a new pharmacopedia session...',
+      );
       await handleNewSession();
       if (!currentSessionId) return; // Session creation might have failed
     }
@@ -907,9 +1272,12 @@ const PharmacopediaChat: React.FC = () => {
       return;
     }
 
-    const userContent = attachedFiles.length > 0
-      ? `${query}\n\n[Attached: ${attachedFiles.map(f => f.name).join(', ')}]`
-      : query;
+    const userContent =
+      attachedFiles.length > 0
+        ? `${query}\n\n[Attached: ${attachedFiles
+            .map((f) => f.name)
+            .join(', ')}]`
+        : query;
     addMessage('user', userContent);
 
     if (attachedFiles.length > 0) {
@@ -918,33 +1286,42 @@ const PharmacopediaChat: React.FC = () => {
 
     setInputText('');
     setAttachedFiles([]);
-    Keyboard.dismiss();
 
     setIsLoading(true);
     const loadingId = Date.now().toString() + '-loading';
     setMessages((prev) => [
       ...prev,
-      { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
+      {
+        id: loadingId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isLoading: true,
+      },
     ]);
 
     try {
       // Map existing messages to history format
-      const history = messages.map(m => ({
+      const history = messages.map((m) => ({
         role: m.role,
-        content: m.content
+        content: m.content,
       }));
 
       const response = await sendPharmaMessage(
         currentSessionId,
         query || '[Attached Files]',
         chatbotToken,
-        { history }
+        { history },
       );
 
       setMessages((prev) => prev.filter((m) => m.id !== loadingId));
 
       if (response.data?.success) {
-        addMessage('assistant', response.data.data.message, response.data.data.sources);
+        addMessage(
+          'assistant',
+          response.data.data.message,
+          response.data.data.sources,
+        );
       } else {
         throw new Error('Failed to get response');
       }
@@ -969,7 +1346,9 @@ const PharmacopediaChat: React.FC = () => {
 
   const handleFilePick = async () => {
     try {
-      const result = await pick({ type: [types.pdf, types.docx, types.plainText] });
+      const result = await pick({
+        type: [types.pdf, types.docx, types.plainText],
+      });
       if (result && result[0]) {
         const newFile: AttachedFile = {
           id: Date.now().toString(),
@@ -1005,7 +1384,10 @@ const PharmacopediaChat: React.FC = () => {
 
   const handleGallery = async () => {
     try {
-      const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
       if (result.assets && result.assets[0]) {
         const newFile: AttachedFile = {
           id: Date.now().toString(),
@@ -1041,88 +1423,131 @@ const PharmacopediaChat: React.FC = () => {
       content: template.refinedPrompt,
       createdAt: new Date().toISOString(),
     };
-    setCustomPrompts(prev => [newPrompt, ...prev]);
+    setCustomPrompts((prev) => [newPrompt, ...prev]);
     setSelectedPromptId(newPrompt.id);
     triggerHaptic('medium');
   };
 
   const handleSelectPrompt = (prompt: CustomPrompt) => {
-    setSelectedPromptId(prompt.id);
+    setSelectedPromptId((prev) => (prev === prompt.id ? null : prompt.id));
     setShowPromptLibrary(false);
   };
 
   const handleDeletePrompt = (id: string) => {
-    setCustomPrompts(prev => prev.filter(p => p.id !== id));
+    setCustomPrompts((prev) => prev.filter((p) => p.id !== id));
     if (selectedPromptId === id) setSelectedPromptId(null);
   };
 
-  const selectedPrompt = customPrompts.find(p => p.id === selectedPromptId);
+  const selectedPrompt = customPrompts.find((p) => p.id === selectedPromptId);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]}
+      edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
+        keyboardVerticalOffset={0}>
         {/* Header */}
-        <View style={[styles.header, { 
-          backgroundColor: DYNAMIC_THEME.pure,
-          borderBottomColor: DYNAMIC_THEME.borderLight
-        }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: DYNAMIC_THEME.pure,
+              borderBottomColor: DYNAMIC_THEME.borderLight,
+            },
+          ]}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
             <ChevronLeft size={24} color={DYNAMIC_THEME.navy} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>{t('pharmacopediaChat.title')}</Text>
+            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>
+              {t('pharmacopediaChat.title')}
+            </Text>
             {contextFiles.length > 0 && (
-              <Text style={[styles.headerSubtitle, { color: DYNAMIC_THEME.secondary }]}>
-                {t('pharmacopediaChat.filesLoaded', { count: contextFiles.length })}
+              <Text
+                style={[
+                  styles.headerSubtitle,
+                  { color: DYNAMIC_THEME.secondary },
+                ]}>
+                {t('pharmacopediaChat.filesLoaded', {
+                  count: contextFiles.length,
+                })}
               </Text>
             )}
             {selectedPrompt && (
-              <Text style={[styles.headerPromptBadge, { 
-                color: DYNAMIC_THEME.brand,
-                backgroundColor: DYNAMIC_THEME.brandLight
-              }]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.headerPromptBadge,
+                  {
+                    color: DYNAMIC_THEME.brand,
+                    backgroundColor: DYNAMIC_THEME.brandLight,
+                  },
+                ]}
+                numberOfLines={1}>
                 {selectedPrompt.title}
               </Text>
             )}
           </View>
 
           <View style={styles.headerRightButtons}>
-            <TouchableOpacity onPress={handleNewSession} style={styles.headerButton} disabled={isCreatingSession}>
+            <TouchableOpacity
+              onPress={handleNewSession}
+              style={styles.headerButton}
+              disabled={isCreatingSession}>
               {isCreatingSession ? (
                 <ActivityIndicator size="small" color={DYNAMIC_THEME.brand} />
               ) : (
                 <Plus size={22} color={DYNAMIC_THEME.navy} />
               )}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowPromptLibrary(true)} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={() => setShowPromptLibrary(true)}
+              style={styles.headerButton}>
               <Sparkles size={20} color={DYNAMIC_THEME.brand} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleViewHistory} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={handleViewHistory}
+              style={styles.headerButton}>
               <History size={22} color={DYNAMIC_THEME.navy} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Content area */}
-        <View style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
+        <View
+          style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
           {isEmptyState ? (
             <ScrollView
               contentContainerStyle={styles.emptyState}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               <PulsingAILogo />
-              <Text style={[styles.emptyStateGreeting, { color: DYNAMIC_THEME.navy }]}>{t('pharmacopediaChat.greeting')}</Text>
-              <Text style={[styles.emptyStateSubtext, { color: DYNAMIC_THEME.secondary }]}>{t('pharmacopediaChat.subtitle')}</Text>
-              
+              <Text
+                style={[
+                  styles.emptyStateGreeting,
+                  { color: DYNAMIC_THEME.navy },
+                ]}>
+                {t('pharmacopediaChat.greeting')}
+              </Text>
+              <Text
+                style={[
+                  styles.emptyStateSubtext,
+                  { color: DYNAMIC_THEME.secondary },
+                ]}>
+                {t('pharmacopediaChat.subtitle')}
+              </Text>
+
               {/* Drug Combinations */}
               <View style={styles.drugCombinationsContainer}>
-                <Text style={[styles.drugCombinationsTitle, { color: DYNAMIC_THEME.tertiary }]}>{t('pharmacopediaChat.exampleCombinations')}</Text>
+                <Text
+                  style={[
+                    styles.drugCombinationsTitle,
+                    { color: DYNAMIC_THEME.tertiary },
+                  ]}>
+                  {t('pharmacopediaChat.exampleCombinations')}
+                </Text>
                 <View style={styles.drugCombinationsGrid}>
                   {drugCombinations.map((combo, index) => (
                     <DrugCombinationChip
@@ -1141,8 +1566,7 @@ const PharmacopediaChat: React.FC = () => {
               style={styles.chatStream}
               contentContainerStyle={styles.chatStreamContent}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
@@ -1408,8 +1832,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
-  userMessageText: {
-  },
+  userMessageText: {},
   citationsContainer: {
     marginTop: 16,
     paddingTop: 12,
@@ -1518,8 +1941,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sendButtonActive: {
-  },
+  sendButtonActive: {},
   fileChip: {
     flexDirection: 'row',
     alignItems: 'center',

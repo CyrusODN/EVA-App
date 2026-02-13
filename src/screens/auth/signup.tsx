@@ -22,7 +22,11 @@ import PrimaryButton from '../../components/primaryButton';
 import { colors } from '../../constants/colors';
 import { useNavigation } from '@react-navigation/native';
 import { images } from '../../constants/images';
-import {signup, googleMobileLogin, setAuthToken } from '../../services/authService';
+import {
+  signup,
+  googleMobileLogin,
+  setAuthToken,
+} from '../../services/authService';
 import { customToast } from '../../utils/toastMessage';
 import { validateInput } from '../../utils/inputValidations';
 import userStore from '../../store/user';
@@ -104,7 +108,8 @@ const SignUp = () => {
         } catch (_) {}
 
         try {
-          const webClientId = '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com'
+          const webClientId =
+            '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com';
           await GoogleSignin.configure({
             webClientId,
           });
@@ -113,14 +118,16 @@ const SignUp = () => {
         }
 
         try {
-      const account = await GoogleSignin.signIn();
+          const account = await GoogleSignin.signIn();
           console.log('Google Sign In Account:', account);
           if (account?.idToken) {
             idToken = account.idToken;
-            googleEmail = account?.user?.email || account?.data?.user?.email || '';
+            googleEmail =
+              account?.user?.email || account?.data?.user?.email || '';
           } else if (account?.data?.idToken) {
-             idToken = account.data.idToken;
-             googleEmail = account?.user?.email || account?.data?.user?.email || '';
+            idToken = account.data.idToken;
+            googleEmail =
+              account?.user?.email || account?.data?.user?.email || '';
           }
         } catch (error: any) {
           if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -131,7 +138,11 @@ const SignUp = () => {
             console.log('Sign in is in progress already');
             return;
           } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-            customToast('error', 'Error', 'Play services not available or outdated');
+            customToast(
+              'error',
+              'Error',
+              'Play services not available or outdated',
+            );
             setLoading(false);
             return;
           } else {
@@ -140,8 +151,8 @@ const SignUp = () => {
           }
         }
       } catch (err) {
-         // Module not found or other setup error
-         console.warn('Google Sign In setup error:', err);
+        // Module not found or other setup error
+        console.warn('Google Sign In setup error:', err);
       }
 
       if (!idToken) {
@@ -154,15 +165,21 @@ const SignUp = () => {
       // New API call using googleMobileLogin
       const loginPayload = {
         idToken,
-        email : googleEmail,
+        email: googleEmail,
         isSignup: true,
       };
-      console.log('Google Sign-In caught. Preparing backend payload:', JSON.stringify(loginPayload, null, 2));
+      console.log(
+        'Google Sign-In caught. Preparing backend payload:',
+        JSON.stringify(loginPayload, null, 2),
+      );
 
       const resp = await googleMobileLogin(loginPayload);
       console.log('Google Mobile Login Status:', resp.status);
-      console.log('Google Mobile Login API Response Body:', JSON.stringify(resp.data, null, 2));
-      
+      console.log(
+        'Google Mobile Login API Response Body:',
+        JSON.stringify(resp.data, null, 2),
+      );
+
       const payload = resp?.data?.data || resp?.data;
       const token = payload?.token || payload?.accessToken;
 
@@ -182,7 +199,7 @@ const SignUp = () => {
         payload?.userId;
 
       if (reqId) {
-         navigation.replace('otpVerification', {
+        navigation.replace('otpVerification', {
           context: 'sso',
           requestId: reqId ? String(reqId) : undefined,
           email: googleEmail,
@@ -190,33 +207,35 @@ const SignUp = () => {
         });
         return;
       }
-      
+
       // Fallback if no token and no requestId found (unexpected state)
       customToast('error', 'Error', 'Unexpected response from server');
-
     } catch (error: any) {
       console.error('Google Mobile Login FAILED:', error);
       if (error?.response) {
-         console.error('Error Response Data:', JSON.stringify(error.response.data, null, 2));
-         console.error('Error Response Status:', error.response.status);
+        console.error(
+          'Error Response Data:',
+          JSON.stringify(error.response.data, null, 2),
+        );
+        console.error('Error Response Status:', error.response.status);
       }
 
       const message =
         error?.response?.data?.message ||
         error?.message ||
         'Failed to initiate Google login';
-        
+
       if (
         message === 'User not authorized' ||
         message.includes('not whitelisted')
       ) {
-         customToast(
+        customToast(
           'error',
           'Access Denied',
           'You are not authorized to use this service',
         );
       } else {
-         customToast('error', t('common.error'), message);
+        customToast('error', t('common.error'), message);
       }
     } finally {
       setLoading(false);
@@ -224,17 +243,21 @@ const SignUp = () => {
   };
 
   return (
-    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
-      <StatusBar 
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
-        backgroundColor={themeColors.canvas} 
+    <View
+      style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.canvas}
       />
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={[styles.scrollContent ,{paddingBottom: insets.bottom + hp(2)}]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + hp(2) },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -244,18 +267,25 @@ const SignUp = () => {
               <View style={styles.logoWrapper}>
                 <RemedyLogo width={wp(25.5)} height={wp(25.5)} />
                 <View style={styles.productNameContainer}>
-                  <Text style={[
-                    styles.mioText, 
-                    { 
-                      color: isDark ? '#FAFAFA' : '#1A202C',
-                      textShadowColor: isDark ? 'rgba(70, 183, 198, 0.5)' : 'transparent',
-                      textShadowOffset: { width: 0, height: 0 },
-                      textShadowRadius: 20
-                    }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.mioText,
+                      {
+                        color: isDark ? '#FAFAFA' : '#1A202C',
+                        textShadowColor: isDark
+                          ? 'rgba(70, 183, 198, 0.5)'
+                          : 'transparent',
+                        textShadowOffset: { width: 0, height: 0 },
+                        textShadowRadius: 20,
+                      },
+                    ]}>
                     EVA
                   </Text>
-                  <Text style={[styles.mioSubText, { color: themeColors.accentPrimary }]}>
+                  <Text
+                    style={[
+                      styles.mioSubText,
+                      { color: themeColors.accentPrimary },
+                    ]}>
                     {t('login.productSubtitle')}
                   </Text>
                 </View>
@@ -270,10 +300,14 @@ const SignUp = () => {
                   value={email}
                   setValue={setEmail}
                   mode="email"
-                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
-                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  backgroundColor={
+                    isDark ? themeColors.inputBackground : '#FAFAFA'
+                  }
+                  borderColor={isDark ? themeColors.inputBorder : 'transparent'}
                   textColor={themeColors.textPrimary}
-                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
+                  placeholderTextColor={
+                    isDark ? themeColors.textMuted : undefined
+                  }
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -293,10 +327,14 @@ const SignUp = () => {
                   value={password}
                   setValue={setPassword}
                   isPassword={true}
-                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
-                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  backgroundColor={
+                    isDark ? themeColors.inputBackground : '#FAFAFA'
+                  }
+                  borderColor={isDark ? themeColors.inputBorder : 'transparent'}
                   textColor={themeColors.textPrimary}
-                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
+                  placeholderTextColor={
+                    isDark ? themeColors.textMuted : undefined
+                  }
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -316,10 +354,14 @@ const SignUp = () => {
                   value={confirmPassword}
                   setValue={setConfirmPassword}
                   isPassword={true}
-                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
-                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  backgroundColor={
+                    isDark ? themeColors.inputBackground : '#FAFAFA'
+                  }
+                  borderColor={isDark ? themeColors.inputBorder : 'transparent'}
                   textColor={themeColors.textPrimary}
-                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
+                  placeholderTextColor={
+                    isDark ? themeColors.textMuted : undefined
+                  }
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -332,7 +374,14 @@ const SignUp = () => {
               </View>
 
               {/* Sign Up Button */}
-              <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
+              <View
+                style={[
+                  styles.primaryButtonWrapper,
+                  isDark && {
+                    shadowColor: themeColors.shadowColor,
+                    shadowOpacity: themeColors.shadowOpacity,
+                  },
+                ]}>
                 <PrimaryButton
                   text={t('login.signUp')}
                   onPress={handleSignUp}
@@ -348,39 +397,77 @@ const SignUp = () => {
 
               {/* Sign Up Link */}
               <View style={styles.signUpSection}>
-                 <Text variant="bodyMedium" style={[styles.noAccountText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.noAccountText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   {t('login.alreadyHaveAccount')}{' '}
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('login')}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                  <Text variant="bodyMedium" style={[styles.signUpText, { color: themeColors.accentPrimary }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.signUpText,
+                      { color: themeColors.accentPrimary },
+                    ]}>
                     {t('login.signIn')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.orDivider}>
-
-                <View style={[styles.dividerLine, { backgroundColor: isDark ? themeColors.borderSubtle : '#E5E5EA' }]} />
-                <Text style={[styles.dividerText, { color: isDark ? themeColors.textMuted : '#86868b' }]}>{t('login.or')}</Text>
-                <View style={[styles.dividerLine, { backgroundColor: isDark ? themeColors.borderSubtle : '#E5E5EA' }]} />
+                <View
+                  style={[
+                    styles.dividerLine,
+                    {
+                      backgroundColor: isDark
+                        ? themeColors.borderSubtle
+                        : '#E5E5EA',
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.dividerText,
+                    { color: isDark ? themeColors.textMuted : '#86868b' },
+                  ]}>
+                  {t('login.or')}
+                </Text>
+                <View
+                  style={[
+                    styles.dividerLine,
+                    {
+                      backgroundColor: isDark
+                        ? themeColors.borderSubtle
+                        : '#E5E5EA',
+                    },
+                  ]}
+                />
               </View>
 
               {/* Google Sign In - Apple Style */}
               <TouchableOpacity
-                                style={[
+                style={[
                   styles.googleButton,
-                  { 
+                  {
                     backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-                    borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
-                  }
+                    borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0',
+                  },
                 ]}
                 onPress={handleGoogleSignUp}
                 disabled={loading}
                 activeOpacity={0.7}>
                 <Image source={images.googleIcon} style={styles.googleIcon} />
-                <Text variant="labelLarge" style={[styles.googleButtonText, { color: themeColors.textPrimary }]}>
+                <Text
+                  variant="labelLarge"
+                  style={[
+                    styles.googleButtonText,
+                    { color: themeColors.textPrimary },
+                  ]}>
                   {t('login.signUpWithGoogle')}
                 </Text>
               </TouchableOpacity>
@@ -388,9 +475,16 @@ const SignUp = () => {
 
             {/* Footer - Pushed to bottom */}
             <View style={styles.footer}>
-              <Text variant="bodySmall" style={[styles.footerText, { color: themeColors.textMuted }]}>
+              <Text
+                variant="bodySmall"
+                style={[styles.footerText, { color: themeColors.textMuted }]}>
                 {t('login.protectedBy')}{' '}
-                <Text variant="bodySmall" style={[styles.brandText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.brandText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   Remedy AI
                 </Text>
               </Text>
@@ -432,7 +526,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 5,
-        alignItems: 'center',
+    alignItems: 'center',
   },
   productNameContainer: {
     alignItems: 'center',
@@ -443,7 +537,8 @@ const styles = StyleSheet.create({
     fontWeight: '300', // Light weight
     letterSpacing: 12, // Very wide tracking
     textTransform: 'uppercase',
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
     marginBottom: 2,
   },
   mioSubText: {
@@ -451,7 +546,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 3,
     textTransform: 'uppercase',
-    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
     opacity: 0.9,
   },
   logo: {

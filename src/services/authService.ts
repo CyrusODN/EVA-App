@@ -147,15 +147,16 @@ export const generateNotes = (
   sessionId: string,
   payload: {
     noteType: string;
-    visitType: string;
-    specialization: string;
-    length: string;
+    visitType?: string;
+    specialization?: string;
+    length?: string;
+    llmModel?: string;
+    promptId?: string;
+    followUpVisits?: string[];
+    followUpText?: string;
   },
 ): Promise<AxiosResponse<any>> => {
-  return api.post(`/event/${sessionId}/generate-notes/stream`, {
-    ...payload,
-    llmModel: 'gpt-4.1', // Hardcoded as requested
-  });
+  return api.post(`/event/${sessionId}/generate-notes/stream`, payload);
 };
 
 export const resetEvent = (sessionId: string): Promise<AxiosResponse<any>> => {

@@ -51,23 +51,30 @@ const Header: React.FC<HeaderProps> = ({
   showBorder = true,
 }) => {
   const { colors: themeColors, isDark } = useTheme();
-  
+
   // Use props if provided, otherwise use theme colors
-  const finalTextColor = textColor || (isDark ? themeColors.textPrimary : colors.onSecondary);
-  const finalBackgroundColor = backgroundColor || (isDark ? themeColors.layer2 : colors.surface);
-  const finalBorderColor = isDark ? themeColors.borderNormal : colors.borderColor;
-  const finalSubtitleColor = isDark ? themeColors.textSecondary : colors.onSurfaceVariant;
+  const finalTextColor =
+    textColor || (isDark ? themeColors.textPrimary : colors.onSecondary);
+  const finalBackgroundColor =
+    backgroundColor || (isDark ? themeColors.layer2 : colors.surface);
+  const finalBorderColor = isDark
+    ? themeColors.borderNormal
+    : colors.borderColor;
+  const finalSubtitleColor = isDark
+    ? themeColors.textSecondary
+    : colors.onSurfaceVariant;
   const finalIconColor = isDark ? themeColors.textPrimary : colors.onSurface;
-  
+
   return (
-    <View style={[
-      styles.headerContainer, 
-      { 
-        backgroundColor: finalBackgroundColor,
-        borderBottomColor: finalBorderColor
-      }, 
-      !showBorder && styles.noBorder
-    ]}>
+    <View
+      style={[
+        styles.headerContainer,
+        {
+          backgroundColor: finalBackgroundColor,
+          borderBottomColor: finalBorderColor,
+        },
+        !showBorder && styles.noBorder,
+      ]}>
       <View style={styles.headerContent}>
         {/* Left Icon */}
         {leftIcon && (
@@ -79,19 +86,24 @@ const Header: React.FC<HeaderProps> = ({
         {/* Title Container */}
         <View style={styles.headerTitleContainer}>
           {showIcon && Icon && (
-            <View style={[styles.headerIconContainer, { backgroundColor: themeColors.accentPrimary }]}>
+            <View
+              style={[
+                styles.headerIconContainer,
+                { backgroundColor: themeColors.accentPrimary },
+              ]}>
               <Icon size={20} color="white" />
             </View>
           )}
           <View style={styles.headerTextContainer}>
             <Text
               variant="headlineLarge"
-              style={[textStyles.headlineLarge, { color: finalTextColor }]}
-            >
+              style={[textStyles.headlineLarge, { color: finalTextColor }]}>
               {title}
             </Text>
             {showSubtitle && subtitle && (
-              <Text variant="bodySmall" style={[styles.subtitle, { color: finalSubtitleColor }]}>
+              <Text
+                variant="bodySmall"
+                style={[styles.subtitle, { color: finalSubtitleColor }]}>
                 {subtitle}
               </Text>
             )}
@@ -168,8 +180,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 2,
-    fontFamily:
-      Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
     fontSize: 13,
     letterSpacing: 0.2,
   },

@@ -60,20 +60,35 @@ const SavedDocumentsList: React.FC<SavedDocumentsListProps> = ({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={[styles.savedModalContainer, { backgroundColor: DYNAMIC_THEME.background }]}>
-        <View style={[styles.savedModalHeader, { borderBottomColor: DYNAMIC_THEME.border }]}>
-          <Text style={[styles.savedModalTitle, { color: DYNAMIC_THEME.text }]}>{title}</Text>
+      onRequestClose={onClose}>
+      <SafeAreaView
+        style={[
+          styles.savedModalContainer,
+          { backgroundColor: DYNAMIC_THEME.background },
+        ]}>
+        <View
+          style={[
+            styles.savedModalHeader,
+            { borderBottomColor: DYNAMIC_THEME.border },
+          ]}>
+          <Text style={[styles.savedModalTitle, { color: DYNAMIC_THEME.text }]}>
+            {title}
+          </Text>
           <TouchableOpacity onPress={onClose}>
             <X size={22} color={DYNAMIC_THEME.iconColor} />
           </TouchableOpacity>
         </View>
         <ScrollView contentContainerStyle={styles.savedList}>
           {items.length === 0 ? (
-            <Text style={[styles.savedEmptyText, { color: DYNAMIC_THEME.textMuted }]}>{emptyText}</Text>
+            <Text
+              style={[
+                styles.savedEmptyText,
+                { color: DYNAMIC_THEME.textMuted },
+              ]}>
+              {emptyText}
+            </Text>
           ) : (
-            items.map(item => (
+            items.map((item) => (
               <View
                 key={item.id}
                 style={[
@@ -81,36 +96,55 @@ const SavedDocumentsList: React.FC<SavedDocumentsListProps> = ({
                   {
                     backgroundColor: DYNAMIC_THEME.surface,
                     borderColor: DYNAMIC_THEME.border,
-                    ...(isDark ? {
-                      shadowColor: '#46B7C6',
-                      shadowOffset: { width: 0, height: 0 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 8,
-                      elevation: 3,
-                    } : {})
-                  }
-                ]}
-              >
+                    ...(isDark
+                      ? {
+                          shadowColor: '#46B7C6',
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 8,
+                          elevation: 3,
+                        }
+                      : {}),
+                  },
+                ]}>
                 <View style={styles.savedCardHeader}>
                   <TouchableOpacity
                     style={styles.savedCardContent}
-                    onPress={() => onSelectItem(item)}
-                  >
-                    <Text style={[styles.savedTitle, { color: DYNAMIC_THEME.text }]}>{item.title}</Text>
-                    <Text style={[styles.savedMeta, { color: DYNAMIC_THEME.textMuted }]}>
+                    onPress={() => onSelectItem(item)}>
+                    <Text
+                      style={[
+                        styles.savedTitle,
+                        { color: DYNAMIC_THEME.text },
+                      ]}>
+                      {item.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.savedMeta,
+                        { color: DYNAMIC_THEME.textMuted },
+                      ]}>
                       {new Date(item.createdAt).toLocaleDateString()}
                     </Text>
                   </TouchableOpacity>
                   <View style={styles.savedActions}>
-                    <TouchableOpacity onPress={() => onRename(item.id, item.title)}>
+                    <TouchableOpacity
+                      onPress={() => onRename(item.id, item.title)}>
                       <Text style={styles.savedRename}>{renameText}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => onDelete(item.id, item.title)}>
-                      <Text style={[styles.savedRename, styles.savedDelete]}>{deleteText}</Text>
+                    <TouchableOpacity
+                      onPress={() => onDelete(item.id, item.title)}>
+                      <Text style={[styles.savedRename, styles.savedDelete]}>
+                        {deleteText}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
-                <Text style={[styles.savedPreview, { color: DYNAMIC_THEME.textSecondary }]} numberOfLines={2}>
+                <Text
+                  style={[
+                    styles.savedPreview,
+                    { color: DYNAMIC_THEME.textSecondary },
+                  ]}
+                  numberOfLines={2}>
                   {item.content.replace(/\n/g, ' ')}
                 </Text>
               </View>

@@ -15,12 +15,7 @@ import {
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import {
-  BookOpen,
-  FileText,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react-native';
+import { BookOpen, FileText, ArrowRight, Sparkles } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../constants/colors';
 import Header from '../../components/header';
@@ -32,17 +27,17 @@ const THEME = {
   pure: '#FFFFFF',
   surface: '#F9FAFB',
   surfaceAlt: '#F3F4F6',
-  
+
   // Text
   navy: '#111827',
   secondary: '#6B7280',
   tertiary: '#9CA3AF',
-  
+
   // Brand
   brand: '#46B7C6',
   brandLight: 'rgba(70, 183, 198, 0.08)',
   brandMedium: 'rgba(70, 183, 198, 0.15)',
-  
+
   // Borders
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
@@ -83,31 +78,47 @@ const ResearchModuleCard: React.FC<ResearchModuleCardProps> = ({
       onPress={handlePress}
       style={({ pressed }) => [
         styles.moduleCard,
-        { 
+        {
           backgroundColor: dynamicTheme.pure,
           borderColor: dynamicTheme.borderLight,
-          shadowColor: isDark ? dynamicTheme.brand : '#000'
+          shadowColor: isDark ? dynamicTheme.brand : '#000',
         },
         pressed && { backgroundColor: dynamicTheme.surface },
-      ]}
-    >
+      ]}>
       <View style={styles.cardContent}>
         {/* Icon container */}
         <View style={styles.iconWrapper}>
-          <View style={[styles.iconContainer, { backgroundColor: dynamicTheme.brandMedium }]}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: dynamicTheme.brandMedium },
+            ]}>
             <Icon size={24} color={dynamicTheme.brand} strokeWidth={1.8} />
           </View>
         </View>
 
         {/* Text content */}
         <View style={styles.textContent}>
-          <Text style={[styles.cardTitle, { color: dynamicTheme.navy }]}>{title}</Text>
-          <Text style={[styles.cardDescription, { color: dynamicTheme.secondary }]}>{description}</Text>
+          <Text style={[styles.cardTitle, { color: dynamicTheme.navy }]}>
+            {title}
+          </Text>
+          <Text
+            style={[styles.cardDescription, { color: dynamicTheme.secondary }]}>
+            {description}
+          </Text>
         </View>
 
         {/* Arrow indicator */}
-        <View style={[styles.arrowContainer, { backgroundColor: dynamicTheme.surface }]}>
-          <ArrowRight size={20} color={dynamicTheme.tertiary} strokeWidth={1.5} />
+        <View
+          style={[
+            styles.arrowContainer,
+            { backgroundColor: dynamicTheme.surface },
+          ]}>
+          <ArrowRight
+            size={20}
+            color={dynamicTheme.tertiary}
+            strokeWidth={1.5}
+          />
         </View>
       </View>
     </Pressable>
@@ -143,8 +154,14 @@ const Research = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]} edges={['top']}>
-      <View style={[styles.contentWrapper, { backgroundColor: DYNAMIC_THEME.pure }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]}
+      edges={['top']}>
+      <View
+        style={[
+          styles.contentWrapper,
+          { backgroundColor: DYNAMIC_THEME.pure },
+        ]}>
         <Header
           title={t('remediusResearch.main.title')}
           subtitle={t('remediusResearch.main.subtitle')}
@@ -157,14 +174,15 @@ const Research = () => {
         <ScrollView
           style={styles.content}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+          contentContainerStyle={styles.scrollContent}>
           {/* Module cards */}
           <View style={styles.modulesContainer}>
             <ResearchModuleCard
               mode="general"
               title={t('remediusResearch.main.modules.researchAssistant.title')}
-              description={t('remediusResearch.main.modules.researchAssistant.description')}
+              description={t(
+                'remediusResearch.main.modules.researchAssistant.description',
+              )}
               icon={BookOpen}
               onPress={() => handleModulePress('general')}
               dynamicTheme={DYNAMIC_THEME}
@@ -174,7 +192,9 @@ const Research = () => {
             <ResearchModuleCard
               mode="protocol"
               title={t('remediusResearch.main.modules.protocolAssistant.title')}
-              description={t('remediusResearch.main.modules.protocolAssistant.description')}
+              description={t(
+                'remediusResearch.main.modules.protocolAssistant.description',
+              )}
               icon={FileText}
               onPress={() => handleModulePress('protocol')}
               dynamicTheme={DYNAMIC_THEME}
@@ -233,7 +253,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   iconWrapper: {
     marginRight: wp(4),
   },

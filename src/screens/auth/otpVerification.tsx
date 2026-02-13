@@ -376,14 +376,21 @@ const OtpVerification = () => {
   };
 
   return (
-    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.canvas} />
+    <View
+      style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.canvas}
+      />
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + 30 },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -395,10 +402,20 @@ const OtpVerification = () => {
               </View>
 
               <View style={styles.textWrapper}>
-                <Text variant="displayMedium" style={[styles.welcomeTitle, { color: themeColors.textPrimary }]}>
+                <Text
+                  variant="displayMedium"
+                  style={[
+                    styles.welcomeTitle,
+                    { color: themeColors.textPrimary },
+                  ]}>
                   {t('login.twoFactorAuth')}
                 </Text>
-                <Text variant="bodyLarge" style={[styles.welcomeSubtitle, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                <Text
+                  variant="bodyLarge"
+                  style={[
+                    styles.welcomeSubtitle,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   {t('login.enterVerificationCode')}
                 </Text>
               </View>
@@ -408,37 +425,62 @@ const OtpVerification = () => {
             <View style={styles.formSection}>
               <View style={styles.otpRow}>
                 {otpDigits.map((digit, index) => (
-                <TextInput
-                                    key={index}
-                    ref={index === 0 ? d0 : index === 1 ? d1 : index === 2 ? d2 : index === 3 ? d3 : index === 4 ? d4 : d5}
+                  <TextInput
+                    key={index}
+                    ref={
+                      index === 0
+                        ? d0
+                        : index === 1
+                        ? d1
+                        : index === 2
+                        ? d2
+                        : index === 3
+                        ? d3
+                        : index === 4
+                        ? d4
+                        : d5
+                    }
                     style={[
                       styles.otpBox,
-                      { 
-                        backgroundColor: isDark ? themeColors.inputBackground : '#FAFAFA',
-                        borderColor: isDark ? themeColors.inputBorder : '#E5E5EA',
-                        color: themeColors.textPrimary
+                      {
+                        backgroundColor: isDark
+                          ? themeColors.inputBackground
+                          : '#FAFAFA',
+                        borderColor: isDark
+                          ? themeColors.inputBorder
+                          : '#E5E5EA',
+                        color: themeColors.textPrimary,
                       },
                       expired && {
-                         backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F0F0F0',
-                         color: isDark ? 'rgba(255,255,255,0.3)' : '#C7C7CC'
-                      }
+                        backgroundColor: isDark
+                          ? 'rgba(255,255,255,0.02)'
+                          : '#F0F0F0',
+                        color: isDark ? 'rgba(255,255,255,0.3)' : '#C7C7CC',
+                      },
                     ]}
                     value={digit}
-                    onChangeText={t => handleDigitChange(index, t)}
-                 
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  textContentType="oneTimeCode"
-                  editable={!expired}
-                  
-                    onKeyPress={e => handleKeyPress(index, e)}
-                    placeholderTextColor={isDark ? themeColors.textMuted : undefined}
-                />
+                    onChangeText={(t) => handleDigitChange(index, t)}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    textContentType="oneTimeCode"
+                    editable={!expired}
+                    onKeyPress={(e) => handleKeyPress(index, e)}
+                    placeholderTextColor={
+                      isDark ? themeColors.textMuted : undefined
+                    }
+                  />
                 ))}
               </View>
 
               {/* Verify Code Button */}
-              <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
+              <View
+                style={[
+                  styles.primaryButtonWrapper,
+                  isDark && {
+                    shadowColor: themeColors.shadowColor,
+                    shadowOpacity: themeColors.shadowOpacity,
+                  },
+                ]}>
                 <PrimaryButton
                   text={t('login.verifyCode')}
                   onPress={() => handleVerify()}
@@ -453,7 +495,12 @@ const OtpVerification = () => {
               </View>
 
               <View style={styles.resendContainer}>
-                <Text variant="bodySmall" style={[styles.resendText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.resendText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   {expired
                     ? 'Code expired'
                     : `${t('login.resendCodeIn')} ${formatTime(secondsLeft)}`}
@@ -466,9 +513,9 @@ const OtpVerification = () => {
                     variant="bodySmall"
                     style={[
                       styles.resendLink,
-                     { 
+                      {
                         color: themeColors.accentPrimary,
-                        opacity: canResend ? 1 : 0.5 
+                        opacity: canResend ? 1 : 0.5,
                       },
                     ]}>
                     {t('login.resendVerificationCode')}
@@ -479,9 +526,16 @@ const OtpVerification = () => {
 
             {/* Footer - Pushed to bottom */}
             <View style={styles.footer}>
-              <Text variant="bodySmall" style={[styles.footerText,{color:themeColors.textMuted}]}>
+              <Text
+                variant="bodySmall"
+                style={[styles.footerText, { color: themeColors.textMuted }]}>
                 {t('login.protectedBy')}{' '}
-                <Text variant="bodySmall" style={[styles.brandText,{color:isDark?themeColors.textSecondary:'#86868b'}]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.brandText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   Remedy AI
                 </Text>
               </Text>

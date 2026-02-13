@@ -30,13 +30,18 @@ export const templateStorage = {
 
   async saveTemplates(templates: StoredTemplate[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(serializeTemplates(templates)));
+      await AsyncStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(serializeTemplates(templates)),
+      );
     } catch (error) {
       console.error('Error saving templates:', error);
     }
   },
 
-  async addTemplate(template: Omit<StoredTemplate, 'id'> & { id?: string }): Promise<void> {
+  async addTemplate(
+    template: Omit<StoredTemplate, 'id'> & { id?: string },
+  ): Promise<void> {
     const existing = await templateStorage.getTemplates();
     const newTemplate: StoredTemplate = {
       id: template.id || Date.now().toString(),

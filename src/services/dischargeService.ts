@@ -87,7 +87,7 @@ const dischargeService = {
     data: {
       name?: string;
       sections?: DischargeSection[];
-    }
+    },
   ): Promise<AxiosResponse<ApiResponse<DischargeTemplate>>> => {
     return api.put(`/tools/discharge/templates/${templateId}`, data);
   },
@@ -96,7 +96,9 @@ const dischargeService = {
    * Delete a prompt template
    * DELETE /api/prompts/{id}
    */
-  deletePrompt: (promptId: string): Promise<AxiosResponse<ApiResponse<null>>> => {
+  deletePrompt: (
+    promptId: string,
+  ): Promise<AxiosResponse<ApiResponse<null>>> => {
     return api.delete(`/prompts/${promptId}`);
   },
 
@@ -114,7 +116,9 @@ const dischargeService = {
    * Get a discharge summary by ID
    * GET /api/tools/discharge/summary/{id}
    */
-  getSummaryById: (summaryId: string): Promise<AxiosResponse<ApiResponse<DischargeSummary>>> => {
+  getSummaryById: (
+    summaryId: string,
+  ): Promise<AxiosResponse<ApiResponse<DischargeSummary>>> => {
     return api.get(`/tools/discharge/summary/${summaryId}`);
   },
 
@@ -130,10 +134,14 @@ const dischargeService = {
       timestamp: string;
     }>;
     promptId: string;
-  }): Promise<AxiosResponse<ApiResponse<{
-    summaryId: string;
-    summary: string;
-  }>>> => {
+  }): Promise<
+    AxiosResponse<
+      ApiResponse<{
+        summaryId: string;
+        summary: string;
+      }>
+    >
+  > => {
     return api.post('/tools/discharge/summary/generate', data);
   },
 
@@ -147,7 +155,7 @@ const dischargeService = {
       title?: string;
       content?: string;
       observations?: any[];
-    }
+    },
   ): Promise<AxiosResponse<ApiResponse<DischargeSummary>>> => {
     return api.put(`/tools/discharge/summary/${summaryId}`, data);
   },
@@ -156,7 +164,9 @@ const dischargeService = {
    * Delete a discharge summary
    * DELETE /api/tools/discharge/summary/{id}
    */
-  deleteSummary: (summaryId: string): Promise<AxiosResponse<ApiResponse<null>>> => {
+  deleteSummary: (
+    summaryId: string,
+  ): Promise<AxiosResponse<ApiResponse<null>>> => {
     return api.delete(`/tools/discharge/summary/${summaryId}`);
   },
 
@@ -166,13 +176,17 @@ const dischargeService = {
    */
   generateCertificate: (
     data: any,
-    token?: string
-  ): Promise<AxiosResponse<ApiResponse<{
-    certificateContent: string;
-    certificateType: string;
-    eventsIncluded: number;
-    documentsIncluded: number;
-  }>>> => {
+    token?: string,
+  ): Promise<
+    AxiosResponse<
+      ApiResponse<{
+        certificateContent: string;
+        certificateType: string;
+        eventsIncluded: number;
+        documentsIncluded: number;
+      }>
+    >
+  > => {
     const config: any = {};
     if (token) {
       config.headers = {
@@ -200,8 +214,6 @@ const dischargeService = {
 
     return api.post('/tools/report/generate-certificate', payload, config);
   },
-
-
 };
 
 export default dischargeService;

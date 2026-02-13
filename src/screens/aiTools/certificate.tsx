@@ -15,27 +15,30 @@ import {
   ScrollView,
   Image as RNImage,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import { 
-  ClipboardList, 
-  Sparkles, 
-  Bookmark, 
-  Camera, 
-  FolderOpen, 
+import {
+  ClipboardList,
+  Sparkles,
+  Bookmark,
+  Camera,
+  FolderOpen,
   FileText,
-  Search as SearchIcon, 
-  X, 
-  ChevronRight, 
+  Search as SearchIcon,
+  X,
+  ChevronRight,
   FileCheck,
   CheckCircle2,
   Circle,
-  ScrollText
+  ScrollText,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -48,7 +51,12 @@ import { colors } from '../../constants/colors';
 import Header from '../../components/header';
 import PromptLibrary from '../../components/PromptLibrary';
 import { useTheme } from '../../constants/theme';
-import { sessionStorage, Session, SessionType, SessionStatus } from '../../utils/sessionStorage';
+import {
+  sessionStorage,
+  Session,
+  SessionType,
+  SessionStatus,
+} from '../../utils/sessionStorage';
 import { getEvents } from '../../services/authService';
 import {
   ObservationTimeline,
@@ -61,7 +69,6 @@ import {
   type CustomPrompt,
 } from '../../components/documentAssistant';
 import dischargeService from '../../services/dischargeService';
-
 
 const PRIMARY_COLOR = '#46B7C6';
 
@@ -80,11 +87,14 @@ const Certificate = () => {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
   const [showSavedSummaries, setShowSavedSummaries] = useState(false);
+  const [hasSeenSavedSummaries, setHasSeenSavedSummaries] = useState(true); // Default to true so it doesn't show on initial load
   const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>([]);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveNameInput, setSaveNameInput] = useState('');
-  const [renamingSummaryId, setRenamingSummaryId] = useState<string | null>(null);
+  const [renamingSummaryId, setRenamingSummaryId] = useState<string | null>(
+    null,
+  );
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [showVisitModal, setShowVisitModal] = useState(false);
@@ -113,7 +123,10 @@ const Certificate = () => {
 
   const saveSummariesToStorage = async (summaries: SavedSummary[]) => {
     try {
-      await AsyncStorage.setItem('saved_certificates', JSON.stringify(summaries));
+      await AsyncStorage.setItem(
+        'saved_certificates',
+        JSON.stringify(summaries),
+      );
     } catch (error) {
       console.log('Error saving summaries to storage:', error);
     }
@@ -121,7 +134,9 @@ const Certificate = () => {
 
   const checkFirstTimeUser = async () => {
     try {
-      const hasSeenWelcome = await AsyncStorage.getItem('certificate_welcome_seen');
+      const hasSeenWelcome = await AsyncStorage.getItem(
+        'certificate_welcome_seen',
+      );
       if (!hasSeenWelcome) {
         setTimeout(() => {
           setShowWelcomeModal(true);
@@ -165,7 +180,7 @@ const Certificate = () => {
     content: string,
     uri?: string,
     fileName?: string,
-    mimeType?: string
+    mimeType?: string,
   ) => {
     const newObs: Observation & { mimeType?: string } = {
       id: Date.now().toString(),
@@ -178,7 +193,7 @@ const Certificate = () => {
       status: 'done', // Files are now marked as done immediately since we don't do local OCR
     };
 
-    setObservations(prev => [...prev, newObs]);
+    setObservations((prev) => [...prev, newObs]);
     triggerHaptic('notification');
 
     // Scroll to bottom
@@ -188,10 +203,9 @@ const Certificate = () => {
   };
 
   const handleDeleteObservation = (id: string) => {
-    setObservations(prev => prev.filter(obs => obs.id !== id));
+    setObservations((prev) => prev.filter((obs) => obs.id !== id));
     triggerHaptic('impact');
   };
-
 
   const handleSendText = () => {
     if (!inputText.trim()) return;
@@ -210,11 +224,11 @@ const Certificate = () => {
 
       if (result.assets && result.assets[0]) {
         addObservation(
-          'image', 
-          '', 
-          result.assets[0].uri, 
+          'image',
+          '',
+          result.assets[0].uri,
           result.assets[0].fileName,
-          result.assets[0].type
+          result.assets[0].type,
         );
       }
     } catch (error) {
@@ -232,11 +246,11 @@ const Certificate = () => {
 
       if (result.assets && result.assets[0]) {
         addObservation(
-          'image', 
-          '', 
-          result.assets[0].uri, 
+          'image',
+          '',
+          result.assets[0].uri,
           result.assets[0].fileName,
-          result.assets[0].type
+          result.assets[0].type,
         );
       }
     } catch (error) {
@@ -252,11 +266,11 @@ const Certificate = () => {
 
       if (result && result[0]) {
         addObservation(
-          'file', 
-          '', 
-          result[0].uri, 
+          'file',
+          '',
+          result[0].uri,
           result[0].name || 'document.pdf',
-          result[0].type || undefined
+          result[0].type || undefined,
         );
       }
     } catch (error) {
@@ -271,7 +285,10 @@ const Certificate = () => {
 
   const handleGenerateSummary = async () => {
     if (observations.length === 0 && selectedVisits.length === 0) {
-      Alert.alert('No Data', 'Please add medical notes or select visits first.');
+      Alert.alert(
+        'No Data',
+        'Please add medical notes or select visits first.',
+      );
       return;
     }
 
@@ -280,50 +297,116 @@ const Certificate = () => {
 
     try {
       const token = await AsyncStorage.getItem('auth_token');
-      const eventIds = selectedVisits.map(v => v.sessionId).filter(id => !!id) as string[];
-      const observationsText = observations
-        .filter(o => o.type === 'text')
-        .map(o => o.content)
-        .join('\n');
+      const eventIds = selectedVisits
+        .map((v) => v.id || (v as any).sessionId)
+        .filter((id) => !!id) as string[];
+      const observationsText =
+        observations
+          .filter((o) => o.type === 'text')
+          .map((o) => o.content)
+          .join('\n') || '';
       const certType = 'medical-report';
 
-      // Use FormData for binary upload
-      const formData = new FormData();
-      formData.append('observations', observationsText);
-      formData.append('certificateType', certType);
-
-      if (eventIds.length > 0) {
-        eventIds.forEach(id => formData.append('eventIds', id));
-      }
-
-      // Add binary documents
-      observations.forEach(obs => {
-        if ((obs.type === 'image' || obs.type === 'file') && obs.uri) {
-          formData.append('documents', {
-            uri: obs.uri,
-            type: (obs as any).mimeType || (obs.type === 'image' ? 'image/jpeg' : 'application/pdf'),
-            name: obs.fileName || (obs.type === 'image' ? 'photo.jpg' : 'document.pdf'),
-          } as any);
-        }
-      });
-
-      console.log('[Certificate] Starting generation with FormData payload:');
-      // For logging FormData in React Native
-      const logData: any = {};
-      (formData as any)._parts?.forEach(([key, value]: [string, any]) => {
-        if (key === 'documents') {
-          logData[key] = logData[key] || [];
-          logData[key].push({ name: value.name, type: value.type, uri: value.uri });
-        } else {
-          logData[key] = value;
-        }
-      });
-      console.log('[Certificate] Payload Details:', JSON.stringify(logData, null, 2));
-
-      const response = await dischargeService.generateCertificate(
-        formData,
-        token || undefined
+      // Check if we have binary files (images/documents)
+      const hasBinaryFiles = observations.some(
+        (obs) => (obs.type === 'image' || obs.type === 'file') && obs.uri,
       );
+
+      console.log(
+        '[Certificate] Selected Visits:',
+        JSON.stringify(
+          selectedVisits.map((v) => ({
+            id: v.id,
+            sessionId: v.sessionId,
+            title: v.title,
+          })),
+          null,
+          2,
+        ),
+      );
+      console.log('[Certificate] Event IDs being sent:', eventIds);
+      console.log('[Certificate] Has binary files:', hasBinaryFiles);
+      console.log(
+        '[Certificate] Observations text:',
+        observationsText
+          ? observationsText.substring(0, 100) + '...'
+          : '(empty)',
+      );
+
+      let response;
+
+      if (hasBinaryFiles) {
+        // Use FormData for binary upload
+        const formData = new FormData();
+        formData.append('observations', observationsText);
+        formData.append('certificateType', certType);
+
+        if (eventIds.length > 0) {
+          formData.append('eventIds', JSON.stringify(eventIds));
+        }
+
+        // Add binary documents
+        observations.forEach((obs) => {
+          if ((obs.type === 'image' || obs.type === 'file') && obs.uri) {
+            formData.append('documents', {
+              uri: obs.uri,
+              type:
+                (obs as any).mimeType ||
+                (obs.type === 'image' ? 'image/jpeg' : 'application/pdf'),
+              name:
+                obs.fileName ||
+                (obs.type === 'image' ? 'photo.jpg' : 'document.pdf'),
+            } as any);
+          }
+        });
+
+        // Log FormData
+        const logData: any = {};
+        (formData as any)._parts?.forEach(([key, value]: [string, any]) => {
+          if (key === 'documents') {
+            logData[key] = logData[key] || [];
+            logData[key].push({
+              name: value.name,
+              type: value.type,
+              uri: value.uri,
+            });
+          } else if (key === 'eventIds') {
+            logData[key] = logData[key] || [];
+            logData[key].push(value);
+          } else {
+            logData[key] = value;
+          }
+        });
+        console.log(
+          '[Certificate] Sending FormData payload:',
+          JSON.stringify(logData, null, 2),
+        );
+
+        response = await dischargeService.generateCertificate(
+          formData,
+          token || undefined,
+        );
+      } else {
+        // Use JSON payload (no binary files — just text observations and/or visits)
+        const jsonPayload: any = {
+          observations: observationsText,
+          certificateType: certType,
+        };
+
+        if (eventIds.length > 0) {
+          jsonPayload.eventIds = eventIds;
+        }
+
+        console.log(
+          '[Certificate] Sending JSON payload:',
+          JSON.stringify(jsonPayload, null, 2),
+        );
+
+        response = await dischargeService.generateCertificate(
+          jsonPayload,
+          token || undefined,
+        );
+      }
 
       console.log('[Certificate] API Response received:', {
         success: response.data?.success,
@@ -340,8 +423,26 @@ const Certificate = () => {
       setShowSynthesis(true);
       triggerHaptic('notification');
     } catch (error: any) {
-      console.error('[Certificate] Error generating certificate:', error);
-      Alert.alert('Generation Error', error.message || 'Failed to generate medical certificate.');
+      // Log the full error response for debugging
+      if (error.response) {
+        console.error('[Certificate] Error Status:', error.response.status);
+        console.error(
+          '[Certificate] Error Response Data:',
+          JSON.stringify(error.response.data, null, 2),
+        );
+        console.error(
+          '[Certificate] Error Response Headers:',
+          JSON.stringify(error.response.headers, null, 2),
+        );
+      } else {
+        console.error('[Certificate] Error:', error.message);
+      }
+      Alert.alert(
+        'Generation Error',
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to generate medical certificate.',
+      );
       setIsSynthesizing(false);
     }
   };
@@ -350,10 +451,10 @@ const Certificate = () => {
     if (!generatedSummary.trim()) return;
     setSaveNameInput(`Medical Certificate ${savedSummaries.length + 1}`);
     setRenamingSummaryId(null);
-    
+
     // Close the preview modal first to avoid nested modal issues on iOS
     setShowSynthesis(false);
-    
+
     // Delay opening the save dialog to allow the first modal to close
     setTimeout(() => {
       setShowSaveDialog(true);
@@ -378,7 +479,7 @@ const Certificate = () => {
     if (!name) {
       Alert.alert(
         t('certificateAssistant.savedSummaries.nameRequiredTitle'),
-        t('certificateAssistant.savedSummaries.nameRequiredMessage')
+        t('certificateAssistant.savedSummaries.nameRequiredMessage'),
       );
       return;
     }
@@ -390,16 +491,20 @@ const Certificate = () => {
 
     // 1. Close the dialog first to unblock UI
     setShowSaveDialog(false);
-    
+
     // Give modal time to animate out
     setTimeout(async () => {
       let updated: SavedSummary[] = [];
 
       if (currentRenamingId) {
-        updated = currentSavedSummaries.map(item => 
-          item.id === currentRenamingId ? { ...item, title: name } : item
+        updated = currentSavedSummaries.map((item) =>
+          item.id === currentRenamingId ? { ...item, title: name } : item,
         );
-        customToast('success', t('certificateAssistant.savedSummaries.savedSuccess') || 'Saved successfully');
+        customToast(
+          'success',
+          t('certificateAssistant.savedSummaries.savedSuccess') ||
+            'Saved successfully',
+        );
       } else {
         const newSummary: SavedSummary = {
           id: Date.now().toString(),
@@ -408,16 +513,21 @@ const Certificate = () => {
           content: currentGeneratedSummary,
         };
         updated = [newSummary, ...currentSavedSummaries];
+        setHasSeenSavedSummaries(false); // New summary saved, show badge
         triggerHaptic('notification');
-        customToast('success', t('certificateAssistant.savedSummaries.savedSuccess') || 'Saved successfully');
+        customToast(
+          'success',
+          t('certificateAssistant.savedSummaries.savedSuccess') ||
+            'Saved successfully',
+        );
       }
 
       // Update state
       setSavedSummaries(updated);
-      
+
       // Save in background
       saveSummariesToStorage(updated);
-      
+
       // Reset dialog state
       setSaveNameInput('');
       setRenamingSummaryId(null);
@@ -435,7 +545,7 @@ const Certificate = () => {
       content: template.refinedPrompt,
       createdAt: new Date().toISOString(),
     };
-    setCustomPrompts(prev => [newPrompt, ...prev]);
+    setCustomPrompts((prev) => [newPrompt, ...prev]);
     triggerHaptic('notification');
   };
 
@@ -444,16 +554,16 @@ const Certificate = () => {
   };
 
   const handleDeletePrompt = (id: string) => {
-    setCustomPrompts(prev => prev.filter(p => p.id !== id));
+    setCustomPrompts((prev) => prev.filter((p) => p.id !== id));
   };
 
   const handleRenameSummary = (id: string, currentTitle: string) => {
     setRenamingSummaryId(id);
     setSaveNameInput(currentTitle);
-    
+
     // Close the list modal first
     setShowSavedSummaries(false);
-    
+
     // Delay opening the save dialog
     setTimeout(() => {
       setShowSaveDialog(true);
@@ -465,14 +575,17 @@ const Certificate = () => {
   };
 
   const handleSelectVisits = (sessions: Session[]) => {
-    console.log('[Certificate] Visits selected:', sessions.map(s => s.title));
+    console.log(
+      '[Certificate] Visits selected:',
+      sessions.map((s) => s.title),
+    );
     setSelectedVisits(sessions);
     triggerHaptic('notification');
   };
 
   const handleRemoveVisit = (visitId: string) => {
     console.log('[Certificate] Removing visit:', visitId);
-    setSelectedVisits(prev => prev.filter(v => v.id !== visitId));
+    setSelectedVisits((prev) => prev.filter((v) => v.id !== visitId));
     triggerHaptic('impact');
   };
 
@@ -486,13 +599,15 @@ const Certificate = () => {
           text: t('certificateAssistant.savedSummaries.deleteConfirm'),
           style: 'destructive',
           onPress: async () => {
-            const updatedSummaries = savedSummaries.filter(summary => summary.id !== id);
+            const updatedSummaries = savedSummaries.filter(
+              (summary) => summary.id !== id,
+            );
             setSavedSummaries(updatedSummaries);
             await saveSummariesToStorage(updatedSummaries);
             customToast('success', 'Deleted successfully');
           },
         },
-      ]
+      ],
     );
   };
 
@@ -508,26 +623,27 @@ const Certificate = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.background }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: DYNAMIC_THEME.background }]}
+      edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-      <View style={styles.mainContainer}>
-        {/* Header */}
-        <View style={styles.headerWrapper}>
-          <Header
-            title={t('certificateAssistant.headerTitle')}
-            subtitle={t('certificateAssistant.headerSubtitle')}
-            onLeftPress={handleBackPress}
-            icon={ClipboardList}
-            showIcon={false}
-            backgroundColor={DYNAMIC_THEME.background}
-            showBorder={true}
-            textColor={PRIMARY_COLOR}
-          />
-          <View style={styles.headerRightButtons}>
-{/* 
+        style={styles.keyboardView}>
+        <View style={styles.mainContainer}>
+          {/* Header */}
+          <View style={styles.headerWrapper}>
+            <Header
+              title={t('certificateAssistant.headerTitle')}
+              subtitle={t('certificateAssistant.headerSubtitle')}
+              onLeftPress={handleBackPress}
+              icon={ClipboardList}
+              showIcon={false}
+              backgroundColor={DYNAMIC_THEME.background}
+              showBorder={true}
+              textColor={PRIMARY_COLOR}
+            />
+            <View style={styles.headerRightButtons}>
+              {/* 
             <TouchableOpacity
               style={styles.headerButton}
               onPress={() => setShowPromptLibrary(true)}
@@ -535,320 +651,507 @@ const Certificate = () => {
               <Sparkles size={20} color={PRIMARY_COLOR} />
             </TouchableOpacity>
             */}
-            {generatedSummary.length > 0 && (
-              <TouchableOpacity 
-                style={styles.headerButton} 
-                onPress={() => {
-                  triggerHaptic('impact');
-                  setShowSynthesis(true);
-                }}
-              >
-                <ScrollText size={20} color={PRIMARY_COLOR} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity style={styles.headerButton} onPress={() => setShowSavedSummaries(true)}>
-              <Bookmark size={20} color={PRIMARY_COLOR} />
-              {savedSummaries.length > 0 && (
-                <View style={[styles.savedBadge, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.2)' : '#E0F2F5' }]}>
-                  <Text style={styles.savedBadgeText}>{savedSummaries.length}</Text>
-                </View>
+              {generatedSummary.length > 0 && (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={() => {
+                    triggerHaptic('impact');
+                    setShowSynthesis(true);
+                  }}>
+                  <ScrollText size={20} color={PRIMARY_COLOR} />
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Imported Visit Banner */}
-        {selectedVisits.length > 0 && (
-          <View style={[styles.visitBanner, { backgroundColor: DYNAMIC_THEME.surface, borderBottomColor: DYNAMIC_THEME.border }]}>
-            <View style={{ gap: 12 }}>
-              {selectedVisits.map((visit) => (
-                <View key={visit.id} style={styles.visitBannerContent}>
-                  <View style={styles.visitBannerTextContainer}>
-                    <Text style={[styles.visitBannerTitle, { color: DYNAMIC_THEME.text }]} numberOfLines={1}>
-                      {visit.title}
-                    </Text>
-                    <Text style={[styles.visitBannerDate, { color: DYNAMIC_THEME.textSecondary }]}>
-                      {new Date(visit.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => {
+                  setHasSeenSavedSummaries(true);
+                  setShowSavedSummaries(true);
+                }}>
+                <Bookmark size={20} color={PRIMARY_COLOR} />
+                {savedSummaries.length > 0 && !hasSeenSavedSummaries && (
+                  <View
+                    style={[
+                      styles.savedBadge,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(70, 183, 198, 0.2)'
+                          : '#E0F2F5',
+                      },
+                    ]}>
+                    <Text style={styles.savedBadgeText}>
+                      {savedSummaries.length}
                     </Text>
                   </View>
-                  
-                  <View style={styles.visitBannerChips}>
-                    {visit.noteGenerationMeta?.visitTypeLabel && (
-                      <View style={[styles.visitChip, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#F0F9FA' }]}>
-                        <Text style={[styles.visitChipText, { color: PRIMARY_COLOR }]}>{visit.noteGenerationMeta.visitTypeLabel}</Text>
-                      </View>
-                    )}
-                    {visit.noteGenerationMeta?.specializationLabel && (
-                      <View style={[styles.visitChip, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : '#F5F3FF' }]}>
-                        <Text style={[styles.visitChipText, { color: '#8B5CF6' }]}>{visit.noteGenerationMeta.specializationLabel}</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <TouchableOpacity onPress={() => handleRemoveVisit(visit.id)} style={styles.visitBannerClose}>
-                    <X size={18} color={DYNAMIC_THEME.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-              ))}
+                )}
+              </TouchableOpacity>
             </View>
           </View>
-        )}
 
-        {/* Timeline with Type Selection Header */}
-        <ObservationTimeline
-          items={observations}
-          HeaderComponent={null}
-          emptyState={{
-            title: t('certificateAssistant.emptyState.title'),
-            subtitle: t('certificateAssistant.emptyState.subtitle'),
-          }}
-          primaryColor={PRIMARY_COLOR}
-          scrollViewRef={scrollViewRef}
-          onDelete={handleDeleteObservation}
-          statusTexts={{
-            analyzingPixelData: t('certificateAssistant.status.analyzingPixelData'),
-            analyzingDocument: t('certificateAssistant.status.analyzingDocument'),
-          }}
-        />
-
-        {/* Generate Button (Floating) */}
-        {(observations.length > 0 || selectedVisits.length > 0) && 
-         !isSynthesizing && 
-         !observations.some(obs => obs.status === 'processing') && (
-          <View style={styles.floatingButtonContainer}>
-            <TouchableOpacity
+          {/* Imported Visit Banner */}
+          {selectedVisits.length > 0 && (
+            <View
               style={[
-                styles.generateButton,
+                styles.visitBanner,
                 {
-                  backgroundColor: PRIMARY_COLOR,
-                  ...(isDark ? {
-                    shadowColor: PRIMARY_COLOR,
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 15,
-                  } : {
-                    shadowColor: PRIMARY_COLOR,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 8,
-                  })
-                }
-              ]}
-              onPress={handleGenerateSummary}
-              activeOpacity={0.9}
-            >
-              <Sparkles size={18} color="white" style={{ marginRight: 8 }} />
-              <Text style={styles.generateText}>{t('certificateAssistant.actions.generate') || 'Generate Certificate'}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Loading Overlay for Synthesis */}
-        {isSynthesizing && (
-          <View style={styles.synthesizingContainer}>
-            <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-            <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>
-              {t('certificateAssistant.status.generating') || 'Generating medical certificate...'}
-            </Text>
-          </View>
-        )}
-
-        {/* Input Bar */}
-        <SmartInputBar
-          inputText={inputText}
-          onChangeText={setInputText}
-          onSendText={handleSendText}
-          onPlusPress={handlePlusPress}
-          placeholder={t('certificateAssistant.inputBar.placeholder')}
-          insets={insets}
-          primaryColor={PRIMARY_COLOR}
-        />
-      </View>
-
-      {/* Summary View Modal */}
-      <SummaryView
-        visible={showSynthesis}
-        onClose={() => setShowSynthesis(false)}
-        summary={generatedSummary}
-        onSave={handleSaveSummary}
-        onCopy={handleCopy}
-        onExport={() => Alert.alert('Export PDF')}
-        title={t('certificateAssistant.savedSummaries.certificateTitle') || "Medical Certificate"}
-        primaryColor={PRIMARY_COLOR}
-        saveLabel={t('certificateAssistant.savedSummaries.save')}
-      />
-
-      {/* Saved Summaries Modal */}
-      <SavedDocumentsList
-        visible={showSavedSummaries}
-        onClose={() => setShowSavedSummaries(false)}
-        items={savedSummaries}
-        onSelectItem={handleSelectSavedSummary}
-        onRename={handleRenameSummary}
-        onDelete={handleDeleteSummary}
-        title={t('certificateAssistant.savedSummaries.title')}
-        emptyText={t('certificateAssistant.savedSummaries.empty')}
-        renameText={t('certificateAssistant.savedSummaries.rename')}
-        deleteText={t('certificateAssistant.savedSummaries.delete')}
-        cancelText={t('certificateAssistant.actions.cancel')}
-      />
-
-      {/* Prompt Library with Magic Creator */}
-      <PromptLibrary
-        visible={showPromptLibrary}
-        onClose={() => setShowPromptLibrary(false)}
-        prompts={customPrompts}
-        selectedPromptId={null}
-        onSelectPrompt={handleSelectPrompt}
-        onDeletePrompt={handleDeletePrompt}
-        onSavePrompt={handleSaveMagicTemplate}
-      />
-
-      {/* Welcome Modal - First Time User */}
-      <WelcomeModal
-        visible={showWelcomeModal}
-        onClose={handleCloseWelcomeModal}
-        title={t('certificateAssistant.welcomeModal.title')}
-        description={t('certificateAssistant.welcomeModal.description')}
-        buttonText={t('certificateAssistant.welcomeModal.button')}
-        iconColor={PRIMARY_COLOR}
-      />
-
-      {/* Attachment Modal */}
-      <Modal visible={showAttachmentModal} transparent animationType="fade" onRequestClose={() => setShowAttachmentModal(false)}>
-        <TouchableWithoutFeedback onPress={() => setShowAttachmentModal(false)}>
-          <View style={styles.attachmentModalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.attachmentModalContent, { backgroundColor: DYNAMIC_THEME.background }]}>
-                <View style={styles.attachmentModalHeader}>
-                  <View style={[styles.attachmentModalHandle, { backgroundColor: DYNAMIC_THEME.border }]} />
-                </View>
-                
-                <View style={styles.attachmentOptionsContainer}>
-                  <TouchableOpacity
-                    style={[styles.attachmentOption, { backgroundColor: DYNAMIC_THEME.surface }]}
-                    onPress={() => {
-                      setShowAttachmentModal(false);
-                      setTimeout(() => handleImportVisit(), 300);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: 'rgba(70, 183, 198, 0.15)' }]}>
-                      <FileCheck size={24} color={PRIMARY_COLOR} strokeWidth={2} />
+                  backgroundColor: DYNAMIC_THEME.surface,
+                  borderBottomColor: DYNAMIC_THEME.border,
+                },
+              ]}>
+              <View style={{ gap: 12 }}>
+                {selectedVisits.map((visit) => (
+                  <View key={visit.id} style={styles.visitBannerContent}>
+                    <View style={styles.visitBannerTextContainer}>
+                      <Text
+                        style={[
+                          styles.visitBannerTitle,
+                          { color: DYNAMIC_THEME.text },
+                        ]}
+                        numberOfLines={1}>
+                        {visit.title}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.visitBannerDate,
+                          { color: DYNAMIC_THEME.textSecondary },
+                        ]}>
+                        {new Date(visit.date).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </Text>
                     </View>
-                    <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.text }]}>{t('consultChat.attachOptions.importVisit') || 'Import from Visits'}</Text>
-                  </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.attachmentOption, { backgroundColor: DYNAMIC_THEME.surface }]}
-                    onPress={() => {
-                      setShowAttachmentModal(false);
-                      setTimeout(() => handleFile(), 300);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: 'rgba(139, 92, 246, 0.15)' }]}>
-                      <FileText size={24} color="#8B5CF6" strokeWidth={2} />
+                    <View style={styles.visitBannerChips}>
+                      {visit.noteGenerationMeta?.visitTypeLabel && (
+                        <View
+                          style={[
+                            styles.visitChip,
+                            {
+                              backgroundColor: isDark
+                                ? 'rgba(70, 183, 198, 0.1)'
+                                : '#F0F9FA',
+                            },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.visitChipText,
+                              { color: PRIMARY_COLOR },
+                            ]}>
+                            {visit.noteGenerationMeta.visitTypeLabel}
+                          </Text>
+                        </View>
+                      )}
+                      {visit.noteGenerationMeta?.specializationLabel && (
+                        <View
+                          style={[
+                            styles.visitChip,
+                            {
+                              backgroundColor: isDark
+                                ? 'rgba(139, 92, 246, 0.1)'
+                                : '#F5F3FF',
+                            },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.visitChipText,
+                              { color: '#8B5CF6' },
+                            ]}>
+                            {visit.noteGenerationMeta.specializationLabel}
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                    <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.text }]}>{t('certificateAssistant.actions.files')}</Text>
-                  </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.attachmentOption, { backgroundColor: DYNAMIC_THEME.surface }]}
-                    onPress={() => {
-                      setShowAttachmentModal(false);
-                      setTimeout(() => handleScan(), 300);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                      <Camera size={24} color="#10B981" strokeWidth={2} />
-                    </View>
-                    <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.text }]}>{t('certificateAssistant.actions.scanDocuments')}</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleRemoveVisit(visit.id)}
+                      style={styles.visitBannerClose}>
+                      <X size={18} color={DYNAMIC_THEME.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
-                  <TouchableOpacity
-                    style={[styles.attachmentOption, { backgroundColor: DYNAMIC_THEME.surface }]}
-                    onPress={() => {
-                      setShowAttachmentModal(false);
-                      setTimeout(() => handleGallery(), 300);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-                      <FolderOpen size={24} color="#F59E0B" strokeWidth={2} />
-                    </View>
-                    <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.text }]}>{t('certificateAssistant.actions.gallery')}</Text>
-                  </TouchableOpacity>
-                  
-                </View>
+          {/* Timeline with Type Selection Header */}
+          <ObservationTimeline
+            items={observations}
+            HeaderComponent={null}
+            emptyState={{
+              title: t('certificateAssistant.emptyState.title'),
+              subtitle: t('certificateAssistant.emptyState.subtitle'),
+            }}
+            primaryColor={PRIMARY_COLOR}
+            scrollViewRef={scrollViewRef}
+            onDelete={handleDeleteObservation}
+            statusTexts={{
+              analyzingPixelData: t(
+                'certificateAssistant.status.analyzingPixelData',
+              ),
+              analyzingDocument: t(
+                'certificateAssistant.status.analyzingDocument',
+              ),
+            }}
+          />
 
-                <TouchableOpacity style={[styles.attachmentCancelButton, { backgroundColor: DYNAMIC_THEME.surfaceAlt }]} onPress={() => setShowAttachmentModal(false)}>
-                  <Text style={[styles.attachmentCancelText, { color: DYNAMIC_THEME.textSecondary }]}>{t('certificateAssistant.actions.cancel')}</Text>
+          {/* Generate Button (Floating) */}
+          {(observations.length > 0 || selectedVisits.length > 0) &&
+            !isSynthesizing &&
+            !observations.some((obs) => obs.status === 'processing') && (
+              <View style={styles.floatingButtonContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.generateButton,
+                    {
+                      backgroundColor: PRIMARY_COLOR,
+                      ...(isDark
+                        ? {
+                            shadowColor: PRIMARY_COLOR,
+                            shadowOffset: { width: 0, height: 0 },
+                            shadowOpacity: 0.5,
+                            shadowRadius: 15,
+                          }
+                        : {
+                            shadowColor: PRIMARY_COLOR,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 8,
+                          }),
+                    },
+                  ]}
+                  onPress={handleGenerateSummary}
+                  activeOpacity={0.9}>
+                  <Sparkles
+                    size={18}
+                    color="white"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.generateText}>
+                    {t('certificateAssistant.actions.generate') ||
+                      'Generate Certificate'}
+                  </Text>
                 </TouchableOpacity>
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+            )}
 
-      {/* Visit Selection Modal */}
-      <VisitSelectionModal
-        visible={showVisitModal}
-        onClose={() => setShowVisitModal(false)}
-        onSelectVisits={handleSelectVisits}
-        selectedVisitIds={selectedVisits.map(v => v.id)}
-        dynamicTheme={DYNAMIC_THEME}
-      />
+          {/* Loading Overlay for Synthesis */}
+          {isSynthesizing && (
+            <View style={styles.synthesizingContainer}>
+              <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+              <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>
+                {t('certificateAssistant.status.generating') ||
+                  'Generating medical certificate...'}
+              </Text>
+            </View>
+          )}
 
-      {/* Save/Rename Dialog */}
-      <Modal 
-        visible={showSaveDialog} 
-        transparent 
-        animationType="fade" 
-        onRequestClose={() => setShowSaveDialog(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowSaveDialog(false)}>
-          <View style={[styles.dialogOverlay, { backgroundColor: DYNAMIC_THEME.overlay }]}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.dialogCard, { backgroundColor: DYNAMIC_THEME.background, borderColor: DYNAMIC_THEME.border }]}>
-                <Text style={[styles.dialogTitle, { color: DYNAMIC_THEME.text }]}>
-                  {renamingSummaryId
-                    ? t('certificateAssistant.savedSummaries.renameTitle')
-                    : t('certificateAssistant.savedSummaries.nameTitle')}
-                </Text>
-                <TextInput
+          {/* Input Bar */}
+          <SmartInputBar
+            inputText={inputText}
+            onChangeText={setInputText}
+            onSendText={handleSendText}
+            onPlusPress={handlePlusPress}
+            placeholder={t('certificateAssistant.inputBar.placeholder')}
+            insets={insets}
+            primaryColor={PRIMARY_COLOR}
+          />
+        </View>
+
+        {/* Summary View Modal */}
+        <SummaryView
+          visible={showSynthesis}
+          onClose={() => setShowSynthesis(false)}
+          summary={generatedSummary}
+          onSave={handleSaveSummary}
+          onCopy={handleCopy}
+          onExport={() => Alert.alert('Export PDF')}
+          title={
+            t('certificateAssistant.savedSummaries.certificateTitle') ||
+            'Medical Certificate'
+          }
+          primaryColor={PRIMARY_COLOR}
+          saveLabel={t('certificateAssistant.savedSummaries.save')}
+        />
+
+        {/* Saved Summaries Modal */}
+        <SavedDocumentsList
+          visible={showSavedSummaries}
+          onClose={() => setShowSavedSummaries(false)}
+          items={savedSummaries}
+          onSelectItem={handleSelectSavedSummary}
+          onRename={handleRenameSummary}
+          onDelete={handleDeleteSummary}
+          title={t('certificateAssistant.savedSummaries.title')}
+          emptyText={t('certificateAssistant.savedSummaries.empty')}
+          renameText={t('certificateAssistant.savedSummaries.rename')}
+          deleteText={t('certificateAssistant.savedSummaries.delete')}
+          cancelText={t('certificateAssistant.actions.cancel')}
+        />
+
+        {/* Prompt Library with Magic Creator */}
+        <PromptLibrary
+          visible={showPromptLibrary}
+          onClose={() => setShowPromptLibrary(false)}
+          prompts={customPrompts}
+          selectedPromptId={null}
+          onSelectPrompt={handleSelectPrompt}
+          onDeletePrompt={handleDeletePrompt}
+          onSavePrompt={handleSaveMagicTemplate}
+        />
+
+        {/* Welcome Modal - First Time User */}
+        <WelcomeModal
+          visible={showWelcomeModal}
+          onClose={handleCloseWelcomeModal}
+          title={t('certificateAssistant.welcomeModal.title')}
+          description={t('certificateAssistant.welcomeModal.description')}
+          buttonText={t('certificateAssistant.welcomeModal.button')}
+          iconColor={PRIMARY_COLOR}
+          features={
+            t('certificateAssistant.welcomeModal.features', {
+              returnObjects: true,
+            }) as any
+          }
+        />
+
+        {/* Attachment Modal */}
+        <Modal
+          visible={showAttachmentModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowAttachmentModal(false)}>
+          <TouchableWithoutFeedback
+            onPress={() => setShowAttachmentModal(false)}>
+            <View style={styles.attachmentModalOverlay}>
+              <TouchableWithoutFeedback>
+                <View
                   style={[
-                    styles.dialogInput,
-                    {
-                      borderColor: DYNAMIC_THEME.border,
-                      color: DYNAMIC_THEME.text,
-                      backgroundColor: DYNAMIC_THEME.surface,
-                    }
-                  ]}
-                  placeholder={t('certificateAssistant.savedSummaries.namePlaceholder')}
-                  placeholderTextColor={isDark ? themeColors.textMuted : colors.onSurfaceVariant}
-                  value={saveNameInput}
-                  onChangeText={setSaveNameInput}
-                  autoFocus
-                />
-                <View style={styles.dialogActions}>
-                  <TouchableOpacity onPress={() => setShowSaveDialog(false)}>
-                    <Text style={[styles.dialogCancel, { color: DYNAMIC_THEME.textSecondary }]}>{t('certificateAssistant.actions.cancel')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleConfirmSaveName}>
-                    <Text style={styles.dialogConfirm}>
-                      {renamingSummaryId
-                        ? t('certificateAssistant.savedSummaries.renameConfirm')
-                        : t('certificateAssistant.savedSummaries.saveConfirm')}
+                    styles.attachmentModalContent,
+                    { backgroundColor: DYNAMIC_THEME.background },
+                  ]}>
+                  <View style={styles.attachmentModalHeader}>
+                    <View
+                      style={[
+                        styles.attachmentModalHandle,
+                        { backgroundColor: DYNAMIC_THEME.border },
+                      ]}
+                    />
+                  </View>
+
+                  <View style={styles.attachmentOptionsContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.attachmentOption,
+                        { backgroundColor: DYNAMIC_THEME.surface },
+                      ]}
+                      onPress={() => {
+                        setShowAttachmentModal(false);
+                        setTimeout(() => handleImportVisit(), 300);
+                      }}
+                      activeOpacity={0.7}>
+                      <View
+                        style={[
+                          styles.attachmentOptionIcon,
+                          { backgroundColor: 'rgba(70, 183, 198, 0.15)' },
+                        ]}>
+                        <FileCheck
+                          size={24}
+                          color={PRIMARY_COLOR}
+                          strokeWidth={2}
+                        />
+                      </View>
+                      <Text
+                        style={[
+                          styles.attachmentOptionLabel,
+                          { color: DYNAMIC_THEME.text },
+                        ]}>
+                        {t('consultChat.attachOptions.importVisit') ||
+                          'Import from Visits'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.attachmentOption,
+                        { backgroundColor: DYNAMIC_THEME.surface },
+                      ]}
+                      onPress={() => {
+                        setShowAttachmentModal(false);
+                        setTimeout(() => handleFile(), 300);
+                      }}
+                      activeOpacity={0.7}>
+                      <View
+                        style={[
+                          styles.attachmentOptionIcon,
+                          { backgroundColor: 'rgba(139, 92, 246, 0.15)' },
+                        ]}>
+                        <FileText size={24} color="#8B5CF6" strokeWidth={2} />
+                      </View>
+                      <Text
+                        style={[
+                          styles.attachmentOptionLabel,
+                          { color: DYNAMIC_THEME.text },
+                        ]}>
+                        {t('certificateAssistant.actions.files')}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.attachmentOption,
+                        { backgroundColor: DYNAMIC_THEME.surface },
+                      ]}
+                      onPress={() => {
+                        setShowAttachmentModal(false);
+                        setTimeout(() => handleScan(), 300);
+                      }}
+                      activeOpacity={0.7}>
+                      <View
+                        style={[
+                          styles.attachmentOptionIcon,
+                          { backgroundColor: 'rgba(16, 185, 129, 0.15)' },
+                        ]}>
+                        <Camera size={24} color="#10B981" strokeWidth={2} />
+                      </View>
+                      <Text
+                        style={[
+                          styles.attachmentOptionLabel,
+                          { color: DYNAMIC_THEME.text },
+                        ]}>
+                        {t('certificateAssistant.actions.scanDocuments')}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.attachmentOption,
+                        { backgroundColor: DYNAMIC_THEME.surface },
+                      ]}
+                      onPress={() => {
+                        setShowAttachmentModal(false);
+                        setTimeout(() => handleGallery(), 300);
+                      }}
+                      activeOpacity={0.7}>
+                      <View
+                        style={[
+                          styles.attachmentOptionIcon,
+                          { backgroundColor: 'rgba(245, 158, 11, 0.15)' },
+                        ]}>
+                        <FolderOpen size={24} color="#F59E0B" strokeWidth={2} />
+                      </View>
+                      <Text
+                        style={[
+                          styles.attachmentOptionLabel,
+                          { color: DYNAMIC_THEME.text },
+                        ]}>
+                        {t('certificateAssistant.actions.gallery')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.attachmentCancelButton,
+                      { backgroundColor: DYNAMIC_THEME.surfaceAlt },
+                    ]}
+                    onPress={() => setShowAttachmentModal(false)}>
+                    <Text
+                      style={[
+                        styles.attachmentCancelText,
+                        { color: DYNAMIC_THEME.textSecondary },
+                      ]}>
+                      {t('certificateAssistant.actions.cancel')}
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Visit Selection Modal */}
+        <VisitSelectionModal
+          visible={showVisitModal}
+          onClose={() => setShowVisitModal(false)}
+          onSelectVisits={handleSelectVisits}
+          selectedVisitIds={selectedVisits.map((v) => v.id)}
+          dynamicTheme={DYNAMIC_THEME}
+        />
+
+        {/* Save/Rename Dialog */}
+        <Modal
+          visible={showSaveDialog}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowSaveDialog(false)}>
+          <TouchableWithoutFeedback onPress={() => setShowSaveDialog(false)}>
+            <View
+              style={[
+                styles.dialogOverlay,
+                { backgroundColor: DYNAMIC_THEME.overlay },
+              ]}>
+              <TouchableWithoutFeedback>
+                <View
+                  style={[
+                    styles.dialogCard,
+                    {
+                      backgroundColor: DYNAMIC_THEME.background,
+                      borderColor: DYNAMIC_THEME.border,
+                    },
+                  ]}>
+                  <Text
+                    style={[styles.dialogTitle, { color: DYNAMIC_THEME.text }]}>
+                    {renamingSummaryId
+                      ? t('certificateAssistant.savedSummaries.renameTitle')
+                      : t('certificateAssistant.savedSummaries.nameTitle')}
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.dialogInput,
+                      {
+                        borderColor: DYNAMIC_THEME.border,
+                        color: DYNAMIC_THEME.text,
+                        backgroundColor: DYNAMIC_THEME.surface,
+                      },
+                    ]}
+                    placeholder={t(
+                      'certificateAssistant.savedSummaries.namePlaceholder',
+                    )}
+                    placeholderTextColor={
+                      isDark ? themeColors.textMuted : colors.onSurfaceVariant
+                    }
+                    value={saveNameInput}
+                    onChangeText={setSaveNameInput}
+                    autoFocus
+                  />
+                  <View style={styles.dialogActions}>
+                    <TouchableOpacity onPress={() => setShowSaveDialog(false)}>
+                      <Text
+                        style={[
+                          styles.dialogCancel,
+                          { color: DYNAMIC_THEME.textSecondary },
+                        ]}>
+                        {t('certificateAssistant.actions.cancel')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleConfirmSaveName}>
+                      <Text style={styles.dialogConfirm}>
+                        {renamingSummaryId
+                          ? t(
+                              'certificateAssistant.savedSummaries.renameConfirm',
+                            )
+                          : t(
+                              'certificateAssistant.savedSummaries.saveConfirm',
+                            )}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -871,7 +1174,8 @@ const VisitSelectionModal: React.FC<{
   const [searchQuery, setSearchQuery] = useState('');
   const [patientSessions, setPatientSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedVisitIds);
+  const [localSelectedIds, setLocalSelectedIds] =
+    useState<string[]>(selectedVisitIds);
 
   useEffect(() => {
     if (visible) {
@@ -881,13 +1185,15 @@ const VisitSelectionModal: React.FC<{
   }, [visible, selectedVisitIds]);
 
   const toggleSelection = (id: string) => {
-    setLocalSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setLocalSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
   const handleConfirm = () => {
-    const selected = patientSessions.filter(s => localSelectedIds.includes(s.id));
+    const selected = patientSessions.filter((s) =>
+      localSelectedIds.includes(s.id),
+    );
     onSelectVisits(selected);
     onClose();
   };
@@ -902,72 +1208,103 @@ const VisitSelectionModal: React.FC<{
     setIsLoading(true);
     try {
       const response = await getEvents();
-      console.log('[VisitSelectionModal] API response status:', response.status);
-      
+      console.log(
+        '[VisitSelectionModal] API response status:',
+        response.status,
+      );
+
       // The API returns { data: { docs: [...] } }
-      if (response.data && response.data.data && Array.isArray(response.data.data.docs)) {
-        console.log('[VisitSelectionModal] Fetched sessions count:', response.data.data.docs.length);
-        // Map backend events to Session interface
-        const sessions: Session[] = response.data.data.docs.map((event: any) => {
-          // Determine status based on provided backend flags
-          let status: SessionStatus = 'new';
-          if (event.notes && event.notes.length > 0) {
-            status = 'completed';
-          } else if (event.isTranscribed) {
-            status = 'transcribed';
-          } else if (event.recordingUrl) {
-            status = 'recorded';
-          }
-
-          const firstNote = event.notes && event.notes.length > 0 ? event.notes[0] : null;
-
-          return {
-            id: event._id,
-            sessionId: event._id,
-            title: event.title || 'Untitled Visit',
-            type: (event.type as SessionType) || 'patient',
-            date: event.date || event.createdAt,
-            status,
-            hasRecording: !!event.recordingUrl,
-            hasTranscription: !!event.isTranscribed,
-            duration: event.transcription?.duration?.toString() || null,
-            transcriptText: event.transcription?.text || null,
-            generatedNotes: firstNote?.content || null,
-            noteGenerationMeta: {
-              generationMode: firstNote?.type || 'standard',
-              specializationLabel: firstNote?.specialization || '',
-              visitTypeLabel: firstNote?.visitType || '',
-            },
-          };
-        });
-
-        const filteredByStatus = sessions.filter(s => 
-          s.type === 'patient' && 
-          (s.status === 'transcribed' || s.status === 'completed')
+      if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data.docs)
+      ) {
+        console.log(
+          '[VisitSelectionModal] Fetched sessions count:',
+          response.data.data.docs.length,
         );
-        
-        console.log('[VisitSelectionModal] Filtered sessions count:', filteredByStatus.length);
-        filteredByStatus.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Map backend events to Session interface
+        const sessions: Session[] = response.data.data.docs.map(
+          (event: any) => {
+            // Determine status based on provided backend flags
+            let status: SessionStatus = 'new';
+            if (event.notes && event.notes.length > 0) {
+              status = 'completed';
+            } else if (event.isTranscribed) {
+              status = 'transcribed';
+            } else if (event.recordingUrl) {
+              status = 'recorded';
+            }
+
+            const firstNote =
+              event.notes && event.notes.length > 0 ? event.notes[0] : null;
+
+            return {
+              id: event._id,
+              sessionId: event._id,
+              title: event.title || 'Untitled Visit',
+              type: (event.type as SessionType) || 'patient',
+              date: event.date || event.createdAt,
+              status,
+              hasRecording: !!event.recordingUrl,
+              hasTranscription: !!event.isTranscribed,
+              duration: event.transcription?.duration?.toString() || null,
+              transcriptText: event.transcription?.text || null,
+              generatedNotes: firstNote?.content || null,
+              noteGenerationMeta: {
+                generationMode: firstNote?.type || 'standard',
+                specializationLabel: firstNote?.specialization || '',
+                visitTypeLabel: firstNote?.visitType || '',
+              },
+            };
+          },
+        );
+
+        const filteredByStatus = sessions.filter(
+          (s) =>
+            s.type === 'patient' &&
+            (s.status === 'transcribed' || s.status === 'completed'),
+        );
+
+        console.log(
+          '[VisitSelectionModal] Filtered sessions count:',
+          filteredByStatus.length,
+        );
+        filteredByStatus.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
         setPatientSessions(filteredByStatus);
       }
     } catch (error) {
-      console.error('[VisitSelectionModal] Error loading sessions from API:', error);
+      console.error(
+        '[VisitSelectionModal] Error loading sessions from API:',
+        error,
+      );
       // Fallback to local storage if API fails
       try {
-        console.log('[VisitSelectionModal] Attempting local storage fallback...');
+        console.log(
+          '[VisitSelectionModal] Attempting local storage fallback...',
+        );
         const localSessions = await sessionStorage.getSessionsByType('patient');
-        const filtered = localSessions.filter(s => s.status === 'transcribed' || s.status === 'completed');
-        filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const filtered = localSessions.filter(
+          (s) => s.status === 'transcribed' || s.status === 'completed',
+        );
+        filtered.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
         setPatientSessions(filtered);
       } catch (localError) {
-        console.error('[VisitSelectionModal] Local fallback failed:', localError);
+        console.error(
+          '[VisitSelectionModal] Local fallback failed:',
+          localError,
+        );
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredSessions = patientSessions.filter(session => {
+  const filteredSessions = patientSessions.filter((session) => {
     if (searchQuery.trim() === '') return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -988,36 +1325,62 @@ const VisitSelectionModal: React.FC<{
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'completed': return t('status.completed') || 'Completed';
-      case 'transcribed': return t('status.transcribed') || 'Transcribed';
-      default: return status;
+      case 'completed':
+        return t('status.completed') || 'Completed';
+      case 'transcribed':
+        return t('status.transcribed') || 'Transcribed';
+      default:
+        return status;
     }
   };
 
   return (
-    <Modal 
-      visible={visible} 
-      animationType="slide" 
-      presentationStyle="pageSheet" 
-      onRequestClose={onClose}
-    >
-      <View style={[styles.visitModalContainer, { backgroundColor: dynamicTheme.background }]}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}>
+      <View
+        style={[
+          styles.visitModalContainer,
+          { backgroundColor: dynamicTheme.background },
+        ]}>
         <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-          <View style={[styles.visitModalHeader, { borderBottomColor: dynamicTheme.border }]}>
+          <View
+            style={[
+              styles.visitModalHeader,
+              { borderBottomColor: dynamicTheme.border },
+            ]}>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <X size={24} color={dynamicTheme.text} />
             </TouchableOpacity>
-            <Text style={[styles.visitModalTitle, { color: dynamicTheme.text }]}>{t('consultChat.visitSelection.title') || 'Select Visit'}</Text>
+            <Text
+              style={[styles.visitModalTitle, { color: dynamicTheme.text }]}>
+              {t('consultChat.visitSelection.title') || 'Select Visit'}
+            </Text>
             <TouchableOpacity onPress={handleConfirm} style={{ padding: 8 }}>
-              <Text style={{ color: '#46B7C6', fontWeight: '700', fontSize: 16 }}>{t('common.done') || 'Done'}</Text>
+              <Text
+                style={{ color: '#46B7C6', fontWeight: '700', fontSize: 16 }}>
+                {t('common.done') || 'Done'}
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.visitSearchContainer, { backgroundColor: dynamicTheme.surfaceAlt || dynamicTheme.surface }]}>
+          <View
+            style={[
+              styles.visitSearchContainer,
+              {
+                backgroundColor:
+                  dynamicTheme.surfaceAlt || dynamicTheme.surface,
+              },
+            ]}>
             <SearchIcon size={20} color={dynamicTheme.textSecondary} />
             <TextInput
               style={[styles.visitSearchInput, { color: dynamicTheme.text }]}
-              placeholder={t('consultChat.visitSelection.searchPlaceholder') || 'Search visits...'}
+              placeholder={
+                t('consultChat.visitSelection.searchPlaceholder') ||
+                'Search visits...'
+              }
               placeholderTextColor={dynamicTheme.textSecondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -1026,36 +1389,55 @@ const VisitSelectionModal: React.FC<{
 
           <View style={{ flex: 1 }}>
             {isLoading ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
                 <ActivityIndicator color="#46B7C6" size="large" />
               </View>
             ) : (
-              <ScrollView 
+              <ScrollView
                 style={styles.visitsList}
                 contentContainerStyle={{ paddingBottom: 40 }}
-                showsVerticalScrollIndicator={true}
-              >
+                showsVerticalScrollIndicator={true}>
                 {filteredSessions.length > 0 ? (
                   filteredSessions.map((session) => (
                     <TouchableOpacity
                       key={session.id}
                       style={[
-                        styles.visitItem, 
-                        { 
-                          backgroundColor: dynamicTheme.surfaceAlt || dynamicTheme.surface,
-                          borderColor: dynamicTheme.border
-                        }
+                        styles.visitItem,
+                        {
+                          backgroundColor:
+                            dynamicTheme.surfaceAlt || dynamicTheme.surface,
+                          borderColor: dynamicTheme.border,
+                        },
                       ]}
                       onPress={() => toggleSelection(session.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.visitIconContainer, { backgroundColor: 'rgba(70, 183, 198, 0.1)' }]}>
+                      activeOpacity={0.7}>
+                      <View
+                        style={[
+                          styles.visitIconContainer,
+                          { backgroundColor: 'rgba(70, 183, 198, 0.1)' },
+                        ]}>
                         <FileCheck size={20} color="#46B7C6" />
                       </View>
                       <View style={styles.visitInfo}>
-                        <Text style={[styles.visitPatientName, { color: dynamicTheme.text }]}>{session.title}</Text>
-                        <Text style={[styles.visitDetails, { color: dynamicTheme.textSecondary }]}>
-                          {formatDate(session.date)} • {getStatusLabel(session.status)}
+                        <Text
+                          style={[
+                            styles.visitPatientName,
+                            { color: dynamicTheme.text },
+                          ]}>
+                          {session.title}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.visitDetails,
+                            { color: dynamicTheme.textSecondary },
+                          ]}>
+                          {formatDate(session.date)} •{' '}
+                          {getStatusLabel(session.status)}
                         </Text>
                       </View>
                       {localSelectedIds.includes(session.id) ? (
@@ -1068,7 +1450,13 @@ const VisitSelectionModal: React.FC<{
                 ) : (
                   <View style={styles.noVisitsContainer}>
                     <FileCheck size={48} color={dynamicTheme.border} />
-                    <Text style={{ color: dynamicTheme.textSecondary, marginTop: 16 }}>{t('common.noRecords') || 'No visits found'}</Text>
+                    <Text
+                      style={{
+                        color: dynamicTheme.textSecondary,
+                        marginTop: 16,
+                      }}>
+                      {t('common.noRecords') || 'No visits found'}
+                    </Text>
                   </View>
                 )}
               </ScrollView>
@@ -1085,8 +1473,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   keyboardView: {
-  flex: 1,
-},
+    flex: 1,
+  },
   mainContainer: {
     flex: 1,
     display: 'flex',

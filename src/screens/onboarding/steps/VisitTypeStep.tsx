@@ -61,14 +61,19 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
   const { colors: themeColors, isDark } = useOnboardingTheme();
 
   return (
-     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                    <Text style={[styles.backText, { color: themeColors.textSecondary }]}>←  {t('onboarding.back')}</Text>
+          <Text style={[styles.backText, { color: themeColors.textSecondary }]}>
+            ← {t('onboarding.back')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>{t('onboarding.skip')}</Text>
+          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>
+            {t('onboarding.skip')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -113,9 +118,14 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
         {/* Hint */}
         <Animated.View
           entering={FadeIn.delay(350).duration(DURATIONS.normal)}
-          style={[styles.hintContainer, { backgroundColor: themeColors.primarySubtle }]}>
+          style={[
+            styles.hintContainer,
+            { backgroundColor: themeColors.primarySubtle },
+          ]}>
           <Text style={styles.hintIcon}>💡</Text>
-          <Text style={[styles.hintText, { color: themeColors.textSecondary }]}>{t('onboarding.visitType.hint')}</Text>
+          <Text style={[styles.hintText, { color: themeColors.textSecondary }]}>
+            {t('onboarding.visitType.hint')}
+          </Text>
         </Animated.View>
 
         {/* Progress dots */}
@@ -141,7 +151,9 @@ const VisitTypeStep: React.FC<VisitTypeStepProps> = ({
           ]}
           onPress={onContinue}
           activeOpacity={0.9}>
-          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.next')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>
+            {t('onboarding.next')}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

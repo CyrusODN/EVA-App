@@ -54,7 +54,14 @@ import PromptLibrary from '../../components/PromptLibrary';
 import { useTheme } from '../../constants/theme';
 import { customToast } from '../../utils/toastMessage';
 import { getChatbotServiceToken } from '../../services/authService';
-import { getPastConsultSessions, deleteConsultSession, createConsultSession, sendConsultMessage, ConsultSession } from '../../services/clinicalToolService';
+import {
+  getPastConsultSessions,
+  deleteConsultSession,
+  getConsultSessionHistory,
+  createConsultSession,
+  sendConsultMessage,
+  ConsultSession,
+} from '../../services/clinicalToolService';
 import { sessionStorage, Session } from '../../utils/sessionStorage';
 
 // ============================================================================
@@ -132,13 +139,15 @@ const DEFAULT_CONSULT_PROMPTS: CustomPrompt[] = [
   {
     id: 'p1',
     title: 'Differential Diagnosis',
-    content: 'Provide a comprehensive differential diagnosis with clinical reasoning.',
+    content:
+      'Provide a comprehensive differential diagnosis with clinical reasoning.',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'p2',
     title: 'Treatment Plan',
-    content: 'Focus on evidence-based treatment recommendations and management strategies.',
+    content:
+      'Focus on evidence-based treatment recommendations and management strategies.',
     createdAt: new Date().toISOString(),
   },
   {
@@ -160,7 +169,6 @@ const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'medium') => {
 // ============================================================================
 // MOCK RESPONSE
 // ============================================================================
-
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -184,7 +192,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -193,7 +201,8 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+      <Animated.View
+        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
         <Image source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
@@ -201,7 +210,10 @@ const PulsingAILogo: React.FC = () => {
 };
 
 // Pulsing Import Button
-const PulsingImportButton: React.FC<{ onPress: () => void; dynamicTheme: any }> = ({ onPress, dynamicTheme }) => {
+const PulsingImportButton: React.FC<{
+  onPress: () => void;
+  dynamicTheme: any;
+}> = ({ onPress, dynamicTheme }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const { t } = useTranslation();
 
@@ -220,7 +232,7 @@ const PulsingImportButton: React.FC<{ onPress: () => void; dynamicTheme: any }> 
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -234,13 +246,15 @@ const PulsingImportButton: React.FC<{ onPress: () => void; dynamicTheme: any }> 
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={onPress}
-        style={styles.pulsingButtonWrapper}
-      >
-        <Animated.View style={[styles.pulsingCircle, { transform: [{ scale: pulseAnim }] }]}>
+        style={styles.pulsingButtonWrapper}>
+        <Animated.View
+          style={[styles.pulsingCircle, { transform: [{ scale: pulseAnim }] }]}>
           <Plus size={36} color={THEME.pure} strokeWidth={2.5} />
         </Animated.View>
       </TouchableOpacity>
-      <Text style={[styles.importVisitText, { color: dynamicTheme.secondary }]}>{t('consultChat.importVisitPrompt')}</Text>
+      <Text style={[styles.importVisitText, { color: dynamicTheme.secondary }]}>
+        {t('consultChat.importVisitPrompt')}
+      </Text>
     </View>
   );
 };
@@ -293,23 +307,38 @@ const MessageBubble: React.FC<{
     triggerHaptic('light');
     customToast('success', 'Copied', 'Message copied to clipboard');
   };
-  
+
   const isUser = message.role === 'user';
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(isUser ? 20 : -20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
   if (message.isLoading) {
     return (
-      <Animated.View style={[styles.messageBubbleWrapper, { opacity: fadeAnim, transform: [{ translateX: slideAnim }] }]}>
+      <Animated.View
+        style={[
+          styles.messageBubbleWrapper,
+          { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
+        ]}>
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
         <View style={styles.bubbleContent}>
           <ThinkingIndicator />
@@ -324,58 +353,102 @@ const MessageBubble: React.FC<{
         styles.messageBubbleWrapper,
         isUser && styles.userBubbleWrapper,
         { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-      ]}
-    >
+      ]}>
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
       )}
-      
-      <View style={[
-        styles.messageBubble, 
-        isUser ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }] : [
-          styles.assistantBubble,
-          { 
-            backgroundColor: dynamicTheme.pure,
-            borderColor: dynamicTheme.borderLight,
-            shadowColor: '#000'
-          }
-        ]
-      ]}>
+
+      <View
+        style={[
+          styles.messageBubble,
+          isUser
+            ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }]
+            : [
+                styles.assistantBubble,
+                {
+                  backgroundColor: dynamicTheme.pure,
+                  borderColor: dynamicTheme.borderLight,
+                  shadowColor: '#000',
+                },
+              ],
+        ]}>
         {!isUser && (
-          <TouchableOpacity 
-            style={[styles.copyButton, { backgroundColor: dynamicTheme.brandMedium }]} 
-            onPress={handleCopy} 
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} 
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity
+            style={[
+              styles.copyButton,
+              { backgroundColor: dynamicTheme.brandMedium },
+            ]}
+            onPress={handleCopy}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}>
             <Copy size={14} color={dynamicTheme.brand} strokeWidth={2} />
           </TouchableOpacity>
         )}
 
         {isUser ? (
-          <Text style={[styles.messageText, styles.userMessageText, { color: dynamicTheme.navy }]}>{message.content}</Text>
+          <Text
+            style={[
+              styles.messageText,
+              styles.userMessageText,
+              { color: dynamicTheme.navy },
+            ]}>
+            {message.content}
+          </Text>
         ) : (
-          <Markdown style={markdownStyles(dynamicTheme)}>{message.content}</Markdown>
+          <Markdown style={markdownStyles(dynamicTheme)}>
+            {message.content}
+          </Markdown>
         )}
 
         {message.citations && message.citations.length > 0 && (
-          <View style={[styles.citationsContainer, { borderTopColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>Sources</Text>
+          <View
+            style={[
+              styles.citationsContainer,
+              { borderTopColor: dynamicTheme.borderLight },
+            ]}>
+            <Text
+              style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>
+              Sources
+            </Text>
             {message.citations.map((citation, index) => (
               <TouchableOpacity
                 key={citation.id}
-                style={[styles.citationChip, { backgroundColor: dynamicTheme.surfaceAlt }]}
+                style={[
+                  styles.citationChip,
+                  { backgroundColor: dynamicTheme.surfaceAlt },
+                ]}
                 onPress={() => onCitationPress?.(citation)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.citationNumber, { backgroundColor: dynamicTheme.brandMedium }]}>
-                  <Text style={[styles.citationNumberText, { color: dynamicTheme.brand }]}>{index + 1}</Text>
+                activeOpacity={0.7}>
+                <View
+                  style={[
+                    styles.citationNumber,
+                    { backgroundColor: dynamicTheme.brandMedium },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.citationNumberText,
+                      { color: dynamicTheme.brand },
+                    ]}>
+                    {index + 1}
+                  </Text>
                 </View>
                 <View style={styles.citationContent}>
-                  <Text style={[styles.citationTitle, { color: dynamicTheme.navy }]} numberOfLines={1}>{citation.title}</Text>
-                  <Text style={[styles.citationSource, { color: dynamicTheme.tertiary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.citationTitle, { color: dynamicTheme.navy }]}
+                    numberOfLines={1}>
+                    {citation.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.citationSource,
+                      { color: dynamicTheme.tertiary },
+                    ]}
+                    numberOfLines={1}>
                     {citation.source} {citation.page && `• ${citation.page}`}
                   </Text>
                 </View>
@@ -399,9 +472,17 @@ const ThinkingIndicator: React.FC = () => {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0.3, duration: 400, useNativeDriver: true }),
-        ])
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0.3,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]),
       );
 
     animateDot(dot1, 0).start();
@@ -420,22 +501,37 @@ const ThinkingIndicator: React.FC = () => {
   );
 };
 
-const FileChip: React.FC<{ file: AttachedFile; onRemove: () => void; dynamicTheme: any }> = ({ file, onRemove, dynamicTheme }) => {
+const FileChip: React.FC<{
+  file: AttachedFile;
+  onRemove: () => void;
+  dynamicTheme: any;
+}> = ({ file, onRemove, dynamicTheme }) => {
   const getIcon = () => {
     switch (file.type) {
-      case 'pdf': return FileText;
-      case 'image': return ImageIcon;
-      case 'visit': return FileCheck;
-      default: return File;
+      case 'pdf':
+        return FileText;
+      case 'image':
+        return ImageIcon;
+      case 'visit':
+        return FileCheck;
+      default:
+        return File;
     }
   };
   const Icon = getIcon();
 
   return (
-    <View style={[styles.fileChip, { backgroundColor: dynamicTheme.brandLight }]}>
+    <View
+      style={[styles.fileChip, { backgroundColor: dynamicTheme.brandLight }]}>
       <Icon size={14} color={dynamicTheme.brand} />
-      <Text style={[styles.fileChipName, { color: dynamicTheme.navy }]} numberOfLines={1}>{file.name}</Text>
-      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <Text
+        style={[styles.fileChipName, { color: dynamicTheme.navy }]}
+        numberOfLines={1}>
+        {file.name}
+      </Text>
+      <TouchableOpacity
+        onPress={onRemove}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <X size={14} color={dynamicTheme.secondary} />
       </TouchableOpacity>
     </View>
@@ -451,24 +547,68 @@ const AttachmentModal: React.FC<{
   onScan: () => void;
   onGallery: () => void;
   dynamicTheme: any;
-}> = ({ visible, onClose, onImportVisit, onUploadPdf, onScan, onGallery, dynamicTheme }) => {
+}> = ({
+  visible,
+  onClose,
+  onImportVisit,
+  onUploadPdf,
+  onScan,
+  onGallery,
+  dynamicTheme,
+}) => {
   const { t } = useTranslation();
 
   const options = [
-    { icon: FileCheck, label: t('consultChat.attachOptions.importVisit'), onPress: onImportVisit, color: dynamicTheme.brand },
-    { icon: FileText, label: t('consultChat.attachOptions.uploadPdf'), onPress: onUploadPdf, color: '#8B5CF6' },
-    { icon: Camera, label: t('consultChat.attachOptions.scan'), onPress: onScan, color: '#10B981', disabled: true },
-    { icon: FolderOpen, label: t('consultChat.attachOptions.gallery'), onPress: onGallery, color: '#F59E0B', disabled: true },
+    {
+      icon: FileCheck,
+      label: t('consultChat.attachOptions.importVisit'),
+      onPress: onImportVisit,
+      color: dynamicTheme.brand,
+    },
+    {
+      icon: FileText,
+      label: t('consultChat.attachOptions.uploadPdf'),
+      onPress: onUploadPdf,
+      color: '#8B5CF6',
+    },
+    {
+      icon: Camera,
+      label: t('consultChat.attachOptions.scan'),
+      onPress: onScan,
+      color: '#10B981',
+      disabled: true,
+    },
+    {
+      icon: FolderOpen,
+      label: t('consultChat.attachOptions.gallery'),
+      onPress: onGallery,
+      color: '#F59E0B',
+      disabled: true,
+    },
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.attachmentModalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={[
+            styles.attachmentModalContent,
+            { backgroundColor: dynamicTheme.pure },
+          ]}
+          onPress={(e) => e.stopPropagation()}>
           <View style={styles.attachmentModalHeader}>
-            <View style={[styles.attachmentModalHandle, { backgroundColor: dynamicTheme.inactive }]} />
+            <View
+              style={[
+                styles.attachmentModalHandle,
+                { backgroundColor: dynamicTheme.inactive },
+              ]}
+            />
           </View>
-          
+
           <View style={styles.attachmentOptionsContainer}>
             {options.map((option, index) => {
               const Icon = option.icon;
@@ -477,9 +617,9 @@ const AttachmentModal: React.FC<{
                 <TouchableOpacity
                   key={index}
                   style={[
-                    styles.attachmentOption, 
+                    styles.attachmentOption,
                     { backgroundColor: dynamicTheme.surface },
-                    isDisabled && { opacity: 0.7 }
+                    isDisabled && { opacity: 0.7 },
                   ]}
                   onPress={() => {
                     if (isDisabled) return;
@@ -487,23 +627,53 @@ const AttachmentModal: React.FC<{
                     onClose();
                   }}
                   activeOpacity={isDisabled ? 1 : 0.7}
-                  disabled={isDisabled}
-                >
-                  <View style={[
-                    styles.attachmentOptionIcon, 
-                    { backgroundColor: isDisabled ? (dynamicTheme.borderLight || '#E5E7EB') : `${option.color}15` }
-                  ]}>
-                    <Icon size={24} color={isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : option.color} strokeWidth={2} />
-                  </View>
-                  <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={[
-                      styles.attachmentOptionLabel, 
-                      { color: isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : dynamicTheme.navy }
+                  disabled={isDisabled}>
+                  <View
+                    style={[
+                      styles.attachmentOptionIcon,
+                      {
+                        backgroundColor: isDisabled
+                          ? dynamicTheme.borderLight || '#E5E7EB'
+                          : `${option.color}15`,
+                      },
                     ]}>
+                    <Icon
+                      size={24}
+                      color={
+                        isDisabled
+                          ? dynamicTheme.inactive || '#9CA3AF'
+                          : option.color
+                      }
+                      strokeWidth={2}
+                    />
+                  </View>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                    <Text
+                      style={[
+                        styles.attachmentOptionLabel,
+                        {
+                          color: isDisabled
+                            ? dynamicTheme.inactive || '#9CA3AF'
+                            : dynamicTheme.navy,
+                        },
+                      ]}>
                       {option.label}
                     </Text>
                     {isDisabled && (
-                      <Text style={{ fontSize: 12, color: dynamicTheme.brand, fontWeight: '600' }}>Coming soon</Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: dynamicTheme.brand,
+                          fontWeight: '600',
+                        }}>
+                        Coming soon
+                      </Text>
                     )}
                   </View>
                 </TouchableOpacity>
@@ -511,8 +681,19 @@ const AttachmentModal: React.FC<{
             })}
           </View>
 
-          <TouchableOpacity style={[styles.attachmentCancelButton, { backgroundColor: dynamicTheme.surfaceAlt }]} onPress={onClose}>
-            <Text style={[styles.attachmentCancelText, { color: dynamicTheme.secondary }]}>{t('consultChat.attachOptions.cancel')}</Text>
+          <TouchableOpacity
+            style={[
+              styles.attachmentCancelButton,
+              { backgroundColor: dynamicTheme.surfaceAlt },
+            ]}
+            onPress={onClose}>
+            <Text
+              style={[
+                styles.attachmentCancelText,
+                { color: dynamicTheme.secondary },
+              ]}>
+              {t('consultChat.attachOptions.cancel')}
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -544,9 +725,13 @@ const VisitSelectionModal: React.FC<{
     try {
       const sessions = await sessionStorage.getSessionsByType('patient');
       // Filter to only show transcribed and completed sessions
-      const filteredByStatus = sessions.filter(s => s.status === 'transcribed' || s.status === 'completed');
+      const filteredByStatus = sessions.filter(
+        (s) => s.status === 'transcribed' || s.status === 'completed',
+      );
       // Sort by date descending (most recent first)
-      filteredByStatus.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      filteredByStatus.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      );
       setPatientSessions(filteredByStatus);
     } catch (error) {
       console.error('[VisitSelectionModal] Error loading sessions:', error);
@@ -555,7 +740,7 @@ const VisitSelectionModal: React.FC<{
     }
   };
 
-  const filteredSessions = patientSessions.filter(session => {
+  const filteredSessions = patientSessions.filter((session) => {
     if (searchQuery.trim() === '') return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -576,11 +761,16 @@ const VisitSelectionModal: React.FC<{
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'completed': return t('status.completed') || 'Completed';
-      case 'transcribed': return t('status.transcribed') || 'Transcribed';
-      case 'recorded': return t('status.recorded') || 'Recorded';
-      case 'new': return t('status.new') || 'New';
-      default: return status;
+      case 'completed':
+        return t('status.completed') || 'Completed';
+      case 'transcribed':
+        return t('status.transcribed') || 'Transcribed';
+      case 'recorded':
+        return t('status.recorded') || 'Recorded';
+      case 'new':
+        return t('status.new') || 'New';
+      default:
+        return status;
     }
   };
 
@@ -591,16 +781,37 @@ const VisitSelectionModal: React.FC<{
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={[styles.visitModalContainer, { backgroundColor: dynamicTheme.pure }]} edges={['top']}>
-        <View style={[styles.visitModalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
-          <Text style={[styles.visitModalTitle, { color: dynamicTheme.navy }]}>{t('consultChat.visitSelection.title')}</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}>
+      <SafeAreaView
+        style={[
+          styles.visitModalContainer,
+          { backgroundColor: dynamicTheme.pure },
+        ]}
+        edges={['top']}>
+        <View
+          style={[
+            styles.visitModalHeader,
+            { borderBottomColor: dynamicTheme.borderLight },
+          ]}>
+          <Text style={[styles.visitModalTitle, { color: dynamicTheme.navy }]}>
+            {t('consultChat.visitSelection.title')}
+          </Text>
+          <TouchableOpacity
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <X size={24} color={dynamicTheme.navy} />
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.visitSearchContainer, { backgroundColor: dynamicTheme.surface }]}>
+        <View
+          style={[
+            styles.visitSearchContainer,
+            { backgroundColor: dynamicTheme.surface },
+          ]}>
           <Search size={20} color={dynamicTheme.tertiary} />
           <TextInput
             style={[styles.visitSearchInput, { color: dynamicTheme.navy }]}
@@ -610,33 +821,59 @@ const VisitSelectionModal: React.FC<{
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <X size={18} color={dynamicTheme.tertiary} />
             </TouchableOpacity>
           )}
         </View>
 
         {isLoading ? (
-          <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+          <View
+            style={{
+              padding: 40,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
             <ActivityIndicator color={dynamicTheme.brand} size="large" />
           </View>
         ) : (
-          <ScrollView style={styles.visitsList} contentContainerStyle={styles.visitsListContent}>
+          <ScrollView
+            style={styles.visitsList}
+            contentContainerStyle={styles.visitsListContent}>
             {filteredSessions.length > 0 ? (
               filteredSessions.map((session) => (
                 <TouchableOpacity
                   key={session.id}
-                  style={[styles.visitItem, { backgroundColor: dynamicTheme.surface }]}
+                  style={[
+                    styles.visitItem,
+                    { backgroundColor: dynamicTheme.surface },
+                  ]}
                   onPress={() => handleSelectSession(session)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.visitIconContainer, { backgroundColor: dynamicTheme.brandLight }]}>
+                  activeOpacity={0.7}>
+                  <View
+                    style={[
+                      styles.visitIconContainer,
+                      { backgroundColor: dynamicTheme.brandLight },
+                    ]}>
                     <FileCheck size={20} color={dynamicTheme.brand} />
                   </View>
                   <View style={styles.visitInfo}>
-                    <Text style={[styles.visitPatientName, { color: dynamicTheme.navy }]}>{session.title}</Text>
-                    <Text style={[styles.visitDetails, { color: dynamicTheme.secondary }]}>
-                      {formatDate(session.date)} • {getStatusLabel(session.status)}
+                    <Text
+                      style={[
+                        styles.visitPatientName,
+                        { color: dynamicTheme.navy },
+                      ]}>
+                      {session.title}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.visitDetails,
+                        { color: dynamicTheme.secondary },
+                      ]}>
+                      {formatDate(session.date)} •{' '}
+                      {getStatusLabel(session.status)}
                       {session.duration ? ` • ${session.duration}` : ''}
                     </Text>
                   </View>
@@ -648,7 +885,13 @@ const VisitSelectionModal: React.FC<{
             ) : (
               <View style={styles.noVisitsContainer}>
                 <FileCheck size={48} color={dynamicTheme.inactive} />
-                <Text style={[styles.noVisitsText, { color: dynamicTheme.tertiary }]}>{t('consultChat.visitSelection.noVisits')}</Text>
+                <Text
+                  style={[
+                    styles.noVisitsText,
+                    { color: dynamicTheme.tertiary },
+                  ]}>
+                  {t('consultChat.visitSelection.noVisits')}
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -658,7 +901,6 @@ const VisitSelectionModal: React.FC<{
   );
 };
 
-
 const PastSessionsModal: React.FC<{
   visible: boolean;
   sessions: ConsultSession[];
@@ -667,73 +909,125 @@ const PastSessionsModal: React.FC<{
   onDeleteSession: (sessionId: string) => void;
   isLoading: boolean;
   dynamicTheme: any;
-}> = ({ visible, sessions, onClose, onSelectSession, onDeleteSession, isLoading, dynamicTheme }) => {
+}> = ({
+  visible,
+  sessions,
+  onClose,
+  onSelectSession,
+  onDeleteSession,
+  isLoading,
+  dynamicTheme,
+}) => {
   const { t } = useTranslation();
-  
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>{t('consultChat.pastConversations') || 'Past Conversations'}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]}
+          onPress={(e) => e.stopPropagation()}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: dynamicTheme.borderLight },
+            ]}>
+            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>
+              {t('consultChat.pastConversations') || 'Past Conversations'}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={dynamicTheme.navy} />
             </TouchableOpacity>
           </View>
 
           {isLoading ? (
-            <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                padding: 40,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               <ActivityIndicator color={dynamicTheme.brand} size="large" />
             </View>
           ) : (
             <ScrollView style={styles.modalFilesList}>
               {sessions.length > 0 ? (
                 sessions.map((session) => (
-                  <View 
-                    key={session._id} 
-                    style={[styles.modalFileItem, { 
-                      borderBottomWidth: 1, 
-                      borderBottomColor: dynamicTheme.borderLight,
-                      paddingVertical: 12,
-                      paddingHorizontal: 4,
-                      flexDirection: 'row',
-                      alignItems: 'center'
-                    }]}
-                  >
-                    <TouchableOpacity 
-                      style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                  <View
+                    key={session._id}
+                    style={[
+                      styles.modalFileItem,
+                      {
+                        borderBottomWidth: 1,
+                        borderBottomColor: dynamicTheme.borderLight,
+                        paddingVertical: 12,
+                        paddingHorizontal: 4,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      },
+                    ]}>
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        flex: 1,
+                      }}
                       onPress={() => onSelectSession(session)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={{ 
-                        width: 40, 
-                        height: 40, 
-                        borderRadius: 20, 
-                        backgroundColor: dynamicTheme.brandLight, 
-                        alignItems: 'center', 
-                        justifyContent: 'center' 
-                      }}>
+                      activeOpacity={0.7}>
+                      <View
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          backgroundColor: dynamicTheme.brandLight,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
                         <History size={18} color={dynamicTheme.brand} />
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={[styles.modalFileName, { color: dynamicTheme.navy, fontWeight: '600' }]} numberOfLines={1}>
+                        <Text
+                          style={[
+                            styles.modalFileName,
+                            { color: dynamicTheme.navy, fontWeight: '600' },
+                          ]}
+                          numberOfLines={1}>
                           {session.title || 'Untitled Conversation'}
                         </Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                          <Text style={{ fontSize: 12, color: dynamicTheme.brand, fontWeight: '500' }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginTop: 2,
+                          }}>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: dynamicTheme.brand,
+                              fontWeight: '500',
+                            }}>
                             #{session._id.substring(0, 7)}
                           </Text>
-                          <Text style={{ fontSize: 12, color: dynamicTheme.tertiary, marginLeft: 8 }}>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: dynamicTheme.tertiary,
+                              marginLeft: 8,
+                            }}>
                             {new Date(session.createdAt).toLocaleDateString()}
                           </Text>
                         </View>
                       </View>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      onPress={() => onDeleteSession(session._id)}
+                    <TouchableOpacity
+                      onPress={() => onDeleteSession(session.sessionId)}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ padding: 8, marginRight: 4 }}
-                    >
+                      style={{ padding: 8, marginRight: 4 }}>
                       <Trash2 size={18} color={dynamicTheme.error} />
                     </TouchableOpacity>
                     <ChevronRight size={18} color={dynamicTheme.tertiary} />
@@ -742,7 +1036,17 @@ const PastSessionsModal: React.FC<{
               ) : (
                 <View style={[styles.modalEmptyState, { padding: 40 }]}>
                   <History size={32} color={dynamicTheme.tertiary} />
-                  <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary, marginTop: 12, textAlign: 'center' }]}>No past conversations found</Text>
+                  <Text
+                    style={[
+                      styles.modalEmptyText,
+                      {
+                        color: dynamicTheme.tertiary,
+                        marginTop: 12,
+                        textAlign: 'center',
+                      },
+                    ]}>
+                    No past conversations found
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -753,12 +1057,20 @@ const PastSessionsModal: React.FC<{
   );
 };
 
-
 // Specialty options for new consultation session
-const SPECIALTY_OPTIONS = [
-  { id: 'childPsychiatry', label: 'Child Psychiatry' },
-  { id: 'adultPsychiatry', label: 'Adult Psychiatry' },
-  { id: 'internalMedicine', label: 'Internal Medicine' },
+const getSpecialtyOptions = (t: any) => [
+  {
+    id: 'childPsychiatry',
+    label: t('consultChat.specialtySelection.specialties.childPsychiatry'),
+  },
+  {
+    id: 'adultPsychiatry',
+    label: t('consultChat.specialtySelection.specialties.adultPsychiatry'),
+  },
+  {
+    id: 'internalMedicine',
+    label: t('consultChat.specialtySelection.specialties.internalMedicine'),
+  },
 ];
 
 // Specialty Selection Modal
@@ -770,58 +1082,105 @@ const SpecialtySelectionModal: React.FC<{
   dynamicTheme: any;
 }> = ({ visible, onClose, onSelectSpecialty, isLoading, dynamicTheme }) => {
   const { t } = useTranslation();
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string>('adultPsychiatry');
+  const { isDark } = useTheme();
+  const [selectedSpecialty, setSelectedSpecialty] =
+    useState<string>('adultPsychiatry');
 
   const handleStartConsultation = () => {
     onSelectSpecialty(selectedSpecialty);
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.modalOverlay, { justifyContent: 'center', alignItems: 'center' }]}>
-        <View style={[styles.specialtyModalContent, { backgroundColor: dynamicTheme.pure }]}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
+      <View
+        style={[
+          styles.modalOverlay,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}>
+        <View
+          style={[
+            styles.specialtyModalContent,
+            { backgroundColor: dynamicTheme.pure },
+          ]}>
           {/* Header */}
           <View style={styles.specialtyModalHeader}>
-            <Text style={[styles.specialtyModalTitle, { color: dynamicTheme.navy }]}>
-              Choose a specialty
+            <Text
+              style={[
+                styles.specialtyModalTitle,
+                { color: dynamicTheme.navy },
+              ]}>
+              {t('consultChat.specialtySelection.title')}
             </Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={dynamicTheme.tertiary} />
             </TouchableOpacity>
           </View>
 
           {/* Subtitle */}
-          <Text style={[styles.specialtyModalSubtitle, { color: dynamicTheme.secondary }]}>
-            Pick a specialty for your new consultation session.
+          <Text
+            style={[
+              styles.specialtyModalSubtitle,
+              { color: dynamicTheme.secondary },
+            ]}>
+            {t('consultChat.specialtySelection.subtitle')}
           </Text>
 
           {/* Dropdown/Picker Label */}
           <Text style={[styles.specialtyLabel, { color: dynamicTheme.navy }]}>
-            Select Specialty
+            {t('consultChat.specialtySelection.label')}
           </Text>
 
           {/* Specialty List */}
-          <View style={[styles.specialtyDropdown, { backgroundColor: dynamicTheme.surface, borderColor: dynamicTheme.borderLight }]}>
-            <ScrollView style={{ maxHeight: 150 }} showsVerticalScrollIndicator={false}>
-              {SPECIALTY_OPTIONS.map((specialty) => (
+          <View
+            style={[
+              styles.specialtyDropdown,
+              {
+                backgroundColor: dynamicTheme.borderLight,
+                borderColor: dynamicTheme.borderLight,
+              },
+            ]}>
+            <ScrollView
+              style={{ maxHeight: 200 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ gap: 1 }}>
+              {getSpecialtyOptions(t).map((specialty) => (
                 <TouchableOpacity
                   key={specialty.id}
                   style={[
                     styles.specialtyOption,
-                    selectedSpecialty === specialty.id && { backgroundColor: dynamicTheme.brandLight + '40' } // Adding transparency
+                    { backgroundColor: dynamicTheme.pure },
+                    selectedSpecialty === specialty.id && {
+                      backgroundColor: isDark
+                        ? dynamicTheme.brandLight
+                        : '#F0F9FA',
+                    },
                   ]}
                   onPress={() => setSelectedSpecialty(specialty.id)}
-                  activeOpacity={0.7}
-                >
+                  activeOpacity={0.7}>
                   <View style={styles.specialtyOptionRow}>
                     {selectedSpecialty === specialty.id && (
-                      <Text style={[styles.specialtyCheckmark, { color: dynamicTheme.brand }]}>✓</Text>
+                      <Text
+                        style={[
+                          styles.specialtyCheckmark,
+                          { color: dynamicTheme.brand },
+                        ]}>
+                        ✓
+                      </Text>
                     )}
-                    <Text style={[
-                      styles.specialtyOptionText,
-                      { color: dynamicTheme.navy },
-                      selectedSpecialty === specialty.id && { fontWeight: '600' }
-                    ]}>
+                    <Text
+                      style={[
+                        styles.specialtyOptionText,
+                        { color: dynamicTheme.navy },
+                        selectedSpecialty === specialty.id && {
+                          fontWeight: '600',
+                        },
+                      ]}>
                       {specialty.label}
                     </Text>
                   </View>
@@ -833,21 +1192,38 @@ const SpecialtySelectionModal: React.FC<{
           {/* Action Buttons */}
           <View style={styles.specialtyButtonRow}>
             <TouchableOpacity
-              style={[styles.specialtyCancelButton, { borderColor: dynamicTheme.borderLight }]}
+              style={[
+                styles.specialtyCancelButton,
+                { borderColor: dynamicTheme.borderLight },
+              ]}
               onPress={onClose}
-              disabled={isLoading}
-            >
-              <Text style={[styles.specialtyCancelText, { color: dynamicTheme.navy }]}>Cancel</Text>
+              disabled={isLoading}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={[
+                  styles.specialtyCancelText,
+                  { color: dynamicTheme.navy },
+                ]}>
+                {t('consultChat.specialtySelection.cancel')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.specialtyStartButton, { backgroundColor: dynamicTheme.brand }]}
+              style={[
+                styles.specialtyStartButton,
+                { backgroundColor: dynamicTheme.brand },
+              ]}
               onPress={handleStartConsultation}
-              disabled={isLoading}
-            >
+              disabled={isLoading}>
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.specialtyStartText}>Start Consultation</Text>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={styles.specialtyStartText}>
+                  {t('consultChat.specialtySelection.start')}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -864,14 +1240,28 @@ const ContextFilesModal: React.FC<{
   dynamicTheme: any;
 }> = ({ visible, files, onClose, dynamicTheme }) => {
   const { t } = useTranslation();
-  
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>{t('consultChat.contextFiles')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]}
+          onPress={(e) => e.stopPropagation()}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: dynamicTheme.borderLight },
+            ]}>
+            <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>
+              {t('consultChat.contextFiles')}
+            </Text>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={dynamicTheme.navy} />
             </TouchableOpacity>
           </View>
@@ -879,18 +1269,37 @@ const ContextFilesModal: React.FC<{
           <ScrollView style={styles.modalFilesList}>
             {files.length > 0 ? (
               files.map((file) => {
-                const Icon = file.type === 'pdf' ? FileText : file.type === 'image' ? ImageIcon : file.type === 'visit' ? FileCheck : File;
+                const Icon =
+                  file.type === 'pdf'
+                    ? FileText
+                    : file.type === 'image'
+                    ? ImageIcon
+                    : file.type === 'visit'
+                    ? FileCheck
+                    : File;
                 return (
                   <View key={file.id} style={styles.modalFileItem}>
                     <Icon size={18} color={dynamicTheme.brand} />
-                    <Text style={[styles.modalFileName, { color: dynamicTheme.navy }]}>{file.name}</Text>
+                    <Text
+                      style={[
+                        styles.modalFileName,
+                        { color: dynamicTheme.navy },
+                      ]}>
+                      {file.name}
+                    </Text>
                   </View>
                 );
               })
             ) : (
               <View style={styles.modalEmptyState}>
                 <FolderOpen size={32} color={dynamicTheme.tertiary} />
-                <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary }]}>No files uploaded</Text>
+                <Text
+                  style={[
+                    styles.modalEmptyText,
+                    { color: dynamicTheme.tertiary },
+                  ]}>
+                  No files uploaded
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -910,40 +1319,71 @@ const InputBar: React.FC<{
   placeholder: string;
   isLoading: boolean;
   dynamicTheme: any;
-}> = ({ value, onChangeText, onSend, onAttach, attachedFiles, onRemoveFile, placeholder, isLoading, dynamicTheme }) => {
-  const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
+}> = ({
+  value,
+  onChangeText,
+  onSend,
+  onAttach,
+  attachedFiles,
+  onRemoveFile,
+  placeholder,
+  isLoading,
+  dynamicTheme,
+}) => {
+  const inputRef = useRef<TextInput>(null);
+  const canSend =
+    (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
 
   const handleSend = () => {
     if (canSend) {
       triggerHaptic('medium');
       onSend();
+      // Re-focus input to keep keyboard open
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
   return (
-    <View style={[styles.inputBarWrapper, { 
-      backgroundColor: dynamicTheme.pure,
-      borderTopColor: dynamicTheme.borderLight
-    }]}>
+    <View
+      style={[
+        styles.inputBarWrapper,
+        {
+          backgroundColor: dynamicTheme.pure,
+          borderTopColor: dynamicTheme.borderLight,
+        },
+      ]}>
       {attachedFiles.length > 0 && (
         <View style={styles.attachedFilesContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {attachedFiles.map((file) => (
-              <FileChip key={file.id} file={file} onRemove={() => onRemoveFile(file.id)} dynamicTheme={dynamicTheme} />
+              <FileChip
+                key={file.id}
+                file={file}
+                onRemove={() => onRemoveFile(file.id)}
+                dynamicTheme={dynamicTheme}
+              />
             ))}
           </ScrollView>
         </View>
       )}
 
-      <View style={[styles.inputBarContainer, { 
-        backgroundColor: dynamicTheme.surfaceAlt,
-        borderColor: dynamicTheme.borderLight
-      }]}>
-        <TouchableOpacity style={[styles.attachButton, { backgroundColor: dynamicTheme.pure }]} onPress={onAttach} activeOpacity={0.7}>
+      <View
+        style={[
+          styles.inputBarContainer,
+          {
+            backgroundColor: dynamicTheme.surfaceAlt,
+            borderColor: dynamicTheme.borderLight,
+          },
+        ]}>
+        <TouchableOpacity
+          style={[styles.attachButton, { backgroundColor: dynamicTheme.pure }]}
+          onPress={onAttach}
+          activeOpacity={0.7}>
           <Plus size={22} color={dynamicTheme.secondary} strokeWidth={2} />
         </TouchableOpacity>
 
         <TextInput
+          ref={inputRef}
           style={[styles.textInput, { color: dynamicTheme.navy }]}
           value={value}
           onChangeText={onChangeText}
@@ -956,11 +1396,18 @@ const InputBar: React.FC<{
 
         {value.trim().length > 0 && (
           <TouchableOpacity
-            style={[styles.sendButton, styles.sendButtonActive, { backgroundColor: dynamicTheme.brand }]}
+            style={[
+              styles.sendButton,
+              styles.sendButtonActive,
+              {
+                backgroundColor: canSend
+                  ? dynamicTheme.brand
+                  : dynamicTheme.inactive,
+              },
+            ]}
             onPress={handleSend}
             disabled={!canSend}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <ArrowUp size={18} color={dynamicTheme.pure} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
@@ -1009,15 +1456,19 @@ const ConsultChat: React.FC = () => {
   const [showContextModal, setShowContextModal] = useState(false);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [showVisitModal, setShowVisitModal] = useState(false);
-  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(DEFAULT_CONSULT_PROMPTS);
+  const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>(
+    DEFAULT_CONSULT_PROMPTS,
+  );
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [chatbotToken, setChatbotToken] = useState<string | null>(null);
   const [pastSessions, setPastSessions] = useState<ConsultSession[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [showSessionsModal, setShowSessionsModal] = useState(false);
-  const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const [showSpecialtyModal, setShowSpecialtyModal] = useState(true);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(
+    null,
+  );
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
@@ -1027,7 +1478,7 @@ const ConsultChat: React.FC = () => {
       try {
         console.log('[ConsultChat] Fetching chatbot service token...');
         const response = await getChatbotServiceToken();
-        
+
         if (response.data?.success && response.data?.data?.serviceToken) {
           setChatbotToken(response.data.data.serviceToken);
           console.log('[ConsultChat] Chatbot token fetched successfully');
@@ -1036,7 +1487,10 @@ const ConsultChat: React.FC = () => {
         }
       } catch (error: any) {
         console.error('[ConsultChat] Error fetching chatbot token:', error);
-        console.error('[ConsultChat] Error details:', error.response?.data || error.message);
+        console.error(
+          '[ConsultChat] Error details:',
+          error.response?.data || error.message,
+        );
       }
     };
 
@@ -1058,74 +1512,159 @@ const ConsultChat: React.FC = () => {
 
   const handleCreateSession = async (specialtyId: string) => {
     if (!loggedInUser || !chatbotToken) {
-      customToast('error', 'Authentication Error', 'Please login again to create a session.');
+      customToast(
+        'error',
+        'Authentication Error',
+        'Please login again to create a session.',
+      );
       return;
     }
 
     setIsCreatingSession(true);
     try {
       const userId = loggedInUser.id || loggedInUser._id;
-      console.log('[ConsultChat] Creating session with specialty:', specialtyId);
-      
-      const response = await createConsultSession(userId, specialtyId, chatbotToken);
-      
+      console.log(
+        '[ConsultChat] Creating session with specialty:',
+        specialtyId,
+      );
+
+      const response = await createConsultSession(
+        userId,
+        specialtyId,
+        chatbotToken,
+      );
+
       if (response.data?.success && response.data?.data?.sessionId) {
         setCurrentSessionId(response.data.data.sessionId);
         setSelectedSpecialty(specialtyId);
-        const specialtyLabel = SPECIALTY_OPTIONS.find(s => s.id === specialtyId)?.label || specialtyId;
-        
+        const specialtyLabel =
+          getSpecialtyOptions(t).find((s: any) => s.id === specialtyId)
+            ?.label || specialtyId;
+
         // Start the chat with a greeting
         setMessages([
           {
             id: Date.now().toString(),
             role: 'assistant',
-            content: `Hello! I've started a new **${specialtyLabel}** consultation session for you. How can I assist you today?`,
+            content: t('consultChat.defaultMessage', {
+              specialty: specialtyLabel,
+            }),
             timestamp: new Date(),
-          }
+          },
         ]);
-        
+
         setShowSpecialtyModal(false);
-        customToast('success', 'Session Created', `Started ${specialtyLabel} consultation`);
-        console.log('[ConsultChat] Session created:', response.data.data.sessionId);
+        customToast(
+          'success',
+          t('consultChat.toast.sessionCreated'),
+          t('consultChat.toast.startedConsultation', {
+            specialty: specialtyLabel,
+          }),
+        );
+        console.log(
+          '[ConsultChat] Session created:',
+          response.data.data.sessionId,
+        );
       } else {
         throw new Error('Invalid response from server');
       }
     } catch (error: any) {
       console.error('[ConsultChat] Error creating session:', error);
-      customToast('error', 'Error', 'Failed to create consultation session');
+      customToast(
+        'error',
+        t('common.error'),
+        t('consultChat.toast.createError'),
+      );
     } finally {
       setIsCreatingSession(false);
     }
   };
 
-  const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role,
-      content,
-      citations,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
-    return newMessage.id;
-  }, []);
+  const addMessage = useCallback(
+    (role: MessageRole, content: string, citations?: Citation[]) => {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role,
+        content,
+        citations,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
+      return newMessage.id;
+    },
+    [],
+  );
 
-  const handleSelectSession = (session: ConsultSession) => {
-    if (session.messages && Array.isArray(session.messages)) {
-      const formattedMessages: Message[] = session.messages.map((msg: any) => ({
-        id: msg._id || Math.random().toString(),
-        role: msg.role as MessageRole,
-        content: msg.content,
-        timestamp: new Date(msg.createdAt || Date.now()),
-      }));
-      setMessages(formattedMessages);
+  const handleSelectSession = async (session: ConsultSession) => {
+    if (!chatbotToken) {
+      customToast('error', 'Authentication Error', 'Please try again.');
+      return;
+    }
+
+    try {
       setShowSessionsModal(false);
-      customToast('success', 'Conversation Loaded', 'History has been successfully loaded');
+      setIsLoading(true);
+
+      console.log(
+        '[ConsultChat] Fetching session history for:',
+        session.sessionId,
+      );
+      const response = await getConsultSessionHistory(
+        session.sessionId,
+        chatbotToken,
+      );
+
+      if (response.data?.success && response.data?.data?.messages) {
+        const fetchedMessages = response.data.data.messages;
+        const formattedMessages: Message[] = fetchedMessages.map(
+          (msg: any) => ({
+            id: msg._id || Math.random().toString(),
+            role: msg.role as MessageRole,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp || msg.createdAt || Date.now()),
+          }),
+        );
+
+        setMessages(formattedMessages);
+        setCurrentSessionId(session.sessionId);
+
+        // Set specialty from metadata if available
+        if (response.data.data.metadata?.speciality) {
+          setSelectedSpecialty(response.data.data.metadata.speciality);
+        }
+
+        console.log(
+          '[ConsultChat] Loaded',
+          formattedMessages.length,
+          'messages from session:',
+          session.sessionId,
+        );
+        customToast(
+          'success',
+          'Conversation Loaded',
+          'History has been successfully loaded',
+        );
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error: any) {
+      console.error('[ConsultChat] Error fetching session history:', error);
+      console.error('[ConsultChat] Error details:', error.response?.data);
+      customToast('error', 'Error', 'Failed to load conversation history');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteSession = (sessionId: string) => {
+    console.log(
+      '[ConsultChat] handleDeleteSession called with sessionId:',
+      sessionId,
+    );
     Alert.alert(
       'Delete Conversation',
       'Are you sure you want to delete this conversation? This action cannot be undone.',
@@ -1135,50 +1674,94 @@ const ConsultChat: React.FC = () => {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            console.log(
+              '[ConsultChat] Delete confirmed for sessionId:',
+              sessionId,
+            );
             if (!chatbotToken) {
-              customToast('error', 'Authentication Error', 'Session token not found.');
+              console.error(
+                '[ConsultChat] No chatbot token available for delete',
+              );
+              customToast(
+                'error',
+                'Authentication Error',
+                'Session token not found.',
+              );
               return;
             }
             try {
-              await deleteConsultSession(sessionId, chatbotToken);
-              setPastSessions((prev) => prev.filter((s) => s._id !== sessionId));
-              customToast('success', 'Deleted', 'Conversation has been deleted');
+              console.log('[ConsultChat] Calling deleteConsultSession API...');
+              const response = await deleteConsultSession(
+                sessionId,
+                chatbotToken,
+              );
+              console.log(
+                '[ConsultChat] Delete API response:',
+                JSON.stringify(response.data),
+              );
+              setPastSessions((prev) =>
+                prev.filter((s) => s.sessionId !== sessionId),
+              );
+              customToast(
+                'success',
+                'Deleted',
+                'Conversation has been deleted',
+              );
               triggerHaptic('light');
             } catch (error: any) {
               console.error('[ConsultChat] Error deleting session:', error);
-              customToast('error', 'Error', 'Failed to delete conversation');
+              console.error(
+                '[ConsultChat] Delete error status:',
+                error.response?.status,
+              );
+              console.error(
+                '[ConsultChat] Delete error data:',
+                JSON.stringify(error.response?.data),
+              );
+              customToast(
+                'error',
+                'Error',
+                error.response?.data?.message ||
+                  'Failed to delete conversation',
+              );
             }
           },
         },
-      ]
+      ],
     );
   };
-
 
   const handleViewHistory = async () => {
     triggerHaptic('light');
     if (!loggedInUser || !chatbotToken) {
-      customToast('error', 'Authentication Error', 'Session token not found. Please try again.');
+      customToast('error', 'Authentication Error', 'Please try again.');
       return;
     }
 
     setShowSessionsModal(true);
     setIsLoadingSessions(true);
-    
+
     try {
       const userId = loggedInUser.id || loggedInUser._id;
       console.log('[ConsultChat] Fetching past sessions for user:', userId);
       const response = await getPastConsultSessions(userId, chatbotToken);
-      
+
       if (response.data?.success) {
         setPastSessions(response.data.data);
-        console.log('[ConsultChat] Fetched sessions count:', response.data.data.length);
+        console.log(
+          '[ConsultChat] Fetched sessions count:',
+          response.data.data.length,
+        );
       } else {
         console.error('[ConsultChat] Failed to fetch sessions:', response.data);
       }
     } catch (error: any) {
       console.error('[ConsultChat] Error fetching history:', error);
-      customToast('error', 'Connection Error', 'Failed to load past conversations');
+      customToast(
+        'error',
+        'Connection Error',
+        'Failed to load past conversations',
+      );
     } finally {
       setIsLoadingSessions(false);
     }
@@ -1189,7 +1772,11 @@ const ConsultChat: React.FC = () => {
     if (!query && attachedFiles.length === 0) return;
 
     if (!currentSessionId) {
-      customToast('info', 'New Session', 'Please start a new consultation session first.');
+      customToast(
+        'info',
+        'New Session',
+        'Please start a new consultation session first.',
+      );
       setShowSpecialtyModal(true);
       return;
     }
@@ -1199,9 +1786,12 @@ const ConsultChat: React.FC = () => {
       return;
     }
 
-    const userContent = attachedFiles.length > 0
-      ? `${query}\n\n[Attached: ${attachedFiles.map(f => f.name).join(', ')}]`
-      : query;
+    const userContent =
+      attachedFiles.length > 0
+        ? `${query}\n\n[Attached: ${attachedFiles
+            .map((f) => f.name)
+            .join(', ')}]`
+        : query;
     addMessage('user', userContent);
 
     if (attachedFiles.length > 0) {
@@ -1210,20 +1800,25 @@ const ConsultChat: React.FC = () => {
 
     setInputText('');
     setAttachedFiles([]);
-    Keyboard.dismiss();
 
     setIsLoading(true);
     const loadingId = Date.now().toString() + '-loading';
     setMessages((prev) => [
       ...prev,
-      { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
+      {
+        id: loadingId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isLoading: true,
+      },
     ]);
 
     try {
       // Map existing messages to history format (excluding current message)
-      const history = messages.map(m => ({
+      const history = messages.map((m) => ({
         role: m.role,
-        content: m.content
+        content: m.content,
       }));
 
       const response = await sendConsultMessage(
@@ -1233,13 +1828,17 @@ const ConsultChat: React.FC = () => {
         {
           history,
           // You can add additional fields like symptoms or patientInfo if you have them in state
-        }
+        },
       );
 
       setMessages((prev) => prev.filter((m) => m.id !== loadingId));
 
       if (response.data?.success) {
-        addMessage('assistant', response.data.data.message, response.data.data.sources);
+        addMessage(
+          'assistant',
+          response.data.data.message,
+          response.data.data.sources,
+        );
       } else {
         throw new Error('Failed to get response');
       }
@@ -1264,24 +1863,35 @@ const ConsultChat: React.FC = () => {
   const handleSelectVisit = (session: Session) => {
     const visitFile: AttachedFile = {
       id: Date.now().toString(),
-      name: `Visit: ${session.title} - ${new Date(session.date).toLocaleDateString()}`,
+      name: `Visit: ${session.title} - ${new Date(
+        session.date,
+      ).toLocaleDateString()}`,
       type: 'visit',
       uri: `session://${session.id}`,
     };
     setAttachedFiles((prev) => [...prev, visitFile]);
-    
+
     // If session has transcription, add it to context
     if (session.transcriptText) {
-      addMessage('user', `Based on the following patient visit transcription, please provide clinical insights:\n\n${session.transcriptText}`);
+      addMessage(
+        'user',
+        `Based on the following patient visit transcription, please provide clinical insights:\n\n${session.transcriptText}`,
+      );
     }
-    
-    customToast('success', 'Visit Imported', `${session.title} has been imported`);
+
+    customToast(
+      'success',
+      'Visit Imported',
+      `${session.title} has been imported`,
+    );
     triggerHaptic('light');
   };
 
   const handleFilePick = async () => {
     try {
-      const result = await pick({ type: [types.pdf, types.docx, types.plainText] });
+      const result = await pick({
+        type: [types.pdf, types.docx, types.plainText],
+      });
       if (result && result[0]) {
         const newFile: AttachedFile = {
           id: Date.now().toString(),
@@ -1317,7 +1927,10 @@ const ConsultChat: React.FC = () => {
 
   const handleGallery = async () => {
     try {
-      const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
       if (result.assets && result.assets[0]) {
         const newFile: AttachedFile = {
           id: Date.now().toString(),
@@ -1353,81 +1966,118 @@ const ConsultChat: React.FC = () => {
       content: template.refinedPrompt,
       createdAt: new Date().toISOString(),
     };
-    setCustomPrompts(prev => [newPrompt, ...prev]);
+    setCustomPrompts((prev) => [newPrompt, ...prev]);
     setSelectedPromptId(newPrompt.id);
     triggerHaptic('medium');
   };
 
   const handleSelectPrompt = (prompt: CustomPrompt) => {
-    setSelectedPromptId(prompt.id);
+    setSelectedPromptId((prev) => (prev === prompt.id ? null : prompt.id));
     setShowPromptLibrary(false);
   };
 
   const handleDeletePrompt = (id: string) => {
-    setCustomPrompts(prev => prev.filter(p => p.id !== id));
+    setCustomPrompts((prev) => prev.filter((p) => p.id !== id));
     if (selectedPromptId === id) setSelectedPromptId(null);
   };
 
-  const selectedPrompt = customPrompts.find(p => p.id === selectedPromptId);
+  const selectedPrompt = customPrompts.find((p) => p.id === selectedPromptId);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]}
+      edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
+        keyboardVerticalOffset={0}>
         {/* Header */}
-        <View style={[styles.header, { 
-          backgroundColor: DYNAMIC_THEME.pure,
-          borderBottomColor: DYNAMIC_THEME.borderLight
-        }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: DYNAMIC_THEME.pure,
+              borderBottomColor: DYNAMIC_THEME.borderLight,
+            },
+          ]}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
             <ChevronLeft size={24} color={DYNAMIC_THEME.navy} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>{t('consultChat.title')}</Text>
+            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>
+              {t('consultChat.title')}
+            </Text>
             {contextFiles.length > 0 && (
-              <Text style={[styles.headerSubtitle, { color: DYNAMIC_THEME.secondary }]}>
+              <Text
+                style={[
+                  styles.headerSubtitle,
+                  { color: DYNAMIC_THEME.secondary },
+                ]}>
                 {t('consultChat.filesLoaded', { count: contextFiles.length })}
               </Text>
             )}
             {selectedPrompt && (
-              <Text style={[styles.headerPromptBadge, { 
-                color: DYNAMIC_THEME.brand,
-                backgroundColor: DYNAMIC_THEME.brandLight
-              }]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.headerPromptBadge,
+                  {
+                    color: DYNAMIC_THEME.brand,
+                    backgroundColor: DYNAMIC_THEME.brandLight,
+                  },
+                ]}
+                numberOfLines={1}>
                 {selectedPrompt.title}
               </Text>
             )}
           </View>
 
           <View style={styles.headerRightButtons}>
-            <TouchableOpacity onPress={handleNewSession} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={handleNewSession}
+              style={styles.headerButton}>
               <Plus size={22} color={DYNAMIC_THEME.navy} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowPromptLibrary(true)} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={() => setShowPromptLibrary(true)}
+              style={styles.headerButton}>
               <Sparkles size={20} color={DYNAMIC_THEME.brand} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleViewHistory} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={handleViewHistory}
+              style={styles.headerButton}>
               <History size={22} color={DYNAMIC_THEME.navy} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Content area */}
-        <View style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
+        <View
+          style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
           {isEmptyState ? (
             <ScrollView
               contentContainerStyle={styles.emptyState}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               <PulsingAILogo />
-              <Text style={[styles.emptyStateGreeting, { color: DYNAMIC_THEME.navy }]}>{t('consultChat.greeting')}</Text>
-              <Text style={[styles.emptyStateSubtext, { color: DYNAMIC_THEME.secondary }]}>{t('consultChat.subtitle')}</Text>
-              <PulsingImportButton onPress={handleImportVisit} dynamicTheme={DYNAMIC_THEME} />
+              <Text
+                style={[
+                  styles.emptyStateGreeting,
+                  { color: DYNAMIC_THEME.navy },
+                ]}>
+                {t('consultChat.greeting')}
+              </Text>
+              <Text
+                style={[
+                  styles.emptyStateSubtext,
+                  { color: DYNAMIC_THEME.secondary },
+                ]}>
+                {t('consultChat.subtitle')}
+              </Text>
+              <PulsingImportButton
+                onPress={handleImportVisit}
+                dynamicTheme={DYNAMIC_THEME}
+              />
             </ScrollView>
           ) : (
             <ScrollView
@@ -1435,8 +2085,7 @@ const ConsultChat: React.FC = () => {
               style={styles.chatStream}
               contentContainerStyle={styles.chatStreamContent}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
@@ -1712,8 +2361,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
-  userMessageText: {
-  },
+  userMessageText: {},
   citationsContainer: {
     marginTop: 16,
     paddingTop: 12,
@@ -1822,8 +2470,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sendButtonActive: {
-  },
+  sendButtonActive: {},
   fileChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2082,8 +2729,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   specialtyCancelButton: {
-    flex: 0.8,
+    flex: 1,
     paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
@@ -2093,10 +2741,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
+    textAlign: 'center',
   },
   specialtyStartButton: {
-    flex: 1.2,
+    flex: 1.5, // Give more room to the action button
     paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2106,6 +2756,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
+    textAlign: 'center',
   },
 });
 

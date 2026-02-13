@@ -21,7 +21,7 @@ import Transactions from './profile/transactions';
 import TranscriptionComplete from './home/transcriptionCompleted';
 import OtpVerification from './auth/otpVerification';
 import Onboarding from './onboarding';
- 
+
 export const screens = {
   Login,
   SignUp,

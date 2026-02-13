@@ -226,10 +226,11 @@ const OnboardingScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <StatusBar 
-        barStyle={isDark ? "light-content" : "dark-content"} 
-        backgroundColor={themeColors.background} 
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.background}
       />
       {renderStep()}
 

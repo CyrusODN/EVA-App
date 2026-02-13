@@ -7,7 +7,10 @@ import {
   Platform,
   Keyboard,
 } from 'react-native';
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 import { ArrowUp, Plus } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import type { EdgeInsets } from 'react-native-safe-area-context';
@@ -36,8 +39,14 @@ const SmartInputBar: React.FC<SmartInputBarProps> = ({
   const [keyboardVisible, setKeyboardVisible] = React.useState(false);
 
   React.useEffect(() => {
-    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
     return () => {
       showSub.remove();
       hideSub.remove();
@@ -61,33 +70,36 @@ const SmartInputBar: React.FC<SmartInputBarProps> = ({
       style={[
         styles.inputWrapper,
         {
-          paddingBottom: Platform.OS === 'ios' ? (keyboardVisible ? 1 : insets.bottom) : 10,
+          paddingBottom:
+            Platform.OS === 'ios' ? (keyboardVisible ? 1 : insets.bottom) : 10,
           backgroundColor: DYNAMIC_THEME.wrapper,
           borderTopColor: DYNAMIC_THEME.border,
-        }
-      ]}
-    >
+        },
+      ]}>
       <View
         style={[
           styles.inputBarContainer,
           {
             backgroundColor: DYNAMIC_THEME.container,
             borderColor: DYNAMIC_THEME.containerBorder,
-            ...(isDark ? {
-              shadowColor: primaryColor,
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.15,
-              shadowRadius: 10,
-            } : {})
-          }
-        ]}
-      >
+            ...(isDark
+              ? {
+                  shadowColor: primaryColor,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 10,
+                }
+              : {}),
+          },
+        ]}>
         {/* Plus Button */}
         <TouchableOpacity
-          style={[styles.plusButton, { backgroundColor: DYNAMIC_THEME.plusButton }]}
+          style={[
+            styles.plusButton,
+            { backgroundColor: DYNAMIC_THEME.plusButton },
+          ]}
           onPress={onPlusPress}
-          activeOpacity={0.7}
-        >
+          activeOpacity={0.7}>
           <Plus size={22} color={DYNAMIC_THEME.iconColor} strokeWidth={2} />
         </TouchableOpacity>
 
@@ -107,8 +119,7 @@ const SmartInputBar: React.FC<SmartInputBarProps> = ({
           <TouchableOpacity
             style={[styles.sendButton, { backgroundColor: primaryColor }]}
             onPress={onSendText}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <ArrowUp size={18} color="white" strokeWidth={2.5} />
           </TouchableOpacity>
         )}

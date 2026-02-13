@@ -10,7 +10,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from 'react-native-responsive-screen';
 import { Copy, Save, Share } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import { useTheme } from '../../constants/theme';
@@ -30,9 +33,13 @@ interface SummaryViewProps {
 /**
  * Renders markdown text with bold sections and headers in blue color
  */
-const renderMarkdown = (text: string, textColor: string, primaryColor: string) => {
+const renderMarkdown = (
+  text: string,
+  textColor: string,
+  primaryColor: string,
+) => {
   const lines = text.split('\n');
-  
+
   return (
     <View>
       {lines.map((line, lineIndex) => {
@@ -40,41 +47,37 @@ const renderMarkdown = (text: string, textColor: string, primaryColor: string) =
         if (line.trim() === '') {
           return null;
         }
-        
+
         // Check if line starts with # (markdown header)
         const headerMatch = line.match(/^(#+)\s*(.+)$/);
-        
+
         if (headerMatch) {
           // Render header without # symbols in blue
           const headerText = headerMatch[2];
           return (
-            <Text 
-              key={lineIndex} 
+            <Text
+              key={lineIndex}
               style={[
                 styles.documentText,
-                { 
+                {
                   fontWeight: '700',
                   color: primaryColor,
                   marginTop: 8,
-                }
-              ]}
-            >
-              {headerText}{'\n'}
+                },
+              ]}>
+              {headerText}
+              {'\n'}
             </Text>
           );
         }
-        
+
         // Parse bold text wrapped in **
         const parts = line.split(/(\*\*.*?\*\*)/g);
-        
+
         return (
-          <Text 
-            key={lineIndex} 
-            style={[
-              styles.documentText,
-              { color: textColor }
-            ]}
-          >
+          <Text
+            key={lineIndex}
+            style={[styles.documentText, { color: textColor }]}>
             {parts.map((part, partIndex) => {
               if (part.startsWith('**') && part.endsWith('**')) {
                 // Render bold text in blue without ** symbols
@@ -98,7 +101,6 @@ const renderMarkdown = (text: string, textColor: string, primaryColor: string) =
     </View>
   );
 };
-
 
 const SummaryView: React.FC<SummaryViewProps> = ({
   visible,
@@ -130,40 +132,82 @@ const SummaryView: React.FC<SummaryViewProps> = ({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={[styles.resultContainer, { backgroundColor: DYNAMIC_THEME.background }]}>
-        <View style={[styles.resultHeader, { backgroundColor: DYNAMIC_THEME.headerBg, borderBottomColor: DYNAMIC_THEME.border }]}>
+      onRequestClose={onClose}>
+      <SafeAreaView
+        style={[
+          styles.resultContainer,
+          { backgroundColor: DYNAMIC_THEME.background },
+        ]}>
+        <View
+          style={[
+            styles.resultHeader,
+            {
+              backgroundColor: DYNAMIC_THEME.headerBg,
+              borderBottomColor: DYNAMIC_THEME.border,
+            },
+          ]}>
           <View style={{ width: 24 }} />
-          <Text style={[styles.resultTitle, { color: DYNAMIC_THEME.text }]}>{title}</Text>
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={onClose}
-          >
-            <Text style={[styles.saveButtonText, { color: primaryColor }]}>Done</Text>
+          <Text style={[styles.resultTitle, { color: DYNAMIC_THEME.text }]}>
+            {title}
+          </Text>
+          <TouchableOpacity style={styles.saveButton} onPress={onClose}>
+            <Text style={[styles.saveButtonText, { color: primaryColor }]}>
+              Done
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.resultContent} showsVerticalScrollIndicator={false}>
-          <View style={[styles.documentCard, { backgroundColor: DYNAMIC_THEME.card }]}>
+        <ScrollView
+          style={styles.resultContent}
+          showsVerticalScrollIndicator={false}>
+          <View
+            style={[
+              styles.documentCard,
+              { backgroundColor: DYNAMIC_THEME.card },
+            ]}>
             {renderMarkdown(summary, DYNAMIC_THEME.docText, primaryColor)}
           </View>
           <View style={{ height: hp(5) }} />
         </ScrollView>
 
         {/* Action Bar */}
-        <View style={[styles.resultActions, { backgroundColor: DYNAMIC_THEME.headerBg, borderTopColor: DYNAMIC_THEME.border }]}>
+        <View
+          style={[
+            styles.resultActions,
+            {
+              backgroundColor: DYNAMIC_THEME.headerBg,
+              borderTopColor: DYNAMIC_THEME.border,
+            },
+          ]}>
           <TouchableOpacity style={styles.resultActionBtn} onPress={onSave}>
             <Save size={20} color={DYNAMIC_THEME.actionIcon} />
-            <Text style={[styles.resultActionLabel, { color: DYNAMIC_THEME.actionIcon }]}>{saveLabel}</Text>
+            <Text
+              style={[
+                styles.resultActionLabel,
+                { color: DYNAMIC_THEME.actionIcon },
+              ]}>
+              {saveLabel}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.resultActionBtn} onPress={onCopy}>
             <Copy size={20} color={DYNAMIC_THEME.actionIcon} />
-            <Text style={[styles.resultActionLabel, { color: DYNAMIC_THEME.actionIcon }]}>Copy</Text>
+            <Text
+              style={[
+                styles.resultActionLabel,
+                { color: DYNAMIC_THEME.actionIcon },
+              ]}>
+              Copy
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.resultActionBtn} onPress={onExport}>
             <Share size={20} color={DYNAMIC_THEME.actionIcon} />
-            <Text style={[styles.resultActionLabel, { color: DYNAMIC_THEME.actionIcon }]}>Export</Text>
+            <Text
+              style={[
+                styles.resultActionLabel,
+                { color: DYNAMIC_THEME.actionIcon },
+              ]}>
+              Export
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

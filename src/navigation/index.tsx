@@ -58,8 +58,7 @@ const TabIcon = ({
         transform: [{ scale: scaleAnim }],
         alignItems: 'center',
         justifyContent: 'center',
-      }}
-    >
+      }}>
       <Image
         source={source}
         style={{
@@ -88,7 +87,7 @@ const CustomTabBar = ({
   };
 
   const handleTabPress = (
-    route: typeof state.routes[number],
+    route: (typeof state.routes)[number],
     isFocused: boolean,
   ) => {
     const event = navigation.emit({
@@ -112,7 +111,9 @@ const CustomTabBar = ({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: isDark ? 'rgba(13, 13, 13, 0.98)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: isDark
+          ? 'rgba(13, 13, 13, 0.98)'
+          : 'rgba(255, 255, 255, 0.95)',
         borderTopWidth: isDark ? 1 : 0,
         borderTopColor: isDark ? themeColors.borderSubtle : 'transparent',
         shadowColor: isDark ? themeColors.accentPrimary : '#000',
@@ -124,8 +125,7 @@ const CustomTabBar = ({
         shadowRadius: 12,
         elevation: 8,
         paddingBottom: hp(2),
-      }}
-    >
+      }}>
       <View
         style={{
           flexDirection: 'row',
@@ -134,70 +134,66 @@ const CustomTabBar = ({
           paddingHorizontal: wp(2),
           paddingTop: hp(1.2),
           backgroundColor: 'transparent',
-        }}
-      >
+        }}>
         {state.routes.map((route, index) => {
-            const { options } = descriptors[route.key as string];
-            const isFocused = state.index === index;
-            const icon = options.tabBarIcon;
-            
-            const activeColor = themeColors.accentPrimary;
-            const inactiveColor = isDark ? themeColors.textSecondary : '#64748B';
+          const { options } = descriptors[route.key as string];
+          const isFocused = state.index === index;
+          const icon = options.tabBarIcon;
 
-            return (
-              <Pressable
-                key={route.key}
-                onPress={() => handleTabPress(route, isFocused)}
+          const activeColor = themeColors.accentPrimary;
+          const inactiveColor = isDark ? themeColors.textSecondary : '#64748B';
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={() => handleTabPress(route, isFocused)}
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: hp(0.8),
+              }}
+              android_ripple={{
+                color: 'rgba(70, 183, 198, 0.1)',
+                borderless: true,
+                radius: wp(12),
+              }}>
+              <View
                 style={{
-                  flex: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  paddingVertical: hp(0.8),
-                }}
-                android_ripple={{
-                  color: 'rgba(70, 183, 198, 0.1)',
-                  borderless: true,
-                  radius: wp(12),
-                }}
-              >
+                }}>
+                {/* Icon */}
                 <View
                   style={{
+                    marginBottom: hp(0.4),
                     alignItems: 'center',
                     justifyContent: 'center',
-                  }}
-                >
-                  {/* Icon */}
-                  <View
-                    style={{
-                      marginBottom: hp(0.4),
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {icon &&
-                      icon({
-                        focused: isFocused,
-                        color: isFocused ? activeColor : inactiveColor,
-                      })}
-                  </View>
-
-                  {/* Label */}
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: isFocused ? '600' : '500',
+                  }}>
+                  {icon &&
+                    icon({
+                      focused: isFocused,
                       color: isFocused ? activeColor : inactiveColor,
-                      letterSpacing: -0.1,
-                      fontFamily: 'System',
-                    }}
-                    numberOfLines={1}
-                  >
-                    {tabLabels[route.name as keyof typeof tabLabels] || route.name}
-                  </Text>
+                    })}
                 </View>
-              </Pressable>
-            );
-          })}
+
+                {/* Label */}
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: isFocused ? '600' : '500',
+                    color: isFocused ? activeColor : inactiveColor,
+                    letterSpacing: -0.1,
+                    fontFamily: 'System',
+                  }}
+                  numberOfLines={1}>
+                  {tabLabels[route.name as keyof typeof tabLabels] ||
+                    route.name}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
@@ -216,9 +212,8 @@ const BottomTabNavigator = () => {
           display: 'none',
         },
       }}
-      tabBar={props => <CustomTabBar {...props} />}
-      initialLayout={{ width: wp(100) }}
-    >
+      tabBar={(props) => <CustomTabBar {...props} />}
+      initialLayout={{ width: wp(100) }}>
       <Tab.Screen
         name="Home"
         component={screens.Home}
@@ -328,40 +323,42 @@ const Navigation = () => {
       {initialRoute && (
         <Stack.Navigator
           screenOptions={{ headerShown: false }}
-          initialRouteName={initialRoute}
-        >
-        <Stack.Screen name="login" component={screens.Login} />
-        <Stack.Screen name="signUp" component={screens.SignUp} />
-        <Stack.Screen
-          name="forgotPassword"
-          component={screens.ForgotPassword}
-        />
-        <Stack.Screen
-          name="otpVerification"
-          component={screens.OtpVerification}
-        />
-        <Stack.Screen name="Onboarding" component={screens.Onboarding} />
-        <Stack.Screen name="HomeTabs" component={BottomTabNavigator} />
-        {/* Legacy route name for backwards compatibility */}
-        <Stack.Screen name="tabs" component={BottomTabNavigator} />
-        <Stack.Screen name="session" component={screens.Session} />
-        <Stack.Screen name="discharge" component={screens.Discharge} />
-        <Stack.Screen name="certificate" component={screens.Certificate} />
-        <Stack.Screen name="consult" component={screens.ClinicalWorkspace} />
-        <Stack.Screen name="consultChat" component={screens.ConsultChat} />
-        <Stack.Screen name="pharmacopediaChat" component={screens.PharmacopediaChat} />
-        <Stack.Screen name="pathFinder" component={screens.Pathfinder} />
-        <Stack.Screen name="prescreening" component={screens.Prescreening} />
-        <Stack.Screen name="report" component={screens.Report} />
-        <Stack.Screen name="research" component={screens.Research} />
-        <Stack.Screen name="researchChat" component={screens.ResearchChat} />
-        <Stack.Screen name="settings" component={screens.Settings} />
-        <Stack.Screen name="subscription" component={screens.Subscription} />
-        <Stack.Screen name="transactions" component={screens.Transactions} />
-        <Stack.Screen
-          name="transcriptionCompleted"
-          component={screens.TranscriptionComplete}
-        />
+          initialRouteName={initialRoute}>
+          <Stack.Screen name="login" component={screens.Login} />
+          <Stack.Screen name="signUp" component={screens.SignUp} />
+          <Stack.Screen
+            name="forgotPassword"
+            component={screens.ForgotPassword}
+          />
+          <Stack.Screen
+            name="otpVerification"
+            component={screens.OtpVerification}
+          />
+          <Stack.Screen name="Onboarding" component={screens.Onboarding} />
+          <Stack.Screen name="HomeTabs" component={BottomTabNavigator} />
+          {/* Legacy route name for backwards compatibility */}
+          <Stack.Screen name="tabs" component={BottomTabNavigator} />
+          <Stack.Screen name="session" component={screens.Session} />
+          <Stack.Screen name="discharge" component={screens.Discharge} />
+          <Stack.Screen name="certificate" component={screens.Certificate} />
+          <Stack.Screen name="consult" component={screens.ClinicalWorkspace} />
+          <Stack.Screen name="consultChat" component={screens.ConsultChat} />
+          <Stack.Screen
+            name="pharmacopediaChat"
+            component={screens.PharmacopediaChat}
+          />
+          <Stack.Screen name="pathFinder" component={screens.Pathfinder} />
+          <Stack.Screen name="prescreening" component={screens.Prescreening} />
+          <Stack.Screen name="report" component={screens.Report} />
+          <Stack.Screen name="research" component={screens.Research} />
+          <Stack.Screen name="researchChat" component={screens.ResearchChat} />
+          <Stack.Screen name="settings" component={screens.Settings} />
+          <Stack.Screen name="subscription" component={screens.Subscription} />
+          <Stack.Screen name="transactions" component={screens.Transactions} />
+          <Stack.Screen
+            name="transcriptionCompleted"
+            component={screens.TranscriptionComplete}
+          />
         </Stack.Navigator>
       )}
     </NavigationContainer>

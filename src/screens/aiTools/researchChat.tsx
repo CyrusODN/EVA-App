@@ -55,7 +55,11 @@ import PromptLibrary from '../../components/PromptLibrary';
 import { useTheme } from '../../constants/theme';
 import researchService from '../../services/researchService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { connectSocket, disconnectSocket, getSocket } from '../../services/socketService';
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+} from '../../services/socketService';
 import { customToast } from '../../utils/toastMessage';
 
 // ============================================================================
@@ -67,23 +71,23 @@ const THEME = {
   surface: '#F9FAFB',
   surfaceAlt: '#F3F4F6',
   userBubble: '#F3F4F6',
-  
+
   // Text
   navy: '#111827',
   secondary: '#6B7280',
   tertiary: '#9CA3AF',
   placeholder: '#9CA3AF',
-  
+
   // Brand
   brand: '#46B7C6',
   brandLight: 'rgba(70, 183, 198, 0.08)',
   brandMedium: 'rgba(70, 183, 198, 0.15)',
   brandDark: '#3AA8B7',
-  
+
   // Borders
   border: '#E5E7EB',
   borderLight: '#F3F4F6',
-  
+
   // States
   inactive: '#D1D5DB',
   success: '#10B981',
@@ -162,7 +166,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     const glow = Animated.loop(
@@ -179,7 +183,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -193,18 +197,19 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
-        <Image 
-          source={{ uri: CHATBOT_AVATAR }} 
-          style={styles.avatarImage}
-        />
+      <Animated.View
+        style={[styles.aiLogoInner, { transform: [{ scale: pulseAnim }] }]}>
+        <Image source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
   );
 };
 
 // Pulsing Upload Button
-const PulsingUploadButton: React.FC<{ onPress: () => void; dynamicTheme: any }> = ({ onPress, dynamicTheme }) => {
+const PulsingUploadButton: React.FC<{
+  onPress: () => void;
+  dynamicTheme: any;
+}> = ({ onPress, dynamicTheme }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const { t } = useTranslation();
 
@@ -223,7 +228,7 @@ const PulsingUploadButton: React.FC<{ onPress: () => void; dynamicTheme: any }> 
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -237,13 +242,22 @@ const PulsingUploadButton: React.FC<{ onPress: () => void; dynamicTheme: any }> 
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={onPress}
-        style={styles.pulsingButtonWrapper}
-      >
-        <Animated.View style={[styles.pulsingCircle, { transform: [{ scale: pulseAnim }], backgroundColor: dynamicTheme.brand }]}>
+        style={styles.pulsingButtonWrapper}>
+        <Animated.View
+          style={[
+            styles.pulsingCircle,
+            {
+              transform: [{ scale: pulseAnim }],
+              backgroundColor: dynamicTheme.brand,
+            },
+          ]}>
           <Plus size={36} color="#FFFFFF" strokeWidth={2.5} />
         </Animated.View>
       </TouchableOpacity>
-      <Text style={[styles.uploadPromptText, { color: dynamicTheme.secondary }]}>{t('researchChat.noFilesUploaded')}</Text>
+      <Text
+        style={[styles.uploadPromptText, { color: dynamicTheme.secondary }]}>
+        {t('researchChat.noFilesUploaded')}
+      </Text>
     </View>
   );
 };
@@ -256,15 +270,19 @@ const SuggestionChip: React.FC<{
   dynamicTheme: any;
 }> = ({ icon: Icon, text, onPress, dynamicTheme }) => (
   <TouchableOpacity
-    style={[styles.suggestionChip, { 
-      backgroundColor: dynamicTheme.pure,
-      borderColor: dynamicTheme.borderLight
-    }]}
+    style={[
+      styles.suggestionChip,
+      {
+        backgroundColor: dynamicTheme.pure,
+        borderColor: dynamicTheme.borderLight,
+      },
+    ]}
     onPress={onPress}
-    activeOpacity={0.7}
-  >
+    activeOpacity={0.7}>
     <Icon size={14} color={dynamicTheme.brand} strokeWidth={2} />
-    <Text style={[styles.suggestionChipText, { color: dynamicTheme.navy }]}>{text}</Text>
+    <Text style={[styles.suggestionChipText, { color: dynamicTheme.navy }]}>
+      {text}
+    </Text>
   </TouchableOpacity>
 );
 
@@ -368,10 +386,12 @@ const MessageBubble: React.FC<{
         style={[
           styles.messageBubbleWrapper,
           { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-        ]}
-      >
+        ]}>
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
         <View style={styles.bubbleContent}>
           <ThinkingIndicator />
@@ -386,66 +406,104 @@ const MessageBubble: React.FC<{
         styles.messageBubbleWrapper,
         isUser && styles.userBubbleWrapper,
         { opacity: fadeAnim, transform: [{ translateX: slideAnim }] },
-      ]}
-    >
+      ]}>
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: CHATBOT_AVATAR }} style={styles.assistantAvatar} />
+          <Image
+            source={{ uri: CHATBOT_AVATAR }}
+            style={styles.assistantAvatar}
+          />
         </View>
       )}
-      
+
       <View
         style={[
           styles.messageBubble,
-          isUser ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }] : [
-            styles.assistantBubble, 
-            { 
-              backgroundColor: dynamicTheme.pure,
-              borderColor: dynamicTheme.borderLight,
-              shadowColor: '#000'
-            }
-          ],
-        ]}
-      >
+          isUser
+            ? [styles.userBubble, { backgroundColor: dynamicTheme.userBubble }]
+            : [
+                styles.assistantBubble,
+                {
+                  backgroundColor: dynamicTheme.pure,
+                  borderColor: dynamicTheme.borderLight,
+                  shadowColor: '#000',
+                },
+              ],
+        ]}>
         {/* Copy button for assistant messages */}
         {!isUser && (
           <TouchableOpacity
-            style={[styles.copyButton, { backgroundColor: dynamicTheme.brandMedium }]}
+            style={[
+              styles.copyButton,
+              { backgroundColor: dynamicTheme.brandMedium },
+            ]}
             onPress={handleCopy}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            activeOpacity={0.7}
-          >
+            activeOpacity={0.7}>
             <Copy size={14} color={dynamicTheme.brand} strokeWidth={2} />
           </TouchableOpacity>
         )}
 
         {isUser ? (
-          <Text style={[styles.messageText, styles.userMessageText, { color: dynamicTheme.navy }]}>
+          <Text
+            style={[
+              styles.messageText,
+              styles.userMessageText,
+              { color: dynamicTheme.navy },
+            ]}>
             {message.content}
           </Text>
         ) : (
-          <Markdown style={getMarkdownStyles(dynamicTheme)}>{message.content}</Markdown>
+          <Markdown style={getMarkdownStyles(dynamicTheme)}>
+            {message.content}
+          </Markdown>
         )}
 
         {/* Citations */}
         {message.citations && message.citations.length > 0 && (
-          <View style={[styles.citationsContainer, { borderTopColor: dynamicTheme.borderLight }]}>
-            <Text style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>Sources</Text>
+          <View
+            style={[
+              styles.citationsContainer,
+              { borderTopColor: dynamicTheme.borderLight },
+            ]}>
+            <Text
+              style={[styles.citationsLabel, { color: dynamicTheme.tertiary }]}>
+              Sources
+            </Text>
             {message.citations.map((citation, index) => (
               <TouchableOpacity
                 key={citation.id}
-                style={[styles.citationChip, { backgroundColor: dynamicTheme.surfaceAlt }]}
+                style={[
+                  styles.citationChip,
+                  { backgroundColor: dynamicTheme.surfaceAlt },
+                ]}
                 onPress={() => onCitationPress?.(citation)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.citationNumber, { backgroundColor: dynamicTheme.brandMedium }]}>
-                  <Text style={[styles.citationNumberText, { color: dynamicTheme.brand }]}>{index + 1}</Text>
+                activeOpacity={0.7}>
+                <View
+                  style={[
+                    styles.citationNumber,
+                    { backgroundColor: dynamicTheme.brandMedium },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.citationNumberText,
+                      { color: dynamicTheme.brand },
+                    ]}>
+                    {index + 1}
+                  </Text>
                 </View>
                 <View style={styles.citationContent}>
-                  <Text style={[styles.citationTitle, { color: dynamicTheme.navy }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.citationTitle, { color: dynamicTheme.navy }]}
+                    numberOfLines={1}>
                     {citation.title}
                   </Text>
-                  <Text style={[styles.citationSource, { color: dynamicTheme.tertiary }]} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.citationSource,
+                      { color: dynamicTheme.tertiary },
+                    ]}
+                    numberOfLines={1}>
                     {citation.source} {citation.page && `• ${citation.page}`}
                   </Text>
                 </View>
@@ -480,7 +538,7 @@ const ThinkingIndicator: React.FC = () => {
             duration: 400,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
 
     animateDot(dot1, 0).start();
@@ -525,17 +583,20 @@ const FileChip: React.FC<{
   const Icon = getIcon();
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.fileChip, { backgroundColor: dynamicTheme.brandLight }]}
       onPress={onPress}
       activeOpacity={0.7}
-      disabled={!onPress}
-    >
+      disabled={!onPress}>
       <Icon size={14} color={dynamicTheme.brand} />
-      <Text style={[styles.fileChipName, { color: dynamicTheme.navy }]} numberOfLines={1}>
+      <Text
+        style={[styles.fileChipName, { color: dynamicTheme.navy }]}
+        numberOfLines={1}>
         {file.name}
       </Text>
-      <TouchableOpacity onPress={onRemove} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <TouchableOpacity
+        onPress={onRemove}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <X size={14} color={dynamicTheme.secondary} />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -550,21 +611,28 @@ const ContextFilesModal: React.FC<{
   dynamicTheme: any;
 }> = ({ visible, files, onClose, dynamicTheme }) => {
   const { t } = useTranslation();
-  
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]} onPress={(e) => e.stopPropagation()}>
-          <View style={[styles.modalHeader, { borderBottomColor: dynamicTheme.borderLight }]}>
+        <Pressable
+          style={[styles.modalContent, { backgroundColor: dynamicTheme.pure }]}
+          onPress={(e) => e.stopPropagation()}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: dynamicTheme.borderLight },
+            ]}>
             <Text style={[styles.modalTitle, { color: dynamicTheme.navy }]}>
               {t('researchChat.contextFiles')}
             </Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={24} color={dynamicTheme.navy} />
             </TouchableOpacity>
           </View>
@@ -572,18 +640,33 @@ const ContextFilesModal: React.FC<{
           <ScrollView style={styles.modalFilesList}>
             {files.length > 0 ? (
               files.map((file, index) => {
-                const Icon = file.type === 'pdf' ? FileText : file.type === 'image' ? ImageIcon : File;
+                const Icon =
+                  file.type === 'pdf'
+                    ? FileText
+                    : file.type === 'image'
+                    ? ImageIcon
+                    : File;
                 return (
                   <View key={file.id} style={styles.modalFileItem}>
                     <Icon size={18} color={dynamicTheme.brand} />
-                    <Text style={[styles.modalFileName, { color: dynamicTheme.navy }]}>{file.name}</Text>
+                    <Text
+                      style={[
+                        styles.modalFileName,
+                        { color: dynamicTheme.navy },
+                      ]}>
+                      {file.name}
+                    </Text>
                   </View>
                 );
               })
             ) : (
               <View style={styles.modalEmptyState}>
                 <FolderOpen size={32} color={dynamicTheme.tertiary} />
-                <Text style={[styles.modalEmptyText, { color: dynamicTheme.tertiary }]}>
+                <Text
+                  style={[
+                    styles.modalEmptyText,
+                    { color: dynamicTheme.tertiary },
+                  ]}>
                   {t('researchChat.noFilesUploaded')}
                 </Text>
               </View>
@@ -607,21 +690,51 @@ const AttachmentModal: React.FC<{
   const { t } = useTranslation();
 
   const options = [
-    { icon: FileText, label: t('researchChat.attachOptions.uploadPdf'), onPress: onUploadPdf, color: '#8B5CF6' },
-    { icon: Camera, label: t('researchChat.attachOptions.scan'), onPress: onScan, color: '#10B981', disabled: true },
-    { icon: FolderOpen, label: t('researchChat.attachOptions.gallery'), onPress: onGallery, color: '#F59E0B', disabled: true },
+    {
+      icon: FileText,
+      label: t('researchChat.attachOptions.uploadPdf'),
+      onPress: onUploadPdf,
+      color: '#8B5CF6',
+    },
+    {
+      icon: Camera,
+      label: t('researchChat.attachOptions.scan'),
+      onPress: onScan,
+      color: '#10B981',
+      disabled: true,
+    },
+    {
+      icon: FolderOpen,
+      label: t('researchChat.attachOptions.gallery'),
+      onPress: onGallery,
+      color: '#F59E0B',
+      disabled: true,
+    },
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.attachmentModalOverlay}>
           <TouchableWithoutFeedback>
-            <View style={[styles.attachmentModalContent, { backgroundColor: dynamicTheme.pure }]}>
+            <View
+              style={[
+                styles.attachmentModalContent,
+                { backgroundColor: dynamicTheme.pure },
+              ]}>
               <View style={styles.attachmentModalHeader}>
-                <View style={[styles.attachmentModalHandle, { backgroundColor: dynamicTheme.inactive }]} />
+                <View
+                  style={[
+                    styles.attachmentModalHandle,
+                    { backgroundColor: dynamicTheme.inactive },
+                  ]}
+                />
               </View>
-              
+
               <View style={styles.attachmentOptionsContainer}>
                 {options.map((option, index) => {
                   const Icon = option.icon;
@@ -630,9 +743,9 @@ const AttachmentModal: React.FC<{
                     <TouchableOpacity
                       key={index}
                       style={[
-                        styles.attachmentOption, 
+                        styles.attachmentOption,
                         { backgroundColor: dynamicTheme.surface },
-                        isDisabled && { opacity: 0.7 }
+                        isDisabled && { opacity: 0.7 },
                       ]}
                       onPress={() => {
                         if (isDisabled) return;
@@ -640,32 +753,73 @@ const AttachmentModal: React.FC<{
                         setTimeout(() => option.onPress(), 300);
                       }}
                       activeOpacity={isDisabled ? 1 : 0.7}
-                      disabled={isDisabled}
-                    >
-                      <View style={[
-                        styles.attachmentOptionIcon, 
-                        { backgroundColor: isDisabled ? (dynamicTheme.borderLight || '#E5E7EB') : `${option.color}15` }
-                      ]}>
-                        <Icon size={24} color={isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : option.color} strokeWidth={2} />
-                      </View>
-                      <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text style={[
-                          styles.attachmentOptionLabel, 
-                          { color: isDisabled ? (dynamicTheme.inactive || '#9CA3AF') : dynamicTheme.navy }
+                      disabled={isDisabled}>
+                      <View
+                        style={[
+                          styles.attachmentOptionIcon,
+                          {
+                            backgroundColor: isDisabled
+                              ? dynamicTheme.borderLight || '#E5E7EB'
+                              : `${option.color}15`,
+                          },
                         ]}>
+                        <Icon
+                          size={24}
+                          color={
+                            isDisabled
+                              ? dynamicTheme.inactive || '#9CA3AF'
+                              : option.color
+                          }
+                          strokeWidth={2}
+                        />
+                      </View>
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                        <Text
+                          style={[
+                            styles.attachmentOptionLabel,
+                            {
+                              color: isDisabled
+                                ? dynamicTheme.inactive || '#9CA3AF'
+                                : dynamicTheme.navy,
+                            },
+                          ]}>
                           {option.label}
                         </Text>
                         {isDisabled && (
-                          <Text style={{ fontSize: 12, color: dynamicTheme.brand, fontWeight: '600' }}>Coming soon</Text>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: dynamicTheme.brand,
+                              fontWeight: '600',
+                            }}>
+                            Coming soon
+                          </Text>
                         )}
                       </View>
                     </TouchableOpacity>
                   );
-                })} 
+                })}
               </View>
 
-              <TouchableOpacity style={[styles.attachmentCancelButton, { backgroundColor: dynamicTheme.surfaceAlt }]} onPress={onClose}>
-                <Text style={[styles.attachmentCancelText, { color: dynamicTheme.secondary }]}>{t('researchChat.attachOptions.cancel')}</Text>
+              <TouchableOpacity
+                style={[
+                  styles.attachmentCancelButton,
+                  { backgroundColor: dynamicTheme.surfaceAlt },
+                ]}
+                onPress={onClose}>
+                <Text
+                  style={[
+                    styles.attachmentCancelText,
+                    { color: dynamicTheme.secondary },
+                  ]}>
+                  {t('researchChat.attachOptions.cancel')}
+                </Text>
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
@@ -709,14 +863,20 @@ const InputBar: React.FC<{
   isDark,
   isEmptyState,
 }) => {
+  const inputRef = useRef<TextInput>(null);
   const hasDocument = hasContextFiles || attachedFiles.length > 0;
   const isAttachDisabled = !hasDocument || isEmptyState;
-  const canSend = hasDocument && (value.trim().length > 0 || attachedFiles.length > 0) && !isLoading;
+  const canSend =
+    hasDocument &&
+    (value.trim().length > 0 || attachedFiles.length > 0) &&
+    !isLoading;
 
   const handleSend = () => {
     if (canSend) {
       triggerHaptic('medium');
       onSend();
+      // Re-focus input to keep keyboard open
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
@@ -726,10 +886,14 @@ const InputBar: React.FC<{
   };
 
   return (
-    <View style={[styles.inputBarWrapper, { 
-      backgroundColor: dynamicTheme.pure,
-      borderTopColor: dynamicTheme.borderLight
-    }]}>
+    <View
+      style={[
+        styles.inputBarWrapper,
+        {
+          backgroundColor: dynamicTheme.pure,
+          borderTopColor: dynamicTheme.borderLight,
+        },
+      ]}>
       {/* Attached and Context files preview */}
       {(attachedFiles.length > 0 || contextFiles.length > 0) && (
         <View style={styles.attachedFilesContainer}>
@@ -758,27 +922,41 @@ const InputBar: React.FC<{
         </View>
       )}
 
-      <View style={[
-        styles.inputBarContainer, 
-        { 
-          backgroundColor: hasDocument ? dynamicTheme.surfaceAlt : dynamicTheme.surface,
-          borderColor: hasDocument ? dynamicTheme.borderLight : (isDark ? dynamicTheme.border : '#E2E8F0'),
-          opacity: hasDocument ? 1 : 0.9,
-          borderStyle: hasDocument ? 'solid' : 'dashed',
-        }
-      ]}>
+      <View
+        style={[
+          styles.inputBarContainer,
+          {
+            backgroundColor: hasDocument
+              ? dynamicTheme.surfaceAlt
+              : dynamicTheme.surface,
+            borderColor: hasDocument
+              ? dynamicTheme.borderLight
+              : isDark
+              ? dynamicTheme.border
+              : '#E2E8F0',
+            opacity: hasDocument ? 1 : 0.9,
+            borderStyle: hasDocument ? 'solid' : 'dashed',
+          },
+        ]}>
         {/* Attach button */}
         <TouchableOpacity
           style={[styles.attachButton, { backgroundColor: dynamicTheme.pure }]}
           onPress={onAttach}
-          activeOpacity={0.7}
-        >
-          <Plus size={22} color={hasDocument ? dynamicTheme.secondary : dynamicTheme.brand} strokeWidth={2} />
+          activeOpacity={0.7}>
+          <Plus
+            size={22}
+            color={hasDocument ? dynamicTheme.secondary : dynamicTheme.brand}
+            strokeWidth={2}
+          />
         </TouchableOpacity>
 
         {/* Text input */}
         <TextInput
-          style={[styles.textInput, { color: dynamicTheme.navy, opacity: hasDocument ? 1 : 0.7 }]}
+          ref={inputRef}
+          style={[
+            styles.textInput,
+            { color: dynamicTheme.navy, opacity: hasDocument ? 1 : 0.7 },
+          ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -786,22 +964,25 @@ const InputBar: React.FC<{
           multiline
           maxLength={4000}
           textAlignVertical="center"
-          editable={hasDocument && !isLoading}
+          editable={hasDocument}
         />
 
-        {/* Send button - visible only when can send */}
+        {/* Send button */}
         {value.trim().length > 0 && (
           <TouchableOpacity
-            style={[styles.sendButton, styles.sendButtonActive, { backgroundColor: canSend ? dynamicTheme.brand : dynamicTheme.inactive }]}
+            style={[
+              styles.sendButton,
+              styles.sendButtonActive,
+              {
+                backgroundColor: canSend
+                  ? dynamicTheme.brand
+                  : dynamicTheme.inactive,
+              },
+            ]}
             onPress={handleSend}
             disabled={!canSend}
-            activeOpacity={0.7}
-          >
-            <ArrowUp
-              size={18}
-              color={dynamicTheme.pure}
-              strokeWidth={2.5}
-            />
+            activeOpacity={0.7}>
+            <ArrowUp size={18} color={dynamicTheme.pure} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
       </View>
@@ -817,7 +998,7 @@ const ResearchChatScreen: React.FC = () => {
   const route = useRoute<any>();
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
-  
+
   const mode: ResearchMode = route.params?.mode || 'general';
   const toolType = mode === 'protocol' ? 'protocol' : 'scholar';
   const scrollViewRef = useRef<ScrollView>(null);
@@ -845,7 +1026,8 @@ const ResearchChatScreen: React.FC = () => {
 
   // Get user name from store
   const loggedInUser = userStore((state: any) => state.loggedInUser);
-  const userName = loggedInUser?.firstName || loggedInUser?.name?.split(' ')[0] || 'Doctor';
+  const userName =
+    loggedInUser?.firstName || loggedInUser?.name?.split(' ')[0] || 'Doctor';
 
   // State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -859,8 +1041,10 @@ const ResearchChatScreen: React.FC = () => {
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | null
+  >(null);
+
   // Ref to track accumulated streaming content to avoid closure issues in socket callbacks
   const streamingContentRef = useRef<string>('');
   const lastUpdateRef = useRef<number>(0);
@@ -889,17 +1073,25 @@ const ResearchChatScreen: React.FC = () => {
   useEffect(() => {
     const fetchPrompts = async () => {
       if (!serviceToken) return;
-      
+
       setIsLoadingPrompts(true);
-      console.log(`[ResearchChat] Fetching prompts for toolType: ${toolType}...`);
-      
+      console.log(
+        `[ResearchChat] Fetching prompts for toolType: ${toolType}...`,
+      );
+
       try {
-        const response = await researchService.getPrompts(toolType, serviceToken);
-        console.log('[ResearchChat] Prompts API Response:', JSON.stringify(response.data, null, 2));
+        const response = await researchService.getPrompts(
+          toolType,
+          serviceToken,
+        );
+        console.log(
+          '[ResearchChat] Prompts API Response:',
+          JSON.stringify(response.data, null, 2),
+        );
 
         if (response.data.success) {
           let promptsData = [];
-          
+
           if (response.data.data?.docs) {
             promptsData = response.data.data.docs;
           } else if (Array.isArray(response.data.data)) {
@@ -913,14 +1105,19 @@ const ResearchChatScreen: React.FC = () => {
               content: p.content || p.instructions || '',
               createdAt: p.createdAt || new Date().toISOString(),
             }));
-            console.log(`[ResearchChat] Successfully loaded ${formatted.length} prompts`);
+            console.log(
+              `[ResearchChat] Successfully loaded ${formatted.length} prompts`,
+            );
             setCustomPrompts(formatted);
           } else {
             console.log('[ResearchChat] No prompts found in response');
             setCustomPrompts([]);
           }
         } else {
-          console.error('[ResearchChat] Failed to fetch prompts:', response.data.message);
+          console.error(
+            '[ResearchChat] Failed to fetch prompts:',
+            response.data.message,
+          );
         }
       } catch (error) {
         console.error('[ResearchChat] Error fetching prompts:', error);
@@ -936,7 +1133,11 @@ const ResearchChatScreen: React.FC = () => {
   useEffect(() => {
     const userId = loggedInUser?.id || loggedInUser?._id;
     if (userId && serviceToken) {
-      console.log('[ResearchChat] Connecting socket for user:', userId, 'with token');
+      console.log(
+        '[ResearchChat] Connecting socket for user:',
+        userId,
+        'with token',
+      );
       connectSocket(userId, serviceToken);
     }
 
@@ -954,19 +1155,44 @@ const ResearchChatScreen: React.FC = () => {
   const isEmptyState = messages.length === 0;
 
   // Suggestion chips based on mode
-  const suggestionChips = mode === 'general'
-    ? [
-        { icon: FileText, text: t('researchChat.suggestions.general.executiveSummary') },
-        { icon: Sparkles, text: t('researchChat.suggestions.general.clinicalImplications') },
-        { icon: Beaker, text: t('researchChat.suggestions.general.methodologyAnalysis') },
-        { icon: AlertCircle, text: t('researchChat.suggestions.general.evidenceGrading') },
-      ]
-    : [
-        { icon: FileText, text: t('researchChat.suggestions.protocol.synopsis') },
-        { icon: ClipboardList, text: t('researchChat.suggestions.protocol.eligibility') },
-        { icon: BookOpen, text: t('researchChat.suggestions.protocol.schedule') },
-        { icon: AlertCircle, text: t('researchChat.suggestions.protocol.safetyEndpoints') },
-      ];
+  const suggestionChips =
+    mode === 'general'
+      ? [
+          {
+            icon: FileText,
+            text: t('researchChat.suggestions.general.executiveSummary'),
+          },
+          {
+            icon: Sparkles,
+            text: t('researchChat.suggestions.general.clinicalImplications'),
+          },
+          {
+            icon: Beaker,
+            text: t('researchChat.suggestions.general.methodologyAnalysis'),
+          },
+          {
+            icon: AlertCircle,
+            text: t('researchChat.suggestions.general.evidenceGrading'),
+          },
+        ]
+      : [
+          {
+            icon: FileText,
+            text: t('researchChat.suggestions.protocol.synopsis'),
+          },
+          {
+            icon: ClipboardList,
+            text: t('researchChat.suggestions.protocol.eligibility'),
+          },
+          {
+            icon: BookOpen,
+            text: t('researchChat.suggestions.protocol.schedule'),
+          },
+          {
+            icon: AlertCircle,
+            text: t('researchChat.suggestions.protocol.safetyEndpoints'),
+          },
+        ];
 
   // Handlers
   const handleBack = () => {
@@ -978,22 +1204,25 @@ const ResearchChatScreen: React.FC = () => {
     setShowContextModal(true);
   };
 
-  const addMessage = useCallback((role: MessageRole, content: string, citations?: Citation[]) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role,
-      content,
-      citations,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
-    
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-    
-    return newMessage.id;
-  }, []);
+  const addMessage = useCallback(
+    (role: MessageRole, content: string, citations?: Citation[]) => {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role,
+        content,
+        citations,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+
+      return newMessage.id;
+    },
+    [],
+  );
 
   const _extractIdFromToken = (token: string) => {
     try {
@@ -1001,15 +1230,22 @@ const ResearchChatScreen: React.FC = () => {
       if (parts.length < 2) return null;
       const base64Url = parts[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      
+
       // Simple base64 decoding logic for React Native
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+      const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
       let out = '';
       let str = String(base64).replace(/=+$/, '');
-      for (let bc = 0, bs = 0, buffer, idx = 0; buffer = str.charAt(idx++); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? out += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+      for (
+        let bc = 0, bs = 0, buffer, idx = 0;
+        (buffer = str.charAt(idx++));
+        ~buffer && ((bs = bc % 4 ? bs * 64 + buffer : buffer), bc++ % 4)
+          ? (out += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6))))
+          : 0
+      ) {
         buffer = chars.indexOf(buffer);
       }
-      
+
       const parsed = JSON.parse(out);
       return parsed.id || parsed._id || parsed.userId || null;
     } catch (e) {
@@ -1024,13 +1260,19 @@ const ResearchChatScreen: React.FC = () => {
 
     // Check if at least one document is present
     if (contextFiles.length === 0 && attachedFiles.length === 0) {
-      Alert.alert(t('researchChat.uploadRequired'), t('researchChat.uploadToProceed'));
+      Alert.alert(
+        t('researchChat.uploadRequired'),
+        t('researchChat.uploadToProceed'),
+      );
       return;
     }
 
-    const userContent = attachedFiles.length > 0
-      ? `${query}\n\n[${t('researchChat.attached')}: ${attachedFiles.map(f => f.name).join(', ')}]`
-      : query;
+    const userContent =
+      attachedFiles.length > 0
+        ? `${query}\n\n[${t('researchChat.attached')}: ${attachedFiles
+            .map((f) => f.name)
+            .join(', ')}]`
+        : query;
     addMessage('user', userContent);
 
     if (attachedFiles.length > 0) {
@@ -1039,13 +1281,18 @@ const ResearchChatScreen: React.FC = () => {
 
     setInputText('');
     setAttachedFiles([]);
-    Keyboard.dismiss();
 
     setIsLoading(true);
     const loadingId = Date.now().toString() + '-loading';
     setMessages((prev) => [
       ...prev,
-      { id: loadingId, role: 'assistant', content: '', timestamp: new Date(), isLoading: true },
+      {
+        id: loadingId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isLoading: true,
+      },
     ]);
 
     try {
@@ -1055,16 +1302,23 @@ const ResearchChatScreen: React.FC = () => {
 
       let convId = currentConversationId;
       const docIds = [
-        ...contextFiles.map(f => f.id),
-        ...attachedFiles.map(f => f.id)
+        ...contextFiles.map((f) => f.id),
+        ...attachedFiles.map((f) => f.id),
       ];
 
       // 1. Create conversation if not exists
       if (!convId) {
         console.log('[ResearchChat] Creating new conversation...');
-        const title = `Discussion about "${contextFiles[0]?.name || 'document'}"`;
-        const createRes = await researchService.createConversation(docIds, title, toolType, serviceToken);
-        
+        const title = `Discussion about "${
+          contextFiles[0]?.name || 'document'
+        }"`;
+        const createRes = await researchService.createConversation(
+          docIds,
+          title,
+          toolType,
+          serviceToken,
+        );
+
         if (createRes.data.success) {
           convId = createRes.data.data._id;
           setCurrentConversationId(convId);
@@ -1076,9 +1330,13 @@ const ResearchChatScreen: React.FC = () => {
 
       // 2. Setup Socket Listeners
       let socket = getSocket();
-      
+
       if (!socket) {
-        let userId = loggedInUser?.id || loggedInUser?._id || loggedInUser?.userId || loggedInUser?._id;
+        let userId =
+          loggedInUser?.id ||
+          loggedInUser?._id ||
+          loggedInUser?.userId ||
+          loggedInUser?._id;
         if (!userId) {
           try {
             const storedUser = await AsyncStorage.getItem('auth_user');
@@ -1093,63 +1351,95 @@ const ResearchChatScreen: React.FC = () => {
         if (!userId && serviceToken) {
           userId = _extractIdFromToken(serviceToken);
         }
-        
+
         if (!userId && loggedInUser?.token) {
           userId = _extractIdFromToken(loggedInUser.token);
         }
 
         if (userId && serviceToken) {
-          console.log('[ResearchChat] Attempting connectSocket with userId:', userId);
+          console.log(
+            '[ResearchChat] Attempting connectSocket with userId:',
+            userId,
+          );
           socket = connectSocket(userId, serviceToken) || null;
         } else {
-          console.error('[ResearchChat] Missing credentials for connectSocket:', { hasUserId: !!userId, hasToken: !!serviceToken });
+          console.error(
+            '[ResearchChat] Missing credentials for connectSocket:',
+            { hasUserId: !!userId, hasToken: !!serviceToken },
+          );
         }
       }
 
       // Ensure socket is connected, wait up to 3 seconds if needed
       if (socket && !socket.connected) {
-        console.log('[ResearchChat] Socket not connected, waiting for connection...');
+        console.log(
+          '[ResearchChat] Socket not connected, waiting for connection...',
+        );
         socket.connect();
-        
+
         // Polling wait for connection (max 3 seconds)
         let attempts = 0;
         while (!socket.connected && attempts < 30) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
           attempts++;
         }
       }
 
-      console.log('[ResearchChat] Socket instance status:', !!socket, 'Connected:', socket?.connected);
-      
+      console.log(
+        '[ResearchChat] Socket instance status:',
+        !!socket,
+        'Connected:',
+        socket?.connected,
+      );
+
       streamingContentRef.current = '';
-      
+
       if (socket && socket.connected && convId) {
-        console.log('[ResearchChat] Setting up socket listeners for convId:', convId);
-        
+        console.log(
+          '[ResearchChat] Setting up socket listeners for convId:',
+          convId,
+        );
+
         socket.off('assistant_message_chunk');
         socket.off('assistant_message_completed');
         socket.off('assistant_message_error');
 
         socket.on('assistant_message_chunk', (event: any) => {
           const payload = event.payload || event;
-          
+
           if (payload.conversationId === convId) {
-            const chunk = payload.content || payload.text || payload.chunk || '';
-            console.log('[ResearchChat] 📥 Received chunk. Total length:', chunk.length);
-            
+            const chunk =
+              payload.content || payload.text || payload.chunk || '';
+            console.log(
+              '[ResearchChat] 📥 Received chunk. Total length:',
+              chunk.length,
+            );
+
             // The backend sends the full accumulated string in each event, so we replace instead of append.
             streamingContentRef.current = chunk;
-            console.log('[ResearchChat] 📥 Content received. Total length:', streamingContentRef.current.length);
-            
-            setMessages((prev) => 
-              prev.map((m) => 
-                m.id === loadingId 
-                  ? { ...m, content: streamingContentRef.current, isLoading: false } 
-                  : m
-              )
+            console.log(
+              '[ResearchChat] 📥 Content received. Total length:',
+              streamingContentRef.current.length,
+            );
+
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === loadingId
+                  ? {
+                      ...m,
+                      content: streamingContentRef.current,
+                      isLoading: false,
+                    }
+                  : m,
+              ),
             );
           } else {
-            console.warn('[ResearchChat] ⚠️ Chunk conversationId mismatch. Expected:', convId, 'Got:', payload.conversationId);
+            console.warn(
+              '[ResearchChat] ⚠️ Chunk conversationId mismatch. Expected:',
+              convId,
+              'Got:',
+              payload.conversationId,
+            );
           }
         });
 
@@ -1158,7 +1448,7 @@ const ResearchChatScreen: React.FC = () => {
           if (payload.conversationId === convId) {
             console.log('[ResearchChat] ✅ Streaming finish confirmed.');
             setIsLoading(false);
-            
+
             socket.off('assistant_message_chunk');
             socket.off('assistant_message_completed');
             socket.off('assistant_message_error');
@@ -1166,47 +1456,71 @@ const ResearchChatScreen: React.FC = () => {
         });
 
         socket.on('assistant_message_error', (event: any) => {
-          console.error('[ResearchChat] ❌ assistant_message_error received:', JSON.stringify(event));
+          console.error(
+            '[ResearchChat] ❌ assistant_message_error received:',
+            JSON.stringify(event),
+          );
           const payload = event.payload || event;
           if (payload.conversationId === convId) {
-            console.error('[ResearchChat] Error message:', payload.message || payload.error);
+            console.error(
+              '[ResearchChat] Error message:',
+              payload.message || payload.error,
+            );
             setIsLoading(false);
             setMessages((prev) => prev.filter((m) => m.id !== loadingId));
-            Alert.alert(t('common.error'), payload.message || 'Error while receiving response.');
-            
+            Alert.alert(
+              t('common.error'),
+              payload.message || 'Error while receiving response.',
+            );
+
             socket.off('assistant_message_chunk');
             socket.off('assistant_message_completed');
             socket.off('assistant_message_error');
           }
         });
       } else {
-        console.error('[ResearchChat] ❌ Cannot setup listeners: Socket or ConvId missing.', { hasSocket: !!socket, convId });
+        console.error(
+          '[ResearchChat] ❌ Cannot setup listeners: Socket or ConvId missing.',
+          { hasSocket: !!socket, convId },
+        );
       }
 
       // 3. Send message
       if (convId) {
         console.log('[ResearchChat] Sending message to conversation:', convId);
-        const sendRes = await researchService.sendMessage(convId, docIds, query || 'Analysis', serviceToken);
-        
+        const sendRes = await researchService.sendMessage(
+          convId,
+          docIds,
+          query || 'Analysis',
+          serviceToken,
+        );
+
         if (!sendRes.data.success) {
           throw new Error('Failed to send message');
         }
-        
-        console.log('[ResearchChat] Message sent successfully. Waiting for socket chunks...');
+
+        console.log(
+          '[ResearchChat] Message sent successfully. Waiting for socket chunks...',
+        );
       }
     } catch (error) {
       console.error('[ResearchChat] Chat error:', error);
       setMessages((prev) => prev.filter((m) => m.id !== loadingId));
-      Alert.alert(t('common.error'), 'Failed to communicate with the assistant.');
-    } finally {
       setIsLoading(false);
+      Alert.alert(
+        t('common.error'),
+        'Failed to communicate with the assistant.',
+      );
     }
   };
 
   const handleSuggestionPress = (suggestion: string) => {
     triggerHaptic('light');
     if (contextFiles.length === 0 && attachedFiles.length === 0) {
-      Alert.alert(t('researchChat.uploadRequired'), t('researchChat.uploadToProceed'));
+      Alert.alert(
+        t('researchChat.uploadRequired'),
+        t('researchChat.uploadToProceed'),
+      );
       return;
     }
     setInputText(suggestion);
@@ -1216,34 +1530,57 @@ const ResearchChatScreen: React.FC = () => {
     setShowAttachmentModal(true);
   };
 
-  const handleUpload = async (file: { uri: string; name: string; type: string; size?: number }) => {
+  const handleUpload = async (file: {
+    uri: string;
+    name: string;
+    type: string;
+    size?: number;
+  }) => {
     if (!serviceToken) {
       console.error('[ResearchChat] Missing service token. Cannot upload.');
-      Alert.alert(t('common.error'), 'Authentication token not ready. Please try again in a moment.');
+      Alert.alert(
+        t('common.error'),
+        'Authentication token not ready. Please try again in a moment.',
+      );
       return;
     }
 
     setIsLoading(true);
-    const title = file.name || (file.type.startsWith('image/') ? 'image.jpg' : 'document.pdf');
-    const fileType = title.split('.').pop()?.toLowerCase() || (file.type.startsWith('image/') ? 'jpg' : 'pdf');
+    const title =
+      file.name ||
+      (file.type.startsWith('image/') ? 'image.jpg' : 'document.pdf');
+    const fileType =
+      title.split('.').pop()?.toLowerCase() ||
+      (file.type.startsWith('image/') ? 'jpg' : 'pdf');
 
     try {
       // 1. Initiate Upload
       const initiatePayload = { title, fileType, toolType };
-      console.log('[ResearchChat] Step 1: Initiating upload payload:', JSON.stringify(initiatePayload));
+      console.log(
+        '[ResearchChat] Step 1: Initiating upload payload:',
+        JSON.stringify(initiatePayload),
+      );
       const initiateRes = await researchService.initiateUpload(
         title,
         fileType,
         toolType,
-        serviceToken
+        serviceToken,
       );
 
       if (initiateRes.data.success) {
         const { uploadId, key } = initiateRes.data.data;
-        console.log('[ResearchChat] Step 1 Success. uploadId:', uploadId, 'key:', key);
+        console.log(
+          '[ResearchChat] Step 1 Success. uploadId:',
+          uploadId,
+          'key:',
+          key,
+        );
 
         // 2. Upload Part
-        console.log('[ResearchChat] Step 2: Uploading part 1 payload:', JSON.stringify({ uploadId, key, partNumber: 1 }));
+        console.log(
+          '[ResearchChat] Step 2: Uploading part 1 payload:',
+          JSON.stringify({ uploadId, key, partNumber: 1 }),
+        );
         const uploadRes = await researchService.uploadPart(
           file.uri,
           file.type || 'application/octet-stream',
@@ -1251,12 +1588,17 @@ const ResearchChatScreen: React.FC = () => {
           uploadId,
           key,
           1,
-          serviceToken
+          serviceToken,
         );
 
         if (uploadRes.data.success) {
           const { ETag, PartNumber } = uploadRes.data.data;
-          console.log('[ResearchChat] Step 2 Success. ETag:', ETag, 'PartNumber:', PartNumber);
+          console.log(
+            '[ResearchChat] Step 2 Success. ETag:',
+            ETag,
+            'PartNumber:',
+            PartNumber,
+          );
 
           // 3. Complete Upload
           const completePayload = {
@@ -1268,31 +1610,51 @@ const ResearchChatScreen: React.FC = () => {
             toolType,
             uploadId,
           };
-          console.log('[ResearchChat] Step 3: Completing upload payload:', JSON.stringify(completePayload));
+          console.log(
+            '[ResearchChat] Step 3: Completing upload payload:',
+            JSON.stringify(completePayload),
+          );
           const completeRes = await researchService.completeUpload(
             completePayload,
-            serviceToken
+            serviceToken,
           );
 
           if (completeRes.data.success) {
             const uploadedDoc = completeRes.data.data;
-            console.log('[ResearchChat] Step 3 Success. Final Document ID:', uploadedDoc._id);
+            console.log(
+              '[ResearchChat] Step 3 Success. Final Document ID:',
+              uploadedDoc._id,
+            );
             const newFile: AttachedFile = {
               id: uploadedDoc._id,
               name: uploadedDoc.title,
-              type: fileType === 'pdf' ? 'pdf' : (file.type.startsWith('image/') ? 'image' : 'document'),
+              type:
+                fileType === 'pdf'
+                  ? 'pdf'
+                  : file.type.startsWith('image/')
+                  ? 'image'
+                  : 'document',
               uri: uploadedDoc.fileUrl,
             };
             setContextFiles((prev) => [...prev, newFile]);
             triggerHaptic('medium');
           } else {
-            console.error('[ResearchChat] Step 3 failed:', completeRes.data.message);
+            console.error(
+              '[ResearchChat] Step 3 failed:',
+              completeRes.data.message,
+            );
           }
         } else {
-          console.error('[ResearchChat] Step 2 failed:', uploadRes.data.message);
+          console.error(
+            '[ResearchChat] Step 2 failed:',
+            uploadRes.data.message,
+          );
         }
       } else {
-        console.error('[ResearchChat] Step 1 failed:', initiateRes.data.message);
+        console.error(
+          '[ResearchChat] Step 1 failed:',
+          initiateRes.data.message,
+        );
       }
     } catch (uploadError: any) {
       console.error('[ResearchChat] Upload sequence error:', uploadError);
@@ -1395,12 +1757,18 @@ const ResearchChatScreen: React.FC = () => {
       toolType: toolType,
     };
 
-    console.log('[ResearchChat] Creating prompt with payload:', JSON.stringify(payload, null, 2));
+    console.log(
+      '[ResearchChat] Creating prompt with payload:',
+      JSON.stringify(payload, null, 2),
+    );
     setIsLoadingPrompts(true);
 
     try {
       const response = await researchService.savePrompt(payload, serviceToken);
-      console.log('[ResearchChat] Prompt creation response:', JSON.stringify(response.data, null, 2));
+      console.log(
+        '[ResearchChat] Prompt creation response:',
+        JSON.stringify(response.data, null, 2),
+      );
 
       if (response.data.success) {
         const p = response.data.data;
@@ -1410,16 +1778,23 @@ const ResearchChatScreen: React.FC = () => {
           content: p.content || template.refinedPrompt,
           createdAt: p.createdAt || new Date().toISOString(),
         };
-        setCustomPrompts(prev => [newPrompt, ...prev]);
+        setCustomPrompts((prev) => [newPrompt, ...prev]);
         setSelectedPromptId(newPrompt.id);
         triggerHaptic('medium');
-        customToast('success', t('common.success'), 'Prompt template saved successfully');
+        customToast(
+          'success',
+          t('common.success'),
+          'Prompt template saved successfully',
+        );
       } else {
         throw new Error(response.data.message || 'Failed to save prompt');
       }
     } catch (error: any) {
       console.error('[ResearchChat] Error creating prompt:', error);
-      Alert.alert(t('common.error'), error.message || 'Failed to save prompt template.');
+      Alert.alert(
+        t('common.error'),
+        error.message || 'Failed to save prompt template.',
+      );
     } finally {
       setIsLoadingPrompts(false);
     }
@@ -1438,9 +1813,13 @@ const ResearchChatScreen: React.FC = () => {
       const response = await researchService.deletePrompt(id, serviceToken);
       if (response.data.success) {
         console.log('[ResearchChat] Prompt deleted successfully');
-        setCustomPrompts(prev => prev.filter(p => p.id !== id));
+        setCustomPrompts((prev) => prev.filter((p) => p.id !== id));
         if (selectedPromptId === id) setSelectedPromptId(null);
-        customToast('success', t('common.success'), 'Template deleted successfully');
+        customToast(
+          'success',
+          t('common.success'),
+          'Template deleted successfully',
+        );
       } else {
         throw new Error(response.data.message || 'Failed to delete prompt');
       }
@@ -1450,89 +1829,118 @@ const ResearchChatScreen: React.FC = () => {
     }
   };
 
-  const selectedPrompt = customPrompts.find(p => p.id === selectedPromptId);
+  const selectedPrompt = customPrompts.find((p) => p.id === selectedPromptId);
 
-  const screenTitle = mode === 'general' 
-    ? t('researchChat.title.general') 
-    : t('researchChat.title.protocol');
+  const screenTitle =
+    mode === 'general'
+      ? t('researchChat.title.general')
+      : t('researchChat.title.protocol');
   const hasDocument = contextFiles.length > 0 || attachedFiles.length > 0;
 
-  const placeholderText = !hasDocument 
+  const placeholderText = !hasDocument
     ? t('researchChat.uploadToProceed')
     : mode === 'general'
-      ? t('researchChat.placeholder.general')
-      : t('researchChat.placeholder.protocol');
+    ? t('researchChat.placeholder.general')
+    : t('researchChat.placeholder.protocol');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: DYNAMIC_THEME.pure }]}
+      edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
+        keyboardVerticalOffset={0}>
         {/* Header */}
-        <View style={[styles.header, { 
-          backgroundColor: DYNAMIC_THEME.pure,
-          borderBottomColor: DYNAMIC_THEME.borderLight
-        }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: DYNAMIC_THEME.pure,
+              borderBottomColor: DYNAMIC_THEME.borderLight,
+            },
+          ]}>
           <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
             <ChevronLeft size={24} color={DYNAMIC_THEME.navy} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>{screenTitle}</Text>
+            <Text style={[styles.headerTitle, { color: DYNAMIC_THEME.brand }]}>
+              {screenTitle}
+            </Text>
             {contextFiles.length > 0 && (
-              <Text style={[styles.headerSubtitle, { color: DYNAMIC_THEME.secondary }]}>
+              <Text
+                style={[
+                  styles.headerSubtitle,
+                  { color: DYNAMIC_THEME.secondary },
+                ]}>
                 {t('researchChat.filesLoaded', { count: contextFiles.length })}
               </Text>
             )}
             {selectedPrompt && (
-              <Text style={[styles.headerPromptBadge, { 
-                color: DYNAMIC_THEME.brand,
-                backgroundColor: DYNAMIC_THEME.brandLight
-              }]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.headerPromptBadge,
+                  {
+                    color: DYNAMIC_THEME.brand,
+                    backgroundColor: DYNAMIC_THEME.brandLight,
+                  },
+                ]}
+                numberOfLines={1}>
                 {selectedPrompt.title}
               </Text>
             )}
           </View>
 
           <View style={styles.headerRightButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 if (!hasDocument) {
-                  Alert.alert(t('researchChat.uploadRequired'), t('researchChat.uploadToProceed'));
+                  Alert.alert(
+                    t('researchChat.uploadRequired'),
+                    t('researchChat.uploadToProceed'),
+                  );
                   return;
                 }
                 setShowPromptLibrary(true);
-              }} 
-              style={styles.headerButton}
-            >
+              }}
+              style={styles.headerButton}>
               <Sparkles size={20} color={DYNAMIC_THEME.brand} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleViewFiles} style={styles.headerButton}>
+            <TouchableOpacity
+              onPress={handleViewFiles}
+              style={styles.headerButton}>
               <FolderOpen size={22} color={DYNAMIC_THEME.navy} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Content area */}
-        <View style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
+        <View
+          style={[styles.contentArea, { backgroundColor: DYNAMIC_THEME.pure }]}>
           {isEmptyState ? (
             /* Empty State - przekażę DYNAMIC_THEME jako context */
             <ScrollView
               contentContainerStyle={styles.emptyState}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               {/* <PulsingAILogo /> */}
-              
-              <Text style={[styles.emptyStateGreeting, { color: DYNAMIC_THEME.navy }]}>
+
+              <Text
+                style={[
+                  styles.emptyStateGreeting,
+                  { color: DYNAMIC_THEME.navy },
+                ]}>
                 {mode === 'general'
                   ? t('researchChat.greeting.general')
                   : t('researchChat.greeting.protocol')}
               </Text>
-              
-              <Text style={[styles.emptyStateSubtext, { color: DYNAMIC_THEME.secondary }]}>
+
+              <Text
+                style={[
+                  styles.emptyStateSubtext,
+                  { color: DYNAMIC_THEME.secondary },
+                ]}>
                 {mode === 'general'
                   ? t('researchChat.subtitle.general')
                   : t('researchChat.subtitle.protocol')}
@@ -1540,14 +1948,25 @@ const ResearchChatScreen: React.FC = () => {
 
               {/* Document Required Badge if none loaded */}
               {isLoading ? (
-                <View style={[styles.uploadPromptContainer, { paddingVertical: hp(5) }]}>
+                <View
+                  style={[
+                    styles.uploadPromptContainer,
+                    { paddingVertical: hp(5) },
+                  ]}>
                   <ActivityIndicator size="large" color={DYNAMIC_THEME.brand} />
-                  <Text style={[styles.uploadPromptText, { color: DYNAMIC_THEME.secondary, marginTop: 12 }]}>
+                  <Text
+                    style={[
+                      styles.uploadPromptText,
+                      { color: DYNAMIC_THEME.secondary, marginTop: 12 },
+                    ]}>
                     Uploading document...
                   </Text>
                 </View>
               ) : !hasDocument ? (
-                <PulsingUploadButton onPress={handleFilePick} dynamicTheme={DYNAMIC_THEME} />
+                <PulsingUploadButton
+                  onPress={handleFilePick}
+                  dynamicTheme={DYNAMIC_THEME}
+                />
               ) : (
                 /* Suggestion chips */
                 <View style={styles.suggestionsContainer}>
@@ -1570,8 +1989,7 @@ const ResearchChatScreen: React.FC = () => {
               style={styles.chatStream}
               contentContainerStyle={styles.chatStreamContent}
               showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+              keyboardShouldPersistTaps="handled">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
@@ -1835,8 +2253,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontFamily: Platform.OS === 'ios' ? 'SF Pro Text' : 'System',
   },
-  userMessageText: {
-  },
+  userMessageText: {},
 
   // Citations
   citationsContainer: {
@@ -1951,8 +2368,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sendButtonActive: {
-  },
+  sendButtonActive: {},
 
   // File Chip
   fileChip: {

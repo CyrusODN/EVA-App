@@ -10,6 +10,8 @@ import {
   Platform,
   StatusBar,
   ActivityIndicator,
+  RefreshControl,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
@@ -47,13 +49,19 @@ import {
 } from 'react-native-gesture-handler';
 import PrimaryButton from '../../components/primaryButton';
 import VisitDialogModal from '../../components/visitDialogueModal';
+import RemedyLogoIcon from '../../components/RemedyLogoIcon';
 import { colors } from '../../constants/colors';
 import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 import EmptyState from '../../components/emptyState';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getChatbotServiceToken, getEvents } from '../../services/authService';
-import { sessionStorage, Session, SessionStatus, SessionType } from '../../utils/sessionStorage';
+import {
+  sessionStorage,
+  Session,
+  SessionStatus,
+  SessionType,
+} from '../../utils/sessionStorage';
 import { customToast } from '../../utils/toastMessage';
 import { useTheme } from '../../constants/theme';
 import RemedyLogoFull from '../../components/RemedyLogoFull';
@@ -93,6 +101,10 @@ const Home = () => {
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const swipeableRefs = useRef(new Map<string, any>()).current;
 
@@ -114,8 +126,12 @@ const Home = () => {
         }
       } catch (_) {}
     })();
+  }, []);
 
+  useEffect(() => {
     loadEvents();
+    // Scroll to top when tab changes to prevent jumping
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
   }, [activeTab]);
 
   useFocusEffect(
@@ -124,7 +140,12 @@ const Home = () => {
     }, []),
   );
 
-  const loadEvents = async () => {
+  const loadEvents = async (fromRefresh = false) => {
+    if (fromRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoadingEvents(true);
+    }
     try {
       const response = await getEvents();
       if (response.data?.success) {
@@ -133,7 +154,7 @@ const Home = () => {
           const isTranscribed = !!doc.isTranscribed;
           const hasRecording = !!doc.recordingUrl;
           const hasNotes = doc.notes && doc.notes.length > 0;
-          
+
           let status: SessionStatus = 'new';
           if (isTranscribed && hasNotes) {
             status = 'completed';
@@ -151,8 +172,11 @@ const Home = () => {
             title: doc.title || 'Untitled',
             type: (doc.type as SessionType) || 'patient',
             date: doc.date || doc.createdAt,
-            duration: doc.transcription?.duration ? 
-               `${Math.floor(doc.transcription.duration / 60)}:${String(doc.transcription.duration % 60).padStart(2, '0')}` : null,
+            duration: doc.transcription?.duration
+              ? `${Math.floor(doc.transcription.duration / 60)}:${String(
+                  doc.transcription.duration % 60,
+                ).padStart(2, '0')}`
+              : null,
             hasRecording,
             hasTranscription: isTranscribed,
             status,
@@ -160,21 +184,32 @@ const Home = () => {
             utterances: doc.transcription?.utterances || null,
             generatedNotes: latestNote?.content || null,
             // Fields for EventItem compatibility in Home screen
-            generationMode: latestNote ? (latestNote.type === 'custom' ? 'custom' : 'standard') : undefined,
+            generationMode: latestNote
+              ? latestNote.type === 'custom'
+                ? 'custom'
+                : 'standard'
+              : undefined,
             specializationLabel: latestNote?.specialization,
             visitTypeLabel: latestNote?.visitType,
-            customTemplateTitle: latestNote?.type === 'custom' ? 'Custom Note' : undefined
+            customTemplateTitle:
+              latestNote?.type === 'custom' ? 'Custom Note' : undefined,
           } as Session;
         });
 
         // Update state with sessions from backend
         setEvents(mappedSessions);
-        
+
         // Update local storage to keep it in sync for offline use
         try {
-          await AsyncStorage.setItem('remedy_ai_sessions', JSON.stringify(mappedSessions));
+          await AsyncStorage.setItem(
+            'remedy_ai_sessions',
+            JSON.stringify(mappedSessions),
+          );
         } catch (storageError) {
-          console.error('[Home] Failed to sync sessions to local storage:', storageError);
+          console.error(
+            '[Home] Failed to sync sessions to local storage:',
+            storageError,
+          );
         }
       } else {
         // Fallback to local storage if API success is false
@@ -186,14 +221,25 @@ const Home = () => {
       // Fallback to local storage if API fails entirely
       const allSessions = await sessionStorage.getAllSessions();
       setEvents(allSessions);
+    } finally {
+      setIsLoadingEvents(false);
+      setIsRefreshing(false);
     }
   };
 
-  const filteredEvents: EventItem[] = events.filter((event: EventItem) => {
-    if (activeTab === 'patients') return event.type === 'patient';
-    if (activeTab === 'meetings') return event.type === 'meeting';
-    if (activeTab === 'lectures') return event.type === 'lecture';
-    return true;
+  const filteredEvents: any[] = events.filter((event: any) => {
+    const matchesTab =
+      (activeTab === 'patients' && event.type === 'patient') ||
+      (activeTab === 'meetings' && event.type === 'meeting') ||
+      (activeTab === 'lectures' && event.type === 'lecture');
+
+    if (!matchesTab) return false;
+
+    const query = searchText.trim().toLowerCase();
+    if (!query) return true;
+
+    const title = (event.title || '').toLowerCase();
+    return title.includes(query);
   });
 
   useEffect(() => {
@@ -240,14 +286,20 @@ const Home = () => {
   const getTabIcon = (tabName: TabName, focused: boolean): React.ReactNode => {
     const activeColor = themeColors.accentPrimary;
     const inactiveColor = isDark ? themeColors.textMuted : '#A6A6A6';
-    
+
     switch (tabName) {
       case 'patients':
-        return <Users size={16} color={focused ? activeColor : inactiveColor} />;
+        return (
+          <Users size={16} color={focused ? activeColor : inactiveColor} />
+        );
       case 'meetings':
-        return <BookOpen size={16} color={focused ? activeColor : inactiveColor} />;
+        return (
+          <BookOpen size={16} color={focused ? activeColor : inactiveColor} />
+        );
       case 'lectures':
-        return <Video size={16} color={focused ? activeColor : inactiveColor} />;
+        return (
+          <Video size={16} color={focused ? activeColor : inactiveColor} />
+        );
       default:
         return null;
     }
@@ -275,7 +327,12 @@ const Home = () => {
       case 'recorded':
         return <Mic size={16} color={isDark ? '#86D4DE' : '#86D4DE'} />;
       case 'new':
-        return <Upload size={16} color={isDark ? themeColors.textMuted : "#C7C7CC"} />;
+        return (
+          <Upload
+            size={16}
+            color={isDark ? themeColors.textMuted : '#C7C7CC'}
+          />
+        );
       default:
         return null;
     }
@@ -297,18 +354,61 @@ const Home = () => {
   };
 
   const getEventDescriptor = (event: EventItem) => {
+    const tPath = 'mainContent.transcriptionComplete';
+
     if (event.generationMode === 'custom' && event.customTemplateTitle) {
-      return `Custom • ${event.customTemplateTitle}`;
+      const mode = t(`${tPath}.modes.custom`);
+      const title =
+        event.customTemplateTitle === 'Custom Note'
+          ? t(`${tPath}.noteOptions.custom`)
+          : event.customTemplateTitle;
+      return `${mode} • ${title}`;
     }
+
     if (event.generationMode === 'standard') {
-      if (event.specializationLabel && event.visitTypeLabel) {
-        return `${event.specializationLabel} • ${event.visitTypeLabel}`;
+      const specMap: Record<string, string> = {
+        Psychiatry: 'psychiatry',
+        psychiatry: 'psychiatry',
+        'Child Psychiatry': 'childPsychiatry',
+        'child-psychiatry': 'childPsychiatry',
+        Surgery: 'surgery',
+        surgery: 'surgery',
+        'Family Medicine': 'familyMedicine',
+        'family-medicine': 'familyMedicine',
+        'Smart Select': 'smartSelect',
+        'smart-select': 'smartSelect',
+      };
+
+      const visitMap: Record<string, string> = {
+        'First Visit': 'firstVisit',
+        'first-visit': 'firstVisit',
+        'Follow-up': 'followUp',
+        'follow-up': 'followUp',
+      };
+
+      const specKey = event.specializationLabel
+        ? specMap[event.specializationLabel] ||
+          event.specializationLabel.toLowerCase()
+        : null;
+      const visitKey = event.visitTypeLabel
+        ? visitMap[event.visitTypeLabel] || event.visitTypeLabel.toLowerCase()
+        : null;
+
+      const specialization = specKey
+        ? t(`${tPath}.specialization.${specKey}`, {
+            defaultValue: event.specializationLabel,
+          })
+        : null;
+      const visitType = visitKey
+        ? t(`${tPath}.visitType.${visitKey}`, {
+            defaultValue: event.visitTypeLabel,
+          })
+        : null;
+
+      if (specialization && visitType) {
+        return `${specialization} • ${visitType}`;
       }
-      if (event.specializationLabel || event.visitTypeLabel) {
-        return [event.specializationLabel, event.visitTypeLabel]
-          .filter(Boolean)
-          .join(' • ');
-      }
+      return specialization || visitType || null;
     }
     return null;
   };
@@ -322,21 +422,21 @@ const Home = () => {
     setIsCreatingSession(true);
     // Don't close dialog yet - let it close after creation starts or finishes
     // Actually, VisitDialogModal closes itself, so we just show loader overlay
-    setShowVisitDialog(false); 
-    
-    try {
-        await sessionStorage.createSession(visitName, visitDialogType);
-        
-        // Refresh events list to show the new session
-        await loadEvents();
+    setShowVisitDialog(false);
 
-        // Show toast notification
-        customToast('success', t('common.success'), `${visitName} created`);
+    try {
+      await sessionStorage.createSession(visitName, visitDialogType);
+
+      // Refresh events list to show the new session
+      await loadEvents();
+
+      // Show toast notification
+      customToast('success', t('common.success'), `${visitName} created`);
     } catch (error) {
-        console.error('Failed to create session:', error);
-        customToast('error', t('common.error'), 'Failed to create session');
+      console.error('Failed to create session:', error);
+      customToast('error', t('common.error'), 'Failed to create session');
     } finally {
-        setIsCreatingSession(false);
+      setIsCreatingSession(false);
     }
   };
 
@@ -373,74 +473,56 @@ const Home = () => {
   };
 
   const handleBulkDelete = () => {
-    const count = selectedItems.size;
-    Alert.alert(
-      i18n.language === 'pl' ? 'Potwierdź usunięcie' : 'Confirm Delete',
-      i18n.language === 'pl'
-        ? `Czy na pewno chcesz usunąć ${count} ${
-            count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'
-          }?`
-        : `Are you sure you want to delete ${count} item${
-            count === 1 ? '' : 's'
-          }?`,
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            // Capture selected IDs before clearing
-            const idsToDelete = Array.from(selectedItems);
-
-            try {
-              // Clear selection mode immediately
-              setSelectionMode(false);
-              setSelectedItems(new Set());
-
-              // Optimistically remove items from UI immediately
-              const idsSet = new Set(idsToDelete);
-              setEvents(prev => prev.filter(e => !idsSet.has(e.id)));
-
-              // Delete all selected sessions from backend and storage
-              await sessionStorage.deleteSessions(idsToDelete);
-
-              // Reload events to ensure consistency
-              await loadEvents();
-
-              // Show success message
-              customToast(
-                'success',
-                t('common.success'),
-                i18n.language === 'pl'
-                  ? `Usunięto ${count} ${
-                      count === 1
-                        ? 'element'
-                        : count < 5
-                        ? 'elementy'
-                        : 'elementów'
-                    }`
-                  : `${count} item${count === 1 ? '' : 's'} deleted`,
-              );
-            } catch (error) {
-              customToast(
-                'error',
-                t('common.error'),
-                i18n.language === 'pl'
-                  ? 'Nie udało się usunąć elementów'
-                  : 'Failed to delete items',
-              );
-              // Re-enable selection mode on error
-              setSelectionMode(true);
-            }
-          },
-        },
-      ],
-    );
+    setShowDeleteModal(true);
   };
 
+  const executeBulkDelete = async () => {
+    const idsToDelete = Array.from(selectedItems);
+    const count = idsToDelete.length;
+
+    console.log(`[Home] Initiating bulk delete for ${count} items.`);
+    setIsDeleting(true);
+
+    try {
+      // Clear selection mode immediately to avoid UI conflicts
+      setSelectionMode(false);
+      setSelectedItems(new Set());
+
+      // Optimistically remove items from main state
+      const idsSet = new Set(idsToDelete);
+      setEvents((prev) => prev.filter((e) => !idsSet.has(e.id)));
+      console.log(
+        `[Home] UI updated optimistically. Removed ${count} items from state.`,
+      );
+
+      // Delete sessions from backend and storage
+      await sessionStorage.deleteSessions(idsToDelete);
+      console.log('[Home] SessionStorage deletion completed.');
+
+      // Reload events to ensure consistency with server
+      await loadEvents();
+      console.log('[Home] Events reloaded from server.');
+
+      // Close modal and show success toast
+      setShowDeleteModal(false);
+      customToast(
+        'success',
+        t('common.success'),
+        i18n.language === 'pl'
+          ? `Pomyślnie usunięto ${count} ${
+              count === 1 ? 'element' : count < 5 ? 'elementy' : 'elementów'
+            }.`
+          : `Successfully deleted ${count} item${count === 1 ? '' : 's'}.`,
+      );
+    } catch (error) {
+      console.error('[Home] Bulk delete failed:', error);
+      customToast('error', t('common.error'), t('errors.deleteSessionFailed'));
+      // Reload on failure to restore state
+      await loadEvents();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const handleLongPress = (itemId: string) => {
     if (!selectionMode) {
       setSelectionMode(true);
@@ -479,10 +561,12 @@ const Home = () => {
   const renderRightActions = (eventId: string) => (
     <View style={styles.swipeActionsContainer}>
       <TouchableOpacity
-        style={[styles.swipeActionDelete, { backgroundColor: themeColors.error }]}
+        style={[
+          styles.swipeActionDelete,
+          { backgroundColor: themeColors.error },
+        ]}
         onPress={() => handleDeleteEvent(eventId)}
-        activeOpacity={0.8}
-      >
+        activeOpacity={0.8}>
         <Trash2 size={20} color="#FFFFFF" strokeWidth={2} />
         <Text style={styles.swipeActionText}>{t('common.delete')}</Text>
       </TouchableOpacity>
@@ -492,10 +576,12 @@ const Home = () => {
   const renderLeftActions = (eventTitle: string) => (
     <View style={styles.swipeActionsContainer}>
       <TouchableOpacity
-        style={[styles.swipeActionSearch, { backgroundColor: themeColors.accentPrimary }]}
+        style={[
+          styles.swipeActionSearch,
+          { backgroundColor: themeColors.accentPrimary },
+        ]}
         onPress={() => handleSearchSimilar(eventTitle)}
-        activeOpacity={0.8}
-      >
+        activeOpacity={0.8}>
         <Copy size={20} color="#FFFFFF" strokeWidth={2} />
         <Text style={styles.swipeActionText}>{t('actions.find')}</Text>
       </TouchableOpacity>
@@ -505,21 +591,36 @@ const Home = () => {
   const renderSelectionBar = () => {
     if (!selectionMode) return null;
 
-    const allSelected = selectedItems.size === filteredEvents.length && filteredEvents.length > 0;
+    const allSelected =
+      selectedItems.size === filteredEvents.length && filteredEvents.length > 0;
     const hasSelection = selectedItems.size > 0;
 
     return (
-      <View style={[styles.selectionBar, { 
-        backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-        borderBottomColor: isDark ? themeColors.borderSubtle : '#E2E8F0',
-        shadowColor: isDark ? '#000' : '#000'
-      }]}>
+      <View
+        style={[
+          styles.selectionBar,
+          {
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            borderBottomColor: isDark ? themeColors.borderSubtle : '#E2E8F0',
+            shadowColor: isDark ? '#000' : '#000',
+          },
+        ]}>
         <TouchableOpacity onPress={toggleSelectionMode}>
-          <Text style={[styles.selectionBarCancel, { color: themeColors.accentPrimary }]}>{t('common.cancel')}</Text>
+          <Text
+            style={[
+              styles.selectionBarCancel,
+              { color: themeColors.accentPrimary },
+            ]}>
+            {t('common.cancel')}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.selectionBarCenter}>
-          <Text style={[styles.selectionBarCount, { color: themeColors.textPrimary }]}>
+          <Text
+            style={[
+              styles.selectionBarCount,
+              { color: themeColors.textPrimary },
+            ]}>
             {selectedItems.size} {t('common.selected')}
           </Text>
         </View>
@@ -528,7 +629,11 @@ const Home = () => {
           {/* Show Select All/Deselect when nothing selected, Delete when items selected */}
           {!hasSelection ? (
             <TouchableOpacity onPress={selectAll}>
-              <Text style={[styles.selectionBarActionText, { color: themeColors.accentPrimary }]}>
+              <Text
+                style={[
+                  styles.selectionBarActionText,
+                  { color: themeColors.accentPrimary },
+                ]}>
                 {t('common.selectAll')}
               </Text>
             </TouchableOpacity>
@@ -536,16 +641,28 @@ const Home = () => {
             <>
               {filteredEvents.length > 1 && (
                 <TouchableOpacity onPress={selectAll}>
-                  <Text style={[styles.selectionBarActionTextSecondary, { color: themeColors.accentPrimary }]}>
-                    {allSelected ? t('common.deselectAll') : t('common.selectAll')}
+                  <Text
+                    style={[
+                      styles.selectionBarActionTextSecondary,
+                      { color: themeColors.accentPrimary },
+                    ]}>
+                    {allSelected
+                      ? t('common.deselectAll')
+                      : t('common.selectAll')}
                   </Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
                 onPress={handleBulkDelete}
-                style={[styles.deleteButton, { backgroundColor: themeColors.error }]}
-              >
-                <Trash2 size={16} strokeWidth={2} color={themeColors.textPrimary} />
+                style={[
+                  styles.deleteButton,
+                  { backgroundColor: themeColors.error },
+                ]}>
+                <Trash2
+                  size={16}
+                  strokeWidth={2}
+                  color={themeColors.textPrimary}
+                />
               </TouchableOpacity>
             </>
           )}
@@ -557,25 +674,39 @@ const Home = () => {
   const renderEventItem = ({ item }: { item: EventItem }) => {
     const eventDescriptor = getEventDescriptor(item);
     const isSelected = selectedItems.has(item.id);
-    
+
     return (
       <Swipeable
-        ref={ref => { if (ref) swipeableRefs.set(item.id, ref); }}
-        renderRightActions={() => selectionMode ? null : renderRightActions(item.id)}
-        renderLeftActions={() => selectionMode ? null : renderLeftActions(item.title)}
+        ref={(ref) => {
+          if (ref) swipeableRefs.set(item.id, ref);
+        }}
+        renderRightActions={() =>
+          selectionMode ? null : renderRightActions(item.id)
+        }
+        renderLeftActions={() =>
+          selectionMode ? null : renderLeftActions(item.title)
+        }
         onSwipeableWillOpen={() => {
-            [...swipeableRefs.entries()].forEach(([key, ref]) => {
-                if (key !== item.id) ref.close();
-            });
+          [...swipeableRefs.entries()].forEach(([key, ref]) => {
+            if (key !== item.id) ref.close();
+          });
         }}
         enabled={!selectionMode}
-        enableTrackpadTwoFingerGesture={false}
-      >
+        enableTrackpadTwoFingerGesture={false}>
         <TouchableOpacity
           style={[
             styles.eventItem,
-            { backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF', shadowColor: themeColors.shadowColor },
-            isSelected && [styles.eventItemSelected, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#F0F9FA', borderColor: themeColors.accentPrimary }]
+            {
+              backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+              shadowColor: themeColors.shadowColor,
+            },
+            isSelected && [
+              styles.eventItemSelected,
+              {
+                backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#F0F9FA',
+                borderColor: themeColors.accentPrimary,
+              },
+            ],
           ]}
           onPress={() => {
             if (selectionMode) {
@@ -586,68 +717,135 @@ const Home = () => {
           }}
           onLongPress={() => handleLongPress(item.id)}
           delayLongPress={400}
-          activeOpacity={0.9}
-        >
-        <View style={styles.eventRow}>
-          {/* Checkbox in selection mode */}
-          {selectionMode && (
-            <View style={styles.checkboxContainer}>
-              <View style={[
-                styles.checkbox,
-                { backgroundColor: isDark ? 'transparent' : '#FFFFFF', borderColor: isDark ? themeColors.borderStrong : '#CBD5E1' },
-                isSelected && [styles.checkboxSelected, { backgroundColor: isDark ? 'transparent' : '#F0F9FA', borderColor: themeColors.accentPrimary }]
-              ]}>
-                {isSelected && (
-                  <CheckCircle size={20} color={themeColors.accentPrimary} fill={themeColors.accentPrimary} />
+          activeOpacity={0.9}>
+          <View style={styles.eventRow}>
+            {/* Checkbox in selection mode */}
+            {selectionMode && (
+              <View style={styles.checkboxContainer}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    {
+                      backgroundColor: isDark ? 'transparent' : '#FFFFFF',
+                      borderColor: isDark
+                        ? themeColors.borderStrong
+                        : '#CBD5E1',
+                    },
+                    isSelected && [
+                      styles.checkboxSelected,
+                      {
+                        backgroundColor: isDark ? 'transparent' : '#F0F9FA',
+                        borderColor: themeColors.accentPrimary,
+                      },
+                    ],
+                  ]}>
+                  {isSelected && (
+                    <CheckCircle
+                      size={20}
+                      color={themeColors.accentPrimary}
+                      fill={themeColors.accentPrimary}
+                    />
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Left: Title + Date/Duration */}
+            <View style={styles.eventLeftContent}>
+              <Text
+                variant="titleMedium"
+                style={[styles.eventTitle, { color: themeColors.textPrimary }]}>
+                {item.title}
+              </Text>
+              <View style={styles.eventMetaRow}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.eventDate,
+                    { color: themeColors.textSecondary },
+                  ]}>
+                  {formatEventDate(item.date)}
+                </Text>
+                {item.duration && (
+                  <>
+                    <Text
+                      style={[
+                        styles.metaSeparator,
+                        {
+                          color: isDark ? themeColors.borderStrong : '#CBD5E1',
+                        },
+                      ]}>
+                      {' '}
+                      ·{' '}
+                    </Text>
+                    <Text
+                      variant="bodySmall"
+                      style={[
+                        styles.durationText,
+                        { color: themeColors.textSecondary },
+                      ]}>
+                      {item.duration}
+                    </Text>
+                  </>
                 )}
               </View>
             </View>
-          )}
 
-          {/* Left: Title + Date/Duration */}
-          <View style={styles.eventLeftContent}>
-            <Text variant="titleMedium" style={[styles.eventTitle, { color: themeColors.textPrimary }]}>
-              {item.title}
-            </Text>
-            <View style={styles.eventMetaRow}>
-              <Text variant="bodySmall" style={[styles.eventDate, { color: themeColors.textSecondary }]}>
-                {formatEventDate(item.date)}
-              </Text>
-              {item.duration && (
-                <>
-                  <Text style={[styles.metaSeparator, { color: isDark ? themeColors.borderStrong : '#CBD5E1' }]}> · </Text>
-                  <Text variant="bodySmall" style={[styles.durationText, { color: themeColors.textSecondary }]}>
-                    {item.duration}
+            {/* Right: Status indicator */}
+            {!selectionMode && (
+              <View style={styles.eventRightContent}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    item.status === 'completed' && [
+                      styles.statusBadgeCompleted,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(45, 139, 150, 0.2)'
+                          : 'rgba(45, 139, 150, 0.1)',
+                      },
+                    ],
+                    item.status === 'transcribed' && [
+                      styles.statusBadgeTranscribed,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(70, 183, 198, 0.2)'
+                          : 'rgba(70, 183, 198, 0.1)',
+                      },
+                    ],
+                    item.status === 'recorded' && [
+                      styles.statusBadgeRecorded,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(122, 203, 214, 0.2)'
+                          : 'rgba(122, 203, 214, 0.1)',
+                      },
+                    ],
+                    item.status === 'new' && [
+                      styles.statusBadgeNew,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(255, 255, 255, 0.1)'
+                          : 'rgba(148, 163, 184, 0.08)',
+                      },
+                    ],
+                  ]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(item.status) },
+                    ]}>
+                    {eventDescriptor ||
+                      (item.status === 'completed' && t('status.completed')) ||
+                      (item.status === 'transcribed' &&
+                        t('status.transcribed')) ||
+                      (item.status === 'recorded' && t('status.recorded')) ||
+                      (item.status === 'new' && t('status.new'))}
                   </Text>
-                </>
-              )}
-            </View>
-          </View>
-
-          {/* Right: Status indicator */}
-          {!selectionMode && (
-            <View style={styles.eventRightContent}>
-              <View style={[
-                styles.statusBadge,
-                item.status === 'completed' && [styles.statusBadgeCompleted, { backgroundColor: isDark ? 'rgba(45, 139, 150, 0.2)' : 'rgba(45, 139, 150, 0.1)' }],
-                item.status === 'transcribed' && [styles.statusBadgeTranscribed, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.2)' : 'rgba(70, 183, 198, 0.1)' }],
-                item.status === 'recorded' && [styles.statusBadgeRecorded, { backgroundColor: isDark ? 'rgba(122, 203, 214, 0.2)' : 'rgba(122, 203, 214, 0.1)' }],
-                item.status === 'new' && [styles.statusBadgeNew, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(148, 163, 184, 0.08)' }],
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  { color: getStatusColor(item.status) }
-                ]}>
-                {eventDescriptor ||
-                  (item.status === 'completed' && t('status.completed')) ||
-                  (item.status === 'transcribed' && t('status.transcribed')) ||
-                  (item.status === 'recorded' && t('status.recorded')) ||
-                  (item.status === 'new' && t('status.new'))}
-                </Text>
+                </View>
               </View>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
         </TouchableOpacity>
       </Swipeable>
     );
@@ -703,33 +901,46 @@ const Home = () => {
     );
   };
 
-  const getEventTypeForDate = (date: Date | null) => {
-    if (!date) return null;
-    const dateString = date.toISOString().split('T')[0];
-    const event = events.find((e: EventItem) => {
-      const eventDate = new Date(e.date).toISOString().split('T')[0];
-      return eventDate === dateString;
+  const getEventsForDate = (date: Date | null) => {
+    if (!date) return [];
+
+    return events.filter((e) => {
+      const eventDate = new Date(e.date);
+      return (
+        eventDate.getDate() === date.getDate() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getFullYear() === date.getFullYear()
+      );
     });
-    return event ? event.type : null;
   };
 
   const renderCalendarLegend = () => (
-    <View style={[styles.calendarLegend, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}>
+    <View
+      style={[
+        styles.calendarLegend,
+        { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' },
+      ]}>
       <View style={styles.legendItem}>
         <View style={[styles.legendDot, { backgroundColor: '#46B7C6' }]} />
-        <Text variant="bodySmall" style={[styles.legendText, { color: themeColors.textSecondary }]}>
+        <Text
+          variant="bodySmall"
+          style={[styles.legendText, { color: themeColors.textSecondary }]}>
           {t('calendar.patientVisits')}
         </Text>
       </View>
       <View style={styles.legendItem}>
         <View style={[styles.legendDot, { backgroundColor: '#7C3AED' }]} />
-        <Text variant="bodySmall" style={[styles.legendText, { color: themeColors.textSecondary }]}>
+        <Text
+          variant="bodySmall"
+          style={[styles.legendText, { color: themeColors.textSecondary }]}>
           {t('calendar.meetings')}
         </Text>
       </View>
       <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: '#FB923C' }]} />
-        <Text variant="bodySmall" style={[styles.legendText, { color: themeColors.textSecondary }]}>
+        <View style={[styles.legendDot, { backgroundColor: '#D97706' }]} />
+        <Text
+          variant="bodySmall"
+          style={[styles.legendText, { color: themeColors.textSecondary }]}>
           {t('calendar.lectures')}
         </Text>
       </View>
@@ -745,7 +956,7 @@ const Home = () => {
       t('calendar.weekDays.wed'),
       t('calendar.weekDays.thu'),
       t('calendar.weekDays.fri'),
-      t('calendar.weekDays.sat')
+      t('calendar.weekDays.sat'),
     ];
     const today = new Date();
     const isToday = (date: Date | null) => {
@@ -758,30 +969,61 @@ const Home = () => {
     };
 
     return (
-      <View style={[styles.calendarContainer, { backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF', shadowColor: themeColors.shadowColor }]}>
+      <View
+        style={[
+          styles.calendarContainer,
+          {
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            shadowColor: themeColors.shadowColor,
+          },
+        ]}>
         {/* Month Navigation Header - Premium Style */}
         <View style={styles.calendarHeader}>
           <View style={styles.monthYearContainer}>
-            <Text style={[styles.monthYearText, { color: themeColors.textPrimary }]}>
+            <Text
+              style={[
+                styles.monthYearText,
+                { color: themeColors.textPrimary },
+              ]}>
               {formatMonthYear(currentMonth)}
             </Text>
           </View>
-          
+
           <View style={styles.monthNavButtons}>
             <TouchableOpacity
               onPress={() => navigateMonth('prev')}
-              style={[styles.monthNavButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}
-              activeOpacity={0.6}
-            >
-              <ChevronLeft size={20} color={isDark ? themeColors.textSecondary : "#64748B"} strokeWidth={2} />
+              style={[
+                styles.monthNavButton,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(255,255,255,0.05)'
+                    : '#F8FAFC',
+                },
+              ]}
+              activeOpacity={0.6}>
+              <ChevronLeft
+                size={20}
+                color={isDark ? themeColors.textSecondary : '#64748B'}
+                strokeWidth={2}
+              />
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => navigateMonth('next')}
-              style={[styles.monthNavButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}
-              activeOpacity={0.6}
-            >
-              <ChevronRight size={20} color={isDark ? themeColors.textSecondary : "#64748B"} strokeWidth={2} />
+              style={[
+                styles.monthNavButton,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(255,255,255,0.05)'
+                    : '#F8FAFC',
+                },
+              ]}
+              activeOpacity={0.6}>
+              <ChevronRight
+                size={20}
+                color={isDark ? themeColors.textSecondary : '#64748B'}
+                strokeWidth={2}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -790,7 +1032,8 @@ const Home = () => {
         <View style={styles.weekDaysContainer}>
           {weekDays.map((day, index) => (
             <View key={index} style={styles.weekDay}>
-              <Text style={[styles.weekDayText, { color: themeColors.textMuted }]}>
+              <Text
+                style={[styles.weekDayText, { color: themeColors.textMuted }]}>
                 {day}
               </Text>
             </View>
@@ -802,18 +1045,18 @@ const Home = () => {
           {calendarDays.map((date, index) => {
             const isSelected = date && isSameDay(date, selectedDate);
             const isTodayDate = date && isToday(date);
-            const eventType = date ? getEventTypeForDate(date) : null;
-            const hasEvent = !!eventType;
+            const dayEvents = date ? getEventsForDate(date) : [];
+            const hasEvents = dayEvents.length > 0;
 
-            // Event background colors (subtle)
-            const getEventBackground = () => {
-              if (isSelected) return undefined;
-              if (!hasEvent) return undefined;
-              return eventType === 'patient'
-                ? (isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.08)')
-                : eventType === 'meeting'
-                ? (isDark ? 'rgba(124, 58, 237, 0.15)' : 'rgba(124, 58, 237, 0.08)')
-                : (isDark ? 'rgba(251, 146, 60, 0.15)' : 'rgba(251, 146, 60, 0.08)');
+            const getEventColor = (type: string) => {
+              const normalizedType = type?.toLowerCase();
+              if (normalizedType === 'patient' || normalizedType === 'patients')
+                return '#46B7C6';
+              if (normalizedType === 'meeting' || normalizedType === 'meetings')
+                return '#7C3AED';
+              if (normalizedType === 'lecture' || normalizedType === 'lectures')
+                return '#D97706';
+              return '#64748B';
             };
 
             return (
@@ -821,26 +1064,73 @@ const Home = () => {
                 key={index}
                 style={[
                   styles.calendarDay,
-                  hasEvent && !isSelected && { backgroundColor: getEventBackground() },
-                  isSelected && [styles.calendarDaySelected, { backgroundColor: themeColors.accentPrimary }],
-                  isTodayDate && !isSelected && [styles.calendarDayToday, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#F0F9FA', borderColor: themeColors.accentPrimary }],
+                  isSelected && [
+                    styles.calendarDaySelected,
+                    { backgroundColor: themeColors.accentPrimary },
+                  ],
+                  isTodayDate &&
+                    !isSelected && [
+                      styles.calendarDayToday,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(70, 183, 198, 0.1)'
+                          : '#F0F9FA',
+                        borderColor: themeColors.accentPrimary,
+                      },
+                    ],
                 ]}
                 onPress={() => date && setSelectedDate(date)}
                 disabled={!date}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 {date && (
                   <View style={styles.calendarDayContent}>
                     <Text
                       style={[
                         styles.calendarDayText,
                         { color: themeColors.textPrimary },
-                        isSelected && [styles.calendarDayTextSelected, { color: isDark ? '#000' : '#FFFFFF' }],
-                        isTodayDate && !isSelected && [styles.calendarDayTextToday, { color: themeColors.accentPrimary }],
-                      ]}
-                    >
+                        isSelected && [
+                          styles.calendarDayTextSelected,
+                          { color: isDark ? '#000' : '#FFFFFF' },
+                        ],
+                        isTodayDate &&
+                          !isSelected && [
+                            styles.calendarDayTextToday,
+                            { color: themeColors.accentPrimary },
+                          ],
+                      ]}>
                       {date.getDate()}
                     </Text>
+
+                    {/* Dots for multiple events */}
+                    {hasEvents && (
+                      <View style={styles.dayDotsContainer}>
+                        {dayEvents.slice(0, 3).map((event, idx) => (
+                          <View
+                            key={`${event.id}-${idx}`}
+                            style={[
+                              styles.dayEventDot,
+                              { backgroundColor: getEventColor(event.type) },
+                              isSelected && {
+                                borderColor: isDark ? '#000' : '#FFFFFF',
+                                borderWidth: 0.5,
+                              },
+                            ]}
+                          />
+                        ))}
+                        {dayEvents.length > 3 && (
+                          <View
+                            style={[
+                              styles.dayEventDot,
+                              { backgroundColor: '#64748B' },
+                              isSelected && {
+                                borderColor: isDark ? '#000' : '#FFFFFF',
+                                borderWidth: 0.5,
+                              },
+                            ]}
+                          />
+                        )}
+                      </View>
+                    )}
                   </View>
                 )}
               </TouchableOpacity>
@@ -852,51 +1142,91 @@ const Home = () => {
 
         {/* Events for Selected Date */}
         {selectedDate && (
-          <View style={[styles.selectedDateEvents, { borderTopColor: isDark ? themeColors.borderSubtle : '#F1F5F9' }]}>
-            <Text style={[styles.selectedDateTitle, { color: themeColors.textPrimary }]}>
-              {selectedDate.toLocaleDateString(i18n.language || 'en-US', { 
-                weekday: 'long', 
-                month: 'long', 
-                day: 'numeric' 
+          <View
+            style={[
+              styles.selectedDateEvents,
+              { borderTopColor: isDark ? themeColors.borderSubtle : '#F1F5F9' },
+            ]}>
+            <Text
+              style={[
+                styles.selectedDateTitle,
+                { color: themeColors.textPrimary },
+              ]}>
+              {selectedDate.toLocaleDateString(i18n.language || 'en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
               })}
             </Text>
             <View style={styles.selectedDateEventsList}>
               {events
-                .filter(event => {
-                  const eventDate = new Date(event.date).toISOString().split('T')[0];
-                  const selDate = selectedDate.toISOString().split('T')[0];
-                  return eventDate === selDate;
+                .filter((event) => {
+                  const eventDate = new Date(event.date);
+                  return (
+                    eventDate.getDate() === selectedDate.getDate() &&
+                    eventDate.getMonth() === selectedDate.getMonth() &&
+                    eventDate.getFullYear() === selectedDate.getFullYear()
+                  );
                 })
-                .map(event => (
+                .map((event) => (
                   <TouchableOpacity
                     key={event.id}
-                    style={[styles.calendarEventItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}
-                    onPress={() => handleEventPress(event)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[
-                      styles.calendarEventDot,
+                    style={[
+                      styles.calendarEventItem,
                       {
-                        backgroundColor:
-                          event.type === 'patient'
-                            ? '#46B7C6'
-                            : event.type === 'meeting'
-                            ? '#7C3AED'
-                            : '#FB923C',
+                        backgroundColor: isDark
+                          ? 'rgba(255,255,255,0.05)'
+                          : '#F8FAFC',
                       },
-                    ]} />
-                    <Text style={[styles.calendarEventTitle, { color: themeColors.textPrimary }]}>{event.title}</Text>
+                    ]}
+                    onPress={() => handleEventPress(event)}
+                    activeOpacity={0.7}>
+                    <View
+                      style={[
+                        styles.calendarEventDot,
+                        {
+                          backgroundColor:
+                            event.type === 'patient'
+                              ? '#46B7C6'
+                              : event.type === 'meeting'
+                              ? '#7C3AED'
+                              : '#D97706',
+                        },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.calendarEventTitle,
+                        { color: themeColors.textPrimary },
+                      ]}>
+                      {event.title}
+                    </Text>
                     {event.duration && (
-                      <Text style={[styles.calendarEventTime, { color: themeColors.textSecondary }]}>{event.duration}</Text>
+                      <Text
+                        style={[
+                          styles.calendarEventTime,
+                          { color: themeColors.textSecondary },
+                        ]}>
+                        {event.duration}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 ))}
-            {events.filter(event => {
-                const eventDate = new Date(event.date).toISOString().split('T')[0];
-                const selDate = selectedDate.toISOString().split('T')[0];
-                return eventDate === selDate;
+              {events.filter((event) => {
+                const eventDate = new Date(event.date);
+                return (
+                  eventDate.getDate() === selectedDate.getDate() &&
+                  eventDate.getMonth() === selectedDate.getMonth() &&
+                  eventDate.getFullYear() === selectedDate.getFullYear()
+                );
               }).length === 0 && (
-                <Text style={[styles.noEventsText, { color: themeColors.textMuted }]}>{t('calendar.noEventsOnDay')}</Text>
+                <Text
+                  style={[
+                    styles.noEventsText,
+                    { color: themeColors.textMuted },
+                  ]}>
+                  {t('calendar.noEventsOnDay')}
+                </Text>
               )}
             </View>
           </View>
@@ -908,36 +1238,65 @@ const Home = () => {
   const renderLoaderOverlay = () => {
     if (!isCreatingSession) return null;
     return (
-      <View style={[
-        StyleSheet.absoluteFill, 
-        { 
-          backgroundColor: 'rgba(0,0,0,0.5)', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          zIndex: 9999 
-        }
-      ]}>
-        <View style={{
-          padding: 24,
-          backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-          borderRadius: 16,
-          alignItems: 'center',
-          ...(!isDark && {
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          },
+        ]}>
+        <View
+          style={{
+            width: wp(80),
+            paddingVertical: 40,
+            paddingHorizontal: 24,
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            borderRadius: 24,
+            alignItems: 'center',
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 5,
-          })
-        }}>
-          <ActivityIndicator size="large" color={themeColors.accentPrimary} />
-          <Text style={{ 
-            marginTop: 16, 
-            color: themeColors.textPrimary,
-            fontWeight: '500' 
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.2,
+            shadowRadius: 16,
+            elevation: 10,
           }}>
-            {t('common.creatingSession') || 'Creating session...'}
-          </Text>
+          <View style={{ marginBottom: 24 }}>
+            <RemedyLogoIcon size={64} color={themeColors.accentPrimary} />
+          </View>
+
+          <ActivityIndicator size="large" color={themeColors.accentPrimary} />
+
+          <View style={{ marginTop: 24 }}>
+            <Text
+              style={{
+                fontSize: 18,
+                lineHeight: 24,
+                color: themeColors.textPrimary,
+                fontWeight: '600',
+                textAlign: 'center',
+                fontFamily:
+                  Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'System',
+                letterSpacing: -0.4,
+              }}>
+              {t('common.creatingSession') || 'Creating your session'}
+            </Text>
+            <Text
+              style={{
+                marginTop: 8,
+                fontSize: 14,
+                color: themeColors.textSecondary,
+                textAlign: 'center',
+                fontFamily:
+                  Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+                opacity: 0.8,
+              }}>
+              {i18n.language === 'pl'
+                ? 'To zajmie tylko chwilę...'
+                : 'This will only take a moment...'}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -945,15 +1304,32 @@ const Home = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.canvas} />
-        <SafeAreaView style={[styles.container, { backgroundColor: themeColors.canvas }]}>
+      <View
+        style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={themeColors.canvas}
+        />
+        <SafeAreaView
+          style={[styles.container, { backgroundColor: themeColors.canvas }]}>
           {/* Header Section */}
-          <View style={[styles.header, { backgroundColor: themeColors.canvas }]}>
+          <View
+            style={[styles.header, { backgroundColor: themeColors.canvas }]}>
             <View style={styles.headerLeft}>
               <RemedyLogoFull width={wp(40)} height={hp(4.5)} />
-              <View style={[styles.headerSeparator, { backgroundColor: isDark ? themeColors.borderNormal : '#D1D1D6' }]} />
-              <Text variant="headlineLarge" style={[styles.mioText, { color: themeColors.textPrimary }]}>
+              <View
+                style={[
+                  styles.headerSeparator,
+                  {
+                    backgroundColor: isDark
+                      ? themeColors.borderNormal
+                      : '#D1D1D6',
+                  },
+                ]}
+              />
+              <Text
+                variant="headlineLarge"
+                style={[styles.mioText, { color: themeColors.textPrimary }]}>
                 EVA
               </Text>
             </View>
@@ -961,88 +1337,148 @@ const Home = () => {
             <View style={styles.headerActions}>
               {!showCalendar && (
                 <TouchableOpacity
-                  style={[styles.headerButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}
+                  style={[
+                    styles.headerButton,
+                    {
+                      backgroundColor: isDark
+                        ? 'rgba(255,255,255,0.05)'
+                        : '#F8FAFC',
+                    },
+                  ]}
                   onPress={toggleSelectionMode}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Edit2 
-                    size={22} 
-                    color={selectionMode ? themeColors.error : themeColors.accentPrimary} 
-                    strokeWidth={1.5} 
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Edit2
+                    size={22}
+                    color={
+                      selectionMode
+                        ? themeColors.error
+                        : themeColors.accentPrimary
+                    }
+                    strokeWidth={1.5}
                   />
                 </TouchableOpacity>
               )}
-              
+
               <TouchableOpacity
-                style={[styles.headerButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC' }]}
+                style={[
+                  styles.headerButton,
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(255,255,255,0.05)'
+                      : '#F8FAFC',
+                  },
+                ]}
                 onPress={() => {
                   setShowCalendar(!showCalendar);
                   if (selectionMode) {
                     toggleSelectionMode();
                   }
                 }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 {showCalendar ? (
-                  <X size={22} color={themeColors.accentPrimary} strokeWidth={2} />
+                  <X
+                    size={22}
+                    color={themeColors.accentPrimary}
+                    strokeWidth={2}
+                  />
                 ) : (
-                  <Calendar size={22} color={themeColors.accentPrimary} strokeWidth={1.5} />
+                  <Calendar
+                    size={22}
+                    color={themeColors.accentPrimary}
+                    strokeWidth={1.5}
+                  />
                 )}
               </TouchableOpacity>
             </View>
           </View>
-          <View style={[styles.headerDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#E2E8F0' }]} />
+          <View
+            style={[
+              styles.headerDivider,
+              {
+                backgroundColor: isDark ? themeColors.borderSubtle : '#E2E8F0',
+              },
+            ]}
+          />
 
           {/* Sticky Tabs Section (outside ScrollView) */}
           {!showCalendar && (
-            <View style={[styles.stickyTabsWrapper, { backgroundColor: themeColors.canvas }]}>
+            <View
+              style={[
+                styles.stickyTabsWrapper,
+                { backgroundColor: themeColors.canvas },
+              ]}>
               <View style={styles.tabsContainer}>
                 <View style={styles.tabsRow}>
-                  {(['patients', 'meetings', 'lectures'] as TabName[]).map(tab => (
-                    <TouchableOpacity
-                      key={tab}
-                      style={[
-                        styles.tabButton,
-                        activeTab === tab && [styles.activeTabButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF', shadowColor: themeColors.shadowColor }],
-                      ]}
-                      onPress={() => setActiveTab(tab)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.tabContent}>
-                        {getTabIcon(tab, activeTab === tab)}
-                        <Text
-                          variant="bodyMedium"
-                          style={[
-                            styles.tabText,
-                            { color: activeTab === tab ? themeColors.accentPrimary : (isDark ? themeColors.textMuted : '#94A3B8') },
-                            activeTab === tab && styles.activeTabText,
-                          ]}
-                        >
-                          {t(`tabs.${tab}`)}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                  {(['patients', 'meetings', 'lectures'] as TabName[]).map(
+                    (tab) => (
+                      <TouchableOpacity
+                        key={tab}
+                        style={[
+                          styles.tabButton,
+                          activeTab === tab && [
+                            styles.activeTabButton,
+                            {
+                              backgroundColor: isDark
+                                ? 'rgba(255,255,255,0.05)'
+                                : '#FFFFFF',
+                              shadowColor: themeColors.shadowColor,
+                            },
+                          ],
+                        ]}
+                        onPress={() => setActiveTab(tab)}
+                        activeOpacity={0.7}>
+                        <View style={styles.tabContent}>
+                          {getTabIcon(tab, activeTab === tab)}
+                          <Text
+                            variant="bodyMedium"
+                            style={[
+                              styles.tabText,
+                              {
+                                color:
+                                  activeTab === tab
+                                    ? themeColors.accentPrimary
+                                    : isDark
+                                    ? themeColors.textMuted
+                                    : '#94A3B8',
+                              },
+                              activeTab === tab && styles.activeTabText,
+                            ]}>
+                            {t(`tabs.${tab}`)}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ),
+                  )}
                 </View>
               </View>
             </View>
           )}
 
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.keyboardAvoidingView}
-          >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}>
             {!showCalendar && (
               <>
                 {/* Search Section */}
-                <View style={[styles.searchSection, { 
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
-                  borderColor: isDark ? themeColors.borderSubtle : '#E2E8F0'
-                }]}>
+                <View
+                  style={[
+                    styles.searchSection,
+                    {
+                      backgroundColor: isDark
+                        ? 'rgba(255,255,255,0.05)'
+                        : '#FFFFFF',
+                      borderColor: isDark
+                        ? themeColors.borderSubtle
+                        : '#E2E8F0',
+                    },
+                  ]}>
                   <Search size={18} color={themeColors.textMuted} />
                   <TextInput
                     placeholder={t('common.search')}
-                    style={[styles.searchInput, { color: themeColors.textPrimary }]}
+                    style={[
+                      styles.searchInput,
+                      { color: themeColors.textPrimary },
+                    ]}
                     placeholderTextColor={themeColors.textMuted}
                     onChangeText={setSearchText}
                     value={searchText}
@@ -1064,42 +1500,59 @@ const Home = () => {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
-            >
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={() => loadEvents(true)}
+                  tintColor={themeColors.accentPrimary}
+                  colors={[themeColors.accentPrimary]}
+                />
+              }>
               {/* Calendar or Content Section */}
               {showCalendar ? (
                 renderCalendarView()
               ) : (
-            <View style={styles.contentSection}>
-              {filteredEvents.length > 0 ? (
-                <FlatList
-                  data={filteredEvents}
-                  renderItem={renderEventItem}
-                  keyExtractor={item => item.id}
-                  scrollEnabled={false}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.eventsList}
-                />
-              ) : (
-                <EmptyState
-                  icon={FileText}
-                  iconSize={48}
-                  iconColor={colors.surfaceDisabled}
-                  message={t('messages.noRecords')}
-                />
+                <View style={styles.contentSection}>
+                  {isLoadingEvents && filteredEvents.length === 0 ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator
+                        size="large"
+                        color={themeColors.accentPrimary}
+                      />
+                    </View>
+                  ) : filteredEvents.length > 0 ? (
+                    <FlatList
+                      data={filteredEvents}
+                      renderItem={renderEventItem}
+                      keyExtractor={(item) => item.id}
+                      scrollEnabled={false}
+                      showsVerticalScrollIndicator={false}
+                      contentContainerStyle={styles.eventsList}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={searchText.trim() !== '' ? Search : FileText}
+                      iconSize={48}
+                      iconColor={colors.surfaceDisabled}
+                      message={
+                        searchText.trim() !== ''
+                          ? t('messages.noResults') || 'No results found'
+                          : t('messages.noRecords')
+                      }
+                    />
+                  )}
+                </View>
               )}
-            </View>
-          )}
             </ScrollView>
           </KeyboardAvoidingView>
 
           {/* Fixed Floating Action Button - Outside ScrollView */}
-          {!showCalendar && (
+          {!showCalendar && !selectionMode && (
             <View style={styles.fabContainer}>
               <TouchableOpacity
                 style={styles.fab}
                 onPress={handleNewButtonPress}
-                activeOpacity={0.85}
-              >
+                activeOpacity={0.85}>
                 <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
@@ -1112,6 +1565,105 @@ const Home = () => {
             visitType={visitDialogType}
             onCreateVisit={handleCreateVisit}
           />
+
+          {/* Delete Confirmation Modal */}
+          <Modal
+            visible={showDeleteModal}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => !isDeleting && setShowDeleteModal(false)}>
+            <View style={styles.modalOverlay}>
+              <View
+                style={[
+                  styles.modalContent,
+                  {
+                    backgroundColor: isDark ? themeColors.canvas : '#FFFFFF',
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    {
+                      color: isDark ? themeColors.textPrimary : '#000000',
+                    },
+                  ]}>
+                  {i18n.language === 'pl'
+                    ? 'Potwierdź usunięcie'
+                    : 'Confirm Delete'}
+                </Text>
+
+                <Text
+                  style={[
+                    styles.modalDescription,
+                    {
+                      color: isDark ? themeColors.textSecondary : '#666666',
+                    },
+                  ]}>
+                  {i18n.language === 'pl'
+                    ? `Czy na pewno chcesz usunąć ${selectedItems.size} ${
+                        selectedItems.size === 1
+                          ? 'element'
+                          : selectedItems.size < 5
+                          ? 'elementy'
+                          : 'elementów'
+                      }? Tej akcji nie można cofnąć.`
+                    : `Are you sure you want to delete ${
+                        selectedItems.size
+                      } item${
+                        selectedItems.size === 1 ? '' : 's'
+                      }? This action cannot be undone.`}
+                </Text>
+
+                <View style={styles.modalButtonsContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      styles.cancelButton,
+                      {
+                        borderColor: isDark
+                          ? themeColors.borderNormal
+                          : '#E5E5E5',
+                        backgroundColor: isDark
+                          ? themeColors.canvas
+                          : '#FFFFFF',
+                      },
+                    ]}
+                    onPress={() => setShowDeleteModal(false)}
+                    disabled={isDeleting}>
+                    <Text
+                      style={[
+                        styles.cancelButtonText,
+                        {
+                          color: isDark ? themeColors.textPrimary : '#000000',
+                        },
+                      ]}>
+                      {t('common.cancel')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      styles.confirmDeleteButton,
+                      {
+                        backgroundColor: themeColors.error,
+                        borderColor: themeColors.error,
+                      },
+                    ]}
+                    onPress={executeBulkDelete}
+                    disabled={isDeleting}>
+                    {isDeleting ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.confirmDeleteButtonText}>
+                        {t('common.delete')}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           {/* Loader Overlay */}
           {renderLoaderOverlay()}
@@ -1170,7 +1722,8 @@ const styles = StyleSheet.create({
   mioText: {
     fontSize: 20,
     lineHeight: 25,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
     fontWeight: '300',
     letterSpacing: 6, // Proportional to smaller font size (20 vs 40 on login)
   },
@@ -1303,6 +1856,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F9FA',
     borderWidth: 1,
     borderColor: '#46B7C6',
+  },
+  dayDotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: -6,
+    gap: 3,
+  },
+  dayEventDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   calendarDayText: {
     color: '#1A1A1A',
@@ -1456,6 +2026,77 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingTop: hp(0.5),
     paddingBottom: hp(5),
+  },
+  loadingContainer: {
+    paddingVertical: hp(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    borderRadius: 20,
+    padding: wp(8),
+    width: wp(92),
+    maxHeight: hp(80),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    elevation: 15,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: hp(2),
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'System',
+    letterSpacing: -0.6,
+  },
+  modalDescription: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: hp(3.5),
+    lineHeight: 24,
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Regular' : 'System',
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: hp(2),
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 54,
+  },
+  cancelButton: {
+    borderWidth: 1.5,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Medium' : 'System',
+    letterSpacing: -0.2,
+  },
+  confirmDeleteButton: {
+    borderWidth: 1,
+  },
+  confirmDeleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
+    letterSpacing: -0.2,
   },
   eventsList: {
     paddingVertical: 0,

@@ -107,7 +107,12 @@ interface VisitDialogModalProps {
   onCreateVisit: (visitName: string) => void;
 }
 
-const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, visitType, onCreateVisit }) => {
+const VisitDialogModal: React.FC<VisitDialogModalProps> = ({
+  visible,
+  onClose,
+  visitType,
+  onCreateVisit,
+}) => {
   const { t } = useTranslation();
   const { colors: themeColors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -216,8 +221,7 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
       transparent
       animationType="none"
       onRequestClose={onClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       <View style={StyleSheet.absoluteFill}>
         {/* Separate backdrop for background only */}
         <Animated.View
@@ -225,7 +229,9 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
             StyleSheet.absoluteFill,
             {
               opacity: fadeAnim,
-              backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
+              backgroundColor: isDark
+                ? 'rgba(0, 0, 0, 0.8)'
+                : 'rgba(0, 0, 0, 0.5)',
             },
           ]}
         />
@@ -233,8 +239,7 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
         <KeyboardAvoidingView
           style={{ flex: 1, backgroundColor: 'transparent' }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
-        >
+          keyboardVerticalOffset={0}>
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
@@ -246,161 +251,251 @@ const VisitDialogModal: React.FC<VisitDialogModalProps> = ({ visible, onClose, v
             keyboardShouldPersistTaps="handled"
             bounces={false}
             showsVerticalScrollIndicator={false}
-            style={{ width: '100%', backgroundColor: 'transparent' }}
-          >
+            style={{ width: '100%', backgroundColor: 'transparent' }}>
             <TouchableOpacity
               style={styles.backdropTouchable}
               activeOpacity={1}
-              onPress={onClose}
-            >
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={e => {
-                e.stopPropagation();
-                Keyboard.dismiss();
-              }}
-              style={styles.modalTouchable}
-            >
-              <Animated.View
-                style={[
-                  styles.modalContainer,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{ translateY: slideAnim }],
-                    backgroundColor: isDark ? themeColors.canvas : '#FFFFFF',
-                    borderWidth: isDark ? 1 : 0,
-                    borderColor: isDark ? 'rgba(70, 183, 198, 0.3)' : 'transparent',
-                    shadowColor: isDark ? themeColors.accentPrimary : '#000',
-                    shadowOffset: { width: 0, height: isDark ? 0 : 8 },
-                    shadowOpacity: isDark ? 0.3 : 0.2,
-                    shadowRadius: isDark ? 20 : 20,
-                    elevation: isDark ? 12 : 12,
-                  },
-                ]}
-              >
-                <View style={[styles.modalContent, { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF' }]}>
-                  {/* Shield Icon */}
-                  <View style={styles.iconContainer}>
-                    <View style={[styles.shieldBackground, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#EAF8FA' }]}>
-                      <Shield size={32} color={themeColors.accentPrimary} strokeWidth={2} />
-                    </View>
-                  </View>
-
-                  {/* Title */}
-                  <View style={styles.titleSection}>
-                    <Text style={[styles.modalTitle, { color: isDark ? themeColors.textPrimary : '#0D0D0D' }]}>
-                      {t('dialog.phi.title')}
-                    </Text>
-                  </View>
-
-                  {/* Description */}
-                  <View style={styles.descriptionSection}>
-                    <Text style={[styles.modalDescription, { color: isDark ? themeColors.textSecondary : '#A6A6A6' }]}>
-                      {t('dialog.phi.description')}
-                    </Text>
-                  </View>
-
-                  {/* Checkbox Agreement */}
-                  <View style={styles.checkboxSection}>
-                    <View style={styles.checkboxRow}>
-                      <TouchableOpacity
-                        onPress={handleCheckboxToggle}
-                        activeOpacity={0.7}
-                      >
-                        <View style={[
-                          styles.customCheckbox,
-                          agreedToTerms && styles.customCheckboxChecked,
-                          { 
-                            borderColor: agreedToTerms ? themeColors.accentPrimary : (isDark ? themeColors.borderNormal : '#E5E5EA'),
-                            backgroundColor: agreedToTerms ? themeColors.accentPrimary : (isDark ? 'transparent' : '#FFFFFF')
-                          }
+              onPress={onClose}>
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Keyboard.dismiss();
+                }}
+                style={styles.modalTouchable}>
+                <Animated.View
+                  style={[
+                    styles.modalContainer,
+                    {
+                      opacity: fadeAnim,
+                      transform: [{ translateY: slideAnim }],
+                      backgroundColor: isDark ? themeColors.canvas : '#FFFFFF',
+                      borderWidth: isDark ? 1 : 0,
+                      borderColor: isDark
+                        ? 'rgba(70, 183, 198, 0.3)'
+                        : 'transparent',
+                      shadowColor: isDark ? themeColors.accentPrimary : '#000',
+                      shadowOffset: { width: 0, height: isDark ? 0 : 8 },
+                      shadowOpacity: isDark ? 0.3 : 0.2,
+                      shadowRadius: isDark ? 20 : 20,
+                      elevation: isDark ? 12 : 12,
+                    },
+                  ]}>
+                  <View
+                    style={[
+                      styles.modalContent,
+                      {
+                        backgroundColor: isDark
+                          ? themeColors.canvas
+                          : '#FFFFFF',
+                      },
+                    ]}>
+                    {/* Shield Icon */}
+                    <View style={styles.iconContainer}>
+                      <View
+                        style={[
+                          styles.shieldBackground,
+                          {
+                            backgroundColor: isDark
+                              ? 'rgba(70, 183, 198, 0.1)'
+                              : '#EAF8FA',
+                          },
                         ]}>
-                          {agreedToTerms && (
-                            <Check size={16} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={3} />
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                      <Text style={[styles.checkboxText, { color: isDark ? themeColors.textPrimary : '#0D0D0D' }]}>
-                        {t('dialog.phi.agreement')}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Input Section - Shows when checkbox is checked */}
-                  {agreedToTerms && (
-                    <Animated.View
-                      style={[
-                        styles.inputAnimatedSection,
-                        {
-                          opacity: inputOpacity,
-                          transform: [
-                            {
-                              translateY: inputOpacity.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [-10, 0],
-                              }),
-                            },
-                          ],
-                        },
-                      ]}
-                    >
-                      <View style={styles.inputLabelContainer}>
-                        <Text style={[styles.inputLabel, { color: isDark ? themeColors.textPrimary : '#0D0D0D' }]}>
-                          {t('visitNameInput.label')}
-                        </Text>
-                      </View>
-                      <View style={[styles.inputWrapper, { 
-                        borderColor: isDark ? themeColors.borderNormal : '#E5E5EA',
-                        backgroundColor: 'transparent'
-                      }]}>
-                        <TextInput
-                          placeholder={getPlaceholder()}
-                          value={visitName}
-                          onChangeText={setVisitName}
-                          style={[styles.textInput, { 
-                            backgroundColor: 'transparent',
-                          }]}
-                          placeholderTextColor={isDark ? themeColors.textMuted : "#C7C7CC"}
-                          underlineColor="transparent"
-                          outlineColor="transparent"
-                          autoFocus={true}
-                          textColor={isDark ? '#FFFFFF' : '#000000'}
-                          keyboardAppearance={isDark ? 'dark' : 'light'}
-                          theme={{ 
-                            colors: { 
-                              text: isDark ? '#FFFFFF' : '#000000',
-                              placeholder: isDark ? themeColors.textMuted : '#C7C7CC',
-                              onSurfaceVariant: isDark ? '#FFFFFF' : '#000000',
-                            } 
-                          }}
+                        <Shield
+                          size={32}
+                          color={themeColors.accentPrimary}
+                          strokeWidth={2}
                         />
                       </View>
-                      {visitType === 'patient' && (
-                        <Text style={[styles.tooltipText, { color: isDark ? themeColors.textSecondary : '#A6A6A6' }]}>
-                          {t('visitNameInput.tooltip')}
-                        </Text>
-                      )}
-                    </Animated.View>
-                  )}
+                    </View>
 
-                  {/* Primary Button */}
-                  <View style={styles.buttonSection}>
-                    <PrimaryButton
-                      text={agreedToTerms && visitName.trim() 
-                        ? t('buttons.continue') 
-                        : t('dialog.phi.continueButton')}
-                      onPress={agreedToTerms && visitName.trim() ? handleCreateVisit : () => {}}
-                      disabled={!agreedToTerms || (agreedToTerms && !visitName.trim())}
-                      width={wp(78)}
-                      useGradient={false}
-                      backgroundColor={themeColors.accentPrimary}
-                      borderRadius={16}
-                    />
+                    {/* Title */}
+                    <View style={styles.titleSection}>
+                      <Text
+                        style={[
+                          styles.modalTitle,
+                          {
+                            color: isDark ? themeColors.textPrimary : '#0D0D0D',
+                          },
+                        ]}>
+                        {t('dialog.phi.title')}
+                      </Text>
+                    </View>
+
+                    {/* Description */}
+                    <View style={styles.descriptionSection}>
+                      <Text
+                        style={[
+                          styles.modalDescription,
+                          {
+                            color: isDark
+                              ? themeColors.textSecondary
+                              : '#A6A6A6',
+                          },
+                        ]}>
+                        {t('dialog.phi.description')}
+                      </Text>
+                    </View>
+
+                    {/* Checkbox Agreement */}
+                    <View style={styles.checkboxSection}>
+                      <View style={styles.checkboxRow}>
+                        <TouchableOpacity
+                          onPress={handleCheckboxToggle}
+                          activeOpacity={0.7}>
+                          <View
+                            style={[
+                              styles.customCheckbox,
+                              agreedToTerms && styles.customCheckboxChecked,
+                              {
+                                borderColor: agreedToTerms
+                                  ? themeColors.accentPrimary
+                                  : isDark
+                                  ? themeColors.borderNormal
+                                  : '#E5E5EA',
+                                backgroundColor: agreedToTerms
+                                  ? themeColors.accentPrimary
+                                  : isDark
+                                  ? 'transparent'
+                                  : '#FFFFFF',
+                              },
+                            ]}>
+                            {agreedToTerms && (
+                              <Check
+                                size={16}
+                                color={isDark ? '#000000' : '#FFFFFF'}
+                                strokeWidth={3}
+                              />
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                        <Text
+                          style={[
+                            styles.checkboxText,
+                            {
+                              color: isDark
+                                ? themeColors.textPrimary
+                                : '#0D0D0D',
+                            },
+                          ]}>
+                          {t('dialog.phi.agreement')}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Input Section - Shows when checkbox is checked */}
+                    {agreedToTerms && (
+                      <Animated.View
+                        style={[
+                          styles.inputAnimatedSection,
+                          {
+                            opacity: inputOpacity,
+                            transform: [
+                              {
+                                translateY: inputOpacity.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [-10, 0],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}>
+                        <View style={styles.inputLabelContainer}>
+                          <Text
+                            style={[
+                              styles.inputLabel,
+                              {
+                                color: isDark
+                                  ? themeColors.textPrimary
+                                  : '#0D0D0D',
+                              },
+                            ]}>
+                            {t('visitNameInput.label')}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.inputWrapper,
+                            {
+                              borderColor: isDark
+                                ? themeColors.borderNormal
+                                : '#E5E5EA',
+                              backgroundColor: 'transparent',
+                            },
+                          ]}>
+                          <TextInput
+                            placeholder={getPlaceholder()}
+                            value={visitName}
+                            onChangeText={setVisitName}
+                            style={[
+                              styles.textInput,
+                              {
+                                backgroundColor: 'transparent',
+                              },
+                            ]}
+                            placeholderTextColor={
+                              isDark ? themeColors.textMuted : '#C7C7CC'
+                            }
+                            underlineColor="transparent"
+                            outlineColor="transparent"
+                            autoFocus={true}
+                            textColor={isDark ? '#FFFFFF' : '#000000'}
+                            keyboardAppearance={isDark ? 'dark' : 'light'}
+                            theme={{
+                              colors: {
+                                text: isDark ? '#FFFFFF' : '#000000',
+                                placeholder: isDark
+                                  ? themeColors.textMuted
+                                  : '#C7C7CC',
+                                onSurfaceVariant: isDark
+                                  ? '#FFFFFF'
+                                  : '#000000',
+                              },
+                            }}
+                          />
+                        </View>
+                        {visitType === 'patient' && (
+                          <Text
+                            style={[
+                              styles.tooltipText,
+                              {
+                                color: isDark
+                                  ? themeColors.textSecondary
+                                  : '#A6A6A6',
+                              },
+                            ]}>
+                            {t('visitNameInput.tooltip')}
+                          </Text>
+                        )}
+                      </Animated.View>
+                    )}
+
+                    {/* Primary Button */}
+                    <View style={styles.buttonSection}>
+                      <PrimaryButton
+                        text={
+                          agreedToTerms && visitName.trim()
+                            ? t('buttons.continue')
+                            : t('dialog.phi.continueButton')
+                        }
+                        onPress={
+                          agreedToTerms && visitName.trim()
+                            ? handleCreateVisit
+                            : () => {}
+                        }
+                        disabled={
+                          !agreedToTerms || (agreedToTerms && !visitName.trim())
+                        }
+                        width={wp(78)}
+                        useGradient={false}
+                        backgroundColor={themeColors.accentPrimary}
+                        borderRadius={16}
+                      />
+                    </View>
                   </View>
-                </View>
-              </Animated.View>
+                </Animated.View>
+              </TouchableOpacity>
             </TouchableOpacity>
-          </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -473,7 +568,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Title Section
   titleSection: {
     alignItems: 'center',
@@ -487,7 +582,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Bold',
     letterSpacing: -0.5,
   },
-  
+
   // Description Section
   descriptionSection: {
     alignItems: 'center',
@@ -502,7 +597,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  
+
   // Checkbox Section
   checkboxSection: {
     width: '100%',
@@ -536,7 +631,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  
+
   // Input Section
   inputAnimatedSection: {
     width: '100%',
@@ -574,7 +669,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto-Regular',
   },
-  
+
   // Button Section
   buttonSection: {
     width: '100%',

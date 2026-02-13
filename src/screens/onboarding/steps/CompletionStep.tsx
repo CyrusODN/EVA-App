@@ -34,7 +34,7 @@ interface CompletionStepProps {
 
 const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
   const { t } = useTranslation();
-  const { colors:themeColors,isDark } = useOnboardingTheme();
+  const { colors: themeColors, isDark } = useOnboardingTheme();
   // Animation values
   const checkScale = useSharedValue(0);
   const checkOpacity = useSharedValue(0);
@@ -124,26 +124,40 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
   }));
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
       <View style={styles.content}>
         {/* Animated checkmark */}
         <Animated.View style={[styles.checkContainer, checkStyle]}>
-          <View style={[
-            styles.checkCircle, 
-            { backgroundColor: themeColors.primary },
-            isDark ? ONBOARDING_SHADOWS_DARK.lg : ONBOARDING_SHADOWS.lg
-          ]}>
-            <Text style={[styles.checkIcon, { color: themeColors.pureWhite }]}>✓</Text>
+          <View
+            style={[
+              styles.checkCircle,
+              { backgroundColor: themeColors.primary },
+              isDark ? ONBOARDING_SHADOWS_DARK.lg : ONBOARDING_SHADOWS.lg,
+            ]}>
+            <Text style={[styles.checkIcon, { color: themeColors.pureWhite }]}>
+              ✓
+            </Text>
           </View>
         </Animated.View>
 
         {/* Title */}
-        <Animated.Text style={[styles.title, titleStyle, { color: themeColors.textPrimary }]}>
+        <Animated.Text
+          style={[
+            styles.title,
+            titleStyle,
+            { color: themeColors.textPrimary },
+          ]}>
           {t('onboarding.complete.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text style={[styles.subtitle, subtitleStyle, { color: themeColors.textSecondary }]}>
+        <Animated.Text
+          style={[
+            styles.subtitle,
+            subtitleStyle,
+            { color: themeColors.textSecondary },
+          ]}>
           {t('onboarding.complete.subtitle')}
         </Animated.Text>
       </View>
@@ -152,13 +166,15 @@ const CompletionStep: React.FC<CompletionStepProps> = ({ onComplete }) => {
       <Animated.View style={[styles.buttonContainer, buttonStyle]}>
         <TouchableOpacity
           style={[
-            styles.ctaButton, 
+            styles.ctaButton,
             { backgroundColor: themeColors.primary },
-            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow
+            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow,
           ]}
           onPress={onComplete}
           activeOpacity={0.9}>
-          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.complete.cta')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>
+            {t('onboarding.complete.cta')}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

@@ -36,20 +36,20 @@ export const ONBOARDING_COLORS_DARK = {
   primary: '#46B7C6',
   primaryLight: 'rgba(70, 183, 198, 0.25)',
   primarySubtle: 'rgba(70, 183, 198, 0.15)',
-  
+
   // Neutrals (Dark mode - Deep Obsidian)
   pureWhite: '#FAFAFA',
   background: '#0A0E12',
   surface: '#141922',
   borderLight: 'rgba(255, 255, 255, 0.08)',
   border: 'rgba(255, 255, 255, 0.12)',
-  
+
   // Text hierarchy
   textPrimary: '#FAFAFA',
   textSecondary: '#94A3B8',
   textTertiary: '#64748B',
   textDisabled: '#475569',
-  
+
   // Semantic
   success: '#10B981',
   warning: '#F59E0B',
@@ -60,7 +60,7 @@ export const ONBOARDING_COLORS_DARK = {
 export const useOnboardingTheme = () => {
   const theme = useThemeStore((state) => state.theme);
   const isDark = theme === 'dark';
-  
+
   return {
     colors: isDark ? ONBOARDING_COLORS_DARK : ONBOARDING_COLORS_LIGHT,
     isDark,

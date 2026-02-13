@@ -9,7 +9,11 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import RemedyLogoIcon from './RemedyLogoIcon';
-import { ONBOARDING_COLORS, SPRINGS, DURATIONS } from '../constants/onboardingTheme';
+import {
+  ONBOARDING_COLORS,
+  SPRINGS,
+  DURATIONS,
+} from '../constants/onboardingTheme';
 
 interface RemedyLogoAnimatedProps {
   size?: number;
@@ -32,24 +36,25 @@ const RemedyLogoAnimated: React.FC<RemedyLogoAnimatedProps> = ({
       // Staggered entrance animation (Superhuman style)
       opacity.value = withDelay(
         delay,
-        withTiming(1, { duration: DURATIONS.slow, easing: Easing.out(Easing.ease) })
+        withTiming(1, {
+          duration: DURATIONS.slow,
+          easing: Easing.out(Easing.ease),
+        }),
       );
-      
+
       scale.value = withDelay(
         delay + 100,
         withSpring(1, {
           ...SPRINGS.bouncy,
           overshootClamping: false,
-        })
+        }),
       );
     }
   }, [animated, delay]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [
-      { scale: scale.value },
-    ],
+    transform: [{ scale: scale.value }],
   }));
 
   return (

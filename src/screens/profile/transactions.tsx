@@ -36,7 +36,11 @@ const MOCK_TRANSACTIONS_DATA: Transaction[] = [
     id: 1,
     user: 'Jan Nowak',
     email: 'jannowak@gmail.com',
-    serviceKeys: ['aiTools.notes.title', 'aiTools.consult.title', 'aiTools.research.title'],
+    serviceKeys: [
+      'aiTools.notes.title',
+      'aiTools.consult.title',
+      'aiTools.research.title',
+    ],
     amount: '220.00 PLN',
     date: '15/03/2025',
   },
@@ -69,44 +73,89 @@ const Transactions = () => {
   };
 
   const TransactionCard = ({ transaction }: { transaction: Transaction }) => (
-    <View style={[styles.transactionCard, { 
-      backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-      borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
-      shadowColor: isDark ? themeColors.accentPrimary : '#000'
-    }]}>
+    <View
+      style={[
+        styles.transactionCard,
+        {
+          backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+          borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
+          shadowColor: isDark ? themeColors.accentPrimary : '#000',
+        },
+      ]}>
       <View style={styles.transactionHeader}>
-        <View style={[styles.transactionNumber, { backgroundColor: themeColors.accentPrimary }]}>
-          <Text variant="labelMedium" style={[styles.numberLabel, { color: isDark ? '#FFFFFF' : colors.surface }]}>
+        <View
+          style={[
+            styles.transactionNumber,
+            { backgroundColor: themeColors.accentPrimary },
+          ]}>
+          <Text
+            variant="labelMedium"
+            style={[
+              styles.numberLabel,
+              { color: isDark ? '#FFFFFF' : colors.surface },
+            ]}>
             #{transaction.id}
           </Text>
         </View>
         <View style={styles.transactionAmount}>
-          <Text variant="titleMedium" style={[styles.amountText, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+          <Text
+            variant="titleMedium"
+            style={[
+              styles.amountText,
+              { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+            ]}>
             {transaction.amount}
           </Text>
         </View>
       </View>
 
       <View style={styles.transactionUser}>
-        <Text variant="titleMedium" style={[styles.userName, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+        <Text
+          variant="titleMedium"
+          style={[
+            styles.userName,
+            { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+          ]}>
           {transaction.user}
         </Text>
-        <Text variant="bodySmall" style={[styles.userEmail, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+        <Text
+          variant="bodySmall"
+          style={[
+            styles.userEmail,
+            { color: isDark ? themeColors.textSecondary : colors.subText },
+          ]}>
           {transaction.email}
         </Text>
       </View>
 
       <View style={styles.servicesContainer}>
-        <Text variant="bodySmall" style={[styles.servicesLabel, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+        <Text
+          variant="bodySmall"
+          style={[
+            styles.servicesLabel,
+            { color: isDark ? themeColors.textSecondary : colors.subText },
+          ]}>
           {t('transactions.table.services')}:
         </Text>
         <View style={styles.servicesTags}>
           {transaction.serviceKeys.map((serviceKey, index) => (
-            <View key={index} style={[styles.serviceTag, { 
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#EBF4FF',
-              borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : '#DBEAFE'
-            }]}>
-              <Text variant="labelSmall" style={[styles.serviceTagText, { color: isDark ? '#60A5FA' : '#1E40AF' }]}>
+            <View
+              key={index}
+              style={[
+                styles.serviceTag,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : '#EBF4FF',
+                  borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : '#DBEAFE',
+                },
+              ]}>
+              <Text
+                variant="labelSmall"
+                style={[
+                  styles.serviceTagText,
+                  { color: isDark ? '#60A5FA' : '#1E40AF' },
+                ]}>
                 {t(serviceKey)}
               </Text>
             </View>
@@ -115,10 +164,20 @@ const Transactions = () => {
       </View>
 
       <View style={styles.transactionFooter}>
-        <Text variant="bodySmall" style={[styles.dateLabel, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+        <Text
+          variant="bodySmall"
+          style={[
+            styles.dateLabel,
+            { color: isDark ? themeColors.textSecondary : colors.subText },
+          ]}>
           {t('transactions.table.date')}:
         </Text>
-        <Text variant="bodySmall" style={[styles.dateText, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+        <Text
+          variant="bodySmall"
+          style={[
+            styles.dateText,
+            { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+          ]}>
           {transaction.date}
         </Text>
       </View>
@@ -126,7 +185,11 @@ const Transactions = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF' }]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF' },
+      ]}>
       <Header
         title={t('transactions.title')}
         subtitle={t('transactions.subtitle')}
@@ -135,18 +198,23 @@ const Transactions = () => {
         rightIconSource={images.downloadIcon}
         onRightPress={handleExport}
       />
-      
-      <View style={[styles.container, { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' }]}>
+
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' },
+        ]}>
         <ScrollView
           style={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View style={styles.transactionsSection}>
-            
             {MOCK_TRANSACTIONS_DATA.length > 0 ? (
               <View style={styles.transactionsList}>
                 {MOCK_TRANSACTIONS_DATA.map((transaction) => (
-                  <TransactionCard key={transaction.id} transaction={transaction} />
+                  <TransactionCard
+                    key={transaction.id}
+                    transaction={transaction}
+                  />
                 ))}
               </View>
             ) : (
@@ -180,7 +248,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
     marginBottom: 16,
   },
   transactionsList: {
@@ -215,31 +284,36 @@ const styles = StyleSheet.create({
   },
   numberLabel: {
     color: colors.surface,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
   },
   transactionAmount: {},
   amountText: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Bold' : 'SFProDisplay-Bold',
   },
   transactionUser: {
     marginBottom: 12,
   },
   userName: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Semibold' : 'SFProDisplay-Semibold',
     marginBottom: 2,
   },
   userEmail: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   servicesContainer: {
     marginBottom: 12,
   },
   servicesLabel: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     marginBottom: 8,
   },
   servicesTags: {
@@ -257,7 +331,8 @@ const styles = StyleSheet.create({
   },
   serviceTagText: {
     color: '#1E40AF',
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     fontSize: 11,
   },
   transactionFooter: {
@@ -267,11 +342,13 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   dateText: {
     color: colors.darkPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -280,7 +357,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: colors.subText,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Regular' : 'SFProDisplay-Regular',
     textAlign: 'center',
   },
 });

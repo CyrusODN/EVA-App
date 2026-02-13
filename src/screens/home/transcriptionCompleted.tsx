@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   connectSocket,
   disconnectSocket,
@@ -56,13 +56,10 @@ import CustomTemplateManager, {
 import { customToast } from '../../utils/toastMessage';
 import { sessionStorage } from '../../utils/sessionStorage';
 import useOnboardingStore from '../../store/onboarding';
-import {
-  generateNotes,
-  getAuthContext,
-} from '../../services/authService';
+import { generateNotes, getAuthContext } from '../../services/authService';
 import {
   createNotesPrompt,
-  getNotesPrompts ,
+  getNotesPrompts,
   deleteNotesPrompt,
   type NotesPrompt,
 } from '../../services/promptsApi';
@@ -156,29 +153,31 @@ const TranscriptionComplete = () => {
       error: themeColors.error,
     },
     borderRadius: DEFAULT_DESIGN_TOKENS.borderRadius,
-    shadows: isDark ? {
-      small: {
-        shadowColor: themeColors.accentPrimary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-      },
-      medium: {
-        shadowColor: themeColors.accentPrimary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 4,
-      },
-      large: {
-        shadowColor: themeColors.accentPrimary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
-        elevation: 10,
-      },
-    } : DEFAULT_DESIGN_TOKENS.shadows,
+    shadows: isDark
+      ? {
+          small: {
+            shadowColor: themeColors.accentPrimary,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
+          },
+          medium: {
+            shadowColor: themeColors.accentPrimary,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 4,
+          },
+          large: {
+            shadowColor: themeColors.accentPrimary,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.2,
+            shadowRadius: 20,
+            elevation: 10,
+          },
+        }
+      : DEFAULT_DESIGN_TOKENS.shadows,
   };
 
   // Get onboarding defaults
@@ -266,6 +265,11 @@ const TranscriptionComplete = () => {
     'Medium',
     'Large',
   ];
+
+  // Model selection state
+  const [selectedModel, setSelectedModel] = useState<'standard' | 'pro'>(
+    'standard',
+  );
   // Prompts states
   const [customPromptTitle, setCustomPromptTitle] = useState<string>('');
   const [savedPrompts, setSavedPrompts] = useState<NotesPrompt[]>([]); // Saved custom prompts
@@ -416,23 +420,24 @@ const TranscriptionComplete = () => {
   }, [session.type, session.id]);
 
   // Load saved custom prompts for this session type
-  useEffect(() => {
-    const loadPrompts = async () => {
-      try {
-        const prompts = await getNotesPrompts(
-          session.type as 'patient' | 'meeting' | 'lecture',
-        );
-        setSavedPrompts(prompts);
-        console.log(
-          '[TranscriptionComplete] Loaded custom prompts:',
-          prompts.length,
-        );
-      } catch (error) {
-        console.error('[TranscriptionComplete] Failed to load prompts:', error);
-      }
-    };
-    loadPrompts();
+  const loadPrompts = useCallback(async () => {
+    try {
+      const prompts = await getNotesPrompts(
+        session.type as 'patient' | 'meeting' | 'lecture',
+      );
+      setSavedPrompts(prompts);
+      console.log(
+        '[TranscriptionComplete] Loaded custom prompts:',
+        prompts.length,
+      );
+    } catch (error) {
+      console.error('[TranscriptionComplete] Failed to load prompts:', error);
+    }
   }, [session.type]);
+
+  useEffect(() => {
+    loadPrompts();
+  }, [loadPrompts]);
 
   // Load saved notes from storage if session already has notes
   // Load saved notes from storage if session already has notes
@@ -442,11 +447,9 @@ const TranscriptionComplete = () => {
       if (session.id && session.id !== '1') {
         try {
           // Add a small delay to ensure storage write matches read (rare race condition)
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          const latestSession = await sessionStorage.getSessionById(
-            session.id,
-          );
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          const latestSession = await sessionStorage.getSessionById(session.id);
           if (latestSession?.generatedNotes) {
             console.log(
               '[TranscriptionComplete] Loaded saved notes from storage:',
@@ -589,14 +592,23 @@ const TranscriptionComplete = () => {
     if (session.type !== 'patient') return null;
     return (
       <View style={styles.modeSwitchContainer}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+        <Text
+          variant="labelMedium"
+          style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
           {t('mainContent.transcriptionComplete.generationMode')}
         </Text>
-        <View style={[styles.compactSegmentedControl, { backgroundColor: DESIGN_TOKENS.colors.border }]}>
+        <View
+          style={[
+            styles.compactSegmentedControl,
+            { backgroundColor: DESIGN_TOKENS.colors.border },
+          ]}>
           <TouchableOpacity
             style={[
               styles.segmentBtn,
-              generationMode === 'standard' && [styles.segmentBtnActive, { backgroundColor: DESIGN_TOKENS.colors.primary }]
+              generationMode === 'standard' && [
+                styles.segmentBtnActive,
+                { backgroundColor: DESIGN_TOKENS.colors.primary },
+              ],
             ]}
             onPress={() => handleModeChange('standard')}>
             <Text
@@ -604,7 +616,13 @@ const TranscriptionComplete = () => {
                 generationMode === 'standard'
                   ? styles.segmentTextActive
                   : styles.segmentTextInactive,
-                generationMode === 'standard' ? { color: '#FFF' } : { color: isDark ? DESIGN_TOKENS.colors.textSecondary : '#666' }
+                generationMode === 'standard'
+                  ? { color: '#FFF' }
+                  : {
+                      color: isDark
+                        ? DESIGN_TOKENS.colors.textSecondary
+                        : '#666',
+                    },
               ]}>
               {t('mainContent.transcriptionComplete.modes.standard')}
             </Text>
@@ -613,7 +631,10 @@ const TranscriptionComplete = () => {
           <TouchableOpacity
             style={[
               styles.segmentBtn,
-              generationMode === 'custom' && [styles.segmentBtnActive, { backgroundColor: DESIGN_TOKENS.colors.primary }]
+              generationMode === 'custom' && [
+                styles.segmentBtnActive,
+                { backgroundColor: DESIGN_TOKENS.colors.primary },
+              ],
             ]}
             onPress={() => handleModeChange('custom')}>
             <Text
@@ -621,7 +642,13 @@ const TranscriptionComplete = () => {
                 generationMode === 'custom'
                   ? styles.segmentTextActive
                   : styles.segmentTextInactive,
-                generationMode === 'custom' ? { color: '#FFF' } : { color: isDark ? DESIGN_TOKENS.colors.textSecondary : '#666' }
+                generationMode === 'custom'
+                  ? { color: '#FFF' }
+                  : {
+                      color: isDark
+                        ? DESIGN_TOKENS.colors.textSecondary
+                        : '#666',
+                    },
               ]}>
               {t('mainContent.transcriptionComplete.modes.custom')}
             </Text>
@@ -633,32 +660,70 @@ const TranscriptionComplete = () => {
 
   // Keep logic for non-patient types
   const renderLegacyNoteButtons = () => {
-      if (session.type === 'patient') return null;
-      return (
-          <View style={styles.noteTypeContainer}>
-             <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>{t('mainContent.transcriptionComplete.noteType')}</Text>
-             <View style={[styles.compactSegmentedControl, { backgroundColor: DESIGN_TOKENS.colors.border }]}>
-                <TouchableOpacity style={[styles.compactSegmentButton, styles.compactSegmentButtonSelected, { backgroundColor: DESIGN_TOKENS.colors.primary }]}><Text style={[styles.compactSegmentTextSelected, { color: '#FFF' }]}>{t('mainContent.transcriptionComplete.noteOptions.general')}</Text></TouchableOpacity>
-             </View>
-          </View>
-      );
+    if (session.type === 'patient') return null;
+    return (
+      <View style={styles.noteTypeContainer}>
+        <Text
+          variant="labelMedium"
+          style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+          {t('mainContent.transcriptionComplete.noteType')}
+        </Text>
+        <View
+          style={[
+            styles.compactSegmentedControl,
+            { backgroundColor: DESIGN_TOKENS.colors.border },
+          ]}>
+          <TouchableOpacity
+            style={[
+              styles.compactSegmentButton,
+              styles.compactSegmentButtonSelected,
+              { backgroundColor: DESIGN_TOKENS.colors.primary },
+            ]}>
+            <Text
+              style={[styles.compactSegmentTextSelected, { color: '#FFF' }]}>
+              {t('mainContent.transcriptionComplete.noteOptions.general')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   const renderSpecializationSection = () => {
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
-            {t('mainContent.transcriptionComplete.specialization.select')}
+        <Text
+          variant="labelMedium"
+          style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+          {t('mainContent.transcriptionComplete.specialization.select')}
         </Text>
         <TouchableOpacity
-          style={[styles.compactDropdownField, { 
-            borderColor: DESIGN_TOKENS.colors.border,
-            backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary 
-          }]}
-          onPress={() => setShowSpecializationModal(true)}
-        >
-          <Text variant="bodySmall" style={selectedSpecialization ? [styles.compactDropdownValue, { color: DESIGN_TOKENS.colors.text }] : [styles.compactDropdownPlaceholder, { color: DESIGN_TOKENS.colors.textSecondary }]}>
-            {selectedSpecialization ? specializationOptions.find(s => s.key === selectedSpecialization)?.label : t('mainContent.transcriptionComplete.specialization.select')}
+          style={[
+            styles.compactDropdownField,
+            {
+              borderColor: DESIGN_TOKENS.colors.border,
+              backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+            },
+          ]}
+          onPress={() => setShowSpecializationModal(true)}>
+          <Text
+            variant="bodySmall"
+            style={
+              selectedSpecialization
+                ? [
+                    styles.compactDropdownValue,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]
+                : [
+                    styles.compactDropdownPlaceholder,
+                    { color: DESIGN_TOKENS.colors.textSecondary },
+                  ]
+            }>
+            {selectedSpecialization
+              ? specializationOptions.find(
+                  (s) => s.key === selectedSpecialization,
+                )?.label
+              : t('mainContent.transcriptionComplete.specialization.select')}
           </Text>
           <ChevronRight size={18} color={DESIGN_TOKENS.colors.textSecondary} />
         </TouchableOpacity>
@@ -669,18 +734,36 @@ const TranscriptionComplete = () => {
   const renderVisitTypeSection = () => {
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
-            {t('mainContent.transcriptionComplete.visitType.select')}
+        <Text
+          variant="labelMedium"
+          style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+          {t('mainContent.transcriptionComplete.visitType.select')}
         </Text>
         <TouchableOpacity
-          style={[styles.compactDropdownField, { 
-            borderColor: DESIGN_TOKENS.colors.border,
-            backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary 
-          }]}
-          onPress={() => setShowVisitTypeModal(true)}
-        >
-          <Text variant="bodySmall" style={visitType ? [styles.compactDropdownValue, { color: DESIGN_TOKENS.colors.text }] : [styles.compactDropdownPlaceholder, { color: DESIGN_TOKENS.colors.textSecondary }]}>
-            {visitType ? visitTypeOptions.find(v => v.key === visitType)?.label : t('mainContent.transcriptionComplete.visitType.select')}
+          style={[
+            styles.compactDropdownField,
+            {
+              borderColor: DESIGN_TOKENS.colors.border,
+              backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+            },
+          ]}
+          onPress={() => setShowVisitTypeModal(true)}>
+          <Text
+            variant="bodySmall"
+            style={
+              visitType
+                ? [
+                    styles.compactDropdownValue,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]
+                : [
+                    styles.compactDropdownPlaceholder,
+                    { color: DESIGN_TOKENS.colors.textSecondary },
+                  ]
+            }>
+            {visitType
+              ? visitTypeOptions.find((v) => v.key === visitType)?.label
+              : t('mainContent.transcriptionComplete.visitType.select')}
           </Text>
           <ChevronRight size={18} color={DESIGN_TOKENS.colors.textSecondary} />
         </TouchableOpacity>
@@ -697,27 +780,44 @@ const TranscriptionComplete = () => {
 
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+        <Text
+          variant="labelMedium"
+          style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
           {t('mainContent.transcriptionComplete.noteLength.select')}
         </Text>
-        <View style={[styles.compactSegmentedControl, { backgroundColor: DESIGN_TOKENS.colors.border }]}>
-          {noteLengthOptions.map(length => (
+        <View
+          style={[
+            styles.compactSegmentedControl,
+            { backgroundColor: DESIGN_TOKENS.colors.border },
+          ]}>
+          {noteLengthOptions.map((length) => (
             <TouchableOpacity
               key={length}
               style={[
                 styles.compactSegmentButton,
-                noteLength === length && [styles.compactSegmentButtonSelected, { backgroundColor: DESIGN_TOKENS.colors.primary, shadowColor: DESIGN_TOKENS.shadows.small.shadowColor }],
+                noteLength === length && [
+                  styles.compactSegmentButtonSelected,
+                  {
+                    backgroundColor: DESIGN_TOKENS.colors.primary,
+                    shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+                  },
+                ],
               ]}
-              onPress={() => setNoteLength(length)}
-            >
+              onPress={() => setNoteLength(length)}>
               <Text
                 variant="bodySmall"
                 style={[
                   styles.compactSegmentText,
-                  { color: isDark ? DESIGN_TOKENS.colors.textSecondary : '#666666' },
-                  noteLength === length && [styles.compactSegmentTextSelected, { color: '#FFF' }],
-                ]}
-              >
+                  {
+                    color: isDark
+                      ? DESIGN_TOKENS.colors.textSecondary
+                      : '#666666',
+                  },
+                  noteLength === length && [
+                    styles.compactSegmentTextSelected,
+                    { color: '#FFF' },
+                  ],
+                ]}>
                 {noteLengthLabels[length]}
               </Text>
             </TouchableOpacity>
@@ -732,7 +832,9 @@ const TranscriptionComplete = () => {
 
     return (
       <View style={styles.selectionSection}>
-        <Text variant="labelMedium" style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
+        <Text
+          variant="labelMedium"
+          style={[styles.sectionLabel, { color: DESIGN_TOKENS.colors.text }]}>
           {t(
             'mainContent.transcriptionComplete.followUpVisits.previousVisitContext',
           )}
@@ -740,14 +842,22 @@ const TranscriptionComplete = () => {
 
         <View style={styles.followUpOptionsRow}>
           <TouchableOpacity
-            style={[styles.followUpOptionButton, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderColor: DESIGN_TOKENS.colors.borderLight,
-              shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-            }]}
+            style={[
+              styles.followUpOptionButton,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                borderColor: DESIGN_TOKENS.colors.borderLight,
+                shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+              },
+            ]}
             onPress={() => setShowFollowUpModal(true)}>
             <Plus size={14} color={DESIGN_TOKENS.colors.primary} />
-            <Text variant="bodySmall" style={[styles.followUpOptionText, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.followUpOptionText,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {t(
                 'mainContent.transcriptionComplete.followUpVisits.fromHistory',
               )}
@@ -755,27 +865,38 @@ const TranscriptionComplete = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.followUpOptionButton, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderColor: DESIGN_TOKENS.colors.borderLight,
-              shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-            }]}
+            style={[
+              styles.followUpOptionButton,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                borderColor: DESIGN_TOKENS.colors.borderLight,
+                shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+              },
+            ]}
             onPress={() => {
               setTempManualText(manualFollowUpText);
               setShowManualTextModal(true);
             }}>
             <Type size={14} color={DESIGN_TOKENS.colors.primary} />
-            <Text variant="bodySmall" style={[styles.followUpOptionText, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.followUpOptionText,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {t('mainContent.transcriptionComplete.followUpVisits.typeText')}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.followUpOptionButton, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderColor: DESIGN_TOKENS.colors.borderLight,
-              shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-            }]}
+            style={[
+              styles.followUpOptionButton,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                borderColor: DESIGN_TOKENS.colors.borderLight,
+                shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+              },
+            ]}
             onPress={() => {
               customToast(
                 'info',
@@ -786,7 +907,12 @@ const TranscriptionComplete = () => {
               );
             }}>
             <Camera size={14} color={DESIGN_TOKENS.colors.primary} />
-            <Text variant="bodySmall" style={[styles.followUpOptionText, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.followUpOptionText,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {t('mainContent.transcriptionComplete.followUpVisits.takePhoto')}
             </Text>
           </TouchableOpacity>
@@ -794,11 +920,15 @@ const TranscriptionComplete = () => {
 
         {/* Manual Text Preview */}
         {manualFollowUpText.trim() && (
-          <View style={[styles.manualTextPreview, { 
-            backgroundColor: DESIGN_TOKENS.colors.backgroundTertiary,
-            borderLeftColor: DESIGN_TOKENS.colors.success,
-            shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-          }]}>
+          <View
+            style={[
+              styles.manualTextPreview,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.backgroundTertiary,
+                borderLeftColor: DESIGN_TOKENS.colors.success,
+                shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+              },
+            ]}>
             <View
               style={{
                 flexDirection: 'row',
@@ -806,21 +936,32 @@ const TranscriptionComplete = () => {
                 alignItems: 'center',
               }}>
               <View style={{ flex: 1 }}>
-                <Text variant="bodySmall" style={[styles.customNoteLabel, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.customNoteLabel,
+                    { color: DESIGN_TOKENS.colors.textSecondary },
+                  ]}>
                   {t(
                     'mainContent.transcriptionComplete.followUpVisits.manualContext',
                   )}
                 </Text>
                 <Text
                   variant="bodySmall"
-                  style={[styles.manualTextSnippet, { color: DESIGN_TOKENS.colors.textSecondary }]}
+                  style={[
+                    styles.manualTextSnippet,
+                    { color: DESIGN_TOKENS.colors.textSecondary },
+                  ]}
                   numberOfLines={2}>
                   {manualFollowUpText}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: wp(2) }}>
                 <TouchableOpacity
-                  style={[styles.customNoteActionButton, { backgroundColor: DESIGN_TOKENS.colors.background }]}
+                  style={[
+                    styles.customNoteActionButton,
+                    { backgroundColor: DESIGN_TOKENS.colors.background },
+                  ]}
                   onPress={() => {
                     setTempManualText(manualFollowUpText);
                     setShowManualTextModal(true);
@@ -828,7 +969,10 @@ const TranscriptionComplete = () => {
                   <Edit3 size={16} color={DESIGN_TOKENS.colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.customNoteActionButton, { backgroundColor: DESIGN_TOKENS.colors.background }]}
+                  style={[
+                    styles.customNoteActionButton,
+                    { backgroundColor: DESIGN_TOKENS.colors.background },
+                  ]}
                   onPress={() => setManualFollowUpText('')}>
                   <X size={16} color={DESIGN_TOKENS.colors.error} />
                 </TouchableOpacity>
@@ -840,7 +984,12 @@ const TranscriptionComplete = () => {
         {/* Imported Visits from History */}
         {importedFollowUpVisits.length > 0 && (
           <View style={styles.importedVisitsContainer}>
-            <Text variant="bodySmall" style={[styles.importedVisitsCount, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.importedVisitsCount,
+                { color: DESIGN_TOKENS.colors.textTertiary },
+              ]}>
               {t(
                 'mainContent.transcriptionComplete.followUpVisits.selectedVisits',
                 {
@@ -849,16 +998,31 @@ const TranscriptionComplete = () => {
               )}
             </Text>
             {importedFollowUpVisits.map((visit) => (
-              <View key={visit._id} style={[styles.importedVisitItem, { 
-                backgroundColor: DESIGN_TOKENS.colors.background, 
-                borderColor: DESIGN_TOKENS.colors.borderLight,
-                shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-              }]}>
+              <View
+                key={visit._id}
+                style={[
+                  styles.importedVisitItem,
+                  {
+                    backgroundColor: DESIGN_TOKENS.colors.background,
+                    borderColor: DESIGN_TOKENS.colors.borderLight,
+                    shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+                  },
+                ]}>
                 <View style={styles.importedVisitInfo}>
-                  <Text variant="bodyMedium" style={[styles.importedVisitTitle, { color: DESIGN_TOKENS.colors.text }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.importedVisitTitle,
+                      { color: DESIGN_TOKENS.colors.text },
+                    ]}>
                     {visit.title}
                   </Text>
-                  <Text variant="bodySmall" style={[styles.importedVisitDate, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+                  <Text
+                    variant="bodySmall"
+                    style={[
+                      styles.importedVisitDate,
+                      { color: DESIGN_TOKENS.colors.textTertiary },
+                    ]}>
                     {new Date(visit.date).toLocaleDateString()}
                   </Text>
                 </View>
@@ -876,17 +1040,6 @@ const TranscriptionComplete = () => {
         )}
       </View>
     );
-  };
-
-  const generateMockNote = () => {
-    return `${t('mainContent.transcriptionComplete.noteGenerated', {
-      mode:
-        generationMode === 'standard'
-          ? t('mainContent.transcriptionComplete.modes.standardSOAP')
-          : t('mainContent.transcriptionComplete.modes.custom'),
-    })}...\n\n${t('mainContent.transcriptionComplete.noteSubjective')}:\n${t(
-      'mainContent.transcriptionComplete.patientPresents',
-    )}...`;
   };
 
   const getGeneratedSummary = () => {
@@ -923,7 +1076,7 @@ const TranscriptionComplete = () => {
           { shadowColor: DESIGN_TOKENS.colors.primary },
           (!canGenerate || isGeneratingNotes) && [
             styles.floatingGenerateButtonDisabled,
-            { backgroundColor: DESIGN_TOKENS.colors.border }
+            { backgroundColor: DESIGN_TOKENS.colors.border },
           ],
         ]}
         onPress={async () => {
@@ -1086,13 +1239,17 @@ const TranscriptionComplete = () => {
                 ? 'general'
                 : 'SOAP';
 
+            // Map UI selection to model identifier
+            const llmModel =
+              selectedModel === 'pro' ? 'gpt-4.1' : 'gpt-4o-mini';
+
             let payload: any = {};
 
             if (noteType === 'custom') {
               payload = {
                 noteType: 'custom',
                 promptId: selectedTemplateId, // Use selectedTemplateId as it holds the custom prompt ID
-                llmModel: 'gpt-4.1',
+                llmModel,
               };
               console.log(
                 '[TranscriptionComplete] Using custom prompt ID:',
@@ -1100,12 +1257,12 @@ const TranscriptionComplete = () => {
               );
             } else if (session.type === 'meeting') {
               payload = {
-                llmModel: 'gpt-4o',
+                llmModel,
                 noteType: 'general',
               };
-            } else if ( session.type === 'lecture') {
+            } else if (session.type === 'lecture') {
               payload = {
-                llmModel: 'gpt-4o',
+                llmModel,
                 noteType: 'medical',
               };
             } else {
@@ -1118,8 +1275,14 @@ const TranscriptionComplete = () => {
                     ? 'childPsychiatry'
                     : selectedSpecialization.toLowerCase() || 'psychiatry',
                 length: noteLength.toLowerCase(),
-                llmModel: 'gemini-3-pro-preview',
+                llmModel,
               };
+            }
+            if (importedFollowUpVisits.length > 0) {
+              payload.followUpVisits = importedFollowUpVisits.map((v) => v._id);
+            }
+            if (manualFollowUpText.trim()) {
+              payload.followUpText = manualFollowUpText.trim();
             }
 
             console.log('[TranscriptionComplete] Payload:', payload);
@@ -1196,7 +1359,11 @@ const TranscriptionComplete = () => {
                   );
                   // Use atomic update to prevent race conditions
                   sessionStorage
-                    .updateSessionAfterGeneration(session.id, contentToSave, 'completed')
+                    .updateSessionAfterGeneration(
+                      session.id,
+                      contentToSave,
+                      'completed',
+                    )
                     .then(() => {
                       console.log(
                         '[TranscriptionComplete] ✅ Session updated (notes + status) successfully!',
@@ -1294,14 +1461,26 @@ const TranscriptionComplete = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DESIGN_TOKENS.colors.background }]} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={DESIGN_TOKENS.colors.background} />
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: DESIGN_TOKENS.colors.background },
+      ]}
+      edges={['top', 'left', 'right']}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={DESIGN_TOKENS.colors.background}
+      />
 
       {/* Compact Header */}
-      <View style={[styles.compactHeader, { 
-        backgroundColor: DESIGN_TOKENS.colors.background,
-        borderBottomColor: DESIGN_TOKENS.colors.borderLight
-      }]}>
+      <View
+        style={[
+          styles.compactHeader,
+          {
+            backgroundColor: DESIGN_TOKENS.colors.background,
+            borderBottomColor: DESIGN_TOKENS.colors.borderLight,
+          },
+        ]}>
         <View style={styles.compactHeaderLeft}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -1312,19 +1491,35 @@ const TranscriptionComplete = () => {
           {(() => {
             const IconComponent = getSessionIcon();
             return (
-              <View style={[styles.compactIconContainer, { 
-                backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)'
-              }]}>
+              <View
+                style={[
+                  styles.compactIconContainer,
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(70, 183, 198, 0.15)'
+                      : 'rgba(70, 183, 198, 0.1)',
+                  },
+                ]}>
                 <IconComponent size={16} color={DESIGN_TOKENS.colors.primary} />
               </View>
             );
           })()}
 
           <View style={styles.compactTitleContainer}>
-            <Text variant="titleMedium" style={[styles.compactTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="titleMedium"
+              style={[
+                styles.compactTitle,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {session.title}
             </Text>
-            <Text variant="bodySmall" style={[styles.compactSubtitle, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.compactSubtitle,
+                { color: DESIGN_TOKENS.colors.textSecondary },
+              ]}>
               {getSessionTypeText()}
             </Text>
           </View>
@@ -1334,8 +1529,15 @@ const TranscriptionComplete = () => {
           {session.type === 'patient' && (
             <TouchableOpacity
               style={styles.compactActionButton}
-              onPress={() => (navigation as any).navigate('consult', { transcription: session.transcriptText })}>
-              <MessageSquare size={20} color={DESIGN_TOKENS.colors.textSecondary} />
+              onPress={() =>
+                (navigation as any).navigate('consult', {
+                  transcription: session.transcriptText,
+                })
+              }>
+              <MessageSquare
+                size={20}
+                color={DESIGN_TOKENS.colors.textSecondary}
+              />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -1361,17 +1563,30 @@ const TranscriptionComplete = () => {
 
       {isNoteReady && isConfigCollapsed ? (
         <TouchableOpacity
-          style={[styles.generatedSummaryBar, { 
-            backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
-            borderColor: DESIGN_TOKENS.colors.borderLight 
-          }]}
+          style={[
+            styles.generatedSummaryBar,
+            {
+              backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+              borderColor: DESIGN_TOKENS.colors.borderLight,
+            },
+          ]}
           onPress={handleExpandConfig}
           activeOpacity={0.85}>
           <View style={styles.generatedSummaryTextGroup}>
-            <Text variant="bodyMedium" style={[styles.generatedSummaryTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="bodyMedium"
+              style={[
+                styles.generatedSummaryTitle,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {getGeneratedSummary()}
             </Text>
-            <Text variant="bodySmall" style={[styles.generatedSummarySubtitle, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.generatedSummarySubtitle,
+                { color: DESIGN_TOKENS.colors.textTertiary },
+              ]}>
               {t('mainContent.transcriptionComplete.tapToEdit')}
             </Text>
           </View>
@@ -1381,18 +1596,29 @@ const TranscriptionComplete = () => {
         <View style={styles.settingsSection}>
           {isNoteReady && (
             <View style={styles.settingsHeaderRow}>
-              <Text variant="labelMedium" style={[styles.settingsHeaderTitle, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+              <Text
+                variant="labelMedium"
+                style={[
+                  styles.settingsHeaderTitle,
+                  { color: DESIGN_TOKENS.colors.textSecondary },
+                ]}>
                 {t('mainContent.transcriptionComplete.configuration')}
               </Text>
               <TouchableOpacity
                 onPress={handleCollapseConfig}
-                style={[styles.settingsHeaderAction, { 
-                  backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
-                  borderColor: DESIGN_TOKENS.colors.border
-                }]}>
+                style={[
+                  styles.settingsHeaderAction,
+                  {
+                    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+                    borderColor: DESIGN_TOKENS.colors.border,
+                  },
+                ]}>
                 <Text
                   variant="bodySmall"
-                  style={[styles.settingsHeaderActionText, { color: DESIGN_TOKENS.colors.primary }]}>
+                  style={[
+                    styles.settingsHeaderActionText,
+                    { color: DESIGN_TOKENS.colors.primary },
+                  ]}>
                   {t('mainContent.transcriptionComplete.hide')}
                 </Text>
               </TouchableOpacity>
@@ -1402,6 +1628,75 @@ const TranscriptionComplete = () => {
           {/* 1. SWITCHER (New) */}
           {renderModeSwitch()}
           {renderLegacyNoteButtons()}
+
+          {/* MODEL SELECTOR */}
+          <View style={styles.modeSwitchContainer}>
+            <Text
+              variant="labelMedium"
+              style={[
+                styles.sectionLabel,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
+              AI Model
+            </Text>
+            <View
+              style={[
+                styles.compactSegmentedControl,
+                { backgroundColor: DESIGN_TOKENS.colors.border },
+              ]}>
+              <TouchableOpacity
+                style={[
+                  styles.segmentBtn,
+                  selectedModel === 'standard' && [
+                    styles.segmentBtnActive,
+                    { backgroundColor: DESIGN_TOKENS.colors.primary },
+                  ],
+                ]}
+                onPress={() => setSelectedModel('standard')}>
+                <Text
+                  style={[
+                    selectedModel === 'standard'
+                      ? styles.segmentTextActive
+                      : styles.segmentTextInactive,
+                    selectedModel === 'standard'
+                      ? { color: '#FFF' }
+                      : {
+                          color: isDark
+                            ? DESIGN_TOKENS.colors.textSecondary
+                            : '#666',
+                        },
+                  ]}>
+                  Standard
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.segmentBtn,
+                  selectedModel === 'pro' && [
+                    styles.segmentBtnActive,
+                    { backgroundColor: DESIGN_TOKENS.colors.primary },
+                  ],
+                ]}
+                onPress={() => setSelectedModel('pro')}>
+                <Text
+                  style={[
+                    selectedModel === 'pro'
+                      ? styles.segmentTextActive
+                      : styles.segmentTextInactive,
+                    selectedModel === 'pro'
+                      ? { color: '#FFF' }
+                      : {
+                          color: isDark
+                            ? DESIGN_TOKENS.colors.textSecondary
+                            : '#666',
+                        },
+                  ]}>
+                  Pro ✨
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {/* 2. STANDARD MODE */}
           {session.type === 'patient' && generationMode === 'standard' && (
@@ -1433,25 +1728,40 @@ const TranscriptionComplete = () => {
                 onSelectTemplate={handleSelectTemplate}
                 noteType={session.type as 'patient' | 'meeting' | 'lecture'}
                 savedPrompts={savedPrompts}
+                onRefresh={loadPrompts}
               />
             </View>
           )}
         </View>
       )}
 
-      <View style={[styles.noteDocumentContainer, { 
-        backgroundColor: isDark ? themeColors.layer2 : DESIGN_TOKENS.colors.background,
-        borderColor: DESIGN_TOKENS.colors.borderLight,
-        shadowColor: DESIGN_TOKENS.shadows.small.shadowColor
-      }]}>
+      <View
+        style={[
+          styles.noteDocumentContainer,
+          {
+            backgroundColor: isDark
+              ? themeColors.layer2
+              : DESIGN_TOKENS.colors.background,
+            borderColor: DESIGN_TOKENS.colors.borderLight,
+            shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+          },
+        ]}>
         {isNoteReady ? (
           <>
             <ScrollView
               ref={noteScrollViewRef}
-              style={[styles.noteDocumentContent, { backgroundColor: DESIGN_TOKENS.colors.background }]}
+              style={[
+                styles.noteDocumentContent,
+                { backgroundColor: DESIGN_TOKENS.colors.background },
+              ]}
               contentContainerStyle={styles.noteDocumentScrollContent}
               showsVerticalScrollIndicator={true}>
-              <Text variant="bodyMedium" style={[styles.noteDocumentText, { color: DESIGN_TOKENS.colors.text }]}>
+              <Text
+                variant="bodyMedium"
+                style={[
+                  styles.noteDocumentText,
+                  { color: DESIGN_TOKENS.colors.text },
+                ]}>
                 {(() => {
                   return generatedNotes.split('\n').map((line, lineIndex) => {
                     const cleanLine = line.trim();
@@ -1479,7 +1789,9 @@ const TranscriptionComplete = () => {
                     // Standard markdown parsing for lines that aren't full headings
                     const parts = line.split(/(\*\*.*?\*\*)/g);
                     return (
-                      <Text key={lineIndex} style={{ color: DESIGN_TOKENS.colors.text }}>
+                      <Text
+                        key={lineIndex}
+                        style={{ color: DESIGN_TOKENS.colors.text }}>
                         {parts.map((part, partIndex) => {
                           if (part.startsWith('**') && part.endsWith('**')) {
                             return (
@@ -1494,7 +1806,13 @@ const TranscriptionComplete = () => {
                               </Text>
                             );
                           }
-                          return <Text key={partIndex} style={{ color: DESIGN_TOKENS.colors.text }}>{part}</Text>;
+                          return (
+                            <Text
+                              key={partIndex}
+                              style={{ color: DESIGN_TOKENS.colors.text }}>
+                              {part}
+                            </Text>
+                          );
                         })}
                         {'\n'}
                       </Text>
@@ -1503,22 +1821,34 @@ const TranscriptionComplete = () => {
                 })()}
               </Text>
             </ScrollView>
-            <View style={[styles.noteDocumentFooter, { 
-              backgroundColor: DESIGN_TOKENS.colors.background,
-              borderTopColor: DESIGN_TOKENS.colors.border 
-            }]}>
+            <View
+              style={[
+                styles.noteDocumentFooter,
+                {
+                  backgroundColor: DESIGN_TOKENS.colors.background,
+                  borderTopColor: DESIGN_TOKENS.colors.border,
+                },
+              ]}>
               <TouchableOpacity
-                style={[styles.noteCopyButton, { 
-                  backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
-                  borderColor: DESIGN_TOKENS.colors.border,
-                }]}
+                style={[
+                  styles.noteCopyButton,
+                  {
+                    backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+                    borderColor: DESIGN_TOKENS.colors.border,
+                  },
+                ]}
                 onPress={async () => {
                   if (!generatedNotes.trim()) return;
                   await Clipboard.setString(generatedNotes);
                   customToast('success', 'Copied', 'Note copied to clipboard');
                 }}>
                 <ClipboardIcon size={16} color={DESIGN_TOKENS.colors.primary} />
-                <Text variant="bodySmall" style={[styles.noteCopyButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.noteCopyButtonText,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]}>
                   {t('common.copy')}
                 </Text>
               </TouchableOpacity>
@@ -1526,7 +1856,10 @@ const TranscriptionComplete = () => {
           </>
         ) : isGeneratingNotes ? (
           <View style={styles.noteEmptyState}>
-            <ActivityIndicator size="large" color={DESIGN_TOKENS.colors.primary} />
+            <ActivityIndicator
+              size="large"
+              color={DESIGN_TOKENS.colors.primary}
+            />
             <Text
               variant="bodySmall"
               style={[styles.noteEmptySubtitle, { marginTop: 12 }]}>
@@ -1535,10 +1868,20 @@ const TranscriptionComplete = () => {
           </View>
         ) : (
           <View style={styles.noteEmptyState}>
-            <Text variant="titleSmall" style={[styles.noteEmptyTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="titleSmall"
+              style={[
+                styles.noteEmptyTitle,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {t('mainContent.transcriptionComplete.noNote')}
             </Text>
-            <Text variant="bodySmall" style={[styles.noteEmptySubtitle, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.noteEmptySubtitle,
+                { color: DESIGN_TOKENS.colors.textTertiary },
+              ]}>
               {t('mainContent.transcriptionComplete.generateToSee')}
             </Text>
           </View>
@@ -1546,7 +1889,13 @@ const TranscriptionComplete = () => {
       </View>
 
       {!isNoteReady || !isConfigCollapsed ? (
-        <View style={[styles.stickyFooter, { backgroundColor: DESIGN_TOKENS.colors.background }]}>{renderGenerateButton()}</View>
+        <View
+          style={[
+            styles.stickyFooter,
+            { backgroundColor: DESIGN_TOKENS.colors.background },
+          ]}>
+          {renderGenerateButton()}
+        </View>
       ) : null}
 
       {/* --- ALL MODALS RESTORED BELOW --- */}
@@ -1558,8 +1907,17 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowRenameModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                ...DESIGN_TOKENS.shadows.large,
+              },
+            ]}>
+            <Text
+              variant="titleLarge"
+              style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
               {t('mainContent.recording.renameSession')}
             </Text>
             <Input
@@ -1567,14 +1925,29 @@ const TranscriptionComplete = () => {
               value={newSessionName}
               setValue={setNewSessionName}
               width={wp(80)}
-              style={{ color: DESIGN_TOKENS.colors.text, borderColor: DESIGN_TOKENS.colors.border }}
+              style={{
+                color: DESIGN_TOKENS.colors.text,
+                borderColor: DESIGN_TOKENS.colors.border,
+              }}
               placeholderTextColor={DESIGN_TOKENS.colors.textTertiary}
             />
             <View style={styles.renameButtonsRow}>
               <TouchableOpacity
-                style={[styles.renameButton, styles.renameCancelButton, { borderColor: DESIGN_TOKENS.colors.border, backgroundColor: DESIGN_TOKENS.colors.background }]}
+                style={[
+                  styles.renameButton,
+                  styles.renameCancelButton,
+                  {
+                    borderColor: DESIGN_TOKENS.colors.borderLight,
+                    backgroundColor: DESIGN_TOKENS.colors.background,
+                  },
+                ]}
                 onPress={() => setShowRenameModal(false)}>
-                <Text variant="bodyMedium" style={[styles.renameCancelText, { color: DESIGN_TOKENS.colors.text }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.renameCancelText,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
@@ -1583,7 +1956,7 @@ const TranscriptionComplete = () => {
                   styles.renameButton,
                   styles.renameSaveButton,
                   isRenaming && styles.renameSaveButtonDisabled,
-                  { backgroundColor: DESIGN_TOKENS.colors.primary }
+                  { backgroundColor: DESIGN_TOKENS.colors.primary },
                 ]}
                 onPress={handleRename}
                 disabled={isRenaming}>
@@ -1593,7 +1966,12 @@ const TranscriptionComplete = () => {
                     color={DESIGN_TOKENS.colors.background}
                   />
                 ) : (
-                  <Text variant="bodyMedium" style={[styles.renameSaveText, { color: DESIGN_TOKENS.colors.background }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.renameSaveText,
+                      { color: DESIGN_TOKENS.colors.background },
+                    ]}>
                     {t('common.save')}
                   </Text>
                 )}
@@ -1610,26 +1988,64 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowDeleteModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                ...DESIGN_TOKENS.shadows.large,
+              },
+            ]}>
+            <Text
+              variant="titleLarge"
+              style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
               {t('mainContent.recording.deleteSession')}
             </Text>
-            <Text variant="bodyMedium" style={[styles.modalDescription, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+            <Text
+              variant="bodyMedium"
+              style={[
+                styles.modalDescription,
+                { color: DESIGN_TOKENS.colors.textSecondary },
+              ]}>
               {t('common.confirmDelete')}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: DESIGN_TOKENS.colors.border, backgroundColor: DESIGN_TOKENS.colors.background }]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  {
+                    borderColor: DESIGN_TOKENS.colors.borderLight,
+                    backgroundColor: DESIGN_TOKENS.colors.background,
+                  },
+                ]}
                 onPress={() => setShowDeleteModal(false)}>
-                <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.cancelButtonText,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton, { borderColor: DESIGN_TOKENS.colors.error, backgroundColor: DESIGN_TOKENS.colors.error }]}
+                style={[
+                  styles.modalButton,
+                  styles.deleteButton,
+                  {
+                    borderColor: DESIGN_TOKENS.colors.error,
+                    backgroundColor: DESIGN_TOKENS.colors.error,
+                  },
+                ]}
                 onPress={handleDelete}
                 disabled={isDeleting}>
-                <Text variant="bodyMedium" style={[styles.deleteButtonText, { color: DESIGN_TOKENS.colors.background }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.deleteButtonText,
+                    { color: DESIGN_TOKENS.colors.background },
+                  ]}>
                   {isDeleting ? t('common.deleting') : t('common.delete')}
                 </Text>
               </TouchableOpacity>
@@ -1645,26 +2061,64 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowResetModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                ...DESIGN_TOKENS.shadows.large,
+              },
+            ]}>
+            <Text
+              variant="titleLarge"
+              style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
               {t('mainContent.recording.resetSession')}
             </Text>
-            <Text variant="bodyMedium" style={[styles.modalDescription, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+            <Text
+              variant="bodyMedium"
+              style={[
+                styles.modalDescription,
+                { color: DESIGN_TOKENS.colors.textSecondary },
+              ]}>
               {t('common.confirmReset')}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: DESIGN_TOKENS.colors.borderLight, backgroundColor: DESIGN_TOKENS.colors.background }]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  {
+                    borderColor: DESIGN_TOKENS.colors.borderLight,
+                    backgroundColor: DESIGN_TOKENS.colors.background,
+                  },
+                ]}
                 onPress={() => setShowResetModal(false)}>
-                <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.cancelButtonText,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton, { borderColor: DESIGN_TOKENS.colors.error, backgroundColor: DESIGN_TOKENS.colors.error }]}
+                style={[
+                  styles.modalButton,
+                  styles.deleteButton,
+                  {
+                    borderColor: DESIGN_TOKENS.colors.error,
+                    backgroundColor: DESIGN_TOKENS.colors.error,
+                  },
+                ]}
                 onPress={handleReset}
                 disabled={isResetting}>
-                <Text variant="bodyMedium" style={[styles.deleteButtonText, { color: DESIGN_TOKENS.colors.background }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.deleteButtonText,
+                    { color: DESIGN_TOKENS.colors.background },
+                  ]}>
                   {isResetting ? t('common.resetting') : t('common.reset')}
                 </Text>
               </TouchableOpacity>
@@ -1680,8 +2134,14 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowSpecializationModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: DESIGN_TOKENS.colors.background },
+            ]}>
+            <Text
+              variant="titleLarge"
+              style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
               {t('mainContent.transcriptionComplete.specialization.select')}
             </Text>
             <View style={styles.optionsList}>
@@ -1690,10 +2150,13 @@ const TranscriptionComplete = () => {
                   key={option.key}
                   style={[
                     styles.optionItem,
-                    { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary },
+                    {
+                      backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+                      borderColor: DESIGN_TOKENS.colors.borderLight,
+                    },
                     selectedSpecialization === option.key && {
                       backgroundColor: DESIGN_TOKENS.colors.primary,
-                      borderColor: DESIGN_TOKENS.colors.primary
+                      borderColor: DESIGN_TOKENS.colors.primary,
                     },
                   ]}
                   onPress={() => {
@@ -1705,7 +2168,9 @@ const TranscriptionComplete = () => {
                     style={[
                       styles.optionText,
                       { color: DESIGN_TOKENS.colors.text },
-                      selectedSpecialization === option.key && { color: '#FFF' },
+                      selectedSpecialization === option.key && {
+                        color: '#FFF',
+                      },
                     ]}>
                     {option.label}
                   </Text>
@@ -1719,10 +2184,19 @@ const TranscriptionComplete = () => {
               style={[
                 styles.modalButton,
                 styles.cancelButton,
-                { width: '100%', backgroundColor: DESIGN_TOKENS.colors.background, borderColor: DESIGN_TOKENS.colors.border },
+                {
+                  width: '100%',
+                  backgroundColor: DESIGN_TOKENS.colors.background,
+                  borderColor: DESIGN_TOKENS.colors.borderLight,
+                },
               ]}
               onPress={() => setShowSpecializationModal(false)}>
-              <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+              <Text
+                variant="bodyMedium"
+                style={[
+                  styles.cancelButtonText,
+                  { color: DESIGN_TOKENS.colors.text },
+                ]}>
                 {t('common.cancel')}
               </Text>
             </TouchableOpacity>
@@ -1737,8 +2211,17 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowVisitTypeModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
-            <Text variant="titleLarge" style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                ...DESIGN_TOKENS.shadows.large,
+              },
+            ]}>
+            <Text
+              variant="titleLarge"
+              style={[styles.modalTitle, { color: DESIGN_TOKENS.colors.text }]}>
               {t('mainContent.transcriptionComplete.visitType.select')}
             </Text>
             <View style={styles.optionsList}>
@@ -1747,10 +2230,13 @@ const TranscriptionComplete = () => {
                   key={option.key}
                   style={[
                     styles.optionItem,
-                    { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary, borderColor: DESIGN_TOKENS.colors.borderLight },
+                    {
+                      backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+                      borderColor: DESIGN_TOKENS.colors.borderLight,
+                    },
                     visitType === option.key && {
                       backgroundColor: DESIGN_TOKENS.colors.primary,
-                      borderColor: DESIGN_TOKENS.colors.primary
+                      borderColor: DESIGN_TOKENS.colors.primary,
                     },
                   ]}
                   onPress={() => {
@@ -1762,8 +2248,11 @@ const TranscriptionComplete = () => {
                     style={[
                       styles.optionText,
                       { color: DESIGN_TOKENS.colors.text },
-                      visitType === option.key && [styles.selectedOptionText, { color:DESIGN_TOKENS.colors.background },
-                    ]]}>
+                      visitType === option.key && [
+                        styles.selectedOptionText,
+                        { color: DESIGN_TOKENS.colors.background },
+                      ],
+                    ]}>
                     {option.label}
                   </Text>
                   {visitType === option.key && (
@@ -1776,10 +2265,19 @@ const TranscriptionComplete = () => {
               style={[
                 styles.modalButton,
                 styles.cancelButton,
-                { width: '100%', backgroundColor: DESIGN_TOKENS.colors.background, borderColor: DESIGN_TOKENS.colors.border },
+                {
+                  width: '100%',
+                  backgroundColor: DESIGN_TOKENS.colors.background,
+                  borderColor: DESIGN_TOKENS.colors.borderLight,
+                },
               ]}
               onPress={() => setShowVisitTypeModal(false)}>
-              <Text variant="bodyMedium" style={[styles.cancelButtonText, { color: DESIGN_TOKENS.colors.text }]}>
+              <Text
+                variant="bodyMedium"
+                style={[
+                  styles.cancelButtonText,
+                  { color: DESIGN_TOKENS.colors.text },
+                ]}>
                 {t('common.cancel')}
               </Text>
             </TouchableOpacity>
@@ -1794,9 +2292,21 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowFollowUpModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.followUpModalCard, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
+          <View
+            style={[
+              styles.followUpModalCard,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                ...DESIGN_TOKENS.shadows.large,
+              },
+            ]}>
             <View style={[styles.followUpModalHeader]}>
-              <Text variant="titleLarge" style={[styles.followUpModalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+              <Text
+                variant="titleLarge"
+                style={[
+                  styles.followUpModalTitle,
+                  { color: DESIGN_TOKENS.colors.text },
+                ]}>
                 {t(
                   'mainContent.transcriptionComplete.followUpVisits.selectDialog.title',
                 )}
@@ -1808,7 +2318,14 @@ const TranscriptionComplete = () => {
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.followUpSearchBar, { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary, shadowColor: DESIGN_TOKENS.shadows.small.shadowColor }]}>
+            <View
+              style={[
+                styles.followUpSearchBar,
+                {
+                  backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+                  shadowColor: DESIGN_TOKENS.shadows.small.shadowColor,
+                },
+              ]}>
               <Search size={18} color={DESIGN_TOKENS.colors.textSecondary} />
               <TextInput
                 placeholder={t(
@@ -1817,14 +2334,24 @@ const TranscriptionComplete = () => {
                 placeholderTextColor={DESIGN_TOKENS.colors.textSecondary}
                 value={visitSearchQuery}
                 onChangeText={setVisitSearchQuery}
-                style={[styles.followUpSearchInput, { color: DESIGN_TOKENS.colors.text }]}
+                style={[
+                  styles.followUpSearchInput,
+                  { color: DESIGN_TOKENS.colors.text },
+                ]}
                 returnKeyType="search"
               />
             </View>
 
-            <ScrollView style={styles.visitsList} showsVerticalScrollIndicator={true}>
+            <ScrollView
+              style={styles.visitsList}
+              showsVerticalScrollIndicator={true}>
               {filteredFollowUpVisits.length === 0 ? (
-                <Text variant="bodyMedium" style={[styles.noVisitsText, { color: DESIGN_TOKENS.colors.textTertiary }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.noVisitsText,
+                    { color: DESIGN_TOKENS.colors.textTertiary },
+                  ]}>
                   {availableSessions.length === 0
                     ? t(
                         'mainContent.transcriptionComplete.followUpVisits.selectDialog.noVisitsAvailable',
@@ -1841,21 +2368,32 @@ const TranscriptionComplete = () => {
                       key={visit._id}
                       style={[
                         styles.visitCard,
-                        { 
+                        {
                           backgroundColor: DESIGN_TOKENS.colors.background,
-                          borderColor: DESIGN_TOKENS.colors.borderLight 
+                          borderColor: DESIGN_TOKENS.colors.borderLight,
                         },
-                        isSelected && [styles.visitCardSelected, { 
-                          backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : '#F5FBFC',
-                          borderColor: DESIGN_TOKENS.colors.primary 
-                        }],
+                        isSelected && [
+                          styles.visitCardSelected,
+                          {
+                            backgroundColor: isDark
+                              ? 'rgba(70, 183, 198, 0.15)'
+                              : '#F5FBFC',
+                            borderColor: DESIGN_TOKENS.colors.primary,
+                          },
+                        ],
                       ]}
                       onPress={() => handleFollowUpVisitSelect(visit._id)}
                       activeOpacity={0.9}>
                       <View style={styles.visitCardLeft}>
-                        <View style={[styles.visitIconCircle, { 
-                          backgroundColor: isDark ? 'rgba(70, 183, 198, 0.2)' : '#EAF6F8' 
-                        }]}>
+                        <View
+                          style={[
+                            styles.visitIconCircle,
+                            {
+                              backgroundColor: isDark
+                                ? 'rgba(70, 183, 198, 0.2)'
+                                : '#EAF6F8',
+                            },
+                          ]}>
                           <PhoneCall
                             size={15}
                             color={DESIGN_TOKENS.colors.primary}
@@ -1864,21 +2402,38 @@ const TranscriptionComplete = () => {
                         <View style={styles.visitInfo}>
                           <Text
                             variant="bodyMedium"
-                            style={[styles.visitTitle, { color: DESIGN_TOKENS.colors.text }]}
+                            style={[
+                              styles.visitTitle,
+                              { color: DESIGN_TOKENS.colors.text },
+                            ]}
                             numberOfLines={1}>
                             {visit.title}
                           </Text>
                           <Text
                             variant="bodySmall"
-                            style={[styles.visitSubtitle, { color: DESIGN_TOKENS.colors.textSecondary }]}
+                            style={[
+                              styles.visitSubtitle,
+                              { color: DESIGN_TOKENS.colors.textSecondary },
+                            ]}
                             numberOfLines={1}>
                             {visit.label}
                           </Text>
                         </View>
                       </View>
                       <View style={styles.visitCardRight}>
-                        <View style={[styles.visitDateTag, { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary }]}>
-                          <Text style={[styles.visitDateTagText, { color: DESIGN_TOKENS.colors.textSecondary }]}>
+                        <View
+                          style={[
+                            styles.visitDateTag,
+                            {
+                              backgroundColor:
+                                DESIGN_TOKENS.colors.backgroundSecondary,
+                            },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.visitDateTagText,
+                              { color: DESIGN_TOKENS.colors.textSecondary },
+                            ]}>
                             {new Date(visit.date).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -1888,19 +2443,28 @@ const TranscriptionComplete = () => {
                         <View
                           style={[
                             styles.visitCheckbox,
-                            { 
+                            {
                               borderColor: DESIGN_TOKENS.colors.border,
-                              backgroundColor: DESIGN_TOKENS.colors.background
+                              backgroundColor: DESIGN_TOKENS.colors.background,
                             },
-                            isSelected && [styles.visitCheckboxSelected, { 
-                              backgroundColor: DESIGN_TOKENS.colors.primary,
-                              borderColor: DESIGN_TOKENS.colors.primary 
-                            }],
+                            isSelected && [
+                              styles.visitCheckboxSelected,
+                              {
+                                backgroundColor: DESIGN_TOKENS.colors.primary,
+                                borderColor: DESIGN_TOKENS.colors.primary,
+                              },
+                            ],
                           ]}>
                           {isSelected && (
                             <Check
                               size={14}
-                              color={isSelected ? (isDark ? '#000' : '#FFF') : DESIGN_TOKENS.colors.background}
+                              color={
+                                isSelected
+                                  ? isDark
+                                    ? '#000'
+                                    : '#FFF'
+                                  : DESIGN_TOKENS.colors.background
+                              }
                             />
                           )}
                         </View>
@@ -1914,8 +2478,13 @@ const TranscriptionComplete = () => {
             <TouchableOpacity
               style={[
                 styles.followUpImportButton,
-                selectedFollowUpVisits.size === 0 && [styles.followUpImportButtonDisabled, { backgroundColor: DESIGN_TOKENS.colors.border }],
-                selectedFollowUpVisits.size > 0 && { backgroundColor: DESIGN_TOKENS.colors.primary }
+                selectedFollowUpVisits.size === 0 && [
+                  styles.followUpImportButtonDisabled,
+                  { backgroundColor: DESIGN_TOKENS.colors.border },
+                ],
+                selectedFollowUpVisits.size > 0 && {
+                  backgroundColor: DESIGN_TOKENS.colors.primary,
+                },
               ]}
               onPress={handleImportFollowUpVisits}
               disabled={selectedFollowUpVisits.size === 0}
@@ -1938,21 +2507,39 @@ const TranscriptionComplete = () => {
         transparent={true}
         onRequestClose={() => setShowManualTextModal(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.slimModalContent, { backgroundColor: DESIGN_TOKENS.colors.background, ...DESIGN_TOKENS.shadows.large }]}>
+          <View
+            style={[
+              styles.slimModalContent,
+              {
+                backgroundColor: DESIGN_TOKENS.colors.background,
+                ...DESIGN_TOKENS.shadows.large,
+              },
+            ]}>
             <TouchableOpacity
               onPress={() => setShowManualTextModal(false)}
               style={styles.slimModalClose}>
               <X size={18} color={DESIGN_TOKENS.colors.textSecondary} />
             </TouchableOpacity>
 
-            <Text variant="titleMedium" style={[styles.slimModalTitle, { color: DESIGN_TOKENS.colors.text }]}>
+            <Text
+              variant="titleMedium"
+              style={[
+                styles.slimModalTitle,
+                { color: DESIGN_TOKENS.colors.text },
+              ]}>
               {t(
                 'mainContent.transcriptionComplete.followUpVisits.manualContextTitle',
               )}
             </Text>
 
             <TouchableOpacity
-              style={[styles.slimPasteButton, { backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,borderColor: DESIGN_TOKENS.colors.border }]}
+              style={[
+                styles.slimPasteButton,
+                {
+                  backgroundColor: DESIGN_TOKENS.colors.backgroundSecondary,
+                  borderColor: DESIGN_TOKENS.colors.border,
+                },
+              ]}
               onPress={async () => {
                 try {
                   const text = await Clipboard.getString();
@@ -1979,7 +2566,12 @@ const TranscriptionComplete = () => {
                 }
               }}>
               <ClipboardIcon size={14} color={DESIGN_TOKENS.colors.primary} />
-              <Text variant="bodySmall" style={[styles.slimPasteButtonText, { color: DESIGN_TOKENS.colors.primary }]}>
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.slimPasteButtonText,
+                  { color: DESIGN_TOKENS.colors.primary },
+                ]}>
                 {t('mainContent.transcriptionComplete.followUpVisits.paste')}
               </Text>
             </TouchableOpacity>
@@ -2000,18 +2592,29 @@ const TranscriptionComplete = () => {
 
             <View style={styles.slimModalActions}>
               <TouchableOpacity
-                style={[styles.slimCancelButton, { 
-                  backgroundColor: DESIGN_TOKENS.colors.background, 
-                  borderColor: DESIGN_TOKENS.colors.border 
-                }]}
+                style={[
+                  styles.slimCancelButton,
+                  {
+                    backgroundColor: DESIGN_TOKENS.colors.background,
+                    borderColor: DESIGN_TOKENS.colors.borderLight,
+                  },
+                ]}
                 onPress={() => setShowManualTextModal(false)}>
-                <Text variant="bodySmall" style={[styles.slimCancelText, { color: DESIGN_TOKENS.colors.text }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.slimCancelText,
+                    { color: DESIGN_TOKENS.colors.text },
+                  ]}>
                   {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.slimSaveButton, { backgroundColor: DESIGN_TOKENS.colors.primary }]}
+                style={[
+                  styles.slimSaveButton,
+                  { backgroundColor: DESIGN_TOKENS.colors.primary },
+                ]}
                 onPress={() => {
                   setManualFollowUpText(tempManualText);
                   setShowManualTextModal(false);
@@ -2027,7 +2630,12 @@ const TranscriptionComplete = () => {
                     );
                   }
                 }}>
-                <Text variant="bodySmall" style={[styles.slimSaveText, {color: DESIGN_TOKENS.colors.background }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.slimSaveText,
+                    { color: DESIGN_TOKENS.colors.background },
+                  ]}>
                   {t('common.save')}
                 </Text>
               </TouchableOpacity>
@@ -2097,7 +2705,6 @@ const styles = StyleSheet.create({
   compactActionButton: {
     padding: 6,
     fontWeight: '600',
-
   },
   settingsSection: {
     flexShrink: 0,

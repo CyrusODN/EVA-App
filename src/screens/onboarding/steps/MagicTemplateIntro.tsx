@@ -43,14 +43,17 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
   totalSteps,
 }) => {
   const { t } = useTranslation();
-  const { colors:themeColors, isDark} = useOnboardingTheme();
+  const { colors: themeColors, isDark } = useOnboardingTheme();
 
   return (
-    <View style={[styles.container, {backgroundColor: themeColors.background}]}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Header with Back */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={[styles.backText, {color: themeColors.textSecondary}]}>← {t('onboarding.back')}</Text>
+          <Text style={[styles.backText, { color: themeColors.textSecondary }]}>
+            ← {t('onboarding.back')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -60,7 +63,11 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
         <Animated.View
           entering={FadeIn.delay(100).duration(DURATIONS.slow)}
           style={styles.iconContainer}>
-          <View style={[styles.iconCircle, {backgroundColor: themeColors.primarySubtle}]}>
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: themeColors.primarySubtle },
+            ]}>
             <Sparkles size={40} color={themeColors.primary} />
           </View>
         </Animated.View>
@@ -68,21 +75,21 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
         {/* Title */}
         <Animated.Text
           entering={FadeInDown.delay(200).duration(DURATIONS.normal)}
-          style={[styles.title, {color: themeColors.textPrimary}]}>
+          style={[styles.title, { color: themeColors.textPrimary }]}>
           {t('onboarding.magicIntro.title')}
         </Animated.Text>
 
         {/* Subtitle */}
         <Animated.Text
           entering={FadeInDown.delay(250).duration(DURATIONS.normal)}
-          style={[styles.subtitle, {color: themeColors.textSecondary}]}>
+          style={[styles.subtitle, { color: themeColors.textSecondary }]}>
           {t('onboarding.magicIntro.subtitle')}
         </Animated.Text>
 
         {/* Description */}
         <Animated.Text
           entering={FadeInDown.delay(300).duration(DURATIONS.normal)}
-          style={[styles.description, {color: themeColors.textTertiary}]}>
+          style={[styles.description, { color: themeColors.textTertiary }]}>
           {t('onboarding.magicIntro.description')}
         </Animated.Text>
 
@@ -92,17 +99,29 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
           style={[
             styles.descriptionCard,
             {
-              backgroundColor: isDark ? themeColors.surface : themeColors.pureWhite,
-              borderColor: isDark ? themeColors.border : themeColors.borderLight,
+              backgroundColor: isDark
+                ? themeColors.surface
+                : themeColors.pureWhite,
+              borderColor: isDark
+                ? themeColors.border
+                : themeColors.borderLight,
               ...(isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm),
             },
           ]}>
           <View style={styles.flowStep}>
-            <View style={[styles.flowStepIcon, {backgroundColor: themeColors.primarySubtle}]}>
+            <View
+              style={[
+                styles.flowStepIcon,
+                { backgroundColor: themeColors.primarySubtle },
+              ]}>
               <Mic size={20} color={themeColors.primary} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={[styles.flowStepLabel, {color: themeColors.textPrimary}]}>
+              <Text
+                style={[
+                  styles.flowStepLabel,
+                  { color: themeColors.textPrimary },
+                ]}>
                 {t('onboarding.magicIntro.step1')}
               </Text>
             </View>
@@ -110,30 +129,50 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
 
           {/* Flow indicator */}
           <View style={styles.flowArrow}>
-            <Text style={[styles.flowArrowText, {color: themeColors.border}]}>↓</Text>
+            <Text style={[styles.flowArrowText, { color: themeColors.border }]}>
+              ↓
+            </Text>
           </View>
 
           <View style={styles.flowStep}>
-            <View style={[styles.flowStepIcon, {backgroundColor: themeColors.primarySubtle}]}>
+            <View
+              style={[
+                styles.flowStepIcon,
+                { backgroundColor: themeColors.primarySubtle },
+              ]}>
               <Sparkles size={20} color={themeColors.primary} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={[styles.flowStepLabelSmall, {color: themeColors.textSecondary}]}>
+              <Text
+                style={[
+                  styles.flowStepLabelSmall,
+                  { color: themeColors.textSecondary },
+                ]}>
                 {t('onboarding.magicIntro.step2')}
               </Text>
             </View>
           </View>
 
           <View style={styles.flowArrow}>
-            <Text style={[styles.flowArrowText, {color: themeColors.border}]}>↓</Text>
+            <Text style={[styles.flowArrowText, { color: themeColors.border }]}>
+              ↓
+            </Text>
           </View>
 
           <View style={styles.flowStep}>
-            <View style={[styles.flowStepIconSuccess, {backgroundColor: themeColors.primary}]}>
+            <View
+              style={[
+                styles.flowStepIconSuccess,
+                { backgroundColor: themeColors.primary },
+              ]}>
               <CheckCircle2 size={20} color={themeColors.pureWhite} />
             </View>
             <View style={styles.flowStepText}>
-              <Text style={[styles.flowStepLabelSuccess, {color: themeColors.primary}]}>
+              <Text
+                style={[
+                  styles.flowStepLabelSuccess,
+                  { color: themeColors.primary },
+                ]}>
                 {t('onboarding.magicIntro.step3')}
               </Text>
             </View>
@@ -156,10 +195,10 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
         entering={FadeInUp.delay(500).duration(DURATIONS.normal)}
         style={styles.buttonContainer}>
         <TouchableOpacity
-         style={[
-            styles.ctaButton, 
+          style={[
+            styles.ctaButton,
             { backgroundColor: themeColors.primary },
-            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow
+            isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow,
           ]}
           onPress={onCreateTemplate}
           activeOpacity={0.9}>
@@ -172,7 +211,11 @@ const MagicTemplateIntro: React.FC<MagicTemplateIntroProps> = ({
           style={styles.skipTemplateButton}
           onPress={onSkip}
           activeOpacity={0.8}>
-          <Text style={[styles.skipTemplateText, { color: themeColors.textTertiary }]}>
+          <Text
+            style={[
+              styles.skipTemplateText,
+              { color: themeColors.textTertiary },
+            ]}>
             {t('onboarding.magicIntro.skipForNow')}
           </Text>
         </TouchableOpacity>

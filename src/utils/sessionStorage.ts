@@ -1,5 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createEvent, deleteEvent, updateEvent, resetEvent } from '../services/authService';
+import {
+  createEvent,
+  deleteEvent,
+  updateEvent,
+  resetEvent,
+} from '../services/authService';
 
 export type SessionType = 'patient' | 'meeting' | 'lecture';
 export type SessionStatus = 'new' | 'recorded' | 'transcribed' | 'completed';
@@ -82,13 +87,19 @@ export const sessionStorage = {
           );
         } catch (apiError: any) {
           // Swallow 403/404 to allow local cleanup
-          if (apiError?.response?.status === 403 || apiError?.response?.status === 404) {
-             console.warn('[SessionStorage] Backend delete failed (ignoring):', apiError.response.status);
+          if (
+            apiError?.response?.status === 403 ||
+            apiError?.response?.status === 404
+          ) {
+            console.warn(
+              '[SessionStorage] Backend delete failed (ignoring):',
+              apiError.response.status,
+            );
           } else {
-             console.error(
+            console.error(
               '[SessionStorage] Failed to delete session from backend:',
               apiError,
-             );
+            );
           }
         }
       }
@@ -125,30 +136,52 @@ export const sessionStorage = {
   },
 
   async deleteSessions(ids: string[]): Promise<void> {
+    console.log(
+      `[SessionStorage] Starting bulk delete for ${ids.length} sessions...`,
+    );
     try {
       const sessions = await this.getAllSessions();
       const idsSet = new Set(ids);
-      
+
       // Also attempt backend delete for each
-      const sessionsToDelete = sessions.filter(s => idsSet.has(s.id));
+      const sessionsToDelete = sessions.filter((s) => idsSet.has(s.id));
       for (const s of sessionsToDelete) {
-         if (s.sessionId) {
-             try {
-                 await deleteEvent(s.sessionId);
-             } catch (e: any) { 
-                 if (e?.response?.status === 403 || e?.response?.status === 404) {
-                     console.warn('[SessionStorage] Batch delete backend failed (ignoring):', e.response.status);
-                 } else {
-                     console.warn('[SessionStorage] Batch delete backend fail:', e); 
-                 }
-             }
-         }
+        if (s.sessionId) {
+          try {
+            console.log(
+              `[SessionStorage] Deleting session ${s.sessionId} from backend...`,
+            );
+            await deleteEvent(s.sessionId);
+            console.log(
+              `[SessionStorage] Successfully deleted session ${s.sessionId} from backend.`,
+            );
+          } catch (e: any) {
+            if (e?.response?.status === 403 || e?.response?.status === 404) {
+              console.warn(
+                '[SessionStorage] Batch delete backend failed (ignoring):',
+                e.response.status,
+              );
+            } else {
+              console.warn(
+                `[SessionStorage] Batch delete backend fail for session ${s.sessionId}:`,
+                e,
+              );
+            }
+          }
+        } else {
+          console.log(
+            `[SessionStorage] Session ${s.id} has no backend sessionId, skipping remote delete.`,
+          );
+        }
       }
 
       const filteredSessions = sessions.filter((s) => !idsSet.has(s.id));
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filteredSessions));
+      console.log(
+        `[SessionStorage] Successfully updated local storage. ${ids.length} sessions removed.`,
+      );
     } catch (error) {
-      console.error('Error deleting sessions from storage:', error);
+      console.error('[SessionStorage] Error during bulk delete:', error);
       throw error;
     }
   },
@@ -271,15 +304,18 @@ export const sessionStorage = {
     const session = await this.getSessionById(id);
     if (session) {
       session.title = title;
-      
+
       // Sync with backend
       if (session.sessionId) {
-          try {
-              await updateEvent(session.sessionId, { title });
-              console.log('[SessionStorage] Title updated on backend');
-          } catch(e: any) {
-              console.warn('[SessionStorage] Failed to update title on backend:', e);
-          }
+        try {
+          await updateEvent(session.sessionId, { title });
+          console.log('[SessionStorage] Title updated on backend');
+        } catch (e: any) {
+          console.warn(
+            '[SessionStorage] Failed to update title on backend:',
+            e,
+          );
+        }
       }
 
       await this.saveSession(session);
@@ -291,16 +327,19 @@ export const sessionStorage = {
     if (session) {
       // Sync with backend
       if (session.sessionId) {
-          try {
-              await resetEvent(session.sessionId);
-              console.log('[SessionStorage] Reset on backend');
-          } catch(e: any) {
-               if (e?.response?.status === 403 || e?.response?.status === 404) {
-                   console.warn('[SessionStorage] Backend reset failed (ignoring):', e.response.status);
-               } else {
-                   console.warn('[SessionStorage] Failed to reset on backend:', e);
-               }
+        try {
+          await resetEvent(session.sessionId);
+          console.log('[SessionStorage] Reset on backend');
+        } catch (e: any) {
+          if (e?.response?.status === 403 || e?.response?.status === 404) {
+            console.warn(
+              '[SessionStorage] Backend reset failed (ignoring):',
+              e.response.status,
+            );
+          } else {
+            console.warn('[SessionStorage] Failed to reset on backend:', e);
           }
+        }
       }
 
       // Preserve the sessionId (backend event ID) when resetting
@@ -410,11 +449,11 @@ export const sessionStorage = {
     if (session) {
       session.generatedNotes = generatedNotes;
       session.status = status;
-      
+
       if (status === 'transcribed' || status === 'completed') {
         session.hasTranscription = true;
       }
-      
+
       await this.saveSession(session);
     }
   },

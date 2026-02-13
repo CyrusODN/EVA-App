@@ -248,12 +248,21 @@ const Subscription = () => {
   };
 
   const SubscribedPlanCard = ({ plan }: { plan: Plan }) => (
-    <View style={[styles.planCard, { 
-      backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-      borderColor: isDark ? themeColors.borderNormal : colors.borderColor
-    }]}>
+    <View
+      style={[
+        styles.planCard,
+        {
+          backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+          borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
+        },
+      ]}>
       <View style={styles.planHeader}>
-        <Text variant="titleMedium" style={[styles.planName, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+        <Text
+          variant="titleMedium"
+          style={[
+            styles.planName,
+            { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+          ]}>
           {plan.name}
         </Text>
         <View style={[styles.statusBadge, getStatusStyle(plan.status)]}>
@@ -262,34 +271,63 @@ const Subscription = () => {
             style={[
               styles.statusText,
               { color: getStatusStyle(plan.status).color },
-            ]}
-          >
+            ]}>
             {t(statusTranslationKeys[plan.status])}
           </Text>
         </View>
       </View>
       <View style={styles.planDetails}>
         <View style={styles.planDetailRow}>
-          <Text variant="bodySmall" style={[styles.planDetailLabel, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.planDetailLabel,
+              { color: isDark ? themeColors.textSecondary : colors.subText },
+            ]}>
             {t('subscription.table.billingModel')}:
           </Text>
-          <Text variant="bodySmall" style={[styles.planDetailValue, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.planDetailValue,
+              { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+            ]}>
             {plan.billingModel}
           </Text>
         </View>
         <View style={styles.planDetailRow}>
-          <Text variant="bodySmall" style={[styles.planDetailLabel, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.planDetailLabel,
+              { color: isDark ? themeColors.textSecondary : colors.subText },
+            ]}>
             {t('subscription.table.subscribedAt')}:
           </Text>
-          <Text variant="bodySmall" style={[styles.planDetailValue, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.planDetailValue,
+              { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+            ]}>
             {plan.subscribedAt}
           </Text>
         </View>
         <View style={styles.planDetailRow}>
-          <Text variant="bodySmall" style={[styles.planDetailLabel, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.planDetailLabel,
+              { color: isDark ? themeColors.textSecondary : colors.subText },
+            ]}>
             {t('subscription.table.expiresAt')}:
           </Text>
-          <Text variant="bodySmall" style={[styles.planDetailValue, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+          <Text
+            variant="bodySmall"
+            style={[
+              styles.planDetailValue,
+              { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+            ]}>
             {plan.expiresAt}
           </Text>
         </View>
@@ -306,28 +344,60 @@ const Subscription = () => {
       billingPeriod === 'yearly' ? 'common.year' : 'common.month';
 
     return (
-      <View style={[styles.availablePlanCard, { 
-        backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-        borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
-        shadowColor: isDark ? themeColors.accentPrimary : '#000'
-      }]}>
+      <View
+        style={[
+          styles.availablePlanCard,
+          {
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
+            shadowColor: isDark ? themeColors.accentPrimary : '#000',
+          },
+        ]}>
         <View style={styles.availablePlanHeader}>
-          <View style={[styles.planIconContainer, { backgroundColor: themeColors.accentPrimary }]}>
+          <View
+            style={[
+              styles.planIconContainer,
+              { backgroundColor: themeColors.accentPrimary },
+            ]}>
             <IconComponent size={18} color="white" />
           </View>
           <View style={styles.planTitleContainer}>
-            <Text variant="titleSmall" style={[styles.availablePlanTitle, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+            <Text
+              variant="titleSmall"
+              style={[
+                styles.availablePlanTitle,
+                {
+                  color: isDark ? themeColors.textPrimary : colors.darkPrimary,
+                },
+              ]}>
               {t(plan.nameKey)}
             </Text>
-            <Text variant="bodySmall" style={[styles.availablePlanDescription, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.availablePlanDescription,
+                { color: isDark ? themeColors.textSecondary : colors.subText },
+              ]}>
               {t(plan.descriptionKey)}
             </Text>
           </View>
           <View style={styles.priceContainer}>
-            <Text variant="titleMedium" style={[styles.price, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+            <Text
+              variant="titleMedium"
+              style={[
+                styles.price,
+                {
+                  color: isDark ? themeColors.textPrimary : colors.darkPrimary,
+                },
+              ]}>
               ${currentPrice}
             </Text>
-            <Text variant="bodySmall" style={[styles.period, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.period,
+                { color: isDark ? themeColors.textSecondary : colors.subText },
+              ]}>
               {t('common.per')} {t(currentPeriodKey)}
             </Text>
           </View>
@@ -337,7 +407,16 @@ const Subscription = () => {
           {plan.featureKeys.map((featureKey, idx) => (
             <View key={idx} style={styles.featureRow}>
               <CheckCircle2 size={14} color={themeColors.accentPrimary} />
-              <Text variant="bodySmall" style={[styles.featureText, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.featureText,
+                  {
+                    color: isDark
+                      ? themeColors.textPrimary
+                      : colors.darkPrimary,
+                  },
+                ]}>
                 {t(featureKey)}
               </Text>
             </View>
@@ -347,39 +426,70 @@ const Subscription = () => {
         <View style={styles.actionsContainer}>
           {plan.subPlans && (
             <TouchableOpacity
-              style={[styles.viewToolsButton, { 
-                borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
-                backgroundColor: isDark ? 'transparent' : '#FFFFFF'
-              }]}
-              onPress={() => setExpandedPlan(isExpanded ? null : plan.nameKey)}
-            >
-              <Text variant="labelMedium" style={[styles.viewToolsText, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+              style={[
+                styles.viewToolsButton,
+                {
+                  borderColor: isDark
+                    ? themeColors.borderNormal
+                    : colors.borderColor,
+                  backgroundColor: isDark ? 'transparent' : '#FFFFFF',
+                },
+              ]}
+              onPress={() => setExpandedPlan(isExpanded ? null : plan.nameKey)}>
+              <Text
+                variant="labelMedium"
+                style={[
+                  styles.viewToolsText,
+                  {
+                    color: isDark
+                      ? themeColors.textPrimary
+                      : colors.darkPrimary,
+                  },
+                ]}>
                 {t('pricing.viewTools')}
               </Text>
               {isExpanded ? (
-                <ChevronUp size={14} color={isDark ? themeColors.textPrimary : colors.darkPrimary} />
+                <ChevronUp
+                  size={14}
+                  color={isDark ? themeColors.textPrimary : colors.darkPrimary}
+                />
               ) : (
-                <ChevronDown size={14} color={isDark ? themeColors.textPrimary : colors.darkPrimary} />
+                <ChevronDown
+                  size={14}
+                  color={isDark ? themeColors.textPrimary : colors.darkPrimary}
+                />
               )}
             </TouchableOpacity>
           )}
           <TouchableOpacity
             style={[
               styles.subscribeButton,
-              { 
-                borderColor: isDark ? (plan.featured ? themeColors.accentPrimary : themeColors.borderNormal) : colors.borderColor,
-                backgroundColor: plan.featured ? themeColors.accentPrimary : (isDark ? 'transparent' : '#FFFFFF')
-              }
+              {
+                borderColor: isDark
+                  ? plan.featured
+                    ? themeColors.accentPrimary
+                    : themeColors.borderNormal
+                  : colors.borderColor,
+                backgroundColor: plan.featured
+                  ? themeColors.accentPrimary
+                  : isDark
+                  ? 'transparent'
+                  : '#FFFFFF',
+              },
             ]}
             onPress={() => handleSubscribe(plan.nameKey)}
-            activeOpacity={0.8}
-          >
+            activeOpacity={0.8}>
             <Text
               style={[
                 styles.subscribeButtonText,
-                { color: plan.featured ? '#FFFFFF' : (isDark ? themeColors.textPrimary : colors.darkPrimary) }
-              ]}
-            >
+                {
+                  color: plan.featured
+                    ? '#FFFFFF'
+                    : isDark
+                    ? themeColors.textPrimary
+                    : colors.darkPrimary,
+                },
+              ]}>
               {t('pricing.subscribe')}
             </Text>
           </TouchableOpacity>
@@ -387,7 +497,15 @@ const Subscription = () => {
 
         {/* Expanded sub-plans */}
         {isExpanded && plan.subPlans && (
-          <View style={[styles.subPlansContainer, { borderTopColor: isDark ? themeColors.borderSubtle : colors.borderColor }]}>
+          <View
+            style={[
+              styles.subPlansContainer,
+              {
+                borderTopColor: isDark
+                  ? themeColors.borderSubtle
+                  : colors.borderColor,
+              },
+            ]}>
             {plan.subPlans.map((subPlan, idx) => {
               const subPlanPrice =
                 billingPeriod === 'yearly'
@@ -395,43 +513,98 @@ const Subscription = () => {
                   : subPlan.price;
 
               return (
-                <View key={idx} style={[styles.subPlanCard, { 
-                  backgroundColor: isDark ? themeColors.layer1 : '#F8FAFC',
-                  borderColor: isDark ? themeColors.borderSubtle : colors.borderColor
-                }]}>
-                  <Text variant="titleSmall" style={[styles.subPlanName, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+                <View
+                  key={idx}
+                  style={[
+                    styles.subPlanCard,
+                    {
+                      backgroundColor: isDark ? themeColors.layer1 : '#F8FAFC',
+                      borderColor: isDark
+                        ? themeColors.borderSubtle
+                        : colors.borderColor,
+                    },
+                  ]}>
+                  <Text
+                    variant="titleSmall"
+                    style={[
+                      styles.subPlanName,
+                      {
+                        color: isDark
+                          ? themeColors.textPrimary
+                          : colors.darkPrimary,
+                      },
+                    ]}>
                     {t(subPlan.nameKey)}
                   </Text>
-                  <Text variant="bodyMedium" style={[styles.subPlanPrice, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.subPlanPrice,
+                      {
+                        color: isDark
+                          ? themeColors.textPrimary
+                          : colors.darkPrimary,
+                      },
+                    ]}>
                     ${subPlanPrice}
                   </Text>
-                  <Text variant="bodySmall" style={[styles.subPlanPeriod, { color: isDark ? themeColors.textSecondary : colors.subText }]}>
+                  <Text
+                    variant="bodySmall"
+                    style={[
+                      styles.subPlanPeriod,
+                      {
+                        color: isDark
+                          ? themeColors.textSecondary
+                          : colors.subText,
+                      },
+                    ]}>
                     {t('common.per')} {t(currentPeriodKey)}
                   </Text>
                   <View style={styles.subPlanFeatures}>
                     {subPlan.featureKeys.map((featureKey, fidx) => (
                       <View key={fidx} style={styles.subPlanFeatureRow}>
-                        <CheckCircle2 size={12} color={themeColors.accentPrimary} />
+                        <CheckCircle2
+                          size={12}
+                          color={themeColors.accentPrimary}
+                        />
                         <Text
                           variant="bodySmall"
-                          style={[styles.subPlanFeatureText, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}
-                        >
+                          style={[
+                            styles.subPlanFeatureText,
+                            {
+                              color: isDark
+                                ? themeColors.textPrimary
+                                : colors.darkPrimary,
+                            },
+                          ]}>
                           {t(featureKey)}
                         </Text>
                       </View>
                     ))}
                   </View>
                   <TouchableOpacity
-                    style={[styles.subPlanSubscribeButton, { 
-                      borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
-                      backgroundColor: isDark ? 'transparent' : '#FFFFFF'
-                    }]}
+                    style={[
+                      styles.subPlanSubscribeButton,
+                      {
+                        borderColor: isDark
+                          ? themeColors.borderNormal
+                          : colors.borderColor,
+                        backgroundColor: isDark ? 'transparent' : '#FFFFFF',
+                      },
+                    ]}
                     onPress={() =>
                       handleSubscribe(`${plan.nameKey}-${subPlan.nameKey}`)
                     }
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.subPlanSubscribeButtonText, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+                    activeOpacity={0.8}>
+                    <Text
+                      style={[
+                        styles.subPlanSubscribeButtonText,
+                        {
+                          color: isDark
+                            ? themeColors.textPrimary
+                            : colors.darkPrimary,
+                        },
+                      ]}>
                       {t('pricing.subscribe')}
                     </Text>
                   </TouchableOpacity>
@@ -446,38 +619,59 @@ const Subscription = () => {
 
   const BillingPeriodTabs = () => (
     <View style={styles.tabsContainer}>
-      <View style={[styles.tabsWrapper, { 
-        backgroundColor: isDark ? themeColors.layer1 : '#F8FAFC',
-        borderColor: isDark ? themeColors.borderNormal : colors.borderColor
-      }]}>
+      <View
+        style={[
+          styles.tabsWrapper,
+          {
+            backgroundColor: isDark ? themeColors.layer1 : '#F8FAFC',
+            borderColor: isDark ? themeColors.borderNormal : colors.borderColor,
+          },
+        ]}>
         <TouchableOpacity
           style={[
             styles.tab,
-            billingPeriod === 'monthly' && { backgroundColor: themeColors.accentPrimary },
+            billingPeriod === 'monthly' && {
+              backgroundColor: themeColors.accentPrimary,
+            },
           ]}
-          onPress={() => setBillingPeriod('monthly')}
-        >
+          onPress={() => setBillingPeriod('monthly')}>
           <Text
             variant="labelMedium"
             style={[
               styles.tabText,
-              { color: billingPeriod === 'monthly' ? '#FFFFFF' : (isDark ? themeColors.textPrimary : colors.darkPrimary) }
-            ]}
-          >
+              {
+                color:
+                  billingPeriod === 'monthly'
+                    ? '#FFFFFF'
+                    : isDark
+                    ? themeColors.textPrimary
+                    : colors.darkPrimary,
+              },
+            ]}>
             {t('pricing.billing.monthly')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, billingPeriod === 'yearly' && { backgroundColor: themeColors.accentPrimary }]}
-          onPress={() => setBillingPeriod('yearly')}
-        >
+          style={[
+            styles.tab,
+            billingPeriod === 'yearly' && {
+              backgroundColor: themeColors.accentPrimary,
+            },
+          ]}
+          onPress={() => setBillingPeriod('yearly')}>
           <Text
             variant="labelMedium"
             style={[
               styles.tabText,
-              { color: billingPeriod === 'yearly' ? '#FFFFFF' : (isDark ? themeColors.textPrimary : colors.darkPrimary) }
-            ]}
-          >
+              {
+                color:
+                  billingPeriod === 'yearly'
+                    ? '#FFFFFF'
+                    : isDark
+                    ? themeColors.textPrimary
+                    : colors.darkPrimary,
+              },
+            ]}>
             {t('pricing.billing.yearly')}
           </Text>
           {billingPeriod === 'yearly' && (
@@ -493,21 +687,38 @@ const Subscription = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF' }]} edges={['top']}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        { backgroundColor: isDark ? themeColors.canvas : '#FFFFFF' },
+      ]}
+      edges={['top']}>
       <Header
         title={t('subscription.title')}
         subtitle={t('subscription.subtitle')}
         onLeftPress={() => navigation.goBack()}
       />
 
-      <ScrollView style={[styles.container, { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={[
+          styles.container,
+          { backgroundColor: isDark ? themeColors.canvas : '#F8FAFC' },
+        ]}
+        showsVerticalScrollIndicator={false}>
         {/* Current Subscriptions */}
         {MOCK_PLANS.length > 0 && (
           <View style={styles.section}>
-            <Text variant="titleLarge" style={[textStyles.sectionTitle, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+            <Text
+              variant="titleLarge"
+              style={[
+                textStyles.sectionTitle,
+                {
+                  color: isDark ? themeColors.textPrimary : colors.darkPrimary,
+                },
+              ]}>
               {t('subscription.title')}
             </Text>
-            {MOCK_PLANS.map(plan => (
+            {MOCK_PLANS.map((plan) => (
               <SubscribedPlanCard key={plan.id} plan={plan} />
             ))}
           </View>
@@ -515,7 +726,12 @@ const Subscription = () => {
 
         {/* Available Plans */}
         <View style={styles.section}>
-          <Text variant="titleLarge" style={[textStyles.sectionTitle, { color: isDark ? themeColors.textPrimary : colors.darkPrimary }]}>
+          <Text
+            variant="titleLarge"
+            style={[
+              textStyles.sectionTitle,
+              { color: isDark ? themeColors.textPrimary : colors.darkPrimary },
+            ]}>
             {t('subscription.availablePlansTitle')}
           </Text>
 

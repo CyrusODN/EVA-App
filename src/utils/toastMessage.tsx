@@ -21,7 +21,12 @@ const ToastLayout: React.FC<ToastLayoutProps> = ({ type, text1, text2 }) => {
       case 'error':
         return <AlertCircle size={24} color={ClinicalTheme.semantic.error} />;
       case 'info':
-        return <Info size={24} color={isDark ? '#46B7C6' : ClinicalTheme.semantic.info} />;
+        return (
+          <Info
+            size={24}
+            color={isDark ? '#46B7C6' : ClinicalTheme.semantic.info}
+          />
+        );
       default:
         return <Info size={24} color={ClinicalTheme.brand.primary} />;
     }
@@ -42,7 +47,7 @@ const ToastLayout: React.FC<ToastLayoutProps> = ({ type, text1, text2 }) => {
 
   const getBackgroundColor = () => {
     if (isDark) {
-        return 'rgba(255, 255, 255, 0.05)';
+      return 'rgba(255, 255, 255, 0.05)';
     }
     switch (type) {
       case 'success':
@@ -57,17 +62,19 @@ const ToastLayout: React.FC<ToastLayoutProps> = ({ type, text1, text2 }) => {
   };
 
   const containerStyle = [
-    styles.container, 
-    isDark ? {
-      backgroundColor: '#0D0D0D',
-      borderWidth: 1,
-      borderColor: 'rgba(70, 183, 198, 0.3)', // Delicate cyan border
-      shadowColor: '#46B7C6', // Cyan glow
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.15, // Delicate glow opacity
-      shadowRadius: 10,
-      elevation: 5,
-    } : ClinicalTheme.shadow.floating
+    styles.container,
+    isDark
+      ? {
+          backgroundColor: '#0D0D0D',
+          borderWidth: 1,
+          borderColor: 'rgba(70, 183, 198, 0.3)', // Delicate cyan border
+          shadowColor: '#46B7C6', // Cyan glow
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.15, // Delicate glow opacity
+          shadowRadius: 10,
+          elevation: 5,
+        }
+      : ClinicalTheme.shadow.floating,
   ];
 
   const titleColor = isDark ? '#FAFAFA' : ClinicalTheme.text.primary;
@@ -77,17 +84,25 @@ const ToastLayout: React.FC<ToastLayoutProps> = ({ type, text1, text2 }) => {
     <View style={containerStyle}>
       <View style={[styles.accentBar, { backgroundColor: getAccentColor() }]} />
       <View style={styles.contentContainer}>
-        <View style={[styles.iconContainer, { backgroundColor: getBackgroundColor() }]}>
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: getBackgroundColor() },
+          ]}>
           {getIcon()}
         </View>
         <View style={styles.textContainer}>
           {text1 ? (
-            <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>
+            <Text
+              style={[styles.title, { color: titleColor }]}
+              numberOfLines={1}>
               {text1}
             </Text>
           ) : null}
           {text2 ? (
-            <Text style={[styles.message, { color: messageColor }]} numberOfLines={2}>
+            <Text
+              style={[styles.message, { color: messageColor }]}
+              numberOfLines={2}>
               {text2}
             </Text>
           ) : null}
@@ -132,10 +147,10 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     // Shadow is applied via style prop from ClinicalTheme
     ...Platform.select({
-        android: {
-            elevation: 4
-        }
-    })
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   accentBar: {
     width: 4,

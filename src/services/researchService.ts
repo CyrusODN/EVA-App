@@ -14,7 +14,6 @@ export interface InitiateUploadResponse {
   data: {
     uploadId: string;
     key: string;
-    
   };
 }
 
@@ -89,7 +88,7 @@ export const initiateUpload = async (
   title: string,
   fileType: string,
   toolType: string = 'scholar',
-  token: string
+  token: string,
 ) => {
   return api.post<InitiateUploadResponse>(
     `${API_PATH}/initiate-upload`,
@@ -102,7 +101,7 @@ export const initiateUpload = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
@@ -116,7 +115,7 @@ export const uploadPart = async (
   uploadId: string,
   key: string,
   partNumber: number = 1,
-  token: string
+  token: string,
 ) => {
   const formData = new FormData();
   formData.append('uploadId', uploadId);
@@ -127,17 +126,13 @@ export const uploadPart = async (
     type: fileType,
     name: fileName,
   } as any);
-  
-  return api.post<UploadPartResponse>(
-    `${API_PATH}/upload-part`,
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-    }
-  );
+
+  return api.post<UploadPartResponse>(`${API_PATH}/upload-part`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 };
 
 /**
@@ -153,7 +148,7 @@ export const completeUpload = async (
     toolType: string;
     uploadId: string;
   },
-  token: string
+  token: string,
 ) => {
   return api.post<CompleteUploadResponse>(
     `${API_PATH}/complete-upload`,
@@ -162,7 +157,7 @@ export const completeUpload = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
@@ -173,7 +168,7 @@ export const createConversation = async (
   documentIds: string[],
   title: string,
   toolType: string = 'scholar',
-  token: string
+  token: string,
 ) => {
   return api.post<CreateConversationResponse>(
     `${ASSISTANT_PATH}/conversations`,
@@ -186,7 +181,7 @@ export const createConversation = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
@@ -197,7 +192,7 @@ export const sendMessage = async (
   conversationId: string,
   documentIds: string[],
   message: string,
-  token: string
+  token: string,
 ) => {
   return api.post<SendMessageResponse>(
     `${ASSISTANT_PATH}/conversations/${conversationId}/messages`,
@@ -209,7 +204,7 @@ export const sendMessage = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
@@ -218,7 +213,7 @@ export const sendMessage = async (
  */
 export const getPrompts = async (
   toolType: string = 'scholar',
-  token: string
+  token: string,
 ) => {
   return api.get(`/prompts?toolType=${toolType}&page=1&limit=50`, {
     headers: {
@@ -236,7 +231,7 @@ export const savePrompt = async (
     content: string;
     toolType: string;
   },
-  token: string
+  token: string,
 ) => {
   return api.post('/prompts', payload, {
     headers: {

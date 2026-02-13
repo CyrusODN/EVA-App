@@ -92,14 +92,19 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={[styles.backText, { color: themeColors.textSecondary }]}>← {t('onboarding.back')}</Text>
+          <Text style={[styles.backText, { color: themeColors.textSecondary }]}>
+            ← {t('onboarding.back')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>{t('onboarding.skip')}</Text>
+          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>
+            {t('onboarding.skip')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -124,7 +129,10 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
         {/* Segmented Control */}
         <Animated.View
           entering={FadeInDown.delay(200).duration(DURATIONS.normal)}
-          style={[styles.segmentedControl, { backgroundColor: themeColors.surface }]}>
+          style={[
+            styles.segmentedControl,
+            { backgroundColor: themeColors.surface },
+          ]}>
           {LENGTH_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.id}
@@ -132,7 +140,9 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
                 styles.segmentButton,
                 selectedLength === option.id && {
                   backgroundColor: themeColors.primary,
-                  ...(isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm),
+                  ...(isDark
+                    ? ONBOARDING_SHADOWS_DARK.sm
+                    : ONBOARDING_SHADOWS.sm),
                 },
               ]}
               onPress={() => handleSelect(option.id)}
@@ -141,7 +151,10 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
                 style={[
                   styles.segmentButtonText,
                   {
-                    color: selectedLength === option.id ? themeColors.pureWhite : themeColors.textSecondary,
+                    color:
+                      selectedLength === option.id
+                        ? themeColors.pureWhite
+                        : themeColors.textSecondary,
                     fontWeight: selectedLength === option.id ? '600' : '500',
                   },
                 ]}>
@@ -155,7 +168,10 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
         <Animated.Text
           key={`desc-${selectedLength}`}
           entering={FadeIn.duration(DURATIONS.fast)}
-          style={[styles.optionDescription, { color: themeColors.textSecondary }]}>
+          style={[
+            styles.optionDescription,
+            { color: themeColors.textSecondary },
+          ]}>
           {t(
             LENGTH_OPTIONS.find((o) => o.id === selectedLength)?.descKey || '',
           )}
@@ -167,7 +183,9 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
           style={[
             styles.previewCard,
             {
-              backgroundColor: isDark ? themeColors.surface : themeColors.pureWhite,
+              backgroundColor: isDark
+                ? themeColors.surface
+                : themeColors.pureWhite,
               borderColor: themeColors.borderLight,
             },
             isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm,
@@ -181,8 +199,17 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
             entering={FadeIn.duration(DURATIONS.normal)}
             layout={Layout.springify()}
             style={styles.previewContent}>
-            <Text style={[styles.previewTitle, { color: themeColors.textPrimary }]}>{currentExample.title}</Text>
-            <Text style={[styles.previewText, { color: themeColors.textSecondary }]}>{currentExample.content}</Text>
+            <Text
+              style={[styles.previewTitle, { color: themeColors.textPrimary }]}>
+              {currentExample.title}
+            </Text>
+            <Text
+              style={[
+                styles.previewText,
+                { color: themeColors.textSecondary },
+              ]}>
+              {currentExample.content}
+            </Text>
           </Animated.View>
         </Animated.View>
 
@@ -209,7 +236,9 @@ const NoteLengthStep: React.FC<NoteLengthStepProps> = ({
           ]}
           onPress={onContinue}
           activeOpacity={0.9}>
-          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.next')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>
+            {t('onboarding.next')}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

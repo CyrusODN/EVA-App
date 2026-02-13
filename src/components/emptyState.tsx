@@ -28,25 +28,45 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   style,
 }) => {
   const { colors: themeColors, isDark } = useTheme();
-  
+
   // Use theme colors if iconColor is not provided, or handle legacy default
-  const effectiveIconColor = iconColor || (isDark ? themeColors.textMuted : colors.surfaceDisabled);
+  const effectiveIconColor =
+    iconColor || (isDark ? themeColors.textMuted : colors.surfaceDisabled);
 
   return (
     <View style={[styles.container, style]}>
       {Icon && <Icon size={iconSize} color={effectiveIconColor} />}
       {title && (
-        <Text variant="headlineSmall" style={[styles.title, { color: isDark ? themeColors.textPrimary : colors.onSurface }]}>
+        <Text
+          variant="headlineSmall"
+          style={[
+            styles.title,
+            { color: isDark ? themeColors.textPrimary : colors.onSurface },
+          ]}>
           {title}
         </Text>
       )}
       {message && (
-        <Text variant="bodyMedium" style={[styles.message, { color: isDark ? themeColors.textSecondary : colors.onSurfaceVariant }]}>
+        <Text
+          variant="bodyMedium"
+          style={[
+            styles.message,
+            {
+              color: isDark
+                ? themeColors.textSecondary
+                : colors.onSurfaceVariant,
+            },
+          ]}>
           {message}
         </Text>
       )}
       {subtext && (
-        <Text variant="bodySmall" style={[styles.subtext, { color: isDark ? themeColors.textMuted : colors.onSurfaceVariant }]}>
+        <Text
+          variant="bodySmall"
+          style={[
+            styles.subtext,
+            { color: isDark ? themeColors.textMuted : colors.onSurfaceVariant },
+          ]}>
           {subtext}
         </Text>
       )}

@@ -10,6 +10,7 @@ const TOOLS_API_BASE_URL = 'https://tools.remedius.ai/api';
 
 export interface ConsultSession {
   _id: string;
+  sessionId: string;
   userId: string;
   projectId: string;
   title: string;
@@ -30,26 +31,42 @@ export interface PastSessionsResponse {
 export const getPastConsultSessions = async (
   userId: string,
   token: string,
-  limit: number = 20
+  limit: number = 20,
 ) => {
-  return axios.get<PastSessionsResponse>(`${TOOLS_API_BASE_URL}/consult/sessions`, {
-    params: {
-      userId,
-      projectId: 'remedius',
-      limit,
+  return axios.get<PastSessionsResponse>(
+    `${TOOLS_API_BASE_URL}/consult/sessions`,
+    {
+      params: {
+        userId,
+        projectId: 'remedius',
+        limit,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
+  );
+};
+
+export const deleteConsultSession = async (
+  sessionId: string,
+  token: string,
+) => {
+  return axios.delete(`${TOOLS_API_BASE_URL}/consult/session/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 };
 
-
-export const deleteConsultSession = async (
+/**
+ * Fetches the full chat history for a specific consult session.
+ */
+export const getConsultSessionHistory = async (
   sessionId: string,
-  token: string
+  token: string,
 ) => {
-  return axios.delete(`${TOOLS_API_BASE_URL}/consult/session/${sessionId}`, {
+  return axios.get(`${TOOLS_API_BASE_URL}/consult/session/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -78,7 +95,7 @@ export const createConsultSession = async (
   userId: string,
   specialty: string,
   token: string,
-  patientInfo: object = {}
+  patientInfo: object = {},
 ) => {
   return axios.post<CreateSessionResponse>(
     `${TOOLS_API_BASE_URL}/consult/session`,
@@ -92,7 +109,7 @@ export const createConsultSession = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 export interface ConsultMessageResponse {
@@ -119,7 +136,7 @@ export const sendConsultMessage = async (
     history?: any[];
     patientInfo?: object;
     symptoms?: string;
-  } = {}
+  } = {},
 ) => {
   return axios.post<ConsultMessageResponse>(
     `${TOOLS_API_BASE_URL}/consult/message`,
@@ -135,7 +152,7 @@ export const sendConsultMessage = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
@@ -149,7 +166,7 @@ export const sendConsultMessage = async (
 export const getPastPharmaSessions = async (
   userId: string,
   token: string,
-  limit: number = 20
+  limit: number = 20,
 ) => {
   return axios.get<PastSessionsResponse>(
     `${TOOLS_API_BASE_URL}/pharmacopedia/sessions?userId=${userId}&projectId=remedius&limit=${limit}`,
@@ -157,29 +174,25 @@ export const getPastPharmaSessions = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
-
-export const deletePharmaSession = async (
-  sessionId: string,
-  token: string
-) => {
-  return axios.delete(`${TOOLS_API_BASE_URL}/pharmacopedia/session/${sessionId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+export const deletePharmaSession = async (sessionId: string, token: string) => {
+  return axios.delete(
+    `${TOOLS_API_BASE_URL}/pharmacopedia/session/${sessionId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
-  });
+  );
 };
 
 /**
  * Creates a new pharmacopedia session.
  */
-export const createPharmaSession = async (
-  userId: string,
-  token: string
-) => {
+export const createPharmaSession = async (userId: string, token: string) => {
   return axios.post<CreateSessionResponse>(
     `${TOOLS_API_BASE_URL}/pharmacopedia/session`,
     {
@@ -190,7 +203,7 @@ export const createPharmaSession = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };
 
@@ -204,7 +217,7 @@ export const sendPharmaMessage = async (
   options: {
     additionalContext?: string;
     history?: any[];
-  } = {}
+  } = {},
 ) => {
   return axios.post<ConsultMessageResponse>(
     `${TOOLS_API_BASE_URL}/pharmacopedia/message`,
@@ -218,6 +231,6 @@ export const sendPharmaMessage = async (
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
+    },
   );
 };

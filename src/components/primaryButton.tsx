@@ -66,7 +66,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {(iconSource || IconComponent) && !loading && (
         <>
           {iconSource ? (
-            <Image source={iconSource} style={styles.leftIcon} resizeMode="contain" />
+            <Image
+              source={iconSource}
+              style={styles.leftIcon}
+              resizeMode="contain"
+            />
           ) : IconComponent ? (
             <IconComponent
               size={hp(2)}
@@ -78,7 +82,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       )}
 
       {loading ? (
-        <ActivityIndicator color={loaderColor} size="small" testID="button-loading" />
+        <ActivityIndicator
+          color={loaderColor}
+          size="small"
+          testID="button-loading"
+        />
       ) : (
         text && (
           <Text
@@ -88,8 +96,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
               {
                 color: isDisabled ? colors.onSurfaceDisabled : textColor,
               },
-            ]}
-          >
+            ]}>
             {text}
           </Text>
         )
@@ -98,7 +105,11 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       {iconRight && iconSourceRight && !loading ? (
         <>
           <View style={styles.iconSpacing} />
-          <Image source={iconSourceRight} style={styles.rightIcon} resizeMode="contain" />
+          <Image
+            source={iconSourceRight}
+            style={styles.rightIcon}
+            resizeMode="contain"
+          />
         </>
       ) : (iconSource || IconComponent) && !loading ? (
         <View style={styles.iconPlaceholder} />
@@ -106,13 +117,15 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     </View>
   );
 
-  const neonShadowStyle: ViewStyle = isDark ? {
-    shadowColor: '#46B7C6',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 15,
-    elevation: 8,
-  } : {};
+  const neonShadowStyle: ViewStyle = isDark
+    ? {
+        shadowColor: '#46B7C6',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: 15,
+        elevation: 8,
+      }
+    : {};
 
   const buttonStyle: ViewStyle = {
     borderRadius: borderRadius,
@@ -132,7 +145,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   };
 
   if (isDark && !isDisabled) {
-    // In dark mode, we can use LinearGradient for the "neon" button look if desired, 
+    // In dark mode, we can use LinearGradient for the "neon" button look if desired,
     // or just the solid background with glow. The tutorial suggests a gradient.
     // "bg-gradient-to-r from-neon-cyan to-remedy-primary"
     return (
@@ -143,8 +156,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
         activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityState={{ disabled: isDisabled }}
-        accessibilityLabel={accessibilityLabel || text}
-      >
+        accessibilityLabel={accessibilityLabel || text}>
         <LinearGradient
           colors={['#46B7C6', '#3D97C5']}
           start={{ x: 0, y: 0 }}
@@ -154,9 +166,8 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
             {
               borderRadius: borderRadius,
               borderWidth: 0,
-            }
-          ]}
-        >
+            },
+          ]}>
           {buttonContent}
         </LinearGradient>
       </TouchableOpacity>
@@ -171,8 +182,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
-      accessibilityLabel={accessibilityLabel || text}
-    >
+      accessibilityLabel={accessibilityLabel || text}>
       <View
         style={[
           styles.solidBackground,
@@ -184,8 +194,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
             borderWidth: 1,
             borderRadius: borderRadius,
           },
-        ]}
-      >
+        ]}>
         {buttonContent}
       </View>
     </TouchableOpacity>

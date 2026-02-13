@@ -88,53 +88,93 @@ const AITools = () => {
     const Icon = item.icon;
     return (
       <TouchableOpacity
-        style={[styles.toolItem, { 
-          backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-          borderColor: isDark ? themeColors.borderSubtle : 'rgba(226, 232, 240, 0.6)',
-          shadowColor: themeColors.shadowColor
-        }]}
+        style={[
+          styles.toolItem,
+          {
+            backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
+            borderColor: isDark
+              ? themeColors.borderSubtle
+              : 'rgba(226, 232, 240, 0.6)',
+            shadowColor: themeColors.shadowColor,
+          },
+        ]}
         onPress={() => navigation.navigate(item.screenName as never)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <View style={styles.toolRow}>
-          <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.15)' : 'rgba(70, 183, 198, 0.1)' }]}>
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(70, 183, 198, 0.15)'
+                  : 'rgba(70, 183, 198, 0.1)',
+              },
+            ]}>
             <Icon size={24} color={themeColors.accentPrimary} strokeWidth={2} />
           </View>
-          
+
           <View style={styles.textContainer}>
-            <Text variant="titleMedium" style={[styles.toolTitle, { color: themeColors.textPrimary }]}>
+            <Text
+              variant="titleMedium"
+              style={[styles.toolTitle, { color: themeColors.textPrimary }]}>
               {t(item.title)}
             </Text>
             <Text
               variant="bodySmall"
-              style={[styles.toolDescription, { color: themeColors.textSecondary }]}
-              numberOfLines={1}
-            >
+              style={[
+                styles.toolDescription,
+                { color: themeColors.textSecondary },
+              ]}
+              numberOfLines={1}>
               {t(item.description)}
             </Text>
           </View>
 
-          <ChevronRight size={20} color={isDark ? themeColors.textMuted : "#C7C7CC"} />
+          <ChevronRight
+            size={20}
+            color={isDark ? themeColors.textMuted : '#C7C7CC'}
+          />
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.canvas} />
-      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.canvas }]}>
+    <View
+      style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.canvas}
+      />
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: themeColors.canvas }]}>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: themeColors.canvas }]}>
           <View style={styles.headerLeft}>
             <RemedyLogoFull width={wp(40)} height={hp(4.5)} />
-            <View style={[styles.headerSeparator, { backgroundColor: isDark ? themeColors.borderNormal : '#D1D1D6' }]} />
-            <Text variant="headlineLarge" style={[styles.mioText, { color: themeColors.textPrimary }]}>
+            <View
+              style={[
+                styles.headerSeparator,
+                {
+                  backgroundColor: isDark
+                    ? themeColors.borderNormal
+                    : '#D1D1D6',
+                },
+              ]}
+            />
+            <Text
+              variant="headlineLarge"
+              style={[styles.mioText, { color: themeColors.textPrimary }]}>
               EVA
             </Text>
           </View>
         </View>
-        <View style={[styles.headerDivider, { backgroundColor: isDark ? themeColors.borderSubtle : '#E2E8F0' }]} />
+        <View
+          style={[
+            styles.headerDivider,
+            { backgroundColor: isDark ? themeColors.borderSubtle : '#E2E8F0' },
+          ]}
+        />
 
         {/* Tools List */}
         <FlatList
@@ -201,7 +241,8 @@ const styles = StyleSheet.create({
     color: '#3C3C43',
     fontSize: 20,
     lineHeight: 25,
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
     fontWeight: '300',
     letterSpacing: 6, // Proportional to smaller font size (20 vs 40 on login)
   },

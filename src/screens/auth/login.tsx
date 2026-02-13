@@ -28,7 +28,12 @@ import { images } from '../../constants/images';
 import { textStyles } from '../../constants/textStyles';
 //@ts-ignore
 import CheckBox from 'react-native-check-box';
-import { login, setAuthToken, googleMobileLogin, getAuthContext } from '../../services/authService';
+import {
+  login,
+  setAuthToken,
+  googleMobileLogin,
+  getAuthContext,
+} from '../../services/authService';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { customToast } from '../../utils/toastMessage';
 import { validateInput } from '../../utils/inputValidations';
@@ -52,7 +57,6 @@ const Login = () => {
   const passwordRef = useRef<TextInput>(null);
 
   // GoogleSignin configuration moved to handleGoogleLogin
-
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -95,24 +99,27 @@ const Login = () => {
           String(Date.now() + 24 * 60 * 60 * 1000),
         );
         try {
-            const authCtx = await getAuthContext();
-            const ctx = authCtx?.data?.data;
-            if (ctx) {
-              const userObj: any = {
-                id: ctx._id || ctx.id || ctx.userId,
-                email: ctx.email || '',
-                name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
-                profilePicture: ctx.profileImage || '',
-                role: ctx.role,
-                settings: ctx.settings,
-                whitelist: ctx.whitelist,
-                token: token,
-              };
-              userStore.getState().setAuth(userObj);
-              await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
-            }
+          const authCtx = await getAuthContext();
+          const ctx = authCtx?.data?.data;
+          if (ctx) {
+            const userObj: any = {
+              id: ctx._id || ctx.id || ctx.userId,
+              email: ctx.email || '',
+              name:
+                ctx.fname ||
+                ctx.name ||
+                (ctx.email ? String(ctx.email).split('@')[0] : ''),
+              profilePicture: ctx.profileImage || '',
+              role: ctx.role,
+              settings: ctx.settings,
+              whitelist: ctx.whitelist,
+              token: token,
+            };
+            userStore.getState().setAuth(userObj);
+            await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
+          }
         } catch (e) {
-            console.log('Failed to fetch auth context', e);
+          console.log('Failed to fetch auth context', e);
         }
 
         customToast('success', 'Success', 'Logged in successfully');
@@ -219,7 +226,8 @@ const Login = () => {
         } catch (_) {}
 
         try {
-          const webClientId = '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com'
+          const webClientId =
+            '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com';
           await GoogleSignin.configure({
             webClientId,
           });
@@ -228,14 +236,16 @@ const Login = () => {
         }
 
         try {
-      const account = await GoogleSignin.signIn();
+          const account = await GoogleSignin.signIn();
           console.log('Google Sign In Account:', account);
           if (account?.idToken) {
             idToken = account.idToken;
-            googleEmail = account?.user?.email || account?.data?.user?.email || '';
+            googleEmail =
+              account?.user?.email || account?.data?.user?.email || '';
           } else if (account?.data?.idToken) {
-             idToken = account.data.idToken;
-             googleEmail = account?.user?.email || account?.data?.user?.email || '';
+            idToken = account.data.idToken;
+            googleEmail =
+              account?.user?.email || account?.data?.user?.email || '';
           }
         } catch (error: any) {
           if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -246,7 +256,11 @@ const Login = () => {
             console.log('Sign in is in progress already');
             return;
           } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-            customToast('error', 'Error', 'Play services not available or outdated');
+            customToast(
+              'error',
+              'Error',
+              'Play services not available or outdated',
+            );
             setLoading(false);
             return;
           } else {
@@ -255,8 +269,8 @@ const Login = () => {
           }
         }
       } catch (err) {
-         // Module not found or other setup error
-         console.warn('Google Sign In setup error:', err);
+        // Module not found or other setup error
+        console.warn('Google Sign In setup error:', err);
       }
 
       if (!idToken) {
@@ -269,15 +283,21 @@ const Login = () => {
       // New API call using googleMobileLogin
       const loginPayload = {
         idToken,
-        email : googleEmail,
+        email: googleEmail,
         isSignup: false,
       };
-      console.log('Google Sign-In caught. Preparing backend payload:', JSON.stringify(loginPayload, null, 2));
+      console.log(
+        'Google Sign-In caught. Preparing backend payload:',
+        JSON.stringify(loginPayload, null, 2),
+      );
 
       const resp = await googleMobileLogin(loginPayload);
       console.log('Google Mobile Login Status:', resp.status);
-      console.log('Google Mobile Login API Response Body:', JSON.stringify(resp.data, null, 2));
-      
+      console.log(
+        'Google Mobile Login API Response Body:',
+        JSON.stringify(resp.data, null, 2),
+      );
+
       const payload = resp?.data?.data || resp?.data;
       const token = payload?.token || payload?.accessToken;
 
@@ -293,24 +313,27 @@ const Login = () => {
         );
 
         try {
-            const authCtx = await getAuthContext();
-            const ctx = authCtx?.data?.data;
-            if (ctx) {
-              const userObj: any = {
-                id: ctx._id || ctx.id || ctx.userId,
-                email: ctx.email || '',
-                name: ctx.fname || ctx.name || (ctx.email ? String(ctx.email).split('@')[0] : ''),
-                profilePicture: ctx.profileImage || '',
-                role: ctx.role,
-                settings: ctx.settings,
-                whitelist: ctx.whitelist,
-                token: token,
-              };
-              userStore.getState().setAuth(userObj);
-              await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
-            }
+          const authCtx = await getAuthContext();
+          const ctx = authCtx?.data?.data;
+          if (ctx) {
+            const userObj: any = {
+              id: ctx._id || ctx.id || ctx.userId,
+              email: ctx.email || '',
+              name:
+                ctx.fname ||
+                ctx.name ||
+                (ctx.email ? String(ctx.email).split('@')[0] : ''),
+              profilePicture: ctx.profileImage || '',
+              role: ctx.role,
+              settings: ctx.settings,
+              whitelist: ctx.whitelist,
+              token: token,
+            };
+            userStore.getState().setAuth(userObj);
+            await AsyncStorage.setItem('auth_user', JSON.stringify(userObj));
+          }
         } catch (e) {
-            console.log('Failed to fetch auth context', e);
+          console.log('Failed to fetch auth context', e);
         }
 
         customToast('success', 'Success', 'Logged in successfully');
@@ -326,7 +349,7 @@ const Login = () => {
         payload?.userId;
 
       if (reqId) {
-         navigation.replace('otpVerification', {
+        navigation.replace('otpVerification', {
           context: 'sso',
           requestId: reqId ? String(reqId) : undefined,
           email: googleEmail,
@@ -334,33 +357,35 @@ const Login = () => {
         });
         return;
       }
-      
+
       // Fallback if no token and no requestId found (unexpected state)
       customToast('error', 'Error', 'Unexpected response from server');
-
     } catch (error: any) {
       console.error('Google Mobile Login FAILED:', error);
       if (error?.response) {
-         console.error('Error Response Data:', JSON.stringify(error.response.data, null, 2));
-         console.error('Error Response Status:', error.response.status);
+        console.error(
+          'Error Response Data:',
+          JSON.stringify(error.response.data, null, 2),
+        );
+        console.error('Error Response Status:', error.response.status);
       }
 
       const message =
         error?.response?.data?.message ||
         error?.message ||
         'Failed to initiate Google login';
-        
+
       if (
         message === 'User not authorized' ||
         message.includes('not whitelisted')
       ) {
-         customToast(
+        customToast(
           'error',
           'Access Denied',
           'You are not authorized to use this service',
         );
       } else {
-         customToast('error', t('common.error'), message);
+        customToast('error', t('common.error'), message);
       }
     } finally {
       setLoading(false);
@@ -368,14 +393,15 @@ const Login = () => {
   };
 
   return (
-    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
-      <StatusBar 
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
-        backgroundColor={themeColors.canvas} 
+    <View
+      style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.canvas}
       />
-       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.topRightControls}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={toggleTheme}
             style={styles.themeToggle}
             accessibilityLabel="Toggle theme">
@@ -391,34 +417,42 @@ const Login = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + 30 },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
-              
               <View style={styles.logoWrapper}>
                 <RemedyLogo width={wp(25.5)} height={wp(25.5)} />
-                                  <View style={styles.productNameContainer}>
-                    <Text style={[
-                      styles.mioText, 
-                      { 
+                <View style={styles.productNameContainer}>
+                  <Text
+                    style={[
+                      styles.mioText,
+                      {
                         color: isDark ? '#FAFAFA' : '#1A202C',
-                        textShadowColor: isDark ? 'rgba(70, 183, 198, 0.5)' : 'transparent',
+                        textShadowColor: isDark
+                          ? 'rgba(70, 183, 198, 0.5)'
+                          : 'transparent',
                         textShadowOffset: { width: 0, height: 0 },
-                        textShadowRadius: 20
-                      }
+                        textShadowRadius: 20,
+                      },
                     ]}>
-                      EVA
-                    </Text>
-                    <Text style={[styles.mioSubText, { color: themeColors.accentPrimary }]}>
-                      {t('login.productSubtitle')}
-                    </Text>
-               </View>
+                    EVA
+                  </Text>
+                  <Text
+                    style={[
+                      styles.mioSubText,
+                      { color: themeColors.accentPrimary },
+                    ]}>
+                    {t('login.productSubtitle')}
+                  </Text>
+                </View>
               </View>
-
             </View>
 
             {/* Form Section */}
@@ -429,10 +463,14 @@ const Login = () => {
                   value={email}
                   setValue={setEmail}
                   mode="email"
-                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
-                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  backgroundColor={
+                    isDark ? themeColors.inputBackground : '#FAFAFA'
+                  }
+                  borderColor={isDark ? themeColors.inputBorder : 'transparent'}
                   textColor={themeColors.textPrimary}
-                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
+                  placeholderTextColor={
+                    isDark ? themeColors.textMuted : undefined
+                  }
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -452,10 +490,14 @@ const Login = () => {
                   value={password}
                   setValue={setPassword}
                   isPassword={true}
-                  backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
-                  borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                  backgroundColor={
+                    isDark ? themeColors.inputBackground : '#FAFAFA'
+                  }
+                  borderColor={isDark ? themeColors.inputBorder : 'transparent'}
                   textColor={themeColors.textPrimary}
-                  placeholderTextColor={isDark ? themeColors.textMuted : undefined}
+                  placeholderTextColor={
+                    isDark ? themeColors.textMuted : undefined
+                  }
                   borderRadius={14}
                   width="100%"
                   height={hp(6.2)}
@@ -483,7 +525,12 @@ const Login = () => {
                     }
                     unCheckedImage={<View style={styles.uncheckedBox} />}
                   />
-                  <Text variant="bodySmall" style={[styles.checkboxText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                  <Text
+                    variant="bodySmall"
+                    style={[
+                      styles.checkboxText,
+                      { color: isDark ? themeColors.textSecondary : '#86868b' },
+                    ]}>
                     {t('login.rememberMe')}
                   </Text>
                 </View>
@@ -497,7 +544,14 @@ const Login = () => {
               </View>
 
               {/* Sign In Button */}
-              <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
+              <View
+                style={[
+                  styles.primaryButtonWrapper,
+                  isDark && {
+                    shadowColor: themeColors.shadowColor,
+                    shadowOpacity: themeColors.shadowOpacity,
+                  },
+                ]}>
                 <PrimaryButton
                   text={t('login.signIn')}
                   onPress={handleLogin}
@@ -514,13 +568,23 @@ const Login = () => {
 
               {/* Sign Up Link */}
               <View style={styles.signUpSection}>
-                <Text variant="bodyMedium" style={[styles.noAccountText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                <Text
+                  variant="bodyMedium"
+                  style={[
+                    styles.noAccountText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   {t('login.noAccount')}{' '}
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('signUp')}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                  <Text variant="bodyMedium" style={[styles.signUpText, { color: themeColors.accentPrimary }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.signUpText,
+                      { color: themeColors.accentPrimary },
+                    ]}>
                     {t('login.signUp')}
                   </Text>
                 </TouchableOpacity>
@@ -528,7 +592,13 @@ const Login = () => {
 
               <View style={styles.orDivider}>
                 <View style={styles.dividerLine} />
-                <Text style={[styles.dividerText, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>{t('login.or')}</Text>
+                <Text
+                  style={[
+                    styles.dividerText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
+                  {t('login.or')}
+                </Text>
                 <View style={styles.dividerLine} />
               </View>
 
@@ -538,14 +608,19 @@ const Login = () => {
                   styles.googleButton,
                   {
                     backgroundColor: isDark ? themeColors.layer2 : '#FFFFFF',
-                    borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0'
-                  }
+                    borderColor: isDark ? themeColors.borderSubtle : '#F0F0F0',
+                  },
                 ]}
                 onPress={handleGoogleLogin}
                 disabled={loading}
                 activeOpacity={0.7}>
                 <Image source={images.googleIcon} style={styles.googleIcon} />
-                <Text variant="labelLarge" style={[styles.googleButtonText, { color: isDark ? themeColors.textPrimary : '#86868b' }]}>
+                <Text
+                  variant="labelLarge"
+                  style={[
+                    styles.googleButtonText,
+                    { color: isDark ? themeColors.textPrimary : '#86868b' },
+                  ]}>
                   {t('login.signInWithGoogle')}
                 </Text>
               </TouchableOpacity>
@@ -612,14 +687,14 @@ const styles = StyleSheet.create({
   },
   productNameContainer: {
     alignItems: 'center',
-
   },
   mioText: {
     fontSize: 40,
     fontWeight: '300', // Light weight
     letterSpacing: 12, // Very wide tracking
     textTransform: 'uppercase',
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
     marginBottom: 2,
   },
   mioSubText: {
@@ -627,7 +702,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 3,
     textTransform: 'uppercase',
-    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
     opacity: 0.9,
   },
   languageSelectorWrapper: {

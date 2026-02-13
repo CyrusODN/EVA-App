@@ -135,10 +135,13 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
   }));
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Skip button */}
       <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-        <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>{t('onboarding.skip')}</Text>
+        <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>
+          {t('onboarding.skip')}
+        </Text>
       </TouchableOpacity>
 
       {/* Content */}
@@ -147,12 +150,22 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
         <RemedyLogoAnimated size={100} animated delay={0} />
 
         {/* Headline */}
-        <Animated.Text style={[styles.headline, headlineStyle, { color: themeColors.textPrimary }]}>
+        <Animated.Text
+          style={[
+            styles.headline,
+            headlineStyle,
+            { color: themeColors.textPrimary },
+          ]}>
           {t('onboarding.welcome.title')}
         </Animated.Text>
 
         {/* Subtitle */}
-        <Animated.Text style={[styles.subtitle, subtitleStyle, { color: themeColors.textSecondary }]}>
+        <Animated.Text
+          style={[
+            styles.subtitle,
+            subtitleStyle,
+            { color: themeColors.textSecondary },
+          ]}>
           {t('onboarding.welcome.subtitle')}
         </Animated.Text>
 
@@ -175,7 +188,9 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
           ]}
           onPress={onContinue}
           activeOpacity={0.9}>
-          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>{t('onboarding.welcome.cta')}</Text>
+          <Text style={[styles.ctaText, { color: themeColors.pureWhite }]}>
+            {t('onboarding.welcome.cta')}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

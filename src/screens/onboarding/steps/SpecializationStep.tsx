@@ -84,14 +84,19 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
   const canContinue = selectedSpecialization !== null;
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Header with Back and Skip */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={[styles.backText, { color: themeColors.textSecondary }]}>←  {t('onboarding.back')}</Text>
+          <Text style={[styles.backText, { color: themeColors.textSecondary }]}>
+            ← {t('onboarding.back')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>{t('onboarding.skip')}</Text>
+          <Text style={[styles.skipText, { color: themeColors.textTertiary }]}>
+            {t('onboarding.skip')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -154,10 +159,14 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
           style={[
             styles.ctaButton,
             {
-              backgroundColor: canContinue ? themeColors.primary : themeColors.border,
+              backgroundColor: canContinue
+                ? themeColors.primary
+                : themeColors.border,
             },
-            canContinue && (isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow),
-            !canContinue && (isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm),
+            canContinue &&
+              (isDark ? ONBOARDING_SHADOWS_DARK.glow : ONBOARDING_SHADOWS.glow),
+            !canContinue &&
+              (isDark ? ONBOARDING_SHADOWS_DARK.sm : ONBOARDING_SHADOWS.sm),
           ]}
           onPress={onContinue}
           disabled={!canContinue}
@@ -166,8 +175,10 @@ const SpecializationStep: React.FC<SpecializationStepProps> = ({
             style={[
               styles.ctaText,
               {
-                color: canContinue ? themeColors.pureWhite : themeColors.textTertiary,
-              }
+                color: canContinue
+                  ? themeColors.pureWhite
+                  : themeColors.textTertiary,
+              },
             ]}>
             {t('onboarding.next')}
           </Text>

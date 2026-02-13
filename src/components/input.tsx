@@ -51,193 +51,227 @@ interface InputProps {
   autoCorrect?: boolean;
   accessibilityLabel?: string;
   returnKeyType?: ReturnKeyTypeOptions;
-  onSubmitEditing?: (e: NativeSyntheticEvent<TextInputSubmitEditingEventData>) => void;
+  onSubmitEditing?: (
+    e: NativeSyntheticEvent<TextInputSubmitEditingEventData>,
+  ) => void;
   blurOnSubmit?: boolean;
   style?: StyleProp<TextStyle>;
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-const Input = forwardRef<TextInput, InputProps>(({
-  placeholder = '',
-  placeholderTextColor,
-  textColor = legacyColors.onSurface,
-  backgroundColor = legacyColors.inputBackground,
-  borderColor = legacyColors.borderColor,
-  borderRadius = 12,
-  width = wp(90),
-  leftIcon = null,
-  rightIcon = null,
-  isPassword = false,
-  setError,
-  value = '',
-  setValue,
-  multiline = false,
-  height,
-  disable = false,
-  rightIconPress,
-  mode = 'text',
-  numberOfLines = 4,
-  onFocus = () => {},
-  onBlur = () => {},
-  error = false,
-  autoCapitalize = 'none',
-  autoCorrect = false,
-  accessibilityLabel,
-  returnKeyType,
-  onSubmitEditing,
-  blurOnSubmit,
-  style,
-  containerStyle,
-}, ref) => {
-  const { colors: themeColors, isDark } = useTheme();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const borderWidthAnim = useRef(new Animated.Value(1.5)).current;
+const Input = forwardRef<TextInput, InputProps>(
+  (
+    {
+      placeholder = '',
+      placeholderTextColor,
+      textColor = legacyColors.onSurface,
+      backgroundColor = legacyColors.inputBackground,
+      borderColor = legacyColors.borderColor,
+      borderRadius = 12,
+      width = wp(90),
+      leftIcon = null,
+      rightIcon = null,
+      isPassword = false,
+      setError,
+      value = '',
+      setValue,
+      multiline = false,
+      height,
+      disable = false,
+      rightIconPress,
+      mode = 'text',
+      numberOfLines = 4,
+      onFocus = () => {},
+      onBlur = () => {},
+      error = false,
+      autoCapitalize = 'none',
+      autoCorrect = false,
+      accessibilityLabel,
+      returnKeyType,
+      onSubmitEditing,
+      blurOnSubmit,
+      style,
+      containerStyle,
+    },
+    ref,
+  ) => {
+    const { colors: themeColors, isDark } = useTheme();
+    const [showPassword, setShowPassword] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+    const borderWidthAnim = useRef(new Animated.Value(1.5)).current;
 
-  const toggleShowPassword = () => {
-    setShowPassword(prevState => !prevState);
-  };
+    const toggleShowPassword = () => {
+      setShowPassword((prevState) => !prevState);
+    };
 
-  const handleChangeText = (text: string) => {
-    if (setValue) {
-      setValue(text);
-    }
-    if (setError) {
-      setError(false);
-    }
-  };
+    const handleChangeText = (text: string) => {
+      if (setValue) {
+        setValue(text);
+      }
+      if (setError) {
+        setError(false);
+      }
+    };
 
-  const handleFocus = () => {
-    setIsFocused(true);
-    onFocus();
-    Animated.timing(borderWidthAnim, {
-      toValue: 1.5,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  };
+    const handleFocus = () => {
+      setIsFocused(true);
+      onFocus();
+      Animated.timing(borderWidthAnim, {
+        toValue: 1.5,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    };
 
-  const handleBlur = () => {
-    setIsFocused(false);
-    onBlur();
-    Animated.timing(borderWidthAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  };
+    const handleBlur = () => {
+      setIsFocused(false);
+      onBlur();
+      Animated.timing(borderWidthAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    };
 
-  const dynamicBorderColor = error
-    ? (isDark ? themeColors.error : legacyColors.error)
-    : isFocused
-    ? (isDark ? themeColors.accentPrimary : legacyColors.primary)
-    : (borderColor === legacyColors.borderColor && isDark ? themeColors.inputBorder : borderColor);
+    const dynamicBorderColor = error
+      ? isDark
+        ? themeColors.error
+        : legacyColors.error
+      : isFocused
+      ? isDark
+        ? themeColors.accentPrimary
+        : legacyColors.primary
+      : borderColor === legacyColors.borderColor && isDark
+      ? themeColors.inputBorder
+      : borderColor;
 
-  const neonGlowStyle: ViewStyle = (isDark && isFocused) ? {
-    shadowColor: themeColors.accentPrimary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  } : {};
-
-  const effectiveBackgroundColor = backgroundColor === legacyColors.inputBackground && isDark 
-    ? themeColors.inputBackground 
-    : (disable ? legacyColors.surfaceDisabled : backgroundColor);
-
-  const iconPadding = wp(4);
-  const inputPaddingLeft = leftIcon ? wp(12) : wp(4);
-  const inputPaddingRight = isPassword || rightIcon ? wp(12) : wp(4);
-
-  return (
-    <Animated.View
-      style={[
-        styles.inputContainer,
-        {
-          borderColor: dynamicBorderColor,
-          borderRadius: borderRadius,
-          backgroundColor: effectiveBackgroundColor,
-          width: width as any,
-          borderWidth: borderWidthAnim as unknown as number,
-        },
-        neonGlowStyle,
-        containerStyle,
-      ]}
-    >
-      {leftIcon && (
-        <View style={[styles.leftIconContainer, { left: iconPadding }]}>
-          {leftIcon}
-        </View>
-      )}
-
-      <TextInput
-        ref={ref}
-        inputMode={mode}
-        placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor || (isDark ? themeColors.textSecondary : "rgba(74, 69, 78, 0.5)")}
-        value={value}
-        onChangeText={handleChangeText}
-        style={[
-          styles.input,
-          {
-            color: disable ? legacyColors.onSurfaceDisabled : (textColor === legacyColors.onSurface && isDark ? themeColors.textPrimary : textColor),
-            paddingLeft: inputPaddingLeft,
-            paddingRight: inputPaddingRight,
-            height: multiline ? height || hp(12) : height || hp(6.5),
-            fontSize: Platform.OS === 'ios' ? 15 : 14,
-            // paddingTop: multiline ? hp(1.5) : 0,
-          },
-          style,
-        ]}
-        secureTextEntry={isPassword && !showPassword}
-        multiline={multiline}
-        editable={!disable}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        numberOfLines={multiline ? numberOfLines : 1}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={autoCorrect}
-        accessibilityLabel={accessibilityLabel || placeholder}
-        accessibilityState={{ disabled: disable }}
-        returnKeyType={returnKeyType}
-        onSubmitEditing={onSubmitEditing}
-        blurOnSubmit={blurOnSubmit}
-      />
-
-      {(isPassword || rightIcon) && (
-        <TouchableOpacity
-          style={[styles.rightIconContainer, { right: iconPadding }]}
-          onPress={isPassword ? toggleShowPassword : rightIconPress}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isPassword
-              ? showPassword
-                ? 'Hide password'
-                : 'Show password'
-              : 'Action button'
+    const neonGlowStyle: ViewStyle =
+      isDark && isFocused
+        ? {
+            shadowColor: themeColors.accentPrimary,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.3,
+            shadowRadius: 10,
+            elevation: 5,
           }
-        >
-          {isPassword ? (
-            showPassword ? (
-              <Eye size={20} color={isDark ? themeColors.textSecondary : legacyColors.subText} />
+        : {};
+
+    const effectiveBackgroundColor =
+      backgroundColor === legacyColors.inputBackground && isDark
+        ? themeColors.inputBackground
+        : disable
+        ? legacyColors.surfaceDisabled
+        : backgroundColor;
+
+    const iconPadding = wp(4);
+    const inputPaddingLeft = leftIcon ? wp(12) : wp(4);
+    const inputPaddingRight = isPassword || rightIcon ? wp(12) : wp(4);
+
+    return (
+      <Animated.View
+        style={[
+          styles.inputContainer,
+          {
+            borderColor: dynamicBorderColor,
+            borderRadius: borderRadius,
+            backgroundColor: effectiveBackgroundColor,
+            width: width as any,
+            borderWidth: borderWidthAnim as unknown as number,
+          },
+          neonGlowStyle,
+          containerStyle,
+        ]}>
+        {leftIcon && (
+          <View style={[styles.leftIconContainer, { left: iconPadding }]}>
+            {leftIcon}
+          </View>
+        )}
+
+        <TextInput
+          ref={ref}
+          inputMode={mode}
+          placeholder={placeholder}
+          placeholderTextColor={
+            placeholderTextColor ||
+            (isDark ? themeColors.textSecondary : 'rgba(74, 69, 78, 0.5)')
+          }
+          value={value}
+          onChangeText={handleChangeText}
+          style={[
+            styles.input,
+            {
+              color: disable
+                ? legacyColors.onSurfaceDisabled
+                : textColor === legacyColors.onSurface && isDark
+                ? themeColors.textPrimary
+                : textColor,
+              paddingLeft: inputPaddingLeft,
+              paddingRight: inputPaddingRight,
+              height: multiline ? height || hp(12) : height || hp(6.5),
+              fontSize: Platform.OS === 'ios' ? 15 : 14,
+              // paddingTop: multiline ? hp(1.5) : 0,
+            },
+            style,
+          ]}
+          secureTextEntry={isPassword && !showPassword}
+          multiline={multiline}
+          editable={!disable}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          numberOfLines={multiline ? numberOfLines : 1}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          accessibilityLabel={accessibilityLabel || placeholder}
+          accessibilityState={{ disabled: disable }}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={blurOnSubmit}
+        />
+
+        {(isPassword || rightIcon) && (
+          <TouchableOpacity
+            style={[styles.rightIconContainer, { right: iconPadding }]}
+            onPress={isPassword ? toggleShowPassword : rightIconPress}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isPassword
+                ? showPassword
+                  ? 'Hide password'
+                  : 'Show password'
+                : 'Action button'
+            }>
+            {isPassword ? (
+              showPassword ? (
+                <Eye
+                  size={20}
+                  color={
+                    isDark ? themeColors.textSecondary : legacyColors.subText
+                  }
+                />
+              ) : (
+                <EyeOff
+                  size={20}
+                  color={
+                    isDark ? themeColors.textSecondary : legacyColors.subText
+                  }
+                />
+              )
             ) : (
-              <EyeOff size={20} color={isDark ? themeColors.textSecondary : legacyColors.subText} />
-            )
-          ) : (
-            rightIcon && (
-              <Image
-                resizeMode="contain"
-                style={[styles.rightIconImage, { opacity: value ? 1 : 0.4 }]}
-                source={rightIcon}
-              />
-            )
-          )}
-        </TouchableOpacity>
-      )}
-    </Animated.View>
-  );
-});
+              rightIcon && (
+                <Image
+                  resizeMode="contain"
+                  style={[styles.rightIconImage, { opacity: value ? 1 : 0.4 }]}
+                  source={rightIcon}
+                />
+              )
+            )}
+          </TouchableOpacity>
+        )}
+      </Animated.View>
+    );
+  },
+);
 
 export default Input;
 

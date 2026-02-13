@@ -63,9 +63,9 @@ const LanguageSelector = ({
   const [showModal, setShowModal] = useState(false);
 
   const currentLanguage = i18n.language as LanguageCode;
-  const currentLangConfig = SUPPORTED_LANGUAGES.find(
-    lang => lang.code === currentLanguage
-  ) || SUPPORTED_LANGUAGES[0];
+  const currentLangConfig =
+    SUPPORTED_LANGUAGES.find((lang) => lang.code === currentLanguage) ||
+    SUPPORTED_LANGUAGES[0];
 
   const handleLanguageSelect = async (langCode: LanguageCode) => {
     try {
@@ -84,16 +84,17 @@ const LanguageSelector = ({
       <>
         <TouchableOpacity
           style={[
-            styles.compactButton, 
-            { 
+            styles.compactButton,
+            {
               backgroundColor: isDark ? colors.layer2 : '#F8FAFC',
-              borderColor: isDark ? colors.borderSubtle : '#E2E8F0'
-            }
+              borderColor: isDark ? colors.borderSubtle : '#E2E8F0',
+            },
           ]}
           onPress={() => setShowModal(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.compactCode, { color: colors.textPrimary }]}>{currentLanguage.toUpperCase()}</Text>
+          activeOpacity={0.7}>
+          <Text style={[styles.compactCode, { color: colors.textPrimary }]}>
+            {currentLanguage.toUpperCase()}
+          </Text>
         </TouchableOpacity>
         {renderModal()}
       </>
@@ -107,9 +108,12 @@ const LanguageSelector = ({
         <TouchableOpacity
           style={[styles.minimalButton]}
           onPress={() => setShowModal(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.minimalText, { color: isDark ? colors.textSecondary : '#64748B' }]}>
+          activeOpacity={0.7}>
+          <Text
+            style={[
+              styles.minimalText,
+              { color: isDark ? colors.textSecondary : '#64748B' },
+            ]}>
             {currentLanguage.toUpperCase()}
           </Text>
         </TouchableOpacity>
@@ -125,17 +129,24 @@ const LanguageSelector = ({
         <TouchableOpacity
           style={[
             styles.inlineButton,
-            { 
-              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            {
+              backgroundColor: isDark
+                ? 'rgba(255,255,255,0.1)'
+                : 'rgba(0,0,0,0.05)',
               borderWidth: 1,
               borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-            }
+            },
           ]}
           onPress={() => setShowModal(true)}
-          activeOpacity={0.7}
-        >
-          <Globe size={18} color={isDark ? colors.textSecondary : "#64748B"} strokeWidth={2} />
-          <Text style={[styles.inlineText, { color: colors.textPrimary }]}>{currentLanguage.toUpperCase()}</Text>
+          activeOpacity={0.7}>
+          <Globe
+            size={18}
+            color={isDark ? colors.textSecondary : '#64748B'}
+            strokeWidth={2}
+          />
+          <Text style={[styles.inlineText, { color: colors.textPrimary }]}>
+            {currentLanguage.toUpperCase()}
+          </Text>
         </TouchableOpacity>
         {renderModal()}
       </>
@@ -149,49 +160,79 @@ const LanguageSelector = ({
         visible={showModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowModal(false)}
-      >
+        onRequestClose={() => setShowModal(false)}>
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowModal(false)}
-        >
+          onPress={() => setShowModal(false)}>
           <TouchableOpacity
-            style={[styles.modalContent, { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF' }]}
+            style={[
+              styles.modalContent,
+              { backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF' },
+            ]}
             activeOpacity={1}
-            onPress={e => e.stopPropagation()}
-          >
-            <View style={[styles.modalHeader, { borderBottomColor: isDark ? colors.borderSubtle : '#F1F5F9' }]}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.language.select')}</Text>
+            onPress={(e) => e.stopPropagation()}>
+            <View
+              style={[
+                styles.modalHeader,
+                { borderBottomColor: isDark ? colors.borderSubtle : '#F1F5F9' },
+              ]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                {t('settings.language.select')}
+              </Text>
             </View>
 
             <View style={styles.languageList}>
-              {SUPPORTED_LANGUAGES.map(lang => {
+              {SUPPORTED_LANGUAGES.map((lang) => {
                 const isSelected = lang.code === currentLanguage;
                 return (
                   <TouchableOpacity
                     key={lang.code}
                     style={[
                       styles.languageItem,
-                      isSelected && { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#F0F9FA' },
+                      isSelected && {
+                        backgroundColor: isDark
+                          ? 'rgba(70, 183, 198, 0.1)'
+                          : '#F0F9FA',
+                      },
                     ]}
                     onPress={() => handleLanguageSelect(lang.code)}
-                    activeOpacity={0.7}
-                  >
+                    activeOpacity={0.7}>
                     <View style={styles.languageInfo}>
-                      <View style={[
-                        styles.languageCodeBadge,
-                        { 
-                          backgroundColor: isDark ? colors.layer2 : '#F8FAFC',
-                          borderColor: isDark ? colors.borderSubtle : '#E2E8F0'
-                        }
-                      ]}>
-                        <Text style={[styles.languageCode, { color: isDark ? colors.textSecondary : '#64748B' }]}>{lang.code.toUpperCase()}</Text>
+                      <View
+                        style={[
+                          styles.languageCodeBadge,
+                          {
+                            backgroundColor: isDark ? colors.layer2 : '#F8FAFC',
+                            borderColor: isDark
+                              ? colors.borderSubtle
+                              : '#E2E8F0',
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.languageCode,
+                            {
+                              color: isDark ? colors.textSecondary : '#64748B',
+                            },
+                          ]}>
+                          {lang.code.toUpperCase()}
+                        </Text>
                       </View>
-                      <Text style={[styles.languageName, { color: colors.textPrimary }]}>{lang.nativeName}</Text>
+                      <Text
+                        style={[
+                          styles.languageName,
+                          { color: colors.textPrimary },
+                        ]}>
+                        {lang.nativeName}
+                      </Text>
                     </View>
                     {isSelected && (
-                      <Check size={20} color={colors.accentPrimary} strokeWidth={2.5} />
+                      <Check
+                        size={20}
+                        color={colors.accentPrimary}
+                        strokeWidth={2.5}
+                      />
                     )}
                   </TouchableOpacity>
                 );
@@ -208,29 +249,46 @@ const LanguageSelector = ({
       <TouchableOpacity
         style={[
           styles.fullButton,
-          { 
+          {
             backgroundColor: isDark ? colors.layer1 : '#FFFFFF',
-            borderColor: isDark ? colors.borderSubtle : '#E2E8F0'
-          }
+            borderColor: isDark ? colors.borderSubtle : '#E2E8F0',
+          },
         ]}
         onPress={() => setShowModal(true)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <View style={styles.fullButtonContent}>
           <View style={styles.fullButtonLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.1)' : '#F0F9FA' }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(70, 183, 198, 0.1)'
+                    : '#F0F9FA',
+                },
+              ]}>
               <Globe size={20} color={colors.accentPrimary} strokeWidth={2} />
             </View>
             <View>
               {showLabel && (
-                <Text style={[styles.fullButtonLabel, { color: colors.textSecondary }]}>{t('settings.language.label')}</Text>
+                <Text
+                  style={[
+                    styles.fullButtonLabel,
+                    { color: colors.textSecondary },
+                  ]}>
+                  {t('settings.language.label')}
+                </Text>
               )}
-              <Text style={[styles.fullButtonValue, { color: colors.textPrimary }]}>
+              <Text
+                style={[styles.fullButtonValue, { color: colors.textPrimary }]}>
                 {currentLangConfig.nativeName}
               </Text>
             </View>
           </View>
-          <Text style={[styles.fullButtonCode, { color: colors.textSecondary }]}>{currentLanguage.toUpperCase()}</Text>
+          <Text
+            style={[styles.fullButtonCode, { color: colors.textSecondary }]}>
+            {currentLanguage.toUpperCase()}
+          </Text>
         </View>
       </TouchableOpacity>
       {renderModal()}
@@ -342,7 +400,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'System',
     letterSpacing: 0.5,
   },
-  
+
   // LANGUAGE CODE BADGE - Industry standard
   languageCodeBadge: {
     width: 44,

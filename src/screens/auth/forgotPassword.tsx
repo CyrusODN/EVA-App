@@ -28,8 +28,7 @@ import { useTheme } from '../../constants/theme';
 import useThemeStore from '../../store/themeStore';
 import RemedyLogo from '../../components/RemedyLogo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {Check } from 'lucide-react-native';
-
+import { Check } from 'lucide-react-native';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -46,7 +45,7 @@ const ForgotPassword = () => {
       customToast('error', 'Error', 'Please enter your email');
       return;
     }
-    
+
     // Validate email using the utility
     const emailErrors = validateInput(email, 'email');
     if (emailErrors.length > 0) {
@@ -76,48 +75,70 @@ const ForgotPassword = () => {
   };
 
   return (
-    <View style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
-      <StatusBar 
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
-        backgroundColor={themeColors.canvas} 
+    <View
+      style={[styles.mainContainer, { backgroundColor: themeColors.canvas }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={themeColors.canvas}
       />
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={['top', 'bottom', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <ScrollView
-            contentContainerStyle={[styles.scrollContent,{paddingBottom: insets.bottom + hp(2)}]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: insets.bottom + hp(2) },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             bounces={false}>
             {/* Header Section */}
             <View style={styles.headerSection}>
               <View style={styles.logoWrapper}>
-                
                 <RemedyLogo width={wp(25.5)} height={wp(25.5)} />
                 <View style={styles.productNameContainer}>
-                  <Text style={[
-                    styles.mioText, 
-                    { 
-                      color: isDark ? '#FAFAFA' : '#1A202C',
-                      textShadowColor: isDark ? 'rgba(70, 183, 198, 0.5)' : 'transparent',
-                      textShadowOffset: { width: 0, height: 0 },
-                      textShadowRadius: 20
-                    }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.mioText,
+                      {
+                        color: isDark ? '#FAFAFA' : '#1A202C',
+                        textShadowColor: isDark
+                          ? 'rgba(70, 183, 198, 0.5)'
+                          : 'transparent',
+                        textShadowOffset: { width: 0, height: 0 },
+                        textShadowRadius: 20,
+                      },
+                    ]}>
                     EVA
                   </Text>
-                  <Text style={[styles.mioSubText, { color: themeColors.accentPrimary }]}>
+                  <Text
+                    style={[
+                      styles.mioSubText,
+                      { color: themeColors.accentPrimary },
+                    ]}>
                     {t('login.productSubtitle')}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.textWrapper}>
-                <Text variant="displayMedium" style={[styles.welcomeTitle,{color:themeColors.textPrimary}]}>
+                <Text
+                  variant="displayMedium"
+                  style={[
+                    styles.welcomeTitle,
+                    { color: themeColors.textPrimary },
+                  ]}>
                   {t('login.resetPassword')}
                 </Text>
-                <Text variant="bodyLarge" style={[styles.welcomeSubtitle,{color:isDark ? themeColors.textSecondary : '#86868b'}]}>
+                <Text
+                  variant="bodyLarge"
+                  style={[
+                    styles.welcomeSubtitle,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   {t('login.resetInstructions')}
                 </Text>
               </View>
@@ -133,10 +154,16 @@ const ForgotPassword = () => {
                       value={email}
                       setValue={setEmail}
                       mode="email"
-                      backgroundColor={isDark ? themeColors.inputBackground : "#FAFAFA"}
-                      borderColor={isDark ? themeColors.inputBorder : "transparent"}
+                      backgroundColor={
+                        isDark ? themeColors.inputBackground : '#FAFAFA'
+                      }
+                      borderColor={
+                        isDark ? themeColors.inputBorder : 'transparent'
+                      }
                       textColor={themeColors.textPrimary}
-                      placeholderTextColor={isDark ? themeColors.textMuted : undefined}
+                      placeholderTextColor={
+                        isDark ? themeColors.textMuted : undefined
+                      }
                       borderRadius={14}
                       width="100%"
                       height={hp(6.2)}
@@ -147,7 +174,14 @@ const ForgotPassword = () => {
                   </View>
 
                   {/* Send Reset Link Button */}
-                  <View style={[styles.primaryButtonWrapper, isDark && { shadowColor: themeColors.shadowColor, shadowOpacity: themeColors.shadowOpacity }]}>
+                  <View
+                    style={[
+                      styles.primaryButtonWrapper,
+                      isDark && {
+                        shadowColor: themeColors.shadowColor,
+                        shadowOpacity: themeColors.shadowOpacity,
+                      },
+                    ]}>
                     <PrimaryButton
                       text={t('login.sendResetLink')}
                       onPress={handleResetPassword}
@@ -163,21 +197,43 @@ const ForgotPassword = () => {
                 </>
               ) : (
                 // Success State
-                <View style={[styles.successContainer, { 
-                  backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.05)',
-                  paddingVertical: hp(4),
-                  paddingHorizontal: wp(5),
-                  borderRadius: 24,
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.2)',
-                }]}>
-                  <View style={[styles.successIcon, { backgroundColor: isDark ? '#4CAF50' : '#4CAF50' }]}>
+                <View
+                  style={[
+                    styles.successContainer,
+                    {
+                      backgroundColor: isDark
+                        ? 'rgba(76, 175, 80, 0.1)'
+                        : 'rgba(76, 175, 80, 0.05)',
+                      paddingVertical: hp(4),
+                      paddingHorizontal: wp(5),
+                      borderRadius: 24,
+                      borderWidth: 1,
+                      borderColor: isDark
+                        ? 'rgba(76, 175, 80, 0.3)'
+                        : 'rgba(76, 175, 80, 0.2)',
+                    },
+                  ]}>
+                  <View
+                    style={[
+                      styles.successIcon,
+                      { backgroundColor: isDark ? '#4CAF50' : '#4CAF50' },
+                    ]}>
                     <Check size={hp(5)} color="#FFFFFF" strokeWidth={3} />
                   </View>
-                  <Text variant="headlineMedium" style={[styles.successTitle, { color: themeColors.textPrimary }]}>
+                  <Text
+                    variant="headlineMedium"
+                    style={[
+                      styles.successTitle,
+                      { color: themeColors.textPrimary },
+                    ]}>
                     {t('login.resetLinkSent')}
                   </Text>
-                  <Text variant="bodyMedium" style={[styles.successSubtitle, { color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.successSubtitle,
+                      { color: isDark ? themeColors.textSecondary : '#86868b' },
+                    ]}>
                     {t('login.checkEmail')}
                   </Text>
                 </View>
@@ -188,7 +244,12 @@ const ForgotPassword = () => {
                 <TouchableOpacity
                   onPress={() => navigation.navigate('login' as never)}
                   hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}>
-                  <Text variant="bodyMedium" style={[styles.signUpText, { color: themeColors.accentPrimary }]}>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.signUpText,
+                      { color: themeColors.accentPrimary },
+                    ]}>
                     ← {t('login.backToLogin')}
                   </Text>
                 </TouchableOpacity>
@@ -197,9 +258,16 @@ const ForgotPassword = () => {
 
             {/* Footer - Pushed to bottom */}
             <View style={styles.footer}>
-              <Text variant="bodySmall" style={[styles.footerText, { color: themeColors.textMuted }]}>
+              <Text
+                variant="bodySmall"
+                style={[styles.footerText, { color: themeColors.textMuted }]}>
                 {t('login.protectedBy')}{' '}
-                <Text variant="bodySmall" style={[styles.brandText,{ color: isDark ? themeColors.textSecondary : '#86868b' }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[
+                    styles.brandText,
+                    { color: isDark ? themeColors.textSecondary : '#86868b' },
+                  ]}>
                   Remedy AI
                 </Text>
               </Text>
@@ -245,14 +313,14 @@ const styles = StyleSheet.create({
   productNameContainer: {
     alignItems: 'center',
     marginBottom: hp(3),
-
   },
   mioText: {
     fontSize: 40,
     fontWeight: '300', // Light weight
     letterSpacing: 12, // Very wide tracking
     textTransform: 'uppercase',
-    fontFamily: Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProDisplay-Light' : 'sans-serif-light',
     marginBottom: 2,
   },
   mioSubText: {
@@ -260,7 +328,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 3,
     textTransform: 'uppercase',
-    fontFamily: Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
+    fontFamily:
+      Platform.OS === 'ios' ? 'SFProText-Semibold' : 'sans-serif-medium',
     opacity: 0.9,
   },
   logo: {
@@ -331,7 +400,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: hp(2),
-    shadowColor: "#4CAF50",
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

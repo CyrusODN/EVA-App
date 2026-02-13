@@ -3,27 +3,27 @@ export const colors = {
   primary: '#46B7C6',
   lightPrimary: '#46B7C6',
   darkPrimary: '#3A9AA8',
-  
+
   // Backgrounds
   surface: '#FFFFFF',
   background: '#FAFAFA',
   backgroundSecondary: '#F7F9FB',
-  
+
   // Text Colors
   onSurface: '#000000',
   onSurfaceVariant: '#86868b',
   subText: '#86868b',
   placeholderColor: '#C7C7CC',
-  
+
   // Borders
   borderColor: '#F0F0F0',
   outline: '#E5E5EA',
   outlineVariant: '#F0F0F0',
-  
+
   // States
   surfaceDisabled: '#F0F0F0',
   onSurfaceDisabled: '#C7C7CC',
-  
+
   // Legacy colors (keep for compatibility)
   secondaryContainer: '#F0F0F0',
   tertiary: '#DAD5E0',

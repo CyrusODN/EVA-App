@@ -9,6 +9,8 @@ export interface Observation {
   content: string; // Text content or extracted text
   uri?: string; // For images/files
   fileName?: string;
+  categories?: string[];
+  tags?: string[];
   timestamp: string;
   status: ProcessingStatus;
 }
@@ -31,6 +33,19 @@ export interface EmptyState {
   logo: string;
   title: string;
   subtitle: string;
+}
+
+export interface WelcomeFeature {
+  icon:
+    | 'FileText'
+    | 'Sparkles'
+    | 'Bookmark'
+    | 'ClipboardList'
+    | 'History'
+    | 'FileCheck'
+    | 'ScrollText';
+  title: string;
+  description: string;
 }
 
 export interface ActionButton {

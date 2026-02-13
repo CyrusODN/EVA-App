@@ -12,19 +12,30 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Text } from 'react-native-paper';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from 'react-i18next';
-import { FileText, Sparkles, Bookmark, Camera, FolderOpen } from 'lucide-react-native';
+import {
+  FileText,
+  Sparkles,
+  Bookmark,
+  Camera,
+  FolderOpen,
+  ScrollText,
+} from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { pick, types } from '@react-native-documents/picker';
 import { Vibration } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNFS from 'react-native-fs';
 import dischargeService from '../../services/dischargeService';
 import { customToast } from '../../utils/toastMessage';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -44,7 +55,6 @@ import {
   type CustomPrompt,
 } from '../../components/documentAssistant';
 
-
 const PRIMARY_COLOR = '#46B7C6';
 
 const Discharge = () => {
@@ -62,13 +72,16 @@ const Discharge = () => {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
   const [showSavedSummaries, setShowSavedSummaries] = useState(false);
+  const [hasSeenSavedSummaries, setHasSeenSavedSummaries] = useState(true); // Default to true so it doesn't show on initial load
   const [customPrompts, setCustomPrompts] = useState<CustomPrompt[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveNameInput, setSaveNameInput] = useState('');
-  const [renamingSummaryId, setRenamingSummaryId] = useState<string | null>(null);
+  const [renamingSummaryId, setRenamingSummaryId] = useState<string | null>(
+    null,
+  );
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
@@ -76,7 +89,41 @@ const Discharge = () => {
   useEffect(() => {
     checkFirstTimeUser();
     fetchPrompts();
+    loadSavedSummaries();
   }, []);
+
+  // Persist saved summaries to AsyncStorage whenever they change
+  useEffect(() => {
+    if (savedSummaries.length > 0) {
+      AsyncStorage.setItem(
+        'discharge_saved_summaries',
+        JSON.stringify(savedSummaries),
+      ).catch((err) =>
+        console.log('[Discharge] Error saving summaries to storage:', err),
+      );
+    } else {
+      AsyncStorage.removeItem('discharge_saved_summaries').catch((err) =>
+        console.log('[Discharge] Error clearing summaries from storage:', err),
+      );
+    }
+  }, [savedSummaries]);
+
+  const loadSavedSummaries = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('discharge_saved_summaries');
+      if (stored) {
+        const parsed = JSON.parse(stored) as SavedSummary[];
+        setSavedSummaries(parsed);
+        console.log(
+          '[Discharge] Loaded',
+          parsed.length,
+          'saved summaries from storage',
+        );
+      }
+    } catch (error) {
+      console.log('[Discharge] Error loading saved summaries:', error);
+    }
+  };
 
   const fetchPrompts = async () => {
     setIsLoadingPrompts(true);
@@ -87,11 +134,14 @@ const Discharge = () => {
         page: 1,
         limit: 100,
       });
-      
-      console.log('[Discharge] API Raw Response Data:', JSON.stringify(response.data, null, 2));
+
+      console.log(
+        '[Discharge] API Raw Response Data:',
+        JSON.stringify(response.data, null, 2),
+      );
 
       let promptsData: any[] = [];
-      
+
       // Handle different possible response structures
       if (response.data.success) {
         if (response.data.data?.docs) {
@@ -102,7 +152,7 @@ const Discharge = () => {
           console.log('[Discharge] Found prompts directly in data');
         } else if (Array.isArray(response.data)) {
           // This case is unlikely given the ApiResponse wrapper
-          promptsData = (response.data as any);
+          promptsData = response.data as any;
           console.log('[Discharge] Found prompts directly in response.data');
         }
       }
@@ -114,13 +164,19 @@ const Discharge = () => {
           content: p.content || p.instructions || '',
           createdAt: p.createdAt || new Date().toISOString(),
         }));
-        
-        console.log('[Discharge] Successfully formatted prompts:', formattedPrompts.length);
+
+        console.log(
+          '[Discharge] Successfully formatted prompts:',
+          formattedPrompts.length,
+        );
         setCustomPrompts(formattedPrompts);
-        
+
         // Auto-select the first prompt if none selected
         if (formattedPrompts.length > 0 && !selectedPromptId) {
-          console.log('[Discharge] Auto-selecting first prompt:', formattedPrompts[0].id);
+          console.log(
+            '[Discharge] Auto-selecting first prompt:',
+            formattedPrompts[0].id,
+          );
           setSelectedPromptId(formattedPrompts[0].id);
         }
       } else {
@@ -136,7 +192,9 @@ const Discharge = () => {
 
   const checkFirstTimeUser = async () => {
     try {
-      const hasSeenWelcome = await AsyncStorage.getItem('discharge_welcome_seen');
+      const hasSeenWelcome = await AsyncStorage.getItem(
+        'discharge_welcome_seen',
+      );
       if (!hasSeenWelcome) {
         setTimeout(() => {
           setShowWelcomeModal(true);
@@ -179,7 +237,9 @@ const Discharge = () => {
     type: 'text' | 'image' | 'file',
     content: string,
     uri?: string,
-    fileName?: string
+    fileName?: string,
+    categories?: string[],
+    tags?: string[],
   ) => {
     const newObs: Observation = {
       id: Date.now().toString(),
@@ -187,30 +247,28 @@ const Discharge = () => {
       content,
       uri,
       fileName,
+      categories: categories || [],
+      tags: tags || [],
       timestamp: new Date().toISOString(),
       status: type === 'text' ? 'done' : 'processing',
     };
 
-    setObservations(prev => [...prev, newObs]);
+    setObservations((prev) => [...prev, newObs]);
     triggerHaptic('notification');
 
-    // Simulate OCR/Processing for non-text
-    if (type !== 'text') {
+    // Simulate OCR/Processing for non-text (images only - files are read directly)
+    if (type === 'image') {
       setTimeout(() => {
-        setObservations(prev =>
-          prev.map(obs =>
+        setObservations((prev) =>
+          prev.map((obs) =>
             obs.id === newObs.id
               ? {
                   ...obs,
                   status: 'done',
-                  content:
-                    obs.content ||
-                    (type === 'image'
-                      ? 'Extracted clinical data...'
-                      : 'Analyzed document content...'),
+                  content: obs.content || 'Extracted clinical data...',
                 }
-              : obs
-          )
+              : obs,
+          ),
         );
       }, 2500);
     }
@@ -221,7 +279,8 @@ const Discharge = () => {
     }, 100);
   };
 
-  const selectedPrompt = customPrompts.find(p => p.id === selectedPromptId) || null;
+  const selectedPrompt =
+    customPrompts.find((p) => p.id === selectedPromptId) || null;
 
   const handleSendText = () => {
     if (!inputText.trim()) return;
@@ -239,12 +298,22 @@ const Discharge = () => {
       });
 
       if (result.assets && result.assets[0]) {
-        addObservation('image', '', result.assets[0].uri, result.assets[0].fileName);
+        addObservation(
+          'image',
+          '',
+          result.assets[0].uri,
+          result.assets[0].fileName,
+        );
       }
     } catch (error) {
       console.log('Camera error', error);
       Alert.alert('Camera unavailable', 'Using mock image for demo.');
-      addObservation('image', '', 'https://via.placeholder.com/300', 'monitor_scan.jpg');
+      addObservation(
+        'image',
+        '',
+        'https://via.placeholder.com/300',
+        'monitor_scan.jpg',
+      );
     }
   };
 
@@ -256,7 +325,12 @@ const Discharge = () => {
       });
 
       if (result.assets && result.assets[0]) {
-        addObservation('image', '', result.assets[0].uri, result.assets[0].fileName);
+        addObservation(
+          'image',
+          '',
+          result.assets[0].uri,
+          result.assets[0].fileName,
+        );
       }
     } catch (error) {
       console.log('Gallery error', error);
@@ -270,7 +344,64 @@ const Discharge = () => {
       });
 
       if (result && result[0]) {
-        addObservation('file', '', result[0].uri, result[0].name || 'document.pdf');
+        const fileUri = result[0].uri || '';
+        const fileName = result[0].name || 'document.pdf';
+        const fileExt = fileName.split('.').pop()?.toLowerCase() || 'pdf';
+
+        // Read the file content — replicate web's FileReader behavior exactly
+        let fileContent = '';
+        try {
+          // Normalize the URI for RNFS
+          const normalizedUri =
+            Platform.OS === 'ios'
+              ? decodeURIComponent(fileUri.replace('file://', ''))
+              : fileUri;
+
+          // Step 1: Read file as base64 using RNFS (more stable than fetch for local URIs in RN)
+          const base64Content = await RNFS.readFile(normalizedUri, 'base64');
+
+          // Step 2: Convert base64 to byte array
+          const binaryStr = atob(base64Content);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+
+          // Step 3: Decode as UTF-8 with lossy replacement — exactly like FileReader.readAsText()
+          // This produces the specific "" characters seen on the web
+          const decoder = new TextDecoder('utf-8', { fatal: false });
+          fileContent = decoder.decode(bytes) || '';
+
+          console.log(
+            '[Discharge] File read successfully, content length:',
+            fileContent?.length || 0,
+          );
+        } catch (readError) {
+          console.error('[Discharge] Error reading file:', readError);
+          fileContent = `[Could not read file: ${fileName}]`;
+        }
+
+        const fullContent = `Content from file: ${fileName}\n${fileContent}`;
+
+        addObservation(
+          'file',
+          fullContent,
+          fileUri,
+          fileName,
+          ['File Upload'],
+          ['uploaded', fileExt],
+        );
+
+        // Mark as done immediately since we already read the content
+        setTimeout(() => {
+          setObservations((prev) =>
+            prev.map((obs) =>
+              obs.uri === fileUri && obs.status === 'processing'
+                ? { ...obs, status: 'done' }
+                : obs,
+            ),
+          );
+        }, 500);
       }
     } catch (error) {
       console.log('File picker error', error);
@@ -284,14 +415,17 @@ const Discharge = () => {
 
   const handleGenerateSummary = async () => {
     if (observations.length === 0) {
-      Alert.alert('No Data', 'Please add observations or scan documents first.');
+      Alert.alert(
+        'No Data',
+        'Please add observations or scan documents first.',
+      );
       return;
     }
 
     if (!selectedPromptId) {
       Alert.alert(
         t('dischargeAssistant.promptRequired.title'),
-        t('dischargeAssistant.promptRequired.message')
+        t('dischargeAssistant.promptRequired.message'),
       );
       return;
     }
@@ -301,10 +435,10 @@ const Discharge = () => {
 
     try {
       // Format observations for API
-      const formattedObservations = observations.map(obs => ({
+      const formattedObservations = observations.map((obs) => ({
         content: obs.content || '',
-        categories: [], // Add categories if available in your observation model
-        tags: [], // Add tags if available in your observation model
+        categories: obs.categories || [],
+        tags: obs.tags || [],
         timestamp: obs.timestamp,
       }));
 
@@ -313,40 +447,66 @@ const Discharge = () => {
         promptId: selectedPromptId,
       });
 
-      const response = await dischargeService.generateSummary({
+      // Log full payload details
+      const payload = {
         observations: formattedObservations,
         promptId: selectedPromptId,
-      });
+      };
+      console.log(
+        '[Discharge] Full payload:',
+        JSON.stringify(
+          {
+            ...payload,
+            observations: payload.observations.map((obs, i) => ({
+              index: i,
+              contentLength: obs.content.length,
+              contentPreview:
+                obs.content.substring(0, 200) +
+                (obs.content.length > 200 ? '...' : ''),
+              categories: obs.categories,
+              tags: obs.tags,
+              timestamp: obs.timestamp,
+            })),
+          },
+          null,
+          2,
+        ),
+      );
+
+      const response = await dischargeService.generateSummary(payload);
 
       console.log('[Discharge] Summary generation response:', response.data);
 
       if (response.data.success && response.data.data) {
         const { summaryId, summary } = response.data.data;
-        
+
         // Add prompt header for context
         const promptHeader = selectedPrompt
-          ? `**Prompt Applied:** ${selectedPrompt.title}\n\n`
+          ? `**${t('dischargeAssistant.promptApplied')}:** ${
+              selectedPrompt.title
+            }\n\n`
           : '';
-        
+
         setGeneratedSummary(`${promptHeader}${summary}`);
         setShowSynthesis(true);
         triggerHaptic('notification');
-        
-        console.log('[Discharge] Summary generated successfully. ID:', summaryId);
+
+        console.log(
+          '[Discharge] Summary generated successfully. ID:',
+          summaryId,
+        );
       } else {
         throw new Error('Invalid response format');
       }
     } catch (error: any) {
       console.error('[Discharge] Error generating summary:', error);
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Failed to generate summary. Please try again.';
-      
-      Alert.alert(
-        t('common.error'),
-        errorMessage
-      );
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to generate summary. Please try again.';
+
+      Alert.alert(t('common.error'), errorMessage);
     } finally {
       setIsSynthesizing(false);
     }
@@ -354,9 +514,12 @@ const Discharge = () => {
 
   const handleSaveSummary = () => {
     if (!generatedSummary.trim()) return;
+    // Close the summary preview modal first
+    setShowSynthesis(false);
+    // Then show the save name dialog
     setSaveNameInput(`Discharge Summary ${savedSummaries.length + 1}`);
     setRenamingSummaryId(null);
-    setShowSaveDialog(true);
+    setTimeout(() => setShowSaveDialog(true), 300);
   };
 
   const handleSelectSavedSummary = (summary: SavedSummary) => {
@@ -370,15 +533,31 @@ const Discharge = () => {
     if (!name) {
       Alert.alert(
         t('dischargeAssistant.savedSummaries.nameRequiredTitle'),
-        t('dischargeAssistant.savedSummaries.nameRequiredMessage')
+        t('dischargeAssistant.savedSummaries.nameRequiredMessage'),
       );
       return;
     }
 
     if (renamingSummaryId) {
-      setSavedSummaries(prev =>
-        prev.map(item => (item.id === renamingSummaryId ? { ...item, title: name } : item))
+      const updatedSummaries = savedSummaries.map((item) =>
+        item.id === renamingSummaryId ? { ...item, title: name } : item,
       );
+      setSavedSummaries(updatedSummaries);
+
+      // Explicitly persist to ensure immediate update in AsyncStorage
+      AsyncStorage.setItem(
+        'discharge_saved_summaries',
+        JSON.stringify(updatedSummaries),
+      ).catch((err) =>
+        console.log('[Discharge] Error updating name in storage:', err),
+      );
+
+      customToast(
+        'success',
+        t('common.success'),
+        'Summary renamed successfully',
+      );
+      setShowSavedSummaries(false);
     } else {
       const newSummary: SavedSummary = {
         id: Date.now().toString(),
@@ -386,9 +565,24 @@ const Discharge = () => {
         createdAt: new Date().toISOString(),
         content: generatedSummary,
       };
-      setSavedSummaries(prev => [newSummary, ...prev]);
+      const updatedSummaries = [newSummary, ...savedSummaries];
+      setSavedSummaries(updatedSummaries);
+
+      // Handle persistence for new item
+      AsyncStorage.setItem(
+        'discharge_saved_summaries',
+        JSON.stringify(updatedSummaries),
+      ).catch((err) =>
+        console.log('[Discharge] Error saving new summary to storage:', err),
+      );
+
+      setHasSeenSavedSummaries(false); // New summary saved, show badge
       triggerHaptic('notification');
-      Alert.alert(t('dischargeAssistant.savedSummaries.savedSuccess'));
+      customToast(
+        'success',
+        t('common.success'),
+        t('dischargeAssistant.savedSummaries.savedSuccess'),
+      );
     }
 
     setShowSaveDialog(false);
@@ -400,16 +594,34 @@ const Discharge = () => {
     name: string;
     instructions: string;
     refinedPrompt: string;
+    serverPrompt?: any;
   }) => {
-    const newPrompt: CustomPrompt = {
-      id: Date.now().toString(),
-      title: template.name,
-      content: template.refinedPrompt,
-      createdAt: new Date().toISOString(),
-    };
-    setCustomPrompts(prev => [newPrompt, ...prev]);
+    // If we have a server prompt, use its data (including the real ID)
+    const newPrompt: CustomPrompt = template.serverPrompt
+      ? {
+          id: template.serverPrompt._id,
+          title: template.serverPrompt.title,
+          content: template.serverPrompt.content,
+          createdAt: template.serverPrompt.createdAt,
+        }
+      : {
+          id: Date.now().toString(),
+          title: template.name,
+          content: template.refinedPrompt,
+          createdAt: new Date().toISOString(),
+        };
+
+    setCustomPrompts((prev) => [newPrompt, ...prev]);
     setSelectedPromptId(newPrompt.id);
     triggerHaptic('notification');
+
+    // Fetch the latest prompts from the backend to ensure the list is in sync
+    // This prevents errors when trying to use a newly created template
+    setTimeout(async () => {
+      await fetchPrompts();
+      // Ensure the new prompt is still selected after refresh if the ID matched
+      setSelectedPromptId(newPrompt.id);
+    }, 300);
   };
 
   const handleSelectPrompt = (prompt: CustomPrompt) => {
@@ -421,10 +633,10 @@ const Discharge = () => {
     try {
       const response = await dischargeService.deletePrompt(id);
       if (response.data.success) {
-        setCustomPrompts(prev => prev.filter(p => p.id !== id));
+        setCustomPrompts((prev) => prev.filter((p) => p.id !== id));
         if (selectedPromptId === id) setSelectedPromptId(null);
         customToast('success', 'Template deleted successfully');
-        console.log('Template deleted successfully',response.data);
+        console.log('Template deleted successfully', response.data);
       }
     } catch (error) {
       console.error('Error deleting prompt:', error);
@@ -433,6 +645,7 @@ const Discharge = () => {
   };
 
   const handleRenameSummary = (id: string, currentTitle: string) => {
+    setShowSavedSummaries(false);
     setRenamingSummaryId(id);
     setSaveNameInput(currentTitle);
     setShowSaveDialog(true);
@@ -441,31 +654,42 @@ const Discharge = () => {
   const handleDeleteSummary = (id: string, title: string) => {
     Alert.alert(
       t('dischargeAssistant.summaryHistory.deleteTitle'),
-      t('dischargeAssistant.summaryHistory.deleteMessage').replace('{{title}}', title),
+      t('dischargeAssistant.summaryHistory.deleteMessage').replace(
+        '{{title}}',
+        title,
+      ),
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { 
-          text: t('common.delete'), 
+        {
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               const response = await dischargeService.deleteSummary(id);
               if (response.data.success) {
-                setSavedSummaries(prev => prev.filter(s => s.id !== id));
-                customToast('success', t('common.success'), t('dischargeAssistant.summaryHistory.deleteSuccess'));
+                setSavedSummaries((prev) => prev.filter((s) => s.id !== id));
+                customToast(
+                  'success',
+                  t('common.success'),
+                  t('dischargeAssistant.summaryHistory.deleteSuccess'),
+                );
               }
             } catch (error) {
               console.log('Error deleting summary:', error);
-              customToast('error', t('common.error'), t('dischargeAssistant.summaryHistory.deleteError'));
+              customToast(
+                'error',
+                t('common.error'),
+                t('dischargeAssistant.summaryHistory.deleteError'),
+              );
             }
-          }
+          },
         },
-      ]
+      ],
     );
   };
 
   const handleDeleteObservation = (id: string) => {
-    setObservations(prev => prev.filter(obs => obs.id !== id));
+    setObservations((prev) => prev.filter((obs) => obs.id !== id));
     triggerHaptic('impact');
   };
 
@@ -483,109 +707,139 @@ const Discharge = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: DYNAMIC_THEME.background }]} edges={['top']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: DYNAMIC_THEME.background }]}
+      edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-      <View style={styles.mainContainer}>
-        {/* Header */}
-        <View style={styles.headerWrapper}>
-          <Header
-            title={t('dischargeAssistant.headerTitle')}
-            subtitle={t('dischargeAssistant.headerSubtitle')}
-            onLeftPress={handleBackPress}
-            icon={FileText}
-            showIcon={false}
-            backgroundColor={DYNAMIC_THEME.background}
-            showBorder={true}
-            textColor={PRIMARY_COLOR}
-          />
-          <View style={styles.headerRightButtons}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => setShowPromptLibrary(true)}
-            >
-              <Sparkles size={20} color={PRIMARY_COLOR} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.headerButton} onPress={() => setShowSavedSummaries(true)}>
-              <Bookmark size={20} color={PRIMARY_COLOR} />
-              {savedSummaries.length > 0 && (
-                <View style={[styles.savedBadge, { backgroundColor: isDark ? 'rgba(70, 183, 198, 0.2)' : '#E0F2F5' }]}>
-                  <Text style={styles.savedBadgeText}>{savedSummaries.length}</Text>
-                </View>
+        style={styles.keyboardView}>
+        <View style={styles.mainContainer}>
+          {/* Header */}
+          <View style={styles.headerWrapper}>
+            <Header
+              title={t('dischargeAssistant.headerTitle')}
+              subtitle={t('dischargeAssistant.headerSubtitle')}
+              onLeftPress={handleBackPress}
+              icon={FileText}
+              showIcon={false}
+              backgroundColor={DYNAMIC_THEME.background}
+              showBorder={true}
+              textColor={PRIMARY_COLOR}
+            />
+            <View style={styles.headerRightButtons}>
+              {generatedSummary.trim().length > 0 && (
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  onPress={() => setShowSynthesis(true)}>
+                  <ScrollText size={20} color={PRIMARY_COLOR} />
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => {
+                  fetchPrompts();
+                  setShowPromptLibrary(true);
+                }}>
+                <Sparkles size={20} color={PRIMARY_COLOR} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => {
+                  setHasSeenSavedSummaries(true);
+                  setShowSavedSummaries(true);
+                }}>
+                <Bookmark size={20} color={PRIMARY_COLOR} />
+                {savedSummaries.length > 0 && !hasSeenSavedSummaries && (
+                  <View
+                    style={[
+                      styles.savedBadge,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(70, 183, 198, 0.2)'
+                          : '#E0F2F5',
+                      },
+                    ]}>
+                    <Text style={styles.savedBadgeText}>
+                      {savedSummaries.length}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
+
+          {/* Timeline */}
+          <ObservationTimeline
+            items={observations}
+            emptyState={{
+              title: t('dischargeAssistant.emptyState.title'),
+              subtitle: t('dischargeAssistant.emptyState.subtitle'),
+            }}
+            primaryColor={PRIMARY_COLOR}
+            scrollViewRef={scrollViewRef}
+            statusTexts={{
+              analyzingPixelData: t(
+                'dischargeAssistant.status.analyzingPixelData',
+              ),
+              analyzingDocument: t(
+                'dischargeAssistant.status.analyzingDocument',
+              ),
+            }}
+            onDelete={handleDeleteObservation}
+          />
+
+          {/* Generate Button (Floating) */}
+          {observations.length > 0 && !isSynthesizing && (
+            <View style={styles.floatingButtonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.generateButton,
+                  {
+                    backgroundColor: PRIMARY_COLOR,
+                    ...(isDark
+                      ? {
+                          shadowColor: PRIMARY_COLOR,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.5,
+                          shadowRadius: 15,
+                        }
+                      : {
+                          shadowColor: PRIMARY_COLOR,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.25,
+                          shadowRadius: 8,
+                        }),
+                  },
+                ]}
+                onPress={handleGenerateSummary}
+                activeOpacity={0.9}>
+                <Sparkles size={18} color="white" style={{ marginRight: 8 }} />
+                <Text style={styles.generateText}>Generate Summary</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Loading Overlay for Synthesis */}
+          {isSynthesizing && (
+            <View style={styles.synthesizingContainer}>
+              <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+              <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>
+                Synthesizing clinical data...
+              </Text>
+            </View>
+          )}
+
+          {/* Input Bar */}
+          <SmartInputBar
+            inputText={inputText}
+            onChangeText={setInputText}
+            onSendText={handleSendText}
+            onPlusPress={handlePlusPress}
+            placeholder={t('dischargeAssistant.inputBar.placeholder')}
+            insets={insets}
+            primaryColor={PRIMARY_COLOR}
+          />
         </View>
-
-        {/* Timeline */}
-        <ObservationTimeline
-          items={observations}
-          emptyState={{
-            title: t('dischargeAssistant.emptyState.title'),
-            subtitle: t('dischargeAssistant.emptyState.subtitle'),
-          }}
-          primaryColor={PRIMARY_COLOR}
-          scrollViewRef={scrollViewRef}
-          statusTexts={{
-            analyzingPixelData: t('dischargeAssistant.status.analyzingPixelData'),
-            analyzingDocument: t('dischargeAssistant.status.analyzingDocument'),
-          }}
-          onDelete={handleDeleteObservation}
-        />
-
-        {/* Generate Button (Floating) */}
-        {observations.length > 0 && !isSynthesizing && (
-          <View style={styles.floatingButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                {
-                  backgroundColor: PRIMARY_COLOR,
-                  ...(isDark ? {
-                    shadowColor: PRIMARY_COLOR,
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 15,
-                  } : {
-                    shadowColor: PRIMARY_COLOR,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 8,
-                  })
-                }
-              ]}
-              onPress={handleGenerateSummary}
-              activeOpacity={0.9}
-            >
-              <Sparkles size={18} color="white" style={{ marginRight: 8 }} />
-              <Text style={styles.generateText}>Generate Summary</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Loading Overlay for Synthesis */}
-        {isSynthesizing && (
-          <View style={styles.synthesizingContainer}>
-            <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-            <Text style={[styles.synthesizingText, { color: PRIMARY_COLOR }]}>
-              Synthesizing clinical data...
-            </Text>
-          </View>
-        )}
-
-        {/* Input Bar */}
-        <SmartInputBar
-          inputText={inputText}
-          onChangeText={setInputText}
-          onSendText={handleSendText}
-          onPlusPress={handlePlusPress}
-          placeholder={t('dischargeAssistant.inputBar.placeholder')}
-          insets={insets}
-          primaryColor={PRIMARY_COLOR}
-        />
-      </View>
       </KeyboardAvoidingView>
 
       {/* Summary View Modal */}
@@ -630,6 +884,7 @@ const Discharge = () => {
         onDeletePrompt={handleDeletePrompt}
         onSavePrompt={handleSaveMagicTemplate}
         isLoading={isLoadingPrompts}
+        onRefresh={fetchPrompts}
       />
 
       {/* Welcome Modal - First Time User */}
@@ -640,72 +895,165 @@ const Discharge = () => {
         description={t('dischargeAssistant.welcomeModal.description')}
         buttonText={t('dischargeAssistant.welcomeModal.button')}
         iconColor={PRIMARY_COLOR}
+        features={
+          t('dischargeAssistant.welcomeModal.features', {
+            returnObjects: true,
+          }) as any
+        }
       />
 
       {/* Attachment Modal */}
-      <Modal visible={showAttachmentModal} transparent animationType="fade" onRequestClose={() => setShowAttachmentModal(false)}>
+      <Modal
+        visible={showAttachmentModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAttachmentModal(false)}>
         <TouchableWithoutFeedback onPress={() => setShowAttachmentModal(false)}>
           <View style={styles.attachmentModalOverlay}>
             <TouchableWithoutFeedback>
-              <View style={[styles.attachmentModalContent, { backgroundColor: DYNAMIC_THEME.background }]}>
+              <View
+                style={[
+                  styles.attachmentModalContent,
+                  { backgroundColor: DYNAMIC_THEME.background },
+                ]}>
                 <View style={styles.attachmentModalHeader}>
-                  <View style={[styles.attachmentModalHandle, { backgroundColor: DYNAMIC_THEME.border }]} />
+                  <View
+                    style={[
+                      styles.attachmentModalHandle,
+                      { backgroundColor: DYNAMIC_THEME.border },
+                    ]}
+                  />
                 </View>
-                
+
                 <View style={styles.attachmentOptionsContainer}>
                   <TouchableOpacity
-                    style={[styles.attachmentOption, { backgroundColor: DYNAMIC_THEME.surface }]}
+                    style={[
+                      styles.attachmentOption,
+                      { backgroundColor: DYNAMIC_THEME.surface },
+                    ]}
                     onPress={() => {
                       setShowAttachmentModal(false);
                       setTimeout(() => handleFile(), 300);
                     }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: 'rgba(139, 92, 246, 0.15)' }]}>
+                    activeOpacity={0.7}>
+                    <View
+                      style={[
+                        styles.attachmentOptionIcon,
+                        { backgroundColor: 'rgba(139, 92, 246, 0.15)' },
+                      ]}>
                       <FileText size={24} color="#8B5CF6" strokeWidth={2} />
                     </View>
-                    <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.text }]}>{t('dischargeAssistant.actions.files')}</Text>
+                    <Text
+                      style={[
+                        styles.attachmentOptionLabel,
+                        { color: DYNAMIC_THEME.text },
+                      ]}>
+                      {t('dischargeAssistant.actions.files')}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[
-                      styles.attachmentOption, 
-                      { backgroundColor: DYNAMIC_THEME.surface, opacity: 0.7 }
+                      styles.attachmentOption,
+                      { backgroundColor: DYNAMIC_THEME.surface, opacity: 0.7 },
                     ]}
                     onPress={() => {}}
                     activeOpacity={1}
-                    disabled={true}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: DYNAMIC_THEME.surfaceAlt }]}>
-                      <Camera size={24} color={DYNAMIC_THEME.inactive} strokeWidth={2} />
+                    disabled={true}>
+                    <View
+                      style={[
+                        styles.attachmentOptionIcon,
+                        { backgroundColor: DYNAMIC_THEME.surfaceAlt },
+                      ]}>
+                      <Camera
+                        size={24}
+                        color={DYNAMIC_THEME.inactive}
+                        strokeWidth={2}
+                      />
                     </View>
-                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.inactive }]}>{t('dischargeAssistant.actions.scanDocuments')}</Text>
-                      <Text style={{ fontSize: 12, color: DYNAMIC_THEME.brand, fontWeight: '600' }}>Coming soon</Text>
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={[
+                          styles.attachmentOptionLabel,
+                          { color: DYNAMIC_THEME.inactive },
+                        ]}>
+                        {t('dischargeAssistant.actions.scanDocuments')}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: DYNAMIC_THEME.brand,
+                          fontWeight: '600',
+                        }}>
+                        Coming soon
+                      </Text>
                     </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[
-                      styles.attachmentOption, 
-                      { backgroundColor: DYNAMIC_THEME.surface, opacity: 0.7 }
+                      styles.attachmentOption,
+                      { backgroundColor: DYNAMIC_THEME.surface, opacity: 0.7 },
                     ]}
                     onPress={() => {}}
                     activeOpacity={1}
-                    disabled={true}
-                  >
-                    <View style={[styles.attachmentOptionIcon, { backgroundColor: DYNAMIC_THEME.surfaceAlt }]}>
-                      <FolderOpen size={24} color={DYNAMIC_THEME.inactive} strokeWidth={2} />
+                    disabled={true}>
+                    <View
+                      style={[
+                        styles.attachmentOptionIcon,
+                        { backgroundColor: DYNAMIC_THEME.surfaceAlt },
+                      ]}>
+                      <FolderOpen
+                        size={24}
+                        color={DYNAMIC_THEME.inactive}
+                        strokeWidth={2}
+                      />
                     </View>
-                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={[styles.attachmentOptionLabel, { color: DYNAMIC_THEME.inactive }]}>{t('dischargeAssistant.actions.gallery')}</Text>
-                      <Text style={{ fontSize: 12, color: DYNAMIC_THEME.brand, fontWeight: '600' }}>Coming soon</Text>
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={[
+                          styles.attachmentOptionLabel,
+                          { color: DYNAMIC_THEME.inactive },
+                        ]}>
+                        {t('dischargeAssistant.actions.gallery')}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: DYNAMIC_THEME.brand,
+                          fontWeight: '600',
+                        }}>
+                        Coming soon
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={[styles.attachmentCancelButton, { backgroundColor: DYNAMIC_THEME.surfaceAlt }]} onPress={() => setShowAttachmentModal(false)}>
-                  <Text style={[styles.attachmentCancelText, { color: DYNAMIC_THEME.textSecondary }]}>{t('dischargeAssistant.actions.cancel')}</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.attachmentCancelButton,
+                    { backgroundColor: DYNAMIC_THEME.surfaceAlt },
+                  ]}
+                  onPress={() => setShowAttachmentModal(false)}>
+                  <Text
+                    style={[
+                      styles.attachmentCancelText,
+                      { color: DYNAMIC_THEME.textSecondary },
+                    ]}>
+                    {t('dischargeAssistant.actions.cancel')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
@@ -715,8 +1063,19 @@ const Discharge = () => {
 
       {/* Save/Rename Dialog */}
       {showSaveDialog && (
-        <View style={[styles.dialogOverlay, { backgroundColor: DYNAMIC_THEME.overlay }]}>
-          <View style={[styles.dialogCard, { backgroundColor: DYNAMIC_THEME.background, borderColor: DYNAMIC_THEME.border }]}>
+        <View
+          style={[
+            styles.dialogOverlay,
+            { backgroundColor: DYNAMIC_THEME.overlay },
+          ]}>
+          <View
+            style={[
+              styles.dialogCard,
+              {
+                backgroundColor: DYNAMIC_THEME.background,
+                borderColor: DYNAMIC_THEME.border,
+              },
+            ]}>
             <Text style={[styles.dialogTitle, { color: DYNAMIC_THEME.text }]}>
               {renamingSummaryId
                 ? t('dischargeAssistant.savedSummaries.renameTitle')
@@ -729,16 +1088,26 @@ const Discharge = () => {
                   borderColor: DYNAMIC_THEME.border,
                   color: DYNAMIC_THEME.text,
                   backgroundColor: DYNAMIC_THEME.surface,
-                }
+                },
               ]}
-              placeholder={t('dischargeAssistant.savedSummaries.namePlaceholder')}
-              placeholderTextColor={isDark ? themeColors.textMuted : colors.onSurfaceVariant}
+              placeholder={t(
+                'dischargeAssistant.savedSummaries.namePlaceholder',
+              )}
+              placeholderTextColor={
+                isDark ? themeColors.textMuted : colors.onSurfaceVariant
+              }
               value={saveNameInput}
               onChangeText={setSaveNameInput}
             />
             <View style={styles.dialogActions}>
               <TouchableOpacity onPress={() => setShowSaveDialog(false)}>
-                <Text style={[styles.dialogCancel, { color: DYNAMIC_THEME.textSecondary }]}>{t('dischargeAssistant.actions.cancel')}</Text>
+                <Text
+                  style={[
+                    styles.dialogCancel,
+                    { color: DYNAMIC_THEME.textSecondary },
+                  ]}>
+                  {t('dischargeAssistant.actions.cancel')}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleConfirmSaveName}>
                 <Text style={styles.dialogConfirm}>
@@ -762,8 +1131,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   keyboardView: {
-  flex: 1,
-},
+    flex: 1,
+  },
   mainContainer: {
     flex: 1,
     display: 'flex',

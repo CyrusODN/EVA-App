@@ -41,7 +41,7 @@ const PulsingAILogo: React.FC = () => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
 
     pulse.start();
@@ -53,21 +53,17 @@ const PulsingAILogo: React.FC = () => {
 
   return (
     <View style={styles.aiLogoContainer}>
-      <Animated.View 
+      <Animated.View
         style={[
-          styles.aiLogoInner, 
-          { 
+          styles.aiLogoInner,
+          {
             backgroundColor: isDark ? themeColors.layer1 : '#FFFFFF',
             transform: [{ scale: pulseAnim }],
-            shadowColor: isDark ? themeColors.textPrimary : '#000', 
-            shadowOpacity: isDark ? 0.2 : 0.1
-          }
-        ]}
-      >
-        <RNImage 
-          source={{ uri: CHATBOT_AVATAR }} 
-          style={styles.avatarImage}
-        />
+            shadowColor: isDark ? themeColors.textPrimary : '#000',
+            shadowOpacity: isDark ? 0.2 : 0.1,
+          },
+        ]}>
+        <RNImage source={{ uri: CHATBOT_AVATAR }} style={styles.avatarImage} />
       </Animated.View>
     </View>
   );
@@ -122,7 +118,9 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
       <View key={item.id} style={styles.streamItemContainer}>
         {/* Left Icon */}
         <View style={styles.streamIconContainer}>
-          {item.type === 'text' && <AlignJustify size={20} color={DYNAMIC_THEME.iconDefault} />}
+          {item.type === 'text' && (
+            <AlignJustify size={20} color={DYNAMIC_THEME.iconDefault} />
+          )}
           {item.type === 'image' && <Monitor size={20} color={primaryColor} />}
           {item.type === 'file' && <File size={20} color={primaryColor} />}
         </View>
@@ -130,18 +128,37 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
         {/* Content */}
         <View style={styles.streamContentContainer}>
           {item.type === 'text' && (
-            <Text style={[styles.streamText, { color: DYNAMIC_THEME.text }]} numberOfLines={3} ellipsizeMode="tail">
+            <Text
+              style={[styles.streamText, { color: DYNAMIC_THEME.text }]}
+              numberOfLines={3}
+              ellipsizeMode="tail">
               {item.content}
             </Text>
           )}
 
           {isImage && (
             <View>
-              <View style={[styles.thumbnailWrapper, { backgroundColor: DYNAMIC_THEME.thumbnailBg, borderColor: DYNAMIC_THEME.thumbnailBorder }]}>
+              <View
+                style={[
+                  styles.thumbnailWrapper,
+                  {
+                    backgroundColor: DYNAMIC_THEME.thumbnailBg,
+                    borderColor: DYNAMIC_THEME.thumbnailBorder,
+                  },
+                ]}>
                 {item.uri ? (
-                  <RNImage source={{ uri: item.uri }} style={styles.thumbnailImage} resizeMode="cover" />
+                  <RNImage
+                    source={{ uri: item.uri }}
+                    style={styles.thumbnailImage}
+                    resizeMode="cover"
+                  />
                 ) : (
-                  <View style={[styles.thumbnailImage, { backgroundColor: DYNAMIC_THEME.thumbnailBg }]} />
+                  <View
+                    style={[
+                      styles.thumbnailImage,
+                      { backgroundColor: DYNAMIC_THEME.thumbnailBg },
+                    ]}
+                  />
                 )}
                 {item.status === 'processing' && (
                   <View style={styles.processingOverlay}>
@@ -149,7 +166,11 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
                   </View>
                 )}
               </View>
-              <Text style={[styles.statusText, { color: DYNAMIC_THEME.textSecondary }]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: DYNAMIC_THEME.textSecondary },
+                ]}>
                 {item.status === 'processing'
                   ? statusTexts.analyzingPixelData
                   : 'Monitor Screen • Captured'}
@@ -159,11 +180,29 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
 
           {isFile && (
             <View>
-              <View style={[styles.fileCard, { backgroundColor: DYNAMIC_THEME.fileCardBg, borderColor: DYNAMIC_THEME.fileCardBorder }]}>
+              <View
+                style={[
+                  styles.fileCard,
+                  {
+                    backgroundColor: DYNAMIC_THEME.fileCardBg,
+                    borderColor: DYNAMIC_THEME.fileCardBorder,
+                  },
+                ]}>
                 <File size={16} color={DYNAMIC_THEME.iconDefault} />
-                <Text style={[styles.fileName, { color: DYNAMIC_THEME.fileCardText }]} numberOfLines={1}>{item.fileName}</Text>
+                <Text
+                  style={[
+                    styles.fileName,
+                    { color: DYNAMIC_THEME.fileCardText },
+                  ]}
+                  numberOfLines={1}>
+                  {item.fileName}
+                </Text>
               </View>
-              <Text style={[styles.statusText, { color: DYNAMIC_THEME.textSecondary }]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: DYNAMIC_THEME.textSecondary },
+                ]}>
                 {item.status === 'processing'
                   ? statusTexts.analyzingDocument
                   : 'Document • Processed'}
@@ -174,16 +213,22 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
 
         {/* Time & Delete */}
         <View style={styles.rightContainer}>
-          <Text style={[styles.streamTime, { color: DYNAMIC_THEME.textSecondary }]}>
-            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <Text
+            style={[styles.streamTime, { color: DYNAMIC_THEME.textSecondary }]}>
+            {new Date(item.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </Text>
           {onDelete && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => onDelete(item.id)}
               style={styles.deleteButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Trash2 size={16} color={isDark ? themeColors.error : '#FF3B30'} />
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Trash2
+                size={16}
+                color={isDark ? themeColors.error : '#FF3B30'}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -196,14 +241,21 @@ const ObservationTimeline: React.FC<ObservationTimelineProps> = ({
       ref={scrollViewRef}
       style={styles.streamContainer}
       contentContainerStyle={styles.streamContent}
-      showsVerticalScrollIndicator={false}
-    >
+      showsVerticalScrollIndicator={false}>
       {HeaderComponent}
       {items.length === 0 ? (
         <View style={styles.emptyState}>
           <PulsingAILogo />
-          <Text style={[styles.emptyTitle, { color: DYNAMIC_THEME.text }]}>{emptyState.title}</Text>
-          <Text style={[styles.emptySubtitle, { color: DYNAMIC_THEME.textSecondary }]}>{emptyState.subtitle}</Text>
+          <Text style={[styles.emptyTitle, { color: DYNAMIC_THEME.text }]}>
+            {emptyState.title}
+          </Text>
+          <Text
+            style={[
+              styles.emptySubtitle,
+              { color: DYNAMIC_THEME.textSecondary },
+            ]}>
+            {emptyState.subtitle}
+          </Text>
         </View>
       ) : (
         items.map(renderTimelineItem)

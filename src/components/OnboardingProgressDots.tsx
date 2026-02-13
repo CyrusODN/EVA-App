@@ -5,7 +5,11 @@ import Animated, {
   withSpring,
   interpolateColor,
 } from 'react-native-reanimated';
-import { useOnboardingTheme, SPRINGS, ONBOARDING_SPACING } from '../constants/onboardingTheme';
+import {
+  useOnboardingTheme,
+  SPRINGS,
+  ONBOARDING_SPACING,
+} from '../constants/onboardingTheme';
 
 interface OnboardingProgressDotsProps {
   totalSteps: number;
@@ -19,7 +23,11 @@ const OnboardingProgressDots: React.FC<OnboardingProgressDotsProps> = ({
   return (
     <View style={styles.container}>
       {Array.from({ length: totalSteps }, (_, index) => (
-        <Dot key={index} isActive={index === currentStep} isPast={index < currentStep} />
+        <Dot
+          key={index}
+          isActive={index === currentStep}
+          isPast={index < currentStep}
+        />
       ))}
     </View>
   );
@@ -40,7 +48,7 @@ const Dot: React.FC<DotProps> = ({ isActive, isPast }) => {
       : isPast
       ? themeColors.primary
       : themeColors.border;
-    
+
     return {
       transform: [{ scale }],
       backgroundColor,

@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import {
   widthPercentageToDP as wp,
@@ -36,7 +31,12 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
   showBorder = true,
 }) => {
   return (
-    <View style={[styles.headerContainer, { backgroundColor }, !showBorder && styles.noBorder]}>
+    <View
+      style={[
+        styles.headerContainer,
+        { backgroundColor },
+        !showBorder && styles.noBorder,
+      ]}>
       <View style={styles.headerContent}>
         {/* Back Button */}
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
@@ -50,8 +50,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
               colors={LinearGradientColors}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.headerIconContainer}
-            >
+              style={styles.headerIconContainer}>
               <Icon size={20} color="white" />
             </LinearGradient>
           )}
