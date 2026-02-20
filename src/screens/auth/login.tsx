@@ -190,21 +190,6 @@ const Login = () => {
     }
   };
 
-  // const handleSkipLogin = async () => {
-  //   setLoading(true);
-
-  //   // Simulate a brief loading delay for UX
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     // Set a mock token for development
-  //     const mockToken = 'dev_token_' + Date.now();
-  //     setAuthToken(mockToken);
-  //     userStore.getState().setToken(mockToken);
-  //     customToast('success', 'Success', 'Development login successful');
-  //     navigation.navigate('tabs');
-  //   }, 800);
-  // };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {

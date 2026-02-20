@@ -199,7 +199,7 @@ const TranscriptionComplete = () => {
   // State management - initialized with onboarding defaults
   const [noteType, setNoteType] = useState<string>('SOAP'); // Default to SOAP for standard mode
   const [selectedSpecialization, setSelectedSpecialization] = useState<string>(
-    defaultSpecialization || '',
+    defaultSpecialization || 'Psychiatry',
   );
   const [visitType, setVisitType] = useState<string>(defaultVisitType || '');
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -1241,7 +1241,7 @@ const TranscriptionComplete = () => {
 
             // Map UI selection to model identifier
             const llmModel =
-              selectedModel === 'pro' ? 'gpt-4.1' : 'gpt-4o-mini';
+              selectedModel === 'pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
 
             let payload: any = {};
 
@@ -1273,6 +1273,10 @@ const TranscriptionComplete = () => {
                 specialization:
                   selectedSpecialization === 'Child Psychiatry'
                     ? 'childPsychiatry'
+                    : selectedSpecialization === 'Family Medicine'
+                    ? 'familymedicine'
+                    : selectedSpecialization === 'Smart Select'
+                    ? 'smartSelect'
                     : selectedSpecialization.toLowerCase() || 'psychiatry',
                 length: noteLength.toLowerCase(),
                 llmModel,
