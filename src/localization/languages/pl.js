@@ -2002,7 +2002,7 @@ export const pl = {
     subtitle: 'Wprowadź dane do analizy kwalifikacji pacjenta',
     aiModel: {
       label: 'Model AI:',
-      gemini: 'Gemini 2.5 Pro',
+      gemini: 'Gemini 3.1 Pro',
       claude: 'Claude 4 Opus',
     },
     loading: {

@@ -1967,7 +1967,7 @@ export const en = {
     subtitle: 'Enter data for patient qualification analysis',
     aiModel: {
       label: 'AI Model:',
-      gemini: 'Gemini 2.5 Pro',
+      gemini: 'Gemini 3.1 Pro',
       claude: 'Claude 4 Opus',
     },
     loading: {

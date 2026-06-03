@@ -1241,7 +1241,7 @@ const TranscriptionComplete = () => {
 
             // Map UI selection to model identifier
             const llmModel =
-              selectedModel === 'pro' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+              selectedModel === 'pro' ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite';
 
             let payload: any = {};
 
