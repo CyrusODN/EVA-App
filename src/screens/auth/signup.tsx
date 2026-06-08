@@ -109,7 +109,7 @@ const SignUp = () => {
 
         try {
           const webClientId =
-            '344164367688-8c5s72053a6c0auatspaklmrvr9291v8.apps.googleusercontent.com';
+            '260564684390-veuu1bt36i05avrh98i4t6tqoms5ir2e.apps.googleusercontent.com';
           await GoogleSignin.configure({
             webClientId,
           });
